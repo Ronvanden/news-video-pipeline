@@ -7,10 +7,11 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 ## 2. Aktueller MVP-Status
 
 - FastAPI-App läuft lokal.
+- **Cloud MVP v1:** Bereitstellung auf **Google Cloud Run** mit öffentlicher Service-URL, `GET /health` und `POST /generate-script` online nutzbar. Details, Deploy-Befehl, Secret Manager und Test-`curl`: [DEPLOYMENT.md](DEPLOYMENT.md).
 - Endpoint `POST /generate-script` ist funktionsfähig.
 - `GET /health` liefert den Service-Status.
 - OpenAI ist optional und wird über Umgebungsvariablen (lokal z. B. `.env`) aktiviert.
-- Der LLM-Modus nutzt strikt geparste JSON-Ausgabe.
+- Der LLM-Modus nutzt strikt geparste JSON-Ausgabe; bei zu kurzem erstem LLM-Output kann ein **zweiter Expansion-Pass** das Skript Richtung Ziel-Länge erweitern (siehe `app/utils.py`, Warnungen in `warnings`).
 - Ein stabiler Fallback bleibt aktiv, wenn OpenAI fehlt oder fehlschlägt.
 - `AGENTS.md` enthält verbindliche Agent-Regeln.
 
@@ -40,6 +41,7 @@ app/
 
 Dockerfile
 README.md
+DEPLOYMENT.md      # Cloud Run MVP v1: URL, Deploy, Secret Manager, Tests
 requirements.txt
 .env.example
 AGENTS.md
@@ -159,6 +161,8 @@ curl -X POST http://127.0.0.1:8000/generate-script \
 - Prüfe `GET /health` und mindestens einen `POST /generate-script` Request.
 
 ## 16. Docker / Cloud Run
+
+**Cloud MVP v1 (URL, Deploy, Secret Manager, Online-Tests):** [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ### Lokales Image
 
