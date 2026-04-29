@@ -9,6 +9,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - FastAPI-App läuft lokal.
 - **Cloud MVP v1:** Bereitstellung auf **Google Cloud Run** mit öffentlicher Service-URL, `GET /health` und `POST /generate-script` online nutzbar. Details, Deploy-Befehl, Secret Manager und Test-`curl`: [DEPLOYMENT.md](DEPLOYMENT.md).
 - Endpoint `POST /generate-script` ist funktionsfähig.
+- Endpoint `POST /youtube/latest-videos` (V1): YouTube-Kanal prüfen und neueste Videos per RSS abrufen (ohne YouTube Data API-Key).
 - `GET /health` liefert den Service-Status.
 - OpenAI ist optional und wird über Umgebungsvariablen (lokal z. B. `.env`) aktiviert.
 - Der LLM-Modus nutzt strikt geparste JSON-Ausgabe; bei zu kurzem erstem LLM-Output kann ein **zweiter Expansion-Pass** das Skript Richtung Ziel-Länge erweitern (siehe `app/utils.py`, Warnungen in `warnings`).
@@ -25,6 +26,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - Lokaler Fallback-Modus ohne API-Schlüssel
 - UTF-8-Response-Handling
 - Klare Warnungen bei Unsicherheit oder unzureichendem Inhalt
+- YouTube-Kanal-Discovery V1: neueste Videos strukturiert mit Heuristik (`score`, `reason`, `summary` aus Metadaten)
 
 ## 4. Projektstruktur
 
@@ -35,9 +37,11 @@ app/
 ├── config.py         # Settings und Umgebungsvariablen
 ├── models.py         # Pydantic Request-/Response-Modelle
 ├── utils.py          # Extraktion, Generierung, LLM und Fallback
+├── youtube/          # Kanal-Auflösung, RSS, Scoring (ohne Data API)
 └── routes/
     ├── __init__.py
-    └── generate.py   # /generate-script Endpoint
+    ├── generate.py   # /generate-script Endpoint
+    └── youtube.py    # /youtube/latest-videos Endpoint
 
 Dockerfile
 README.md
@@ -103,6 +107,47 @@ Die API ist dann unter `http://127.0.0.1:8000` erreichbar.
   }
   ```
 
+### POST /youtube/latest-videos
+
+**Zweck:** Einen YouTube-Kanal prüfen und die **neuesten Videos** strukturiert zurückgeben (Metadaten aus dem Kanal-Feed, keine automatische Veröffentlichung, kein Scheduler).
+
+**Request-Body:**
+
+```json
+{
+  "channel_url": "string",
+  "max_results": 5
+}
+```
+
+`max_results` ist optional (Standard `5`), erlaubt sind Werte von **1 bis 50**.
+
+**Response:**
+
+```json
+{
+  "channel": "",
+  "videos": [
+    {
+      "title": "",
+      "url": "",
+      "video_id": "",
+      "published_at": "",
+      "summary": "",
+      "score": 0,
+      "reason": ""
+    }
+  ],
+  "warnings": []
+}
+```
+
+**Hinweise:**
+
+- **V1** nutzt das **öffentliche YouTube-RSS** (`feeds/videos.xml?channel_id=…`) und **keinen YouTube Data API-Key**.
+- URLs der Form **`https://www.youtube.com/channel/UC…`** sind **zuverlässiger** als **`@handle`**-Links: Letztere erfordern ggf. eine lesbare Kanal-HTML-Seite; bei Cookie-/Einwilligungsseiten oder Bot-Schutz kann die Auflösung fehlschlagen — Details stehen in `warnings`.
+- **Keine Transcript-Extraktion** in V1; `summary` leitet sich nur aus Feed-Metadaten (z. B. Titel) ab, nicht aus Untertiteln oder Audio.
+
 ## 10. Beispiel: GET /health
 
 ```bash
@@ -124,7 +169,19 @@ curl -X POST http://127.0.0.1:8000/generate-script \
   -d '{"url":"https://example.com/news","target_language":"de","duration_minutes":10}'
 ```
 
-## 12. Beispiel-Response
+## 12. Beispiel: POST /youtube/latest-videos
+
+Lokaler Test (Standard-Port `8000`, siehe Abschnitt „Server starten“). Beispiel mit **Kanal-URL** `https://www.youtube.com/channel/UC…` (robuster als `@handle`). Unter Windows kann `curl` ein PowerShell-Alias sein; ggf. `curl.exe` nutzen oder den Request mit einem anderen HTTP-Client senden.
+
+```bash
+curl -X POST http://127.0.0.1:8000/youtube/latest-videos \
+  -H "Content-Type: application/json" \
+  -d '{"channel_url":"https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw","max_results":5}'
+```
+
+**Hinweis:** Für diesen Endpoint sind keine zusätzlichen Secrets nötig; es werden hier keine Geheimnisse dokumentiert.
+
+## 13. Beispiel-Response
 
 ```json
 {
@@ -139,28 +196,28 @@ curl -X POST http://127.0.0.1:8000/generate-script \
 
 > Der Antwortvertrag ist fix: `title`, `hook`, `chapters`, `full_script`, `sources`, `warnings`.
 
-## 13. LLM-Modus vs. Fallback-Modus
+## 14. LLM-Modus vs. Fallback-Modus
 
 - LLM-Modus: Aktiv, wenn `OPENAI_API_KEY` gesetzt ist und OpenAI erfolgreich antwortet.
 - Antwort wird strikt als JSON geparst.
 - Fallback-Modus: Aktiv, wenn kein API-Key vorliegt oder OpenAI fehlschlägt.
 - Fallback liefert weiterhin valide Struktur, ohne neue Fakten zu erfinden.
 
-## 14. Warnings erklärt
+## 15. Warnings erklärt
 
 - `warnings` enthält Hinweise zu unsicherer Quelle, ungenügendem Inhalt oder Fallback-Einsatz.
 - Warnings machen transparent, wenn der Output nicht die gewünschte Länge oder Qualität erreichen kann.
 
-## 15. Lokale Tests
+## 16. Lokale Tests
 
 - App kompilieren:
   ```bash
   python -m compileall app
   ```
 - Endpoint-Tests per `curl` oder Postman durchführen.
-- Prüfe `GET /health` und mindestens einen `POST /generate-script` Request.
+- Prüfe `GET /health`, mindestens einen `POST /generate-script` Request und bei Bedarf `POST /youtube/latest-videos` (z. B. mit `/channel/UC…`).
 
-## 16. Docker / Cloud Run
+## 17. Docker / Cloud Run
 
 **Cloud MVP v1 (URL, Deploy, Secret Manager, Online-Tests):** [DEPLOYMENT.md](DEPLOYMENT.md)
 
@@ -189,24 +246,24 @@ Der Container lauscht auf **0.0.0.0**. Der Port kommt aus der Umgebungsvariable 
 
 Ohne `OPENAI_API_KEY` läuft die API im dokumentierten Fallback-Modus.
 
-## 17. Sicherheit / Secret Handling
+## 18. Sicherheit / Secret Handling
 
 - `.env` darf niemals in Git landen.
 - Geheimnisse bleiben lokal und werden nicht im README dokumentiert.
 - Nur `OPENAI_API_KEY` optional in `.env` konfigurieren.
 
-## 18. Agent-Regeln / AGENTS.md Hinweis
+## 19. Agent-Regeln / AGENTS.md Hinweis
 
 - `AGENTS.md` enthält verbindliche Regeln für Agent-Verhalten und redaktionelle Qualität.
 - Änderungen am Workflow oder an der Scriptqualität sollten dort dokumentiert werden.
 
-## 19. Bekannte Grenzen
+## 20. Bekannte Grenzen
 
 - Kein 100% verlässliches LLM für Faktenprüfung.
 - Qualitätsgrenzen hängen von URL-Extraktion und Artikeltext ab.
 - Manche Inhalte können kurz bleiben, wenn die Quelle nur wenig Text liefert.
 
-## 20. Nächste Schritte
+## 21. Nächste Schritte
 
 - Weitere Quellen-Extraktion und Artikelerkennung hinzufügen.
 - Erweiterte Kapitel- und Timing-Logik implementieren.

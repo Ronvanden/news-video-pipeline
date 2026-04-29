@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from app.config import settings
 from app.routes.generate import router as generate_router
+from app.routes.youtube import router as youtube_router
 import logging
 import json
 
@@ -27,6 +28,7 @@ app = FastAPI(
 
 # Include routers
 app.include_router(generate_router)
+app.include_router(youtube_router)
 
 @app.get("/health")
 async def health():
