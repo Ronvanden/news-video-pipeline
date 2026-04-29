@@ -68,6 +68,8 @@ async def generate_script(request: GenerateScriptRequest):
         )
         if mode == "llm":
             warnings.append("Generated using LLM mode")
+            if reason:
+                warnings.append(reason)
         elif reason:
             r = reason.rstrip(".")
             warnings.append(f"LLM generation failed: {r}. {fallback_note}")

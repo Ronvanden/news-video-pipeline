@@ -41,6 +41,11 @@ def build_openai_http_client() -> httpx.Client:
     )
 
 
+def _effective_openai_api_key() -> str:
+    """Key für Bearer-Header: führende/nachgestellte Whitespaces entfernen. Leer => kein LLM. Niemals loggen."""
+    return (settings.openai_api_key or "").strip()
+
+
 def build_openai_client():
     """
     OpenAI-Sync-Client mit explizitem httpx-Client, Timeouts und max_retries.
@@ -48,8 +53,11 @@ def build_openai_client():
     """
     if not openai:
         raise RuntimeError("openai package not installed")
+    key = _effective_openai_api_key()
+    if not key:
+        raise RuntimeError("OpenAI client build without non-empty API key")
     return openai.OpenAI(
-        api_key=settings.openai_api_key,
+        api_key=key,
         max_retries=_OPENAI_MAX_RETRIES,
         http_client=build_openai_http_client(),
     )
@@ -382,7 +390,7 @@ class ScriptGenerator:
         else:
             num_chapters = 8
         
-        if openai and settings.openai_api_key:
+        if openai and _effective_openai_api_key():
             return self._generate_with_openai(
                 title,
                 key_points,
@@ -475,30 +483,16 @@ Gib die Antwort exakt als Objekt zurück:
             full_script = data.get("full_script") or data.get("script") or ""
             
             full_script_words = count_words(full_script)
+            llm_short_reason = ""
             if full_script_words < min_word_count:
                 logger.warning(
-                    "LLM output too short (%s words), applying single short framing block (no padding loop)",
+                    "LLM output below minimum word band (%s words, min=%s); keeping LLM output (no fallback, no padding)",
                     full_script_words,
+                    min_word_count,
                 )
-                full_script = self._extend_script(full_script, min_word_count)
-                full_script_words = count_words(full_script)
-                if full_script_words < min_word_count:
-                    logger.warning(
-                        "Script still below minimum (%s words) after framing; using local fallback",
-                        full_script_words,
-                    )
-                    return self._generate_fallback(
-                        title,
-                        key_points,
-                        duration_minutes,
-                        target_word_count,
-                        num_chapters,
-                        min_word_count,
-                        max_word_count,
-                        source_word_count,
-                    )
-            
-            return title_text, hook, chapters, full_script, "llm", ""
+                llm_short_reason = "LLM output shorter than target"
+
+            return title_text, hook, chapters, full_script, "llm", llm_short_reason
         
         except openai.OpenAIError as e:
             _log_openai_connection_error_details(e)
@@ -621,17 +615,6 @@ Gib die Antwort exakt als Objekt zurück:
             seen_lower.add(key)
             bullets.append(f"– {p}.")
         return " ".join(bullets) if bullets else self._build_chapter_content(title, [])
-
-    def _extend_script(self, script: str, min_word_count: int) -> str:
-        """At most one short editorial bridge — no loops that paste the same block many times."""
-        if count_words(script) >= min_word_count:
-            return script
-        bridge = (
-            "Einordnung: Wo die Quelle nicht weiter ausführt, erweitern wir den Text hier bewusst nicht "
-            "und wiederholen die Fakten nicht zur Streckung."
-        )
-        return f"{script}\n\n{bridge}"
-
 
 def generate_title(text: str) -> str:
     """Generate a title from text."""
