@@ -1,0 +1,41 @@
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from app.config import settings
+from app.routes.generate import router as generate_router
+import logging
+import json
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class UTF8JSONResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+app = FastAPI(
+    title=settings.app_name,
+    debug=settings.debug,
+    default_response_class=UTF8JSONResponse
+)
+
+# Include routers
+app.include_router(generate_router)
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Starting News to Video Pipeline")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("Shutting down News to Video Pipeline")

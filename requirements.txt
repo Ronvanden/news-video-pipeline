@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-multipart
+requests
+trafilatura
+youtube-transcript-api
+deep-translator
+sumy
+pydantic
+python-dotenv
+moviepy
+Pillow
+feedparser
+pydantic-settings
