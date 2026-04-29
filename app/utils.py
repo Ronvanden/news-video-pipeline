@@ -1,6 +1,6 @@
 import logging
 import json
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import re
 from urllib.parse import urlparse
 import trafilatura
@@ -137,6 +137,68 @@ def _sanitize_openai_text(text: str, max_len: int = 200) -> str:
     if len(t) > max_len:
         t = t[: max_len - 3].rstrip() + "..."
     return t
+
+
+def _extract_first_json_object(text: str) -> str:
+    """
+    Best-effort JSON repair: extract the first top-level {...} object substring.
+    Returns "" if no plausible object found.
+    """
+    if not text:
+        return ""
+    s = text.strip()
+    start = s.find("{")
+    if start < 0:
+        return ""
+    depth = 0
+    in_str = False
+    esc = False
+    for i in range(start, len(s)):
+        ch = s[i]
+        if in_str:
+            if esc:
+                esc = False
+                continue
+            if ch == "\\":
+                esc = True
+                continue
+            if ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+            continue
+        if ch == "{":
+            depth += 1
+            continue
+        if ch == "}":
+            depth -= 1
+            if depth == 0:
+                return s[start : i + 1].strip()
+            continue
+    return ""
+
+
+def _parse_llm_json_object(value: object) -> dict:
+    """
+    Strictly prefer dict; otherwise parse JSON (with a small repair attempt).
+    Raises ValueError/JSONDecodeError for unrepairable input.
+    """
+    if isinstance(value, dict):
+        return value
+    text = str(value or "").strip()
+    if not text:
+        raise ValueError("Empty LLM response")
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        repaired = _extract_first_json_object(text)
+        if not repaired:
+            raise
+        data = json.loads(repaired)
+    if not isinstance(data, dict):
+        raise ValueError(f"Invalid response format (expected object, got {type(data).__name__})")
+    return data
 
 
 def _openai_nested_error_message(body: object) -> str:
@@ -462,20 +524,7 @@ Gib die Antwort exakt als Objekt zurück:
                 )
 
             result = response.choices[0].message.content
-            if isinstance(result, dict):
-                data = result
-            else:
-                text = str(result).strip()
-                try:
-                    data = json.loads(text)
-                except json.JSONDecodeError:
-                    preview = text[:200]
-                    logger.error(f"OpenAI response parse failed, preview={preview!r}")
-                    raise
-            
-            if not isinstance(data, dict):
-                logger.error(f"OpenAI response parsed to non-dict type: {type(data).__name__}")
-                raise ValueError("Invalid response format")
+            data = _parse_llm_json_object(result)
             
             title_text = data.get("title") or title
             hook = data.get("hook") or f"Entdecken Sie: {title_text}"
@@ -483,16 +532,45 @@ Gib die Antwort exakt als Objekt zurück:
             full_script = data.get("full_script") or data.get("script") or ""
             
             full_script_words = count_words(full_script)
-            llm_short_reason = ""
-            if full_script_words < min_word_count:
-                logger.warning(
-                    "LLM output below minimum word band (%s words, min=%s); keeping LLM output (no fallback, no padding)",
-                    full_script_words,
-                    min_word_count,
-                )
-                llm_short_reason = "LLM output shorter than target"
+            if full_script_words >= min_word_count or not full_script.strip():
+                return title_text, hook, chapters, full_script, "llm", ""
 
-            return title_text, hook, chapters, full_script, "llm", llm_short_reason
+            # Valid LLM JSON, but clearly too short: do NOT fallback.
+            # Instead, run a second expansion pass that extends the existing script toward target length.
+            expanded = self._expand_llm_script_with_openai(
+                title=title_text,
+                key_points=key_points,
+                duration_minutes=duration_minutes,
+                target_word_count=target_word_count,
+                min_word_count=min_word_count,
+                max_word_count=max_word_count,
+                current_hook=hook,
+                current_chapters=chapters,
+                current_full_script=full_script,
+            )
+            if expanded:
+                ex_title, ex_hook, ex_chapters, ex_full = expanded
+                before = full_script_words
+                after = count_words(ex_full)
+                # Accept only if it materially improves length/coverage and stays roughly within bounds.
+                if after > before and after <= int(max_word_count * 1.25) and (
+                    after >= min_word_count or after >= int(before * 1.15) or abs(target_word_count - after) < abs(target_word_count - before)
+                ):
+                    return (
+                        ex_title or title_text,
+                        ex_hook or hook,
+                        ex_chapters if isinstance(ex_chapters, list) else chapters,
+                        ex_full,
+                        "llm",
+                        "LLM script expanded toward target length",
+                    )
+
+            logger.warning(
+                "LLM output below minimum word band (%s words, min=%s); expansion not applied",
+                full_script_words,
+                min_word_count,
+            )
+            return title_text, hook, chapters, full_script, "llm", "LLM output shorter than target"
         
         except openai.OpenAIError as e:
             _log_openai_connection_error_details(e)
@@ -518,6 +596,87 @@ Gib die Antwort exakt als Objekt zurück:
             source_word_count,
         )
         return title, hook, chapters, full_script, "fallback", sanitized_reason
+
+    def _expand_llm_script_with_openai(
+        self,
+        *,
+        title: str,
+        key_points: List[str],
+        duration_minutes: int,
+        target_word_count: int,
+        min_word_count: int,
+        max_word_count: int,
+        current_hook: str,
+        current_chapters: List[dict],
+        current_full_script: str,
+    ) -> Optional[Tuple[str, str, List[dict], str]]:
+        """
+        Second-pass expansion: keep the existing script as baseline, deepen chapters and add context/analysis
+        without inventing new factual claims. Never triggers fallback; returns None on any failure.
+        """
+        if not (openai and _effective_openai_api_key()):
+            return None
+        try:
+            chapters_json = json.dumps(current_chapters or [], ensure_ascii=False)
+        except Exception:
+            chapters_json = "[]"
+
+        expansion_prompt = f"""
+Du bist Redaktions- und Story-Producer für ein YouTube-News-Video.
+Erweitere das bestehende Skript gezielt Richtung Ziel-Länge, ohne neue unbelegte Fakten zu erfinden.
+
+WICHTIG:
+- Keine neuen konkreten Behauptungen/Details hinzufügen, die nicht aus den Key Points oder dem vorhandenen Skript ableitbar sind.
+- Wenn du Kontext gibst, formuliere ihn als Einordnung/Erklärung/Allgemeinwissen, ohne neue Ereignis-Fakten zu behaupten.
+- Vermeide Wiederholungen und keine 1:1-Übernahmen aus Quellen.
+- Vertiefe bestehende Kapitel: mehr Erklärung, Einordnung, Konsequenzen, offene Fragen, aber ohne Fakten zu erfinden.
+- Behalte Stil und Sprache: Deutsch, YouTube-tauglich.
+
+Ziel:
+- Dauer: {duration_minutes} Minuten
+- Zielwortanzahl: {target_word_count}
+- Mindestwortanzahl: {min_word_count}
+- Maximalwortanzahl: {max_word_count}
+
+Key Points (Fakten-Anker, keine neuen Fakten hinzufügen):
+{'; '.join([p for p in key_points if p.strip()])}
+
+Bestehendes Skript (muss als Basis erhalten bleiben, aber darf umstrukturiert/verbessert werden):
+Titel: {title}
+Hook: {current_hook}
+Chapters JSON: {chapters_json}
+Full Script:
+{current_full_script}
+
+Antworte nur mit gültigem JSON, ohne zusätzlichen Text, Codeblöcke oder Markdown.
+Gib exakt dieses Objekt zurück:
+{{
+  "title": "...",
+  "hook": "...",
+  "chapters": [{{"title": "...", "content": "..."}}],
+  "full_script": "..."
+}}
+"""
+
+        with build_openai_client() as client:
+            response = client.chat.completions.create(
+                model=settings.openai_model,
+                messages=[{"role": "user", "content": expansion_prompt}],
+                max_tokens=3500,
+                temperature=0.0,
+                response_format={"type": "json_object"},
+            )
+        data = _parse_llm_json_object(response.choices[0].message.content)
+
+        ex_title = data.get("title") or title
+        ex_hook = data.get("hook") or current_hook
+        ex_chapters = data.get("chapters") if isinstance(data.get("chapters"), list) else (current_chapters or [])
+        ex_full = data.get("full_script") or data.get("script") or ""
+        if not str(ex_full).strip():
+            return None
+        return ex_title, ex_hook, ex_chapters, str(ex_full)
+
+    # NOTE: Use try/except in caller; never bubble expansion errors into fallback.
     
     def _generate_fallback(
         self,
