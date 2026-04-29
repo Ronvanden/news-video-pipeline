@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 from app.watchlist.firestore_repo import FirestoreUnavailableError
@@ -11,6 +11,10 @@ from app.watchlist.models import (
     CreateWatchlistChannelResponse,
     ListWatchlistChannelsResponse,
     ListWatchlistScriptJobsResponse,
+    ReviewGeneratedScriptJobResponse,
+    RunAutomationCycleRequest,
+    RunAutomationCycleResponse,
+    RunPendingScriptJobsResponse,
     RunScriptJobResponse,
     WatchlistChannelCreateRequest,
 )
@@ -83,6 +87,85 @@ async def watchlist_run_script_job(job_id: str):
         msg = str(e) if str(e) else "Firestore is not reachable."
         logger.warning("watchlist POST /watchlist/jobs/run failed: Firestore unavailable")
         raise HTTPException(status_code=503, detail=msg)
+
+
+@router.post(
+    "/watchlist/channels/{channel_id}/recheck-video/{video_id}",
+    response_model=CheckWatchlistChannelResponse,
+)
+async def watchlist_recheck_video(channel_id: str, video_id: str):
+    """Dev/Test: eine video_id neu klassifizieren (optional ein Dokument aus ``processed_videos`` entfernen)."""
+    try:
+        return watchlist_service.recheck_video(channel_id, video_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore is not reachable."
+        logger.warning(
+            "watchlist POST recheck-video failed: Firestore unavailable"
+        )
+        body = CheckWatchlistChannelResponse(
+            channel_id=channel_id,
+            warnings=[msg],
+            created_jobs=[],
+        )
+        return JSONResponse(status_code=503, content=body.model_dump())
+
+
+@router.post(
+    "/watchlist/jobs/run-pending",
+    response_model=RunPendingScriptJobsResponse,
+)
+async def watchlist_run_pending_jobs(limit: int = Query(3, ge=1, le=10)):
+    """Pending Jobs nacheinander ausführen (Batch toleriert Einzelfehler)."""
+    try:
+        return watchlist_service.run_pending_script_jobs(limit=limit)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore is not reachable."
+        logger.warning(
+            "watchlist POST /watchlist/jobs/run-pending failed: Firestore unavailable"
+        )
+        body = RunPendingScriptJobsResponse(
+            warnings=[msg],
+        )
+        return JSONResponse(status_code=503, content=body.model_dump())
+
+
+@router.post(
+    "/watchlist/automation/run-cycle",
+    response_model=RunAutomationCycleResponse,
+)
+async def watchlist_automation_run_cycle(
+    req: RunAutomationCycleRequest = Body(...),
+):
+    """Ein Scheduler-Zyklus vorbereiten: aktive Kanäle prüfen, danach pending Jobs (ohne GCP Cloud Scheduler)."""
+    try:
+        return watchlist_service.run_automation_cycle(
+            channel_limit=req.channel_limit,
+            job_limit=req.job_limit,
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore is not reachable."
+        logger.warning(
+            "watchlist POST automation run-cycle failed: Firestore unavailable"
+        )
+        body = RunAutomationCycleResponse(warnings=[msg])
+        return JSONResponse(status_code=503, content=body.model_dump())
+
+
+@router.post(
+    "/watchlist/jobs/{job_id}/review",
+    response_model=ReviewGeneratedScriptJobResponse,
+)
+async def watchlist_review_generated_script(job_id: str):
+    """Originalitäts-Review wie ``POST /review-script``, ohne Job-Status anzufassen."""
+    try:
+        return watchlist_service.review_generated_script_for_job(job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore is not reachable."
+        logger.warning(
+            "watchlist POST jobs review failed: Firestore unavailable"
+        )
+        body = ReviewGeneratedScriptJobResponse(job_id=job_id, warnings=[msg])
+        return JSONResponse(status_code=503, content=body.model_dump())
 
 
 @router.get(

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Literal, Optional
 
-from app.models import Chapter
+from app.models import Chapter, ReviewScriptResponse
 
 ChannelStatusLiteral = Literal["active", "paused", "error"]
 CheckIntervalLiteral = Literal["manual", "hourly", "daily", "weekly"]
@@ -164,4 +164,57 @@ class GeneratedScript(BaseModel):
 class RunScriptJobResponse(BaseModel):
     job: ScriptJob
     script: Optional[GeneratedScript] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+PendingJobOutcomeLiteral = Literal["completed", "failed", "skipped"]
+
+
+class PendingJobRunResultItem(BaseModel):
+    """Ein Eintrag in der Pending-Runner-Ausführungsliste."""
+
+    job_id: str
+    outcome: PendingJobOutcomeLiteral
+    warnings: List[str] = Field(default_factory=list)
+
+
+class RunPendingScriptJobsResponse(BaseModel):
+    checked_jobs: int = 0
+    completed_jobs: int = 0
+    failed_jobs: int = 0
+    skipped_jobs: int = 0
+    results: List[PendingJobRunResultItem] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class RunAutomationCycleRequest(BaseModel):
+    channel_limit: int = Field(default=3, ge=1, le=50)
+    job_limit: int = Field(default=3, ge=1, le=10)
+
+
+class AutomationChannelResultItem(BaseModel):
+    channel_id: str
+    ok: bool = True
+    created_jobs_from_check: int = 0
+    new_videos_count: int = 0
+    skipped_videos_count: int = 0
+    warnings: List[str] = Field(default_factory=list)
+
+
+class RunAutomationCycleResponse(BaseModel):
+    checked_channels: int = 0
+    created_jobs: int = 0
+    run_jobs: int = 0
+    completed_jobs: int = 0
+    failed_jobs: int = 0
+    warnings: List[str] = Field(default_factory=list)
+    channel_results: List[AutomationChannelResultItem] = Field(default_factory=list)
+    job_results: List[PendingJobRunResultItem] = Field(default_factory=list)
+
+
+class ReviewGeneratedScriptJobResponse(BaseModel):
+    """Antwort zur optionalen Reviewschicht nach erfolgreicher Skripterstellung (bewahrt Job-Status)."""
+
+    job_id: str
+    review: Optional[ReviewScriptResponse] = None
     warnings: List[str] = Field(default_factory=list)

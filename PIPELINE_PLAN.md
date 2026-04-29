@@ -105,7 +105,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | | |
 |--|--|
 | **Status** | **next** (Phase 5 weiterhin aktiv; Schritt 1 wie unten dokumentiert vorhanden; Gesamtphase **nicht** `done`) |
-| **Umsetzungsstand** | **Schritt 1–4 umgesetzt:** wie zuvor plus **`POST /watchlist/jobs/{job_id}/run`** — manueller Job-Run, **`generated_scripts`**-Persistenz (gleicher fachlicher Pfad wie `/youtube/generate-script`, ohne HTTP-Selbstaufruf). **Schritte 5–6:** Review-Persistenz aus dem Job optional, Scheduler V1.1+ (**planned**/offen). |
+| **Umsetzungsstand** | **Schritt 1–4 umgesetzt** (CRUD, Check, Jobs, **`POST …/jobs/{job_id}/run`**, **`generated_scripts`**). **BAUANTRAG 5.5–5.7 (Automation Layer):** Recheck eines Videos, **`POST /watchlist/jobs/run-pending`**, **`POST /watchlist/automation/run-cycle`** (Limiter; **ohne** GCP Cloud Scheduler Deploy), optional **`POST /watchlist/jobs/{job_id}/review`** über **`review_script`** (Vertrag **`/review-script`**). Review-Persistenz in Firestore (**`review_results`**) weiter optional/**planned**. GCP Cloud Scheduler später wie geplant (**V1.1+**). |
 | **Ziel (Kurz)** | YouTube-Kanäle dauerhaft speichern, regelmäßig oder manuell prüfen, neue Videos erkennen, Kandidaten bewerten, Script-Jobs vorbereiten und Status führen — aufbauend auf bestehender RSS-/Discovery-Logik (`POST /youtube/latest-videos`). |
 | **Relevante Dateien** | `app/youtube/*` (Resolver, RSS für Kanalnamen bei Create), **implementiert:** `app/watchlist/`, `app/routes/watchlist.py`, `tests/test_watchlist_*.py`; `app/models.py` (bestehende Verträge unverändert) |
 | **Bekannte Grenzen** | YouTube-RSS liefert keine Echtzeit-Garantie; `@handle`-Auflösung bleibt fragiler als `/channel/UC…` (wie Phase 2). |
@@ -133,16 +133,19 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | **generated_scripts** | Persistenz generierter Skripte im Sinne des festen **`GenerateScriptResponse`** (Titel, Hook, Kapitel, `full_script`, Quellen, Warnungen — Vertrag bestehender Skript-Endpoints nicht brechen). |
 | **review_results** | Ergebnisse analog **`POST /review-script`** (`risk_level`, `originality_score`, Flags, Issues, Recommendations, `warnings`). |
 
-#### Geplante Endpoints (Phase 5 V1)
+#### Watchlist-Endpunkte (Phase 5 — Stand Code)
 
 | Methode | Pfad | Zweck |
 |---------|------|--------|
 | `POST` | `/watchlist/channels` | Kanal in Watchlist anlegen |
 | `GET` | `/watchlist/channels` | Watchlist auflisten |
 | `POST` | `/watchlist/channels/{channel_id}/check` | Einen Kanal manuell prüfen |
-| `POST` | `/watchlist/run-check` | Alle aktiven Kanäle prüfen (mit Drossel/Cap nach Implementierung) |
+| `POST` | `/watchlist/channels/{channel_id}/recheck-video/{video_id}` | **Ops/Dev:** Ein einzelnes Video erneut gegen die gleiche Pipeline-Logik prüfen (Warnung bei Löschen genau eines `processed_videos`-Docs; keine Massenaktion). |
 | `GET` | `/watchlist/jobs` | Script-Jobs auflisten |
-| `POST` | `/watchlist/jobs/{job_id}/run` | Einen Script-Job manuell ausführen (Skript persistieren; optional Review wie konfiguriert) |
+| `POST` | `/watchlist/jobs/run-pending` | Pending Jobs nacheinander ausführen (Query **`limit`** Default 3, Max 10; Batch bricht nicht bei Einzelfehlern ab). |
+| `POST` | `/watchlist/automation/run-cycle` | Aktive Kanäle prüfen (Cap **`channel_limit`**), anschließend **`run_pending`** (Cap **`job_limit`**) — **ohne** Cloud Scheduler, nur Endpoint für spätere IAP/Cron-Anbindung. |
+| `POST` | `/watchlist/jobs/{job_id}/run` | Einen Script-Job manuell ausführen (**`generated_scripts`**). |
+| `POST` | `/watchlist/jobs/{job_id}/review` | Optional: Heuristik wie **`POST /review-script`** aus gespeichertem Skript; **keine** Änderung des ScriptJob-Status bei Review-Fehlern. |
 
 (Response-Verträge der Watchlist-Endpunkte sind neu; bestehende Endpoints **`/generate-script`**, **`/youtube/*`**, **`/review-script`** bleiben unverändert.)
 
@@ -157,7 +160,8 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 
 #### Scheduler und Auth (nach V1)
 
-- **Cloud Scheduler:** erst **ab V1.1** vorgesehen (z. B. wiederkehrender Aufruf von `POST /watchlist/run-check`). In V1 wird `check_interval` nur gespeichert/ausgewertet, wo die Implementierung es vorsieht; kein Produktzwang Scheduler in V1.
+- **Cloud Scheduler:** erst **ab V1.1** vorgesehen (z. B. wiederkehrender Aufruf von **`POST /watchlist/automation/run-cycle`** mit Auth-Header/Secret). Der **Endpoint** existiert bereits (Phase 5.6); **Deploy/Trigger** in GCP ist noch **nicht** Teil des Repos.
+- In V1 wird `check_interval` nur gespeichert/ausgewertet, wo die Implementierung es vorsieht; kein Produktzwang Scheduler in V1.
 - **Absicherung:** Öffentlicher Cloud-Run-Service erfordert für Scheduler später **klare Auth** (z. B. gemeinsamer Request-Header mit Secret nur in Secret Manager, oder geschützte Invoker-Only-Variante mit Dienstkonto/IAM — Details bei Implementierung, **keine** Secret-Werte in Repo-Doku).
 
 #### Firestore Setup (Plan, keine Secrets)
@@ -207,8 +211,8 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 2. ~~**Manueller Channel Check** — **`processed_videos`** füllen / Duplikatlogik~~ **(Schritt 2 erledigt: `POST …/check`, siehe README / Umsetzungsstand).**
 3. ~~**Script-Jobs anlegen** bei neuen Videos (Konfigurationsabhängig)~~ **(Schritt 3 erledigt: Firestore `script_jobs`, `pending`; Ausführung erst Schritt 4).**
 4. ~~**Job manuell ausführen** — **`generated_scripts`** persistieren (intern Logik wie `/youtube/generate-script`).~~ **(Schritt 4 umgesetzt: `POST /watchlist/jobs/{job_id}/run`, siehe README.)**
-5. Optional **Review** aus Job heraus — **`review_results`** speichern.
-6. **Scheduler** später (V1.1+) mit Absicherung.
+5. ~~Optional **Review** aus Job heraus (HTTP ohne Pflicht-Persistenz) — **`POST /watchlist/jobs/{job_id}/review`** ruft **`review_script`** wie **`/review-script`** auf; Persistenz **`review_results`** weiter optional/geplant~~ **(teilweise: Endpoint + Service, Persistenz noch offen).**
+6. **Scheduler / Cron in GCP** — **`run-cycle`** kann extern getriggert werden; Produkt-Timing & Auth später (V1.1+) mit Absicherung.
 
 #### Stabilisierung zwischen Schritt 4 und Schritt 5 (Quality Gate: Transcript-Preflight, Job-Fehlercodes)
 

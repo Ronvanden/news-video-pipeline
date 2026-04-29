@@ -10,18 +10,20 @@ from app.youtube.scoring import is_likely_short_video
 from app.youtube.service import get_latest_channel_videos
 from app.youtube.rss import fetch_channel_feed_entries
 from app.youtube.resolver import resolve_channel_id
-from app.models import GenerateScriptResponse
+from app.models import GenerateScriptResponse, ReviewScriptRequest
 from app.utils import (
     WARN_TRANSCRIPT_UNAVAILABLE,
     check_youtube_transcript_available_by_video_id,
     count_words,
     generate_script_from_youtube_video,
 )
+from app.review.service import review_script
 from app.watchlist.firestore_repo import (
     FirestoreUnavailableError,
     FirestoreWatchlistRepository,
 )
 from app.watchlist.models import (
+    AutomationChannelResultItem,
     ChannelCheckVideoItem,
     CheckWatchlistChannelResponse,
     CreateWatchlistChannelResponse,
@@ -29,7 +31,11 @@ from app.watchlist.models import (
     GeneratedScript,
     ListWatchlistChannelsResponse,
     ListWatchlistScriptJobsResponse,
+    PendingJobRunResultItem,
     ProcessedVideo,
+    ReviewGeneratedScriptJobResponse,
+    RunAutomationCycleResponse,
+    RunPendingScriptJobsResponse,
     RunScriptJobResponse,
     ScriptJob,
     WatchlistChannel,
@@ -466,6 +472,192 @@ def _check_item_from_raw(
     )
 
 
+WARN_RECHECK_SINGLE_DOCUMENT_REMOVED_DE = (
+    "Ein vorhandenes processed_videos-Dokument für genau diese video_id wurde zur "
+    "Neuprüfung entfernt. Es handelt sich um keine Massenlöschung; Umfang: ein Video."
+)
+
+
+def _consume_watchlist_feed_video_row(
+    *,
+    repo: FirestoreWatchlistRepository,
+    channel: WatchlistChannel,
+    raw: Dict[str, Any],
+    now_iso: str,
+    checker: Callable[[str], Tuple[bool, List[str]]],
+    transcript_warn_flags: Dict[str, bool],
+    merged_warnings: List[str],
+    created_jobs_out: List[CreatedScriptJobItem],
+    new_out: List[ChannelCheckVideoItem],
+    known_out: List[ChannelCheckVideoItem],
+    skipped_out: List[ChannelCheckVideoItem],
+) -> None:
+    """Eine Feed-Zelle wie beim Kanal-Check verarbeiten (inkl. Transcript-Preflight)."""
+    vid = str(raw.get("video_id") or "").strip()
+    if not vid:
+        return
+    ds = raw.get("duration_seconds")
+    if ds is not None and not isinstance(ds, (int, float)):
+        try:
+            ds = int(ds)
+        except (TypeError, ValueError):
+            ds = None
+    elif isinstance(ds, float):
+        ds = int(ds)
+    media_kw = str(raw.get("media_keywords") or "")
+    title_raw = str(raw.get("title") or "")
+    url_raw = str(raw.get("url") or "")
+    is_short = is_likely_short_video(
+        title_raw, url_raw, ds, media_kw
+    )
+    processed = repo.get_processed_video(vid)
+
+    score_val = raw.get("score")
+    try:
+        sc_num = int(score_val) if score_val is not None else 0
+    except (TypeError, ValueError):
+        sc_num = 0
+    reason_s = str(raw.get("reason") or "")
+
+    if processed:
+        known_out.append(
+            _check_item_from_raw(raw, is_short=is_short, status="known")
+        )
+        return
+
+    if channel.ignore_shorts and is_short:
+        pv = ProcessedVideo(
+            id=vid,
+            channel_id=channel.channel_id,
+            video_id=vid,
+            video_url=url_raw,
+            title=title_raw,
+            published_at=str(raw.get("published_at") or ""),
+            first_seen_at=now_iso,
+            status="skipped",
+            score=sc_num,
+            reason=reason_s,
+            is_short=True,
+            skip_reason="shorts_ignored",
+            script_job_id=None,
+            review_result_id=None,
+            last_error="",
+        )
+        repo.create_processed_video(pv)
+        skipped_out.append(
+            _check_item_from_raw(
+                raw,
+                is_short=True,
+                status="skipped",
+                skip_reason="shorts_ignored",
+            )
+        )
+        return
+
+    if sc_num < channel.min_score:
+        pv = ProcessedVideo(
+            id=vid,
+            channel_id=channel.channel_id,
+            video_id=vid,
+            video_url=url_raw,
+            title=title_raw,
+            published_at=str(raw.get("published_at") or ""),
+            first_seen_at=now_iso,
+            status="skipped",
+            score=sc_num,
+            reason=reason_s,
+            is_short=is_short,
+            skip_reason="score_below_minimum",
+            script_job_id=None,
+            review_result_id=None,
+            last_error="",
+        )
+        repo.create_processed_video(pv)
+        skipped_out.append(
+            _check_item_from_raw(
+                raw,
+                is_short=is_short,
+                status="skipped",
+                skip_reason="score_below_minimum",
+            )
+        )
+        return
+
+    if channel.auto_generate_script:
+        ok_tr, _preflight_ws = checker(vid)
+        if not ok_tr:
+            if any(
+                WARN_TRANSCRIPT_UNAVAILABLE in (x or "")
+                or "Transcript not available" in (x or "")
+                for x in _preflight_ws
+            ):
+                skip_tr = "transcript_not_available"
+                transcript_warn_flags["unavailable"] = True
+            else:
+                skip_tr = "transcript_check_failed"
+                transcript_warn_flags["check_failed"] = True
+            pv_tr = ProcessedVideo(
+                id=vid,
+                channel_id=channel.channel_id,
+                video_id=vid,
+                video_url=url_raw,
+                title=title_raw,
+                published_at=str(raw.get("published_at") or ""),
+                first_seen_at=now_iso,
+                status="skipped",
+                score=sc_num,
+                reason=reason_s,
+                is_short=is_short,
+                skip_reason=skip_tr,
+                script_job_id=None,
+                generated_script_id=None,
+                review_result_id=None,
+                last_error="",
+            )
+            repo.create_processed_video(pv_tr)
+            skipped_out.append(
+                _check_item_from_raw(
+                    raw,
+                    is_short=is_short,
+                    status="skipped",
+                    skip_reason=skip_tr,
+                )
+            )
+            return
+
+    pv_seen = ProcessedVideo(
+        id=vid,
+        channel_id=channel.channel_id,
+        video_id=vid,
+        video_url=url_raw,
+        title=title_raw,
+        published_at=str(raw.get("published_at") or ""),
+        first_seen_at=now_iso,
+        status="seen",
+        score=sc_num,
+        reason=reason_s,
+        is_short=is_short,
+        skip_reason="",
+        script_job_id=None,
+        generated_script_id=None,
+        review_result_id=None,
+        last_error="",
+    )
+    repo.create_processed_video(pv_seen)
+    new_out.append(
+        _check_item_from_raw(raw, is_short=is_short, status="new")
+    )
+    _try_create_script_job_for_seen_video(
+        repo=repo,
+        channel=channel,
+        vid=vid,
+        url_raw=url_raw,
+        now_iso=now_iso,
+        merged_warnings=merged_warnings,
+        created_jobs_acc=created_jobs_out,
+    )
+
+
 def check_channel(
     channel_id: str,
     repo: FirestoreWatchlistRepository | None = None,
@@ -517,8 +709,7 @@ def check_channel(
     skipped_out: List[ChannelCheckVideoItem] = []
     merged_warnings: List[str] = []
     created_jobs_out: List[CreatedScriptJobItem] = []
-    warn_skip_transcript_unavailable = False
-    warn_skip_transcript_check_failed = False
+    transcript_warn_flags = {"unavailable": False, "check_failed": False}
     checker = transcript_checker or check_youtube_transcript_available_by_video_id
 
     try:
@@ -528,177 +719,27 @@ def check_channel(
         for raw in rows:
             if not isinstance(raw, dict):
                 continue
-            vid = str(raw.get("video_id") or "").strip()
-            if not vid:
-                continue
-            ds = raw.get("duration_seconds")
-            if ds is not None and not isinstance(ds, (int, float)):
-                try:
-                    ds = int(ds)
-                except (TypeError, ValueError):
-                    ds = None
-            elif isinstance(ds, float):
-                ds = int(ds)
-            media_kw = str(raw.get("media_keywords") or "")
-            title_raw = str(raw.get("title") or "")
-            url_raw = str(raw.get("url") or "")
-            is_short = is_likely_short_video(
-                title_raw, url_raw, ds, media_kw
-            )
-            processed = repo.get_processed_video(vid)
-
-            score_val = raw.get("score")
-            try:
-                sc_num = int(score_val) if score_val is not None else 0
-            except (TypeError, ValueError):
-                sc_num = 0
-            reason_s = str(raw.get("reason") or "")
-
-            if processed:
-                known_out.append(
-                    _check_item_from_raw(raw, is_short=is_short, status="known")
-                )
-                continue
-
-            if channel.ignore_shorts and is_short:
-                pv = ProcessedVideo(
-                    id=vid,
-                    channel_id=channel.channel_id,
-                    video_id=vid,
-                    video_url=url_raw,
-                    title=title_raw,
-                    published_at=str(raw.get("published_at") or ""),
-                    first_seen_at=now_iso,
-                    status="skipped",
-                    score=sc_num,
-                    reason=reason_s,
-                    is_short=True,
-                    skip_reason="shorts_ignored",
-                    script_job_id=None,
-                    review_result_id=None,
-                    last_error="",
-                )
-                repo.create_processed_video(pv)
-                skipped_out.append(
-                    _check_item_from_raw(
-                        raw,
-                        is_short=True,
-                        status="skipped",
-                        skip_reason="shorts_ignored",
-                    )
-                )
-                continue
-
-            if sc_num < channel.min_score:
-                pv = ProcessedVideo(
-                    id=vid,
-                    channel_id=channel.channel_id,
-                    video_id=vid,
-                    video_url=url_raw,
-                    title=title_raw,
-                    published_at=str(raw.get("published_at") or ""),
-                    first_seen_at=now_iso,
-                    status="skipped",
-                    score=sc_num,
-                    reason=reason_s,
-                    is_short=is_short,
-                    skip_reason="score_below_minimum",
-                    script_job_id=None,
-                    review_result_id=None,
-                    last_error="",
-                )
-                repo.create_processed_video(pv)
-                skipped_out.append(
-                    _check_item_from_raw(
-                        raw,
-                        is_short=is_short,
-                        status="skipped",
-                        skip_reason="score_below_minimum",
-                    )
-                )
-                continue
-
-            if channel.auto_generate_script:
-                ok_tr, _preflight_ws = checker(vid)
-                if not ok_tr:
-                    if any(
-                        WARN_TRANSCRIPT_UNAVAILABLE in (x or "")
-                        or "Transcript not available" in (x or "")
-                        for x in _preflight_ws
-                    ):
-                        skip_tr = "transcript_not_available"
-                        warn_skip_transcript_unavailable = True
-                    else:
-                        skip_tr = "transcript_check_failed"
-                        warn_skip_transcript_check_failed = True
-                    pv_tr = ProcessedVideo(
-                        id=vid,
-                        channel_id=channel.channel_id,
-                        video_id=vid,
-                        video_url=url_raw,
-                        title=title_raw,
-                        published_at=str(raw.get("published_at") or ""),
-                        first_seen_at=now_iso,
-                        status="skipped",
-                        score=sc_num,
-                        reason=reason_s,
-                        is_short=is_short,
-                        skip_reason=skip_tr,
-                        script_job_id=None,
-                        generated_script_id=None,
-                        review_result_id=None,
-                        last_error="",
-                    )
-                    repo.create_processed_video(pv_tr)
-                    skipped_out.append(
-                        _check_item_from_raw(
-                            raw,
-                            is_short=is_short,
-                            status="skipped",
-                            skip_reason=skip_tr,
-                        )
-                    )
-                    continue
-
-            pv_seen = ProcessedVideo(
-                id=vid,
-                channel_id=channel.channel_id,
-                video_id=vid,
-                video_url=url_raw,
-                title=title_raw,
-                published_at=str(raw.get("published_at") or ""),
-                first_seen_at=now_iso,
-                status="seen",
-                score=sc_num,
-                reason=reason_s,
-                is_short=is_short,
-                skip_reason="",
-                script_job_id=None,
-                generated_script_id=None,
-                review_result_id=None,
-                last_error="",
-            )
-            repo.create_processed_video(pv_seen)
-            new_out.append(
-                _check_item_from_raw(raw, is_short=is_short, status="new")
-            )
-            _try_create_script_job_for_seen_video(
+            _consume_watchlist_feed_video_row(
                 repo=repo,
                 channel=channel,
-                vid=vid,
-                url_raw=url_raw,
+                raw=raw,
                 now_iso=now_iso,
+                checker=checker,
+                transcript_warn_flags=transcript_warn_flags,
                 merged_warnings=merged_warnings,
-                created_jobs_acc=created_jobs_out,
+                created_jobs_out=created_jobs_out,
+                new_out=new_out,
+                known_out=known_out,
+                skipped_out=skipped_out,
             )
 
         created_n = len(new_out) + len(skipped_out)
 
-        if warn_skip_transcript_unavailable:
+        if transcript_warn_flags["unavailable"]:
             merged_warnings.append(
                 "Mindestens ein Video wurde ohne Script-Job übersprungen: Transkript nicht verfügbar."
             )
-        if warn_skip_transcript_check_failed:
+        if transcript_warn_flags["check_failed"]:
             merged_warnings.append(
                 "Mindestens ein Video wurde ohne Script-Job übersprungen: Transkript-Check technisch fehlgeschlagen."
             )
@@ -757,3 +798,460 @@ def check_channel(
             warnings=merged_warnings
             + [err_msg, "Check could not be completed."],
         )
+
+
+def _find_feed_row_for_video_id(rows: Any, vid: str) -> Dict[str, Any] | None:
+    for raw in rows or []:
+        if not isinstance(raw, dict):
+            continue
+        v = str(raw.get("video_id") or "").strip()
+        if v == vid:
+            return raw
+    return None
+
+
+def _synthetic_feed_row_from_processed(pv: ProcessedVideo) -> Dict[str, Any]:
+    return {
+        "title": pv.title,
+        "url": pv.video_url,
+        "video_id": pv.video_id,
+        "published_at": pv.published_at or "",
+        "score": pv.score,
+        "reason": pv.reason,
+        "duration_seconds": None,
+        "media_keywords": "",
+    }
+
+
+def recheck_video(
+    channel_id: str,
+    video_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+    get_videos: Callable[..., Dict[str, Any]] | None = None,
+    transcript_checker: Callable[[str], Tuple[bool, List[str]]] | None = None,
+) -> CheckWatchlistChannelResponse:
+    """Einzelnes Video erneut prüfen (Transcript-Preflight wie Channel-Check, kein Massenweg)."""
+    repo = repo or FirestoreWatchlistRepository()
+    cid = (channel_id or "").strip()
+    vid = str(video_id or "").strip()
+    if not vid:
+        return CheckWatchlistChannelResponse(
+            channel_id=cid,
+            warnings=["video_id is required."],
+        )
+
+    getter = get_videos
+    if getter is None:
+        getter = lambda url, mx: get_latest_channel_videos(
+            url, mx, include_feed_metadata=True
+        )
+
+    not_found_resp = CheckWatchlistChannelResponse(
+        channel_id=cid,
+        warnings=["Watchlist channel not found."],
+    )
+
+    try:
+        channel = repo.get_watch_channel(cid)
+    except FirestoreUnavailableError:
+        raise
+    except Exception as e:
+        logger.warning(
+            "watchlist recheck_video load failed: channel_id=%s type=%s",
+            cid,
+            type(e).__name__,
+        )
+        return CheckWatchlistChannelResponse(
+            channel_id=cid,
+            warnings=["Watchlist channel could not be loaded."],
+        )
+
+    if not channel:
+        return not_found_resp
+
+    if channel.status != "active":
+        return CheckWatchlistChannelResponse(
+            channel_id=channel.channel_id,
+            warnings=["Watchlist channel is not active."],
+        )
+
+    snapshot: ProcessedVideo | None = None
+    try:
+        snapshot = repo.get_processed_video(vid)
+    except FirestoreUnavailableError:
+        raise
+    if snapshot is not None and snapshot.channel_id != channel.channel_id:
+        return CheckWatchlistChannelResponse(
+            channel_id=channel.channel_id,
+            warnings=[
+                "processed_videos entry belongs to a different channel_id; recheck refused."
+            ],
+        )
+
+    merged_warnings: List[str] = []
+    try:
+        removed = repo.delete_processed_video(vid)
+    except FirestoreUnavailableError:
+        raise
+    if removed:
+        merged_warnings.append(WARN_RECHECK_SINGLE_DOCUMENT_REMOVED_DE)
+    else:
+        merged_warnings.append(
+            "Kein processed_videos-Eintrag für diese video_id; Neuprüfung läuft dennoch (kein Löschvorgang)."
+        )
+
+    now_iso = utc_now_iso()
+    new_out: List[ChannelCheckVideoItem] = []
+    known_out: List[ChannelCheckVideoItem] = []
+    skipped_out: List[ChannelCheckVideoItem] = []
+    created_jobs_out: List[CreatedScriptJobItem] = []
+    transcript_warn_flags = {"unavailable": False, "check_failed": False}
+    checker = transcript_checker or check_youtube_transcript_available_by_video_id
+
+    feed_width = max(50, int(channel.max_results or 5))
+    try:
+        feed_result = getter(channel.channel_url, feed_width)
+        merged_warnings.extend(list(feed_result.get("warnings") or []))
+        rows = feed_result.get("videos") or []
+        raw = _find_feed_row_for_video_id(rows, vid)
+        if raw is None and snapshot is not None:
+            raw = _synthetic_feed_row_from_processed(snapshot)
+            merged_warnings.append(
+                "Video war im gewählten RSS-Ausschnitt nicht enthalten — Metadaten aus "
+                "früherer Verarbeitung wurden für die Neuprüfung verwendet."
+            )
+        elif raw is None:
+            merged_warnings.append(
+                "Konnte keine Feed-Zeile für diese video_id finden; keine erneute Klassifikation möglich."
+            )
+            return CheckWatchlistChannelResponse(
+                channel_id=channel.channel_id,
+                new_videos=new_out,
+                known_videos=known_out,
+                skipped_videos=skipped_out,
+                created_processed_videos=0,
+                created_jobs=created_jobs_out,
+                warnings=merged_warnings,
+            )
+
+        assert raw is not None
+        _consume_watchlist_feed_video_row(
+            repo=repo,
+            channel=channel,
+            raw=raw,
+            now_iso=now_iso,
+            checker=checker,
+            transcript_warn_flags=transcript_warn_flags,
+            merged_warnings=merged_warnings,
+            created_jobs_out=created_jobs_out,
+            new_out=new_out,
+            known_out=known_out,
+            skipped_out=skipped_out,
+        )
+
+        if transcript_warn_flags["unavailable"]:
+            merged_warnings.append(
+                "Mindestens ein Video wurde ohne Script-Job übersprungen: Transkript nicht verfügbar."
+            )
+        if transcript_warn_flags["check_failed"]:
+            merged_warnings.append(
+                "Mindestens ein Video wurde ohne Script-Job übersprungen: Transkript-Check technisch fehlgeschlagen."
+            )
+
+        ok_channel = channel.model_copy(
+            update={
+                "updated_at": now_iso,
+                "last_checked_at": now_iso,
+                "last_success_at": now_iso,
+                "last_error": "",
+            }
+        )
+        repo.upsert_watch_channel(channel.channel_id, ok_channel.model_dump())
+
+        created_n = len(new_out) + len(skipped_out)
+        return CheckWatchlistChannelResponse(
+            channel_id=channel.channel_id,
+            new_videos=new_out,
+            known_videos=known_out,
+            skipped_videos=skipped_out,
+            created_processed_videos=created_n,
+            created_jobs=created_jobs_out,
+            warnings=merged_warnings,
+        )
+    except FirestoreUnavailableError:
+        raise
+    except Exception as e:
+        logger.warning(
+            "watchlist recheck_video failed: channel_id=%s video_id=%s type=%s",
+            cid,
+            vid,
+            type(e).__name__,
+        )
+        err_msg = "Recheck failed."
+        try:
+            fail_ch = channel.model_copy(
+                update={
+                    "updated_at": now_iso,
+                    "last_checked_at": now_iso,
+                    "last_error": err_msg,
+                }
+            )
+            repo.upsert_watch_channel(channel.channel_id, fail_ch.model_dump())
+        except FirestoreUnavailableError:
+            raise
+        except Exception as persist_e:
+            logger.warning(
+                "could not persist last_error (recheck): type=%s", type(persist_e).__name__
+            )
+            merged_warnings.append("Could not persist channel error status.")
+        return CheckWatchlistChannelResponse(
+            channel_id=channel.channel_id,
+            new_videos=new_out,
+            known_videos=known_out,
+            skipped_videos=skipped_out,
+            created_processed_videos=len(new_out) + len(skipped_out),
+            created_jobs=created_jobs_out,
+            warnings=merged_warnings
+            + [err_msg, "Recheck could not be completed."],
+        )
+
+
+def run_pending_script_jobs(
+    limit: int = 3,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+    generate_fn: Callable[..., Any] | None = None,
+) -> RunPendingScriptJobsResponse:
+    """Führt pending ScriptJobs nacheinander aus; Fehler einzelner Jobs stoppen den Batch nicht."""
+    repo = repo or FirestoreWatchlistRepository()
+    lim = max(1, min(int(limit), 10))
+    base_warnings: List[str] = []
+    try:
+        pending = repo.list_pending_script_jobs(lim)
+    except FirestoreUnavailableError:
+        raise
+
+    results: List[PendingJobRunResultItem] = []
+    checked_jobs = 0
+    completed_jobs = 0
+    failed_jobs = 0
+    skipped_jobs = 0
+
+    if not pending:
+        base_warnings.append("No pending script jobs.")
+        return RunPendingScriptJobsResponse(
+            checked_jobs=checked_jobs,
+            completed_jobs=completed_jobs,
+            failed_jobs=failed_jobs,
+            skipped_jobs=skipped_jobs,
+            results=results,
+            warnings=base_warnings,
+        )
+
+    gen = generate_fn or generate_script_from_youtube_video
+
+    for job in pending:
+        checked_jobs += 1
+        jid = job.id
+        item = PendingJobRunResultItem(job_id=jid, outcome="skipped", warnings=[])
+        try:
+            out = run_script_job(jid, repo=repo, generate_fn=gen)
+        except ScriptJobNotFoundError:
+            item.outcome = "skipped"
+            item.warnings.append("Script job not found at run time.")
+            skipped_jobs += 1
+            results.append(item)
+            continue
+        except ScriptJobConflictError as e:
+            item.outcome = "skipped"
+            item.warnings.append(str(e.detail or "Script job cannot be run."))
+            skipped_jobs += 1
+            results.append(item)
+            continue
+        except FirestoreUnavailableError as e:
+            item.outcome = "failed"
+            item.warnings.append(str(e) if str(e) else "Firestore unavailable.")
+            failed_jobs += 1
+            results.append(item)
+            continue
+        except Exception as e:
+            logger.warning(
+                "run_pending_script_jobs job failed unexpectedly: job_id=%s type=%s",
+                jid,
+                type(e).__name__,
+            )
+            item.outcome = "failed"
+            item.warnings.append("Unexpected error while running script job.")
+            failed_jobs += 1
+            results.append(item)
+            continue
+
+        st = (out.job.status or "").strip()
+        item.warnings.extend(list(out.warnings or []))
+        if st == "completed":
+            item.outcome = "completed"
+            completed_jobs += 1
+        elif st == "failed":
+            item.outcome = "failed"
+            failed_jobs += 1
+        else:
+            item.outcome = "skipped"
+            item.warnings.append(f"Unexpected job status after run: {st!r}.")
+            skipped_jobs += 1
+        results.append(item)
+
+    return RunPendingScriptJobsResponse(
+        checked_jobs=checked_jobs,
+        completed_jobs=completed_jobs,
+        failed_jobs=failed_jobs,
+        skipped_jobs=skipped_jobs,
+        results=results,
+        warnings=base_warnings,
+    )
+
+
+def run_automation_cycle(
+    *,
+    channel_limit: int = 3,
+    job_limit: int = 3,
+    repo: FirestoreWatchlistRepository | None = None,
+    get_videos: Callable[..., Dict[str, Any]] | None = None,
+    transcript_checker: Callable[[str], Tuple[bool, List[str]]] | None = None,
+    generate_fn: Callable[..., Any] | None = None,
+) -> RunAutomationCycleResponse:
+    """Scheduler-tauglicher Zyklus: aktive Kanäle prüfen, danach pending Jobs ausführen."""
+    repo = repo or FirestoreWatchlistRepository()
+    ch_lim = max(1, min(int(channel_limit), 50))
+    jb_lim = max(1, min(int(job_limit), 10))
+    out = RunAutomationCycleResponse(
+        checked_channels=0,
+        created_jobs=0,
+        run_jobs=0,
+        completed_jobs=0,
+        failed_jobs=0,
+        warnings=[],
+        channel_results=[],
+        job_results=[],
+    )
+
+    try:
+        listed = list_channels(repo=repo)
+    except FirestoreUnavailableError:
+        raise
+
+    channels = sorted(
+        [c for c in listed.channels if c.status == "active"], key=lambda c: c.channel_id
+    )
+    slice_ch = channels[:ch_lim]
+
+    for ch in slice_ch:
+        out.checked_channels += 1
+        ch_item = AutomationChannelResultItem(channel_id=ch.channel_id)
+        try:
+            resp = check_channel(
+                ch.channel_id,
+                repo=repo,
+                get_videos=get_videos,
+                transcript_checker=transcript_checker,
+            )
+        except FirestoreUnavailableError:
+            raise
+        except Exception as e:
+            logger.warning(
+                "watchlist run_automation_cycle check failed: channel_id=%s type=%s",
+                ch.channel_id,
+                type(e).__name__,
+            )
+            ch_item.ok = False
+            ch_item.warnings.append(f"Channel check failed: {type(e).__name__}.")
+            out.warnings.extend(ch_item.warnings)
+            out.channel_results.append(ch_item)
+            continue
+
+        ch_item.created_jobs_from_check = len(resp.created_jobs)
+        out.created_jobs += ch_item.created_jobs_from_check
+        ch_item.new_videos_count = len(resp.new_videos or [])
+        ch_item.skipped_videos_count = len(resp.skipped_videos or [])
+        ch_item.warnings.extend(resp.warnings or [])
+        out.warnings.extend(resp.warnings or [])
+        out.channel_results.append(ch_item)
+
+    try:
+        job_batch = run_pending_script_jobs(jb_lim, repo=repo, generate_fn=generate_fn)
+    except FirestoreUnavailableError:
+        raise
+
+    out.run_jobs = job_batch.checked_jobs
+    out.completed_jobs = job_batch.completed_jobs
+    out.failed_jobs = job_batch.failed_jobs
+    out.job_results = list(job_batch.results)
+    extra = [w for w in job_batch.warnings if w not in out.warnings]
+    out.warnings.extend(extra)
+    return out
+
+
+def review_generated_script_for_job(
+    job_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> ReviewGeneratedScriptJobResponse:
+    """Optionaler Review-Schritt; schlägt niemals den ScriptJob-Status fehl."""
+    repo = repo or FirestoreWatchlistRepository()
+    jid = (job_id or "").strip()
+    ws: List[str] = []
+    if not jid:
+        ws.append("job_id is empty.")
+        return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
+
+    try:
+        job = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+
+    if job is None:
+        ws.append("Script job not found.")
+        return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
+
+    if job.status != "completed":
+        ws.append(
+            f"Review nur für completed Jobs gedacht (aktueller Status: {job.status})."
+        )
+        return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
+
+    script_id = job.generated_script_id or jid
+    try:
+        gs = repo.get_generated_script(script_id)
+    except FirestoreUnavailableError:
+        raise
+
+    if gs is None:
+        ws.append("Generated script document not found; review skipped.")
+        return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
+
+    text = (gs.full_script or "").strip()
+    if not text:
+        ws.append("Generated script body is empty; review skipped.")
+        return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
+
+    req = ReviewScriptRequest(
+        source_url=job.video_url or gs.source_url,
+        source_type="youtube_transcript",
+        source_text="",
+        generated_script=text,
+        target_language=job.target_language,
+        prior_warnings=list(gs.warnings or []),
+    )
+    try:
+        resp = review_script(req)
+    except Exception as e:
+        logger.warning(
+            "review_generated_script_for_job unexpected: job_id=%s type=%s",
+            jid,
+            type(e).__name__,
+        )
+        ws.append(
+            "Review-Schritt konnte nicht ausgeführt werden; gespeichertes Skript und Job-Status bleiben unverändert."
+        )
+        return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
+    return ReviewGeneratedScriptJobResponse(job_id=jid, review=resp, warnings=ws)

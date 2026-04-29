@@ -366,6 +366,54 @@ class FirestoreWatchlistRepository:
             ) from e
         return video
 
+    def delete_processed_video(self, video_id: str) -> bool:
+        """Entfernt genau einen ``processed_videos``-Eintrag — für Dev/Recheck (ein Video)."""
+        try:
+            ref = self._processed_collection_ref().document(video_id)
+            snap = ref.get()
+        except Exception as e:
+            logger.warning("Firestore processed_videos get failed: type=%s", type(e).__name__)
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return False
+        try:
+            ref.delete()
+        except Exception as e:
+            logger.warning(
+                "Firestore processed_videos delete failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the delete."
+            ) from e
+        return True
+
+    def list_pending_script_jobs(self, limit: int) -> List[ScriptJob]:
+        """Pending Jobs, FIFO (ältestes ``created_at`` zuerst), max ``limit`` (1 … 50)."""
+        lim = max(1, min(int(limit), 50))
+        try:
+            snaps = self._script_jobs_collection_ref().stream()
+        except Exception as e:
+            logger.warning("Firestore script_jobs stream failed: type=%s", type(e).__name__)
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        pending: List[ScriptJob] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                j = ScriptJob.model_validate(merged)
+            except Exception:
+                logger.warning(
+                    "skip invalid script_jobs row: doc_id=%s", snap.id
+                )
+                continue
+            if j.status == "pending":
+                pending.append(j)
+        pending.sort(key=lambda job: job.created_at or "", reverse=False)
+        return pending[:lim]
+
     def list_processed_videos_by_channel(self, channel_id: str) -> List[ProcessedVideo]:
         try:
             snaps = (
