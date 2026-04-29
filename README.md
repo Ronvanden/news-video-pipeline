@@ -264,7 +264,8 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 
 **Voraussetzungen:**
 
-- Firestore im GCP-Projekt (Native Mode) aktiviert und **Application Default Credentials** lokal (z. B. `gcloud auth application-default login`) bzw. auf Cloud Run über das Dienst-Service-Account; siehe [DEPLOYMENT.md](DEPLOYMENT.md).
+- Firestore im GCP-Projekt (Native Mode), **Named Database** mit ID **`watchlist`** (oder passende ID in der Konsole anlegen). Die App verwendet standardmäßig die Umgebungsvariable **`FIRESTORE_DATABASE=watchlist`** (siehe `app/config.py`; überschreibbar, Standard ist `watchlist`).
+- **Application Default Credentials** lokal (z. B. `gcloud auth application-default login`) bzw. auf Cloud Run über das Dienst-Service-Account; siehe [DEPLOYMENT.md](DEPLOYMENT.md).
 
 **Noch nicht in Schritt 1:** manueller/automatisierter Kanal-Check (`POST /youtube/latest-videos`-Pfad), `processed_videos`, Script-Jobs, Scheduler.
 

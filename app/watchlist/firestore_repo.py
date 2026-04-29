@@ -14,7 +14,9 @@ COLLECTION_NAME = "watch_channels"
 
 
 def get_firestore_client():
-    """Erstellt einen Firestore-Client (Application Default Credentials).
+    """Erstellt einen Firestore-Client (ADC). Nutzt die Datenbank-ID aus ``Settings``.
+
+    Named Database (Umgebungsvariable ``FIRESTORE_DATABASE``, Standard ``watchlist``).
 
     Raises:
         RuntimeError: Bei fehlendem Paket oder nicht initialisierbarem Client (ohne Secrets loggen).
@@ -26,10 +28,12 @@ def get_firestore_client():
             "google-cloud-firestore is not installed."
         ) from e
     try:
-        return gcf.Client()
+        from app.config import settings
+
+        return gcf.Client(database=settings.firestore_database)
     except Exception as e:
         logger.warning(
-            "Firestore client init failed: type=%s check ADC or project",
+            "Firestore client init failed: type=%s check ADC, project, or database id",
             type(e).__name__,
         )
         raise RuntimeError("Could not initialize Firestore client.") from e

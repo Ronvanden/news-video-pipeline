@@ -34,13 +34,14 @@ gcloud run deploy news-to-video-pipeline \
   --source . \
   --region europe-west3 \
   --allow-unauthenticated \
-  --set-env-vars OPENAI_MODEL=gpt-4o-mini \
+  --set-env-vars OPENAI_MODEL=gpt-4o-mini,FIRESTORE_DATABASE=watchlist \
   --set-secrets OPENAI_API_KEY=OPENAI_API_KEY:latest
 ```
 
 **Hinweise:**
 
 - `OPENAI_MODEL` ist optional; ohne Setzen gilt der Default aus `app/config.py`.
+- **`FIRESTORE_DATABASE`** muss zur **Named-Database-ID** in GCP passen (Standard in diesem Projekt: **`watchlist`**, nicht `(default)`).
 - `--set-secrets` verbindet eine **Umgebungsvariable** mit einem **Secret-Manager-Eintrag** (siehe unten). Ersetze bei Bedarf Secret-Name und Version (`:latest` oder feste Version).
 - Keine API-Schlüssel oder anderen Geheimnisse in Befehlen, Images oder Git ablegen.
 
@@ -56,6 +57,7 @@ Ohne gesetztes Secret bzw. ohne Key läuft die Anwendung im dokumentierten **Fal
 
 Für **Watchlist** (`POST/GET /watchlist/channels`) ist **Google Firestore** (Native Mode) im **gleichen GCP-Projekt** wie Cloud Run zu aktivieren.
 
+- **Named Database:** In der Konsole eine Firestore-Datenbank mit ID **`watchlist`** anlegen (oder `FIRESTORE_DATABASE` auf dieselbe ID setzen). Der Client nutzt `firestore.Client(database=…)` gemäß Konfiguration (`app/config.py`).
 - **IAM:** Dem **Cloud-Run-Dienstkonto** Rolle **`roles/datastore.user`** (Zugriff auf Firestore/Datastore) zuweisen.
 - **Lokal:** Projekt setzen (z. B. Umgebungsvariable `GOOGLE_CLOUD_PROJECT` auf die Projekt-ID); **Application Default Credentials** via `gcloud auth application-default login` (keine Service-Account-JSON-Dateien im Repository).
 - Alternativ **Firestore-Emulator** für Entwicklung/Test (siehe Google-Dokumentation).
