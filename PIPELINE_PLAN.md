@@ -19,7 +19,7 @@ Eine **zuverlässige, modulare Pipeline** von **Quellen** (Nachrichten-URLs, You
 | Skript aus Artikel-URL | `POST /generate-script` — Extraktion, LLM optional, Fallback |
 | YouTube Transkript → Skript | `POST /youtube/generate-script` — gleicher Response-Vertrag wie Generate |
 | Kanal-Discovery | `POST /youtube/latest-videos` — RSS, Scoring, ohne Data API |
-| Review / Originalität | Noch nicht implementiert |
+| Review / Originalität | `POST /review-script` — V1 heuristisch (Phase 4 **done**) |
 | Persistenz Jobs / Watchlist / Voice / Bild / Render / Publish | Geplant |
 
 Details zu Deploy und Tests: [README.md](README.md), [DEPLOYMENT.md](DEPLOYMENT.md).  
@@ -34,7 +34,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | 1 | Skriptmotor | **done** |
 | 2 | YouTube Channel Discovery | **done** |
 | 3 | YouTube Transcript-to-Script | **done** |
-| 4 | Script Review / Originality Check | **next** |
+| 4 | Script Review / Originality Check | **done** |
 | 5 | Watchlist / Channel Monitoring | **planned** |
 | 6 | Script Job Speicherung | **planned** |
 | 7 | Voiceover | **planned** |
@@ -90,13 +90,13 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 
 | | |
 |--|--|
-| **Status** | **next** (Planung für V1 abgestimmt; Implementierung folgt gesondertem Bauauftrag) |
-| **Ziel** | Zusätzliche Prüfstufe vor Voiceover/Bild/Video: Nähe zum Quelltext, lange ähnliche Passagen, grobe Struktur-/Einordnungs-Signale — **hybrid** (lokale Heuristiken + optionaler LLM-Teil für qualitative Empfehlungen). **`GenerateScriptResponse` von `/generate-script` und `/youtube/generate-script` bleibt unverändert**; Review als eigener Endpoint und Vertrag. |
-| **Endpoints (geplant)** | `POST /review-script` — Request: u. a. `source_url`, `source_type`, `source_text`, `generated_script` (inhaltlich = `full_script` aus Generate), `target_language`; Response: u. a. `risk_level`, `originality_score`, `similarity_flags`, `issues`, `recommendations`, `warnings` (Detail siehe Projektplanung / MODULE_TEMPLATE). |
-| **Relevante Dateien (geplant)** | Neu: `app/review/` (`__init__.py`, `originality.py`, ggf. `llm_review.py`, `service.py`); neu: `app/routes/review.py`; Anbindung in `app/main.py`; Modelle in `app/models.py`; Doku `README.md` nach Implementierung. |
-| **Akzeptanzkriterien (V1-Zielbild)** | 200 oder validierter Client-/Fehlerpfad ohne unerwartete 500; kein Secret-/.env-Zugriff im Review-Modul; `risk_level` nachvollziehbar aus Heuristik (+ ggf. LLM nur als Zusatzsignal); bei identischem `source_text` und `generated_script` → `high`; eigenständiges Skript → `low` oder `medium` möglich; konkrete `recommendations`; `python -m compileall app` grün; Tests mindestens für identisch / stark ähnlich / eigenständig + YouTube-Strenge + fehlender Kurz-`source_text`. |
-| **Bekannte Grenzen** | Keine Rechtsberatung, keine Freigabe zum Veröffentlichen; keine dauerhafte Speicherung von `source_text` ohne spätere Produktentscheidung; Heuristiken können false positive/negative liefern — menschliche Redaktion bleibt maßgeblich. |
-| **Nächster Schritt** | [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md) für „Script Review API“ ausfüllen; Implementierungs-Bauauftrag: Modelle, `app/review/*`, Route registrieren, Tests, README-Abschnitt. |
+| **Status** | **done** (V1 heuristisch, Stand siehe README und `tests/test_review_script.py`) |
+| **Ziel** | Zusätzliche Prüfstufe vor Voiceover/Bild/Video: Nähe zum Quelltext, lange gemeinsame Wortfolgen, Satz-Ähnlichkeit, grobe Einordnungs-Signale. Architektur **hybrid-fähig**; **V1 nur lokal** (kein `llm_review.py`). **`GenerateScriptResponse` unverändert**; Review eigener Vertrag. |
+| **Endpoints** | `POST /review-script` — Request: `source_url`, `source_type`, `source_text`, `generated_script`, `target_language`, `prior_warnings`; Response: `risk_level`, `originality_score` (0–100, höher = eigenständiger), `similarity_flags`, `issues`, `recommendations`, `warnings`. |
+| **Relevante Dateien** | `app/models.py` (`ReviewScriptRequest`, `ReviewScriptResponse`, …), `app/review/__init__.py`, `app/review/originality.py`, `app/review/service.py`, `app/routes/review.py`, `app/main.py` (Router), `README.md`, Tests: `tests/test_review_script.py`. |
+| **Akzeptanzkriterien (V1)** | 200 + strukturiertes JSON; 422 wenn `source_text` und `generated_script` beide leer; kein Secret-/.env-Zugriff im Review-Modul; kein Volltext-Logging; LLM-Fehler irrelevant (kein LLM in V1); bei identischem Text `high` / niedriger Score; eigenständiges Skript `low` oder `medium` möglich; `python -m compileall app` grün; Unittests für Kernfälle grün. |
+| **Bekannte Grenzen (V1)** | Rein **heuristisch**; **keine Rechtsberatung**; False Positives/Negatives möglich; **qualitatives LLM-Review** bewusst **nicht** in V1 — in `warnings` dokumentiert; für V1.1 optional `app/review/llm_review.py` nach MODULE_TEMPLATE. |
+| **Nächster Schritt** | Feintuning Schwellen nur mit Plan-Eintrag; LLM-Review optional Phase 4.x / V1.1; bei Incidents [ISSUES_LOG.md](ISSUES_LOG.md). |
 
 ---
 

@@ -31,6 +31,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - Klare Warnungen bei Unsicherheit oder unzureichendem Inhalt
 - YouTube Video-to-Script V1: Transkript aus Video-URL → strukturiertes Skript (`POST /youtube/generate-script`)
 - YouTube-Kanal-Discovery V1: neueste Videos strukturiert mit Heuristik (`score`, `reason`, `summary` aus Metadaten)
+- **Phase 4 V1:** `POST /review-script` — heuristische Originalitäts- und Nähe-zur-Quelle-Prüfung (keine Rechtsberatung, kein Auto-Publish)
 
 ## 4. Projektstruktur
 
@@ -41,11 +42,13 @@ app/
 ├── config.py         # Settings und Umgebungsvariablen
 ├── models.py         # Pydantic Request-/Response-Modelle
 ├── utils.py          # Extraktion, Generierung, LLM und Fallback
+├── review/           # Phase 4: Originalitäts-Heuristiken + Review-Service
 ├── youtube/          # Kanal-Auflösung, RSS, Scoring (ohne Data API)
 └── routes/
     ├── __init__.py
     ├── generate.py   # /generate-script Endpoint
-    └── youtube.py    # /youtube/generate-script, /youtube/latest-videos
+    ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
+    └── review.py     # /review-script
 
 Dockerfile
 README.md
@@ -195,6 +198,62 @@ Die API ist dann unter `http://127.0.0.1:8000` erreichbar.
 - **V1** nutzt das **öffentliche YouTube-RSS** (`feeds/videos.xml?channel_id=…`) und **keinen YouTube Data API-Key**.
 - URLs der Form **`https://www.youtube.com/channel/UC…`** sind **zuverlässiger** als **`@handle`**-Links: Letztere erfordern ggf. eine lesbare Kanal-HTML-Seite; bei Cookie-/Einwilligungsseiten oder Bot-Schutz kann die Auflösung fehlschlagen — Details stehen in `warnings`.
 - **Keine Transcript-Extraktion** in V1; `summary` leitet sich nur aus Feed-Metadaten (z. B. Titel) ab, nicht aus Untertiteln oder Audio.
+
+### POST /review-script
+
+**Zweck:** Nach der Skript-Generierung eine **technische/redaktionelle Risikoeinschätzung** liefern: wie nah liegt das Skript am übergebenen Quelltext (Wort-/Satzüberlappung, lange gemeinsame Folgen)? Das ist **keine Rechtsberatung**, **keine Freigabe** zur Veröffentlichung und **kein** Ersatz für menschliche Redaktion. Es erfolgt **keine** automatische Veröffentlichung und **keine** Speicherung des Quelltexts durch diesen Endpoint.
+
+**Request-Body:**
+
+```json
+{
+  "source_url": "",
+  "source_type": "youtube_transcript",
+  "source_text": "",
+  "generated_script": "",
+  "target_language": "de",
+  "prior_warnings": []
+}
+```
+
+- `source_type`: `youtube_transcript` | `news_article` | `unknown` — bei YouTube wird **strenger** bewertet und eine zusätzliche `warning` gesetzt.
+- `generated_script` entspricht inhaltlich dem `full_script` aus `POST /generate-script` bzw. `/youtube/generate-script`.
+- Mindestens eines von `source_text` und `generated_script` muss nicht leer sein; sind **beide** leer, antwortet die API mit **422**.
+- Ist `generated_script` leer, liefert der Service **200** mit `risk_level: high` und klarer `warning` (kein harter Fehler).
+
+**Response:**
+
+```json
+{
+  "risk_level": "low",
+  "originality_score": 85,
+  "similarity_flags": [],
+  "issues": [],
+  "recommendations": [],
+  "warnings": []
+}
+```
+
+**Score-Konvention:** `originality_score` von **0** bis **100**. **100** = sehr eigenständig, **0** = sehr nah an der Quelle / hohes Risiko im Sinne der Heuristik.
+
+**`risk_level`:** grobe Stufe (`low` / `medium` / `high`) aus den Heuristiken — nachvollziehbar über `similarity_flags`, `issues` und `warnings`, aber **nicht** als juristische Bewertung interpretieren.
+
+**V1-Hinweise:**
+
+- Es läuft eine **rein lokale Heuristik** (kein LLM-Review in V1). In `warnings` steht u. a.: *LLM qualitative review is not enabled in V1; heuristic review only.* Qualitative LLM-Second-Opinion ist für **V1.1** vorgesehen, falls gewünscht.
+- Heuristiken können **False Positives** und **False Negatives** erzeugen (z. B. Zitate, Eigennamen, kurze Quellen).
+
+**Beispiel (lokal):**
+
+```bash
+curl -s -X POST "http://127.0.0.1:8000/review-script" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"source_type\":\"news_article\",\"source_text\":\"Kurzer Artikeltext hier.\",\"generated_script\":\"Eigenes Skript mit Einordnung und Fazit.\",\"prior_warnings\":[]}"
+```
+
+(PowerShell: Anführungszeichen ggf. anpassen oder JSON aus Datei mit `-d @body.json` übergeben.)
+
+**Tests (Smoke):** Im Repo unter `tests/test_review_script.py` (u. a. identischer Text → `high`, kurze Quelle → `Source text is short…`, YouTube → strengere `warning`). Zusätzlich: `python -m compileall app` und `python -m unittest tests.test_review_script`.
 
 ## 10. Beispiel: GET /health
 
