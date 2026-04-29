@@ -201,6 +201,23 @@ def _parse_llm_json_object(value: object) -> dict:
     return data
 
 
+def _openai_max_tokens_for_expansion(model: str, target_word_count: int) -> int:
+    """
+    Choose a sensible max_tokens budget for the expansion pass.
+    Must be conservative for small-context models (e.g. gpt-3.5-turbo),
+    but allow more headroom for newer models to reach ~1200-1500 words.
+    """
+    m = (model or "").lower().strip()
+    # Heuristic: 1 word ~ 0.75 tokens (very rough). Add JSON overhead headroom.
+    desired = int(target_word_count * 1.15) + 1200
+    if "gpt-3.5" in m:
+        # Keep below typical small-context limits to avoid hard failures.
+        return max(2200, min(3000, desired))
+    if "gpt-4o-mini" in m or "gpt-4o" in m or "gpt-4" in m:
+        return max(3800, min(6500, desired))
+    return max(2500, min(4500, desired))
+
+
 def _openai_nested_error_message(body: object) -> str:
     if not isinstance(body, dict):
         return ""
@@ -552,17 +569,48 @@ Gib die Antwort exakt als Objekt zurück:
                 ex_title, ex_hook, ex_chapters, ex_full = expanded
                 before = full_script_words
                 after = count_words(ex_full)
+
+                # If still very short, allow one more expansion attempt (max 2 expansion calls total).
+                # Never fallback just due to shortness.
+                if after > before and after < 1200:
+                    expanded2 = self._expand_llm_script_with_openai(
+                        title=ex_title or title_text,
+                        key_points=key_points,
+                        duration_minutes=duration_minutes,
+                        target_word_count=target_word_count,
+                        min_word_count=min_word_count,
+                        max_word_count=max_word_count,
+                        current_hook=ex_hook or hook,
+                        current_chapters=ex_chapters if isinstance(ex_chapters, list) else chapters,
+                        current_full_script=ex_full,
+                    )
+                    if expanded2:
+                        ex2_title, ex2_hook, ex2_chapters, ex2_full = expanded2
+                        after2 = count_words(ex2_full)
+                        if after2 > after:
+                            ex_title, ex_hook, ex_chapters, ex_full, after = (
+                                ex2_title,
+                                ex2_hook,
+                                ex2_chapters,
+                                ex2_full,
+                                after2,
+                            )
+
                 # Accept only if it materially improves length/coverage and stays roughly within bounds.
                 if after > before and after <= int(max_word_count * 1.25) and (
                     after >= min_word_count or after >= int(before * 1.15) or abs(target_word_count - after) < abs(target_word_count - before)
                 ):
+                    if after < 1200 or after < min_word_count:
+                        reason = "LLM expansion still below target"
+                    else:
+                        reason = "LLM script expanded toward target length"
                     return (
                         ex_title or title_text,
                         ex_hook or hook,
                         ex_chapters if isinstance(ex_chapters, list) else chapters,
                         ex_full,
                         "llm",
-                        "LLM script expanded toward target length",
+                        reason,
                     )
 
             logger.warning(
@@ -621,22 +669,49 @@ Gib die Antwort exakt als Objekt zurück:
         except Exception:
             chapters_json = "[]"
 
+        current_words = count_words(current_full_script or "")
+        target_min_words = 1200
+        target_max_words = 1500
+        missing_to_min = max(0, target_min_words - current_words)
+        # Ask for a concrete amount of NEW text to append. Buffer a bit to avoid landing just under the target.
+        desired_new_words = max(250, min(900, missing_to_min + 200))
+
         expansion_prompt = f"""
 Du bist Redaktions- und Story-Producer für ein YouTube-News-Video.
-Erweitere das bestehende Skript gezielt Richtung Ziel-Länge, ohne neue unbelegte Fakten zu erfinden.
+Erweitere das bestehende Skript gezielt und deutlich Richtung Ziel-Länge, ohne neue unbelegte Fakten zu erfinden.
 
 WICHTIG:
+- Du darfst NICHT kürzen. Das bestehende Skript bleibt vollständig erhalten; du fügst neue Passagen hinzu, ordnest um und glättest Übergänge.
+- Wenn du umstrukturierst, stelle sicher, dass der Inhalt insgesamt länger wird (nicht nur umformuliert).
 - Keine neuen konkreten Behauptungen/Details hinzufügen, die nicht aus den Key Points oder dem vorhandenen Skript ableitbar sind.
 - Wenn du Kontext gibst, formuliere ihn als Einordnung/Erklärung/Allgemeinwissen, ohne neue Ereignis-Fakten zu behaupten.
-- Vermeide Wiederholungen und keine 1:1-Übernahmen aus Quellen.
-- Vertiefe bestehende Kapitel: mehr Erklärung, Einordnung, Konsequenzen, offene Fragen, aber ohne Fakten zu erfinden.
+- Keine Wiederholungen: vermeide doppelte Aussagen, wiederholte Hooks/CTAs und redundante Formulierungen.
+- Keine 1:1-Übernahmen aus Quellen oder aus dem bestehenden Skript: paraphrasiere und baue neue Übergänge/Moderation ein.
+- Vertiefe bestehende Kapitel: mehr Erklärung, Einordnung, Konsequenzen, Pro/Contra-Abwägung, offene Fragen, aber ohne Fakten zu erfinden.
+- Mehr Sprechertext: klare Übergänge zwischen Kapiteln, kurze Zusammenfassungen, Einordnung, warum es wichtig ist.
+- Ergänze Kontext/Definitionen (z. B. was eine Regel/Verordnung bedeutet) nur als Erklärung, nicht als neue Nachricht.
 - Behalte Stil und Sprache: Deutsch, YouTube-tauglich.
 
-Ziel:
+Ziel (konkret):
 - Dauer: {duration_minutes} Minuten
-- Zielwortanzahl: {target_word_count}
+- Zielwortanzahl (Plan): {target_word_count}
 - Mindestwortanzahl: {min_word_count}
 - Maximalwortanzahl: {max_word_count}
+- Aktuelle Wortanzahl (IST): {current_words}
+- Fehlende Wörter bis mindestens {target_min_words}: {missing_to_min}
+- Zielbereich fürs finale Skript: {target_min_words}–{target_max_words} Wörter
+
+KLARE ANWEISUNG:
+- Erweitere das Skript auf **mindestens {target_min_words} Wörter** (besser: nahe {target_word_count} und im Bereich {target_min_words}–{target_max_words}).
+- Schreibe so lange weiter, bis du mindestens {target_min_words} Wörter erreichst, sofern du das ohne neue Fakten und ohne Wiederholungen sauber kannst.
+- Nutze dafür vor allem: Übergänge, Moderation, Einordnung, Definitionen, „Warum ist das relevant?“, mögliche Konsequenzen, Abwägungen, offene Fragen, Fazit, CTA.
+- Wenn das nicht sauber möglich ist, bleibe so nah wie möglich am Zielbereich und markiere Unsicherheiten indirekt durch vorsichtige Formulierungen (ohne Fakten zu erfinden).
+
+Ausgabe-Qualität:
+- `full_script` soll wie ein gesprochenes Skript wirken (Sprechertext), mit Absätzen und klaren Übergängen.
+- Baue nach jedem Kapitel 2–4 Sätze Überleitung ein (ohne Wiederholung des Kapitels).
+- Ergänze am Ende ein klares Fazit + Call-to-Action (ohne den Hook zu wiederholen).
+- Ergänze zusätzlich 2–3 kurze Blöcke zur Einordnung, z. B.: „Was heißt das praktisch?“, „Warum ist das politisch/gesellschaftlich relevant?“, „Welche Fragen sind offen?“
 
 Key Points (Fakten-Anker, keine neuen Fakten hinzufügen):
 {'; '.join([p for p in key_points if p.strip()])}
@@ -649,7 +724,12 @@ Full Script:
 {current_full_script}
 
 Antworte nur mit gültigem JSON, ohne zusätzlichen Text, Codeblöcke oder Markdown.
-Gib exakt dieses Objekt zurück:
+Bevorzugtes Ausgabeformat (APPEND, um Kürzungen zu vermeiden):
+{{
+  "additional_script": "NEUER Sprechertext zum Anhängen (ca. {desired_new_words} zusätzliche Wörter, ohne Wiederholungen)",
+  "additional_chapters": [{{"title": "...", "content": "..."}}]
+}}
+Wenn du unbedingt das komplette Objekt liefern willst, darfst du alternativ dieses Format liefern:
 {{
   "title": "...",
   "hook": "...",
@@ -662,12 +742,25 @@ Gib exakt dieses Objekt zurück:
             response = client.chat.completions.create(
                 model=settings.openai_model,
                 messages=[{"role": "user", "content": expansion_prompt}],
-                max_tokens=3500,
+                max_tokens=_openai_max_tokens_for_expansion(settings.openai_model, target_word_count),
                 temperature=0.0,
                 response_format={"type": "json_object"},
             )
         data = _parse_llm_json_object(response.choices[0].message.content)
 
+        # Preferred: append-only
+        additional_script = data.get("additional_script") or ""
+        additional_chapters = data.get("additional_chapters") if isinstance(data.get("additional_chapters"), list) else []
+        if str(additional_script).strip():
+            ex_title = title
+            ex_hook = current_hook
+            ex_chapters = list(current_chapters or [])
+            if additional_chapters:
+                ex_chapters.extend(additional_chapters)
+            ex_full = (current_full_script or "").rstrip() + "\n\n" + str(additional_script).strip()
+            return ex_title, ex_hook, ex_chapters, ex_full
+
+        # Fallback: full rewrite object
         ex_title = data.get("title") or title
         ex_hook = data.get("hook") or current_hook
         ex_chapters = data.get("chapters") if isinstance(data.get("chapters"), list) else (current_chapters or [])
