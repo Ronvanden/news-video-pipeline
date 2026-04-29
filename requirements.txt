@@ -13,3 +13,4 @@ Pillow
 feedparser
 pydantic-settings
 openai
+httpx>=0.27.0

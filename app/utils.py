@@ -10,12 +10,106 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 from app.config import settings
+import httpx
 try:
     import openai
 except ImportError:
     openai = None
 
 logger = logging.getLogger(__name__)
+
+# Cloud Run / Container: ausreichend lange Connect-/Read-Timeouts, weniger aggressive Retries als Default.
+_OPENAI_CONNECT_TIMEOUT_S = 20.0
+_OPENAI_READ_WRITE_POOL_TIMEOUT_S = 60.0
+_OPENAI_MAX_RETRIES = 2
+
+
+def _openai_httpx_timeout() -> httpx.Timeout:
+    return httpx.Timeout(
+        connect=_OPENAI_CONNECT_TIMEOUT_S,
+        read=_OPENAI_READ_WRITE_POOL_TIMEOUT_S,
+        write=_OPENAI_READ_WRITE_POOL_TIMEOUT_S,
+        pool=_OPENAI_READ_WRITE_POOL_TIMEOUT_S,
+    )
+
+
+def build_openai_http_client() -> httpx.Client:
+    """Synchroner httpx-Client mit festen Timeouts für OpenAI-Aufrufe."""
+    return httpx.Client(
+        timeout=_openai_httpx_timeout(),
+        limits=httpx.Limits(max_keepalive_connections=5, max_connections=20),
+    )
+
+
+def build_openai_client():
+    """
+    OpenAI-Sync-Client mit explizitem httpx-Client, Timeouts und max_retries.
+    Mit Kontextmanager nutzen: ``with build_openai_client() as client: ...``
+    """
+    if not openai:
+        raise RuntimeError("openai package not installed")
+    return openai.OpenAI(
+        api_key=settings.openai_api_key,
+        max_retries=_OPENAI_MAX_RETRIES,
+        http_client=build_openai_http_client(),
+    )
+
+
+def check_openai_endpoint_reachability(
+    probe_timeout_s: float = 10.0,
+) -> Tuple[bool, str]:
+    """
+    Interner Erreichbarkeitscheck (HTTPS zu api.openai.com, ohne Auth, kein Secret).
+    Für Ops/Diagnose; nicht als öffentlicher Debug-Endpunkt mit Schlüsselausgabe verwenden.
+    """
+    url = "https://api.openai.com/"
+    try:
+        timeout = httpx.Timeout(probe_timeout_s, connect=min(probe_timeout_s, 15.0))
+        with httpx.Client(timeout=timeout) as client:
+            r = client.get(url)
+        return True, f"reachability_ok status_code={r.status_code}"
+    except Exception as e:
+        note = _sanitize_openai_text(repr(e), max_len=240)
+        return False, f"{type(e).__name__}: {note}"
+
+
+def _safe_request_url_meta(request: object) -> str:
+    """Nur Schema/Host/Pfad-Anfang — keine Query (könnte sensible Parameter tragen)."""
+    try:
+        url = getattr(request, "url", None)
+        if url is None:
+            return ""
+        u = str(url).split("?", 1)[0]
+        p = urlparse(u)
+        path = (p.path or "")[:64]
+        return f"{p.scheme}://{p.netloc}{path}"[:200]
+    except Exception:
+        return "unavailable"
+
+
+def _log_openai_connection_error_details(exc: BaseException) -> None:
+    """Zusätzliche, sanitisierte Diagnose bei Verbindungs-/Timeout-Fehlern (keine Secrets)."""
+    if not openai or not isinstance(exc, openai.APIConnectionError):
+        return
+    req = getattr(exc, "request", None)
+    has_req = req is not None
+    has_resp = getattr(exc, "response", None) is not None
+    parts = [
+        f"type={type(exc).__name__}",
+        f"has_request={has_req}",
+        f"has_response={has_resp}",
+    ]
+    if has_req:
+        parts.append(f"request_meta={_safe_request_url_meta(req)}")
+    cause = exc.__cause__
+    if cause is not None:
+        parts.append(f"cause_type={type(cause).__name__}")
+        parts.append(f"cause_repr={_sanitize_openai_text(repr(cause), max_len=280)}")
+    ctx = exc.__context__
+    if ctx is not None and ctx is not cause:
+        parts.append(f"context_type={type(ctx).__name__}")
+        parts.append(f"context_repr={_sanitize_openai_text(repr(ctx), max_len=280)}")
+    logger.error("OpenAI connection diagnostics: %s", " ".join(parts))
 
 _SECRET_PATTERNS = (
     # Maskierte oder kurze sk-...-Fragmente (OpenAI liefert z. B. sk-inval***0000)
@@ -314,8 +408,6 @@ class ScriptGenerator:
     ) -> Tuple[str, str, List[dict], str, str, str]:
         """Generate script using OpenAI."""
         try:
-            client = openai.OpenAI(api_key=settings.openai_api_key)
-            
             source_note = "" if source_word_count >= target_word_count else (
                 "Die Quelle enthält weniger Text als die gewünschte Dauer. Bitte ergänze das Skript mit zusätzlicher Kontext-Einordnung und Analyse, ohne neue Fakten zu erfinden.")
             prompt = f"""
@@ -352,15 +444,15 @@ Gib die Antwort exakt als Objekt zurück:
     "full_script": "Vollständiges Skript"
 }}
 """
-            
-            response = client.chat.completions.create(
-                model=settings.openai_model,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=3000,
-                temperature=0.0,
-                response_format={"type": "json_object"}
-            )
-            
+            with build_openai_client() as client:
+                response = client.chat.completions.create(
+                    model=settings.openai_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=3000,
+                    temperature=0.0,
+                    response_format={"type": "json_object"},
+                )
+
             result = response.choices[0].message.content
             if isinstance(result, dict):
                 data = result
@@ -409,6 +501,7 @@ Gib die Antwort exakt als Objekt zurück:
             return title_text, hook, chapters, full_script, "llm", ""
         
         except openai.OpenAIError as e:
+            _log_openai_connection_error_details(e)
             log_line, sanitized_reason = _openai_error_summary(e)
             logger.error("OpenAI request failed: %s", log_line)
         except json.JSONDecodeError as e:
