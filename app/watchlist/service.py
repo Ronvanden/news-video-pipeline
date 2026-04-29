@@ -18,8 +18,11 @@ from app.watchlist.models import (
     ChannelCheckVideoItem,
     CheckWatchlistChannelResponse,
     CreateWatchlistChannelResponse,
+    CreatedScriptJobItem,
     ListWatchlistChannelsResponse,
+    ListWatchlistScriptJobsResponse,
     ProcessedVideo,
+    ScriptJob,
     WatchlistChannel,
     WatchlistChannelCreateRequest,
 )
@@ -163,6 +166,84 @@ def list_channels(
     return ListWatchlistChannelsResponse(channels=channels, warnings=[])
 
 
+def list_script_jobs(
+    repo: FirestoreWatchlistRepository | None = None,
+    limit: int = 50,
+) -> ListWatchlistScriptJobsResponse:
+    """Listet persistierte Script-Jobs (keine Ausführung)."""
+    repo = repo or FirestoreWatchlistRepository()
+    try:
+        jobs = repo.list_script_jobs(limit=limit)
+    except FirestoreUnavailableError as e:
+        raise FirestoreUnavailableError(str(e)) from e
+
+    return ListWatchlistScriptJobsResponse(jobs=jobs, warnings=[])
+
+
+def _try_create_script_job_for_seen_video(
+    *,
+    repo: FirestoreWatchlistRepository,
+    channel: WatchlistChannel,
+    vid: str,
+    url_raw: str,
+    now_iso: str,
+    merged_warnings: List[str],
+    created_jobs_acc: List[CreatedScriptJobItem],
+) -> None:
+    """Nach ``seen`` in ``processed_videos``: optional pending ``script_job`` (Schritt 3, kein Run)."""
+    if not channel.auto_generate_script:
+        return
+    try:
+        existing_job = repo.get_script_job(vid)
+    except FirestoreUnavailableError:
+        raise
+    if existing_job:
+        merged_warnings.append(
+            f"Script job already exists for video {vid}; skipping duplicate job creation."
+        )
+        try:
+            repo.update_processed_video_job_link(vid, existing_job.id)
+        except FirestoreUnavailableError:
+            raise
+        return
+
+    job = ScriptJob(
+        id=vid,
+        video_id=vid,
+        channel_id=channel.channel_id,
+        video_url=url_raw,
+        status="pending",
+        source_type="youtube_transcript",
+        target_language=channel.target_language,
+        duration_minutes=channel.duration_minutes,
+        created_at=now_iso,
+        started_at=None,
+        completed_at=None,
+        error="",
+        generated_script_id=None,
+        review_result_id=None,
+    )
+    try:
+        repo.create_script_job(job)
+    except FirestoreUnavailableError:
+        raise
+    try:
+        repo.update_processed_video_job_link(vid, job.id)
+    except FirestoreUnavailableError:
+        raise
+
+    created_jobs_acc.append(
+        CreatedScriptJobItem(
+            id=job.id,
+            video_id=job.video_id,
+            video_url=job.video_url,
+            status=job.status,
+            target_language=job.target_language,
+            duration_minutes=job.duration_minutes,
+        )
+    )
+
+
 def _check_item_from_raw(
     raw: Dict[str, Any],
     *,
@@ -193,7 +274,7 @@ def check_channel(
     repo: FirestoreWatchlistRepository | None = None,
     get_videos: Callable[..., Dict[str, Any]] | None = None,
 ) -> CheckWatchlistChannelResponse:
-    """Manuellen RSS-Check gegen ``processed_videos`` (keine Jobs, keine Skripterzeugung)."""
+    """RSS-Check gegen ``processed_videos``; optional ``script_jobs`` (pending) bei ``auto_generate_script``."""
     repo = repo or FirestoreWatchlistRepository()
     cid = (channel_id or "").strip()
     getter = get_videos
@@ -237,6 +318,7 @@ def check_channel(
     known_out: List[ChannelCheckVideoItem] = []
     skipped_out: List[ChannelCheckVideoItem] = []
     merged_warnings: List[str] = []
+    created_jobs_out: List[CreatedScriptJobItem] = []
 
     try:
         feed_result = getter(channel.channel_url, channel.max_results)
@@ -356,6 +438,15 @@ def check_channel(
             new_out.append(
                 _check_item_from_raw(raw, is_short=is_short, status="new")
             )
+            _try_create_script_job_for_seen_video(
+                repo=repo,
+                channel=channel,
+                vid=vid,
+                url_raw=url_raw,
+                now_iso=now_iso,
+                merged_warnings=merged_warnings,
+                created_jobs_acc=created_jobs_out,
+            )
 
         created_n = len(new_out) + len(skipped_out)
 
@@ -375,6 +466,7 @@ def check_channel(
             known_videos=known_out,
             skipped_videos=skipped_out,
             created_processed_videos=created_n,
+            created_jobs=created_jobs_out,
             warnings=merged_warnings,
         )
     except FirestoreUnavailableError:
@@ -408,6 +500,7 @@ def check_channel(
             known_videos=known_out,
             skipped_videos=skipped_out,
             created_processed_videos=len(new_out) + len(skipped_out),
+            created_jobs=created_jobs_out,
             warnings=merged_warnings
             + [err_msg, "Check could not be completed."],
         )

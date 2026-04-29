@@ -1,4 +1,4 @@
-"""Watchlist-spezifische Request-/Response-Modelle (Phase 5 V1 Schritt 1)."""
+"""Watchlist-spezifische Request-/Response-Modelle (Phase 5 Watchlist — Script-Jobs Modell Schritt 3)."""
 
 from __future__ import annotations
 
@@ -63,6 +63,9 @@ class ListWatchlistChannelsResponse(BaseModel):
 ProcessedVideoStatusLiteral = Literal["seen", "skipped"]
 ChannelCheckItemStatusLiteral = Literal["new", "known", "skipped"]
 
+ScriptJobStatusLiteral = Literal["pending", "running", "completed", "failed", "skipped"]
+SourceTypeYoutubeTranscript = Literal["youtube_transcript"]
+
 
 class ProcessedVideo(BaseModel):
     id: str
@@ -94,10 +97,44 @@ class ChannelCheckVideoItem(BaseModel):
     skip_reason: str = ""
 
 
+class ScriptJob(BaseModel):
+    id: str
+    video_id: str
+    channel_id: str
+    video_url: str
+    status: ScriptJobStatusLiteral
+    source_type: SourceTypeYoutubeTranscript = "youtube_transcript"
+    target_language: str = "de"
+    duration_minutes: int = Field(default=10, ge=1, le=60)
+    created_at: str
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    error: str = ""
+    generated_script_id: Optional[str] = None
+    review_result_id: Optional[str] = None
+
+
+class CreatedScriptJobItem(BaseModel):
+    """Kompakte Job-Infos in der Check-Antwort (Schritt 3)."""
+
+    id: str
+    video_id: str
+    video_url: str
+    status: ScriptJobStatusLiteral
+    target_language: str = "de"
+    duration_minutes: int = 10
+
+
 class CheckWatchlistChannelResponse(BaseModel):
     channel_id: str
     new_videos: List[ChannelCheckVideoItem] = Field(default_factory=list)
     known_videos: List[ChannelCheckVideoItem] = Field(default_factory=list)
     skipped_videos: List[ChannelCheckVideoItem] = Field(default_factory=list)
     created_processed_videos: int = 0
+    created_jobs: List[CreatedScriptJobItem] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ListWatchlistScriptJobsResponse(BaseModel):
+    jobs: List[ScriptJob] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)

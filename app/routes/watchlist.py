@@ -1,8 +1,8 @@
-"""Watchlist-Endpunkte (Phase 5 V1 — Schritt 1 CRUD, Schritt 2 manueller Kanal-Check)."""
+"""Watchlist-Endpunkte (Phase 5: CRUD, Check, pending Script-Jobs ohne Run)."""
 
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 
 from app.watchlist.firestore_repo import FirestoreUnavailableError
@@ -10,6 +10,7 @@ from app.watchlist.models import (
     CheckWatchlistChannelResponse,
     CreateWatchlistChannelResponse,
     ListWatchlistChannelsResponse,
+    ListWatchlistScriptJobsResponse,
     WatchlistChannelCreateRequest,
 )
 from app.watchlist import service as watchlist_service
@@ -45,8 +46,23 @@ async def watchlist_check_channel(channel_id: str):
         logger.warning("watchlist POST channel check failed: Firestore unavailable")
         body = CheckWatchlistChannelResponse(
             channel_id=channel_id,
+            created_jobs=[],
             warnings=[msg],
         )
+        return JSONResponse(status_code=503, content=body.model_dump())
+
+
+@router.get(
+    "/watchlist/jobs",
+    response_model=ListWatchlistScriptJobsResponse,
+)
+async def watchlist_list_script_jobs(limit: int = Query(50, ge=1, le=200)):
+    try:
+        return watchlist_service.list_script_jobs(limit=limit)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore is not reachable."
+        logger.warning("watchlist GET /watchlist/jobs failed: Firestore unavailable")
+        body = ListWatchlistScriptJobsResponse(jobs=[], warnings=[msg])
         return JSONResponse(status_code=503, content=body.model_dump())
 
 

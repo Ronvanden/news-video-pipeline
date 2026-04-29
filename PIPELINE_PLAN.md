@@ -20,7 +20,7 @@ Eine **zuverlässige, modulare Pipeline** von **Quellen** (Nachrichten-URLs, You
 | YouTube Transkript → Skript | `POST /youtube/generate-script` — gleicher Response-Vertrag wie Generate |
 | Kanal-Discovery | `POST /youtube/latest-videos` — RSS, Scoring, ohne Data API |
 | Review / Originalität | `POST /review-script` — V1 heuristisch (Phase 4 **done**) |
-| Persistenz Jobs / Watchlist / Voice / Bild / Render / Publish | Teilweise (Phase 5 Schritt 1–2: Watchlist **CRUD** + manueller **`/check`** + Firestore `watch_channels` /**`processed_videos`** — keine Script-Jobs/Auto-Run/Scheduler bis Schritt 3+) |
+| Persistenz Jobs / Watchlist / Voice / Bild / Render / Publish | Teilweise (Phase 5 Schritt 1–3: Watchlist **CRUD** + **`/check`** + Firestore `watch_channels` / **`processed_videos`** / **`script_jobs` (pending)** — **kein** Job-Run/Scheduler bis Schritt 4+) |
 
 Details zu Deploy und Tests: [README.md](README.md), [DEPLOYMENT.md](DEPLOYMENT.md).  
 Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
@@ -105,7 +105,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | | |
 |--|--|
 | **Status** | **next** (Phase 5 weiterhin aktiv; Schritt 1 wie unten dokumentiert vorhanden; Gesamtphase **nicht** `done`) |
-| **Umsetzungsstand** | **Schritt 1–2 fertig:** Firestore-Anbindung, Repository, `watch_channels`-CRUD, `processed_videos`-Tracking, `POST /watchlist/channels`, `GET /watchlist/channels`, `POST /watchlist/channels/{channel_id}/check` (RSS/Score wie `POST /youtube/latest-videos`, **keine** Script-Jobs/Auto-Run). **Schritte 3–6** aus dem Detailplan (**planned**/offen): Script-Jobs anlegen, Job-Run, Review-Persistenz optional, Scheduler V1.1+. |
+| **Umsetzungsstand** | **Schritt 1–3 (Script-Jobs anlegen) umgesetzt:** Firestore-Anbindung, Repository, `watch_channels`-CRUD, `processed_videos`-Tracking, `script_jobs`-Anlage (**pending**) bei **`auto_generate_script`** und erfolgreicher Check-/Score-Logik, `POST /watchlist/channels`, `GET /watchlist/channels`, `POST /watchlist/channels/{channel_id}/check`, optional **`GET /watchlist/jobs`**. **Schritte 4–6:** Job manuell ausführen, Review-Persistenz optional, Scheduler V1.1+ (**planned**/offen). |
 | **Ziel (Kurz)** | YouTube-Kanäle dauerhaft speichern, regelmäßig oder manuell prüfen, neue Videos erkennen, Kandidaten bewerten, Script-Jobs vorbereiten und Status führen — aufbauend auf bestehender RSS-/Discovery-Logik (`POST /youtube/latest-videos`). |
 | **Relevante Dateien** | `app/youtube/*` (Resolver, RSS für Kanalnamen bei Create), **implementiert:** `app/watchlist/`, `app/routes/watchlist.py`, `tests/test_watchlist_*.py`; `app/models.py` (bestehende Verträge unverändert) |
 | **Bekannte Grenzen** | YouTube-RSS liefert keine Echtzeit-Garantie; `@handle`-Auflösung bleibt fragiler als `/channel/UC…` (wie Phase 2). |
@@ -205,7 +205,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 
 1. ~~Firestore aktivieren — Repository — **Watchlist CRUD**~~ **(Schritt 1 erledigt, siehe Umsetzungsstand)**.
 2. ~~**Manueller Channel Check** — **`processed_videos`** füllen / Duplikatlogik~~ **(Schritt 2 erledigt: `POST …/check`, siehe README / Umsetzungsstand).**
-3. **Script-Jobs anlegen** bei neuen Videos (Konfigurationsabhängig).
+3. ~~**Script-Jobs anlegen** bei neuen Videos (Konfigurationsabhängig)~~ **(Schritt 3 erledigt: Firestore `script_jobs`, `pending`; Ausführung erst Schritt 4).**
 4. **Job manuell ausführen** — **`generated_scripts`** persistieren (intern Logik wie `/youtube/generate-script`).
 5. Optional **Review** aus Job heraus — **`review_results`** speichern.
 6. **Scheduler** später (V1.1+) mit Absicherung.
@@ -290,4 +290,4 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 3. **Nach Incidents oder wiederkehrenden Bugs**: [ISSUES_LOG.md](ISSUES_LOG.md) aktualisieren (Datum, Ursache, Fix, Commit-Referenz).  
 4. **Commits**: nur mit Tests/Checks laut [AGENTS.md](AGENTS.md) und Statusabgleich hier.
 
-Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-29** — Phase 5 Schritt 1 dokumentiert ([Watchlist CRUD]); weiterhin Datum bei Änderungen im Commit vermerken.
+Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-29** — Phase 5 Schritt 3 „Script Jobs anlegen“ dokumentiert (**script_jobs**/pending ohne Run); Datum bei späteren Änderungen im Commit vermerken.
