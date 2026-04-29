@@ -12,3 +12,4 @@ moviepy
 Pillow
 feedparser
 pydantic-settings
+openai

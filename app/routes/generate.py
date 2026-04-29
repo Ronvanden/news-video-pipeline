@@ -6,7 +6,8 @@ from app.utils import (
     translate_to_german,
     extract_key_points,
     ScriptGenerator,
-    generate_title
+    generate_title,
+    count_words
 )
 import logging
 
@@ -20,7 +21,7 @@ async def generate_script(request: GenerateScriptRequest):
         logger.info(f"Processing URL: {request.url}")
         
         # Extract text
-        text = extract_text_from_url(request.url)
+        text, extraction_warnings = extract_text_from_url(request.url)
         if not text:
             raise HTTPException(status_code=400, detail="Could not extract text from URL")
         
@@ -41,13 +42,26 @@ async def generate_script(request: GenerateScriptRequest):
         
         # Generate script
         generator = ScriptGenerator()
-        hook, chapters, full_script = generator.generate_script(title, key_points, request.duration_minutes)
+        title, hook, chapters, full_script, mode, reason = generator.generate_script(title, key_points, request.duration_minutes)
         
         # Sources and warnings
         sources = [request.url]
-        warnings = []
+        warnings = extraction_warnings
+        target_word_count = request.duration_minutes * 140
+        actual_word_count = count_words(full_script)
+        warnings.append(f"Target word count: {target_word_count}, Actual word count: {actual_word_count}")
+        if actual_word_count < target_word_count * 0.5:
+            warnings.append("Script is significantly shorter than target. Content may be insufficient for the requested duration.")
         if len(full_script) < 500:
             warnings.append("Script may be too short for 10-minute video")
+        
+        # Add mode warning
+        if mode == "llm":
+            warnings.append("Generated using LLM mode")
+        elif reason:
+            warnings.append(f"LLM generation failed: {reason}. Generated using fallback mode.")
+        else:
+            warnings.append("Generated using fallback mode")
         
         return GenerateScriptResponse(
             title=title,
@@ -59,5 +73,5 @@ async def generate_script(request: GenerateScriptRequest):
         )
     
     except Exception as e:
-        logger.error(f"Error generating script: {e}")
+        logger.error(f"Error generating script: {type(e).__name__} message={str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")

@@ -3,7 +3,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     app_name: str = "News to Video Pipeline"
     debug: bool = False
-    # Add other settings like API keys if needed
+    openai_api_key: str = ""
+    openai_model: str = "gpt-3.5-turbo"
 
     class Config:
         env_file = ".env"
