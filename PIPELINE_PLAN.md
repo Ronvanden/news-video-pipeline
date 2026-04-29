@@ -105,7 +105,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | | |
 |--|--|
 | **Status** | **next** (Phase 5 weiterhin aktiv; Schritt 1 wie unten dokumentiert vorhanden; Gesamtphase **nicht** `done`) |
-| **Umsetzungsstand** | **Schritt 1–4 umgesetzt** (CRUD, Check, Jobs, **`POST …/jobs/{job_id}/run`**, **`generated_scripts`**). **BAUANTRAG 5.5–5.7 (Automation Layer):** Recheck eines Videos, **`POST /watchlist/jobs/run-pending`**, **`POST /watchlist/automation/run-cycle`** (Limiter; **ohne** GCP Cloud Scheduler Deploy), optional **`POST /watchlist/jobs/{job_id}/review`** über **`review_script`** (Vertrag **`/review-script`**). Review-Persistenz in Firestore (**`review_results`**) weiter optional/**planned**. GCP Cloud Scheduler später wie geplant (**V1.1+**). |
+| **Umsetzungsstand** | **Schritt 1–4 umgesetzt** (CRUD, Check, Jobs, **`POST …/jobs/{job_id}/run`**, **`generated_scripts`**). **BA 5.5–5.7:** Recheck, **`run-pending`**, **`run-cycle`** (+ optional **`watchlist_meta/automation.last_run_cycle_at`**), Review-HTTP ohne Persistenz. **BA 5.8–6.2:** Pending-Query ohne Full-Scan, **`GET /watchlist/dashboard`**, **`GET /watchlist/errors/summary`**, Retry/Skip/Pause/Resume, **`production_jobs`** + **`POST …/create-production-job`** (Stub, keine Videoproduktion). Review-Persistenz **`review_results`** weiter optional/**planned**. |
 | **Ziel (Kurz)** | YouTube-Kanäle dauerhaft speichern, regelmäßig oder manuell prüfen, neue Videos erkennen, Kandidaten bewerten, Script-Jobs vorbereiten und Status führen — aufbauend auf bestehender RSS-/Discovery-Logik (`POST /youtube/latest-videos`). |
 | **Relevante Dateien** | `app/youtube/*` (Resolver, RSS für Kanalnamen bei Create), **implementiert:** `app/watchlist/`, `app/routes/watchlist.py`, `tests/test_watchlist_*.py`; `app/models.py` (bestehende Verträge unverändert) |
 | **Bekannte Grenzen** | YouTube-RSS liefert keine Echtzeit-Garantie; `@handle`-Auflösung bleibt fragiler als `/channel/UC…` (wie Phase 2). |
@@ -132,6 +132,8 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | **script_jobs** | Jobs zur Skripterzeugung: Status (`pending`, `running`, `completed`, `failed`, …), Verknüpfung zu Video/Kanal, Parameter, Zeitstempel, Verweise auf Ergebnis-IDs/Fehler. |
 | **generated_scripts** | Persistenz generierter Skripte im Sinne des festen **`GenerateScriptResponse`** (Titel, Hook, Kapitel, `full_script`, Quellen, Warnungen — Vertrag bestehender Skript-Endpoints nicht brechen). |
 | **review_results** | Ergebnisse analog **`POST /review-script`** (`risk_level`, `originality_score`, Flags, Issues, Recommendations, `warnings`). |
+| **watchlist_meta** | Kleines Metadokument (z. B. Doc **`automation`**: `last_run_cycle_at` nach erfolgreichem **`run-cycle`-Durchlauf). |
+| **production_jobs** | Vorbereitung späterer Produktion (Voice/Render): Status, Verweise auf **`generated_script_id`** / **`script_job_id`**, Platzhalterfelder — **kein** Rendern in dieser BA. |
 
 #### Watchlist-Endpunkte (Phase 5 — Stand Code)
 
@@ -146,6 +148,13 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | `POST` | `/watchlist/automation/run-cycle` | Aktive Kanäle prüfen (Cap **`channel_limit`**), anschließend **`run_pending`** (Cap **`job_limit`**) — **ohne** Cloud Scheduler, nur Endpoint für spätere IAP/Cron-Anbindung. |
 | `POST` | `/watchlist/jobs/{job_id}/run` | Einen Script-Job manuell ausführen (**`generated_scripts`**). |
 | `POST` | `/watchlist/jobs/{job_id}/review` | Optional: Heuristik wie **`POST /review-script`** aus gespeichertem Skript; **keine** Änderung des ScriptJob-Status bei Review-Fehlern. |
+| `GET` | `/watchlist/dashboard` | Snapshot: Zähler Kanäle/Videos/Jobs/Skripte, Health (`last_successful_job_at`, `last_run_cycle_at`, Warnungen). |
+| `GET` | `/watchlist/errors/summary` | Stichprobe: Aggregation **`error_code`** / **`skip_reason`** mit Beispiel-IDs (`max_docs`). |
+| `POST` | `/watchlist/jobs/{job_id}/retry` | **`failed`**/**`skipped`** → **`pending`**, Fehlerfelder leeren. |
+| `POST` | `/watchlist/jobs/{job_id}/skip` | **`pending`**/**`failed`** → **`skipped`**, **`manual_skip`**. |
+| `POST` | `/watchlist/channels/{channel_id}/pause` | Kanal **`paused`**. |
+| `POST` | `/watchlist/channels/{channel_id}/resume` | Kanal **`active`** (nur aus **`paused`**). |
+| `POST` | `/watchlist/jobs/{job_id}/create-production-job` | **`production_jobs`** anlegen (idempotent), nur **`completed`** + **`generated_script_id`**. |
 
 (Response-Verträge der Watchlist-Endpunkte sind neu; bestehende Endpoints **`/generate-script`**, **`/youtube/*`**, **`/review-script`** bleiben unverändert.)
 
@@ -230,7 +239,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | | |
 |--|--|
 | **Status** | **planned** |
-| **Hinweis zur Abgrenzung** | Persistenz von Script-Jobs, generierten Skripten und Review-Ergebnissen wird in **Phase 5** (Firestore-Collections `script_jobs`, `generated_scripts`, `review_results` u. a.) bereits **mitgeplant und später umgesetzt**. **Phase 6** bleibt für **Erweiterungen** reserviert: z. B. explizite **Job-Versionierung**, erweiterte **Re-Runs**/Historie, alternative Backends oder orchestrierungsseitige Erweiterungen — ohne Phase-5-V1 doppelt zu definieren. |
+| **Hinweis zur Abgrenzung** | Persistenz von Script-Jobs, generierten Skripten und Review-Ergebnissen wird in **Phase 5** (Firestore-Collections `script_jobs`, `generated_scripts`, `review_results` u. a.) bereits **mitgeplant und umgesetzt**. **Phase 6** bleibt für **Erweiterungen** reserviert: z. B. **`production_jobs`**-Weiterführung (echte Render-/Voice-Pipeline), explizite **Job-Versionierung**, erweiterte **Re-Runs**/Historie, alternative Backends — ohne Phase-5-V1 doppelt zu definieren. |
 | **Ziel** | Über Phase 5 hinaus: erweiterte Job-Lifecycle-/Versionierungskonzepte (Details bei Bedarf MODULE_TEMPLATE). |
 | **Endpoints** | *abhängig von Erweiterung* |
 | **Relevante Dateien** | Anknüpfung an Phase-5-Watchlist/Job-Speicher; ggf. `app/config.py` |

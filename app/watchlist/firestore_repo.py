@@ -9,7 +9,13 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
-from app.watchlist.models import GeneratedScript, ProcessedVideo, ScriptJob, WatchlistChannel
+from app.watchlist.models import (
+    GeneratedScript,
+    ProcessedVideo,
+    ProductionJob,
+    ScriptJob,
+    WatchlistChannel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +23,9 @@ COLLECTION_NAME = "watch_channels"
 PROCESSED_VIDEOS_COLLECTION = "processed_videos"
 SCRIPT_JOBS_COLLECTION = "script_jobs"
 GENERATED_SCRIPTS_COLLECTION = "generated_scripts"
+PRODUCTION_JOBS_COLLECTION = "production_jobs"
+WATCHLIST_META_COLLECTION = "watchlist_meta"
+WATCHLIST_META_AUTOMATION_DOC = "automation"
 
 
 def _utc_now_iso() -> str:
@@ -185,8 +194,16 @@ class FirestoreWatchlistRepository:
 
     def mark_script_job_running(self, job_id: str) -> None:
         try:
+            from google.cloud.firestore import Increment
+
+            now = _utc_now_iso()
             self._script_jobs_collection_ref().document(job_id).update(
-                {"status": "running", "started_at": _utc_now_iso()}
+                {
+                    "status": "running",
+                    "started_at": now,
+                    "last_attempt_at": now,
+                    "attempt_count": Increment(1),
+                }
             )
         except Exception as e:
             logger.warning(
@@ -390,12 +407,24 @@ class FirestoreWatchlistRepository:
         return True
 
     def list_pending_script_jobs(self, limit: int) -> List[ScriptJob]:
-        """Pending Jobs, FIFO (ältestes ``created_at`` zuerst), max ``limit`` (1 … 50)."""
+        """Pending Jobs, FIFO (ältestes ``created_at`` zuerst), max ``limit`` (1 … 50).
+
+        Nutzt eine Firestore-Query ``status == pending`` + ``order_by(created_at)`` +
+        serverseitiges ``limit`` (Composite-Index erforderlich, siehe DEPLOYMENT.md).
+        """
         lim = max(1, min(int(limit), 50))
         try:
-            snaps = self._script_jobs_collection_ref().stream()
+            q = (
+                self._script_jobs_collection_ref()
+                .where("status", "==", "pending")
+                .order_by("created_at")
+                .limit(lim)
+            )
+            snaps = q.stream()
         except Exception as e:
-            logger.warning("Firestore script_jobs stream failed: type=%s", type(e).__name__)
+            logger.warning(
+                "Firestore script_jobs pending query failed: type=%s", type(e).__name__
+            )
             raise FirestoreUnavailableError(
                 "Firestore is not reachable."
             ) from e
@@ -411,8 +440,7 @@ class FirestoreWatchlistRepository:
                 continue
             if j.status == "pending":
                 pending.append(j)
-        pending.sort(key=lambda job: job.created_at or "", reverse=False)
-        return pending[:lim]
+        return pending
 
     def list_processed_videos_by_channel(self, channel_id: str) -> List[ProcessedVideo]:
         try:
@@ -441,3 +469,284 @@ class FirestoreWatchlistRepository:
                 )
                 continue
         return out
+
+    def _meta_doc_ref(self):
+        return (
+            self._ensure_client()
+            .collection(WATCHLIST_META_COLLECTION)
+            .document(WATCHLIST_META_AUTOMATION_DOC)
+        )
+
+    def get_last_automation_cycle_at(self) -> Optional[str]:
+        try:
+            snap = self._meta_doc_ref().get()
+        except Exception as e:
+            logger.warning(
+                "Firestore watchlist_meta get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        data = snap.to_dict() or {}
+        raw = data.get("last_run_cycle_at")
+        return raw if isinstance(raw, str) and raw.strip() else None
+
+    def set_last_automation_cycle_at(self, iso_timestamp: str) -> None:
+        try:
+            self._meta_doc_ref().set(
+                {"last_run_cycle_at": iso_timestamp}, merge=True
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore watchlist_meta set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+
+    def list_running_script_jobs(self) -> List[ScriptJob]:
+        try:
+            snaps = (
+                self._script_jobs_collection_ref()
+                .where("status", "==", "running")
+                .stream()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs running query failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[ScriptJob] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ScriptJob.model_validate(merged))
+            except Exception:
+                logger.warning("skip invalid script_jobs row: doc_id=%s", snap.id)
+                continue
+        return out
+
+    @staticmethod
+    def _aggregation_count(query) -> int:
+        """Gibt die Anzahl zurück oder ``-1`` bei Fehler (z. B. fehlender Index)."""
+        try:
+            from google.cloud.firestore_v1.aggregation import AggregationQuery
+        except Exception:
+            return -1
+        try:
+            aq = AggregationQuery(query)
+            aq.count(alias="all")
+            for result in aq.get():
+                for agg in result:
+                    if getattr(agg, "alias", None) == "all":
+                        return int(agg.value)
+        except Exception as e:
+            logger.warning(
+                "Firestore aggregation count failed: type=%s", type(e).__name__
+            )
+            return -1
+        return 0
+
+    def count_collection(self, collection_name: str) -> int:
+        ref = self._ensure_client().collection(collection_name)
+        return self._aggregation_count(ref)
+
+    def count_processed_videos_by_status(self, status: str) -> int:
+        q = self._processed_collection_ref().where("status", "==", status)
+        return self._aggregation_count(q)
+
+    def count_processed_videos_by_skip_reason(self, skip_reason: str) -> int:
+        q = self._processed_collection_ref().where(
+            "skip_reason", "==", skip_reason
+        )
+        return self._aggregation_count(q)
+
+    def count_script_jobs_by_status(self, status: str) -> int:
+        q = self._script_jobs_collection_ref().where("status", "==", status)
+        return self._aggregation_count(q)
+
+    def get_latest_completed_job_completed_at(self) -> Optional[str]:
+        try:
+            from google.cloud.firestore import Query
+
+            q = (
+                self._script_jobs_collection_ref()
+                .where("status", "==", "completed")
+                .order_by("completed_at", direction=Query.DESCENDING)
+                .limit(1)
+            )
+            snaps = list(q.stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs latest completed query failed: type=%s",
+                type(e).__name__,
+            )
+            return None
+        if not snaps:
+            return None
+        merged = self._doc_to_dict(snaps[0].to_dict() or {}, snaps[0].id)
+        try:
+            job = ScriptJob.model_validate(merged)
+        except Exception:
+            return None
+        ca = job.completed_at
+        return ca if isinstance(ca, str) and ca.strip() else None
+
+    def reset_script_job_to_pending(self, job_id: str) -> None:
+        try:
+            from google.cloud.firestore import DELETE_FIELD
+
+            self._script_jobs_collection_ref().document(job_id).update(
+                {
+                    "status": "pending",
+                    "error": "",
+                    "error_code": "",
+                    "started_at": DELETE_FIELD,
+                    "completed_at": DELETE_FIELD,
+                }
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs reset pending failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def mark_script_job_skipped_manual(
+        self, job_id: str, *, error_code: str, error_message: str
+    ) -> None:
+        err_short = (error_message or "")[:2000]
+        ec_short = (error_code or "")[:200]
+        try:
+            self._script_jobs_collection_ref().document(job_id).update(
+                {
+                    "status": "skipped",
+                    "completed_at": _utc_now_iso(),
+                    "error": err_short,
+                    "error_code": ec_short,
+                }
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs mark skipped failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def patch_watch_channel_fields(self, channel_id: str, fields: Dict[str, Any]) -> None:
+        try:
+            self._collection_ref().document(channel_id).update(fields)
+        except Exception as e:
+            logger.warning(
+                "Firestore watch_channels patch failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def _production_jobs_collection_ref(self):
+        return self._ensure_client().collection(PRODUCTION_JOBS_COLLECTION)
+
+    def get_production_job(self, doc_id: str) -> Optional[ProductionJob]:
+        try:
+            snap = self._production_jobs_collection_ref().document(doc_id).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore production_jobs get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return ProductionJob.model_validate(merged)
+        except Exception as e:
+            logger.warning(
+                "invalid production_jobs doc: id=%s type=%s", snap.id, type(e).__name__
+            )
+            return None
+
+    def create_production_job(self, job: ProductionJob) -> ProductionJob:
+        try:
+            self._production_jobs_collection_ref().document(job.id).set(
+                job.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore production_jobs set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return job
+
+    def stream_script_jobs_for_error_summary(
+        self, *, max_docs: int
+    ) -> tuple[List[ScriptJob], bool]:
+        """Jobs mit Status failed oder skipped, begrenzte Stichprobe (kein Full-Scan)."""
+        cap = max(1, min(int(max_docs), 2000))
+        try:
+            q = (
+                self._script_jobs_collection_ref()
+                .where("status", "in", ["failed", "skipped"])
+                .limit(cap)
+            )
+            snaps = list(q.stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs error-summary stream failed: type=%s",
+                type(e).__name__,
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        truncated = len(snaps) >= cap
+        out: List[ScriptJob] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ScriptJob.model_validate(merged))
+            except Exception:
+                logger.warning("skip invalid script_jobs row: doc_id=%s", snap.id)
+                continue
+        return out, truncated
+
+    def stream_processed_videos_skipped_for_summary(
+        self, *, max_docs: int
+    ) -> tuple[List[ProcessedVideo], bool]:
+        cap = max(1, min(int(max_docs), 2000))
+        try:
+            q = (
+                self._processed_collection_ref()
+                .where("status", "==", "skipped")
+                .limit(cap)
+            )
+            snaps = list(q.stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore processed_videos skipped stream failed: type=%s",
+                type(e).__name__,
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        truncated = len(snaps) >= cap
+        out: List[ProcessedVideo] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ProcessedVideo.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid processed_videos row: doc_id=%s", snap.id
+                )
+                continue
+        return out, truncated

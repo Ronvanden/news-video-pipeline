@@ -116,6 +116,8 @@ class ScriptJob(BaseModel):
     error_code: str = ""
     generated_script_id: Optional[str] = None
     review_result_id: Optional[str] = None
+    attempt_count: int = Field(default=0, ge=0)
+    last_attempt_at: Optional[str] = None
 
 
 class CreatedScriptJobItem(BaseModel):
@@ -217,4 +219,112 @@ class ReviewGeneratedScriptJobResponse(BaseModel):
 
     job_id: str
     review: Optional[ReviewScriptResponse] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+ProductionJobStatusLiteral = Literal[
+    "queued", "in_progress", "completed", "failed", "skipped"
+]
+
+
+class ProductionJob(BaseModel):
+    """Vorbereitungsphase für spätere Videoproduktion (eigene Collection)."""
+
+    id: str
+    generated_script_id: str
+    script_job_id: str
+    status: ProductionJobStatusLiteral = "queued"
+    content_category: str = ""
+    visual_style: str = ""
+    narrator_style: str = ""
+    thumbnail_prompt: str = ""
+    created_at: str
+    updated_at: str
+    error: str = ""
+    error_code: str = ""
+
+
+class ProductionJobCreateRequest(BaseModel):
+    content_category: str = ""
+    visual_style: str = ""
+    narrator_style: str = ""
+    thumbnail_prompt: str = ""
+
+
+class CreateProductionJobResponse(BaseModel):
+    job: Optional[ProductionJob] = None
+    created: bool = True
+    warnings: List[str] = Field(default_factory=list)
+
+
+class WatchlistDashboardHealth(BaseModel):
+    last_successful_job_at: Optional[str] = None
+    last_run_cycle_at: Optional[str] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class WatchlistDashboardCounts(BaseModel):
+    channels_active: int = 0
+    channels_paused: int = 0
+    channels_error: int = 0
+    processed_videos_total: int = 0
+    processed_videos_skipped_total: int = 0
+    processed_videos_transcript_not_available_total: int = 0
+    script_jobs_pending: int = 0
+    script_jobs_running: int = 0
+    script_jobs_completed: int = 0
+    script_jobs_failed: int = 0
+    script_jobs_skipped: int = 0
+    generated_scripts_total: int = 0
+
+
+class WatchlistDashboardResponse(BaseModel):
+    counts: WatchlistDashboardCounts = Field(default_factory=WatchlistDashboardCounts)
+    health: WatchlistDashboardHealth = Field(default_factory=WatchlistDashboardHealth)
+
+
+class WatchlistErrorCodeSummaryItem(BaseModel):
+    error_code: str
+    count: int = 0
+    sample_job_ids: List[str] = Field(default_factory=list)
+
+
+class WatchlistSkipReasonSummaryItem(BaseModel):
+    skip_reason: str
+    count: int = 0
+    sample_video_ids: List[str] = Field(default_factory=list)
+
+
+class WatchlistErrorsSummaryResponse(BaseModel):
+    by_error_code: List[WatchlistErrorCodeSummaryItem] = Field(default_factory=list)
+    by_skip_reason: List[WatchlistSkipReasonSummaryItem] = Field(
+        default_factory=list
+    )
+    warnings: List[str] = Field(default_factory=list)
+    scanned_script_jobs: int = 0
+    scanned_processed_videos: int = 0
+
+
+class WatchlistJobActionResponse(BaseModel):
+    job: Optional[ScriptJob] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class WatchlistChannelStatusResponse(BaseModel):
+    channel: Optional[WatchlistChannel] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class WatchlistStuckRunningJobItem(BaseModel):
+    job_id: str
+    started_at: Optional[str] = None
+    channel_id: str = ""
+    video_id: str = ""
+
+
+class WatchlistStuckRunningAnalysisResponse(BaseModel):
+    """Analyse hängender ``running``-Jobs — keine automatische Wiederherstellung."""
+
+    threshold_minutes: int = 45
+    stuck_jobs: List[WatchlistStuckRunningJobItem] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)

@@ -8,15 +8,22 @@ from fastapi.responses import JSONResponse
 from app.watchlist.firestore_repo import FirestoreUnavailableError
 from app.watchlist.models import (
     CheckWatchlistChannelResponse,
+    CreateProductionJobResponse,
     CreateWatchlistChannelResponse,
     ListWatchlistChannelsResponse,
     ListWatchlistScriptJobsResponse,
+    ProductionJobCreateRequest,
     ReviewGeneratedScriptJobResponse,
     RunAutomationCycleRequest,
     RunAutomationCycleResponse,
     RunPendingScriptJobsResponse,
     RunScriptJobResponse,
     WatchlistChannelCreateRequest,
+    WatchlistChannelStatusResponse,
+    WatchlistDashboardHealth,
+    WatchlistDashboardResponse,
+    WatchlistErrorsSummaryResponse,
+    WatchlistJobActionResponse,
 )
 from app.watchlist import service as watchlist_service
 
@@ -166,6 +173,103 @@ async def watchlist_review_generated_script(job_id: str):
         )
         body = ReviewGeneratedScriptJobResponse(job_id=job_id, warnings=[msg])
         return JSONResponse(status_code=503, content=body.model_dump())
+
+
+@router.get(
+    "/watchlist/dashboard",
+    response_model=WatchlistDashboardResponse,
+)
+async def watchlist_dashboard():
+    try:
+        return watchlist_service.get_watchlist_dashboard()
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore nicht erreichbar."
+        logger.warning("watchlist GET dashboard failed: Firestore unavailable")
+        return JSONResponse(
+            status_code=503,
+            content=WatchlistDashboardResponse(
+                health=WatchlistDashboardHealth(warnings=[msg])
+            ).model_dump(),
+        )
+
+
+@router.get(
+    "/watchlist/errors/summary",
+    response_model=WatchlistErrorsSummaryResponse,
+)
+async def watchlist_errors_summary(max_docs: int = Query(500, ge=50, le=2000)):
+    try:
+        return watchlist_service.get_watchlist_errors_summary(max_docs=max_docs)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore nicht erreichbar."
+        logger.warning("watchlist GET errors/summary failed: Firestore unavailable")
+        body = WatchlistErrorsSummaryResponse(warnings=[msg])
+        return JSONResponse(status_code=503, content=body.model_dump())
+
+
+@router.post(
+    "/watchlist/jobs/{job_id}/retry",
+    response_model=WatchlistJobActionResponse,
+)
+async def watchlist_retry_job(job_id: str):
+    try:
+        return watchlist_service.retry_script_job(job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+
+
+@router.post(
+    "/watchlist/jobs/{job_id}/skip",
+    response_model=WatchlistJobActionResponse,
+)
+async def watchlist_skip_job(job_id: str):
+    try:
+        return watchlist_service.skip_script_job_manually(job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+
+
+@router.post(
+    "/watchlist/channels/{channel_id}/pause",
+    response_model=WatchlistChannelStatusResponse,
+)
+async def watchlist_pause_channel(channel_id: str):
+    try:
+        return watchlist_service.pause_watchlist_channel(channel_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+
+
+@router.post(
+    "/watchlist/channels/{channel_id}/resume",
+    response_model=WatchlistChannelStatusResponse,
+)
+async def watchlist_resume_channel(channel_id: str):
+    try:
+        return watchlist_service.resume_watchlist_channel(channel_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+
+
+@router.post(
+    "/watchlist/jobs/{job_id}/create-production-job",
+    response_model=CreateProductionJobResponse,
+)
+async def watchlist_create_production_job(
+    job_id: str,
+    req: ProductionJobCreateRequest | None = Body(None),
+):
+    try:
+        return watchlist_service.create_production_job_from_script_job(
+            job_id, req
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
 
 
 @router.get(

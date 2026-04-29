@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from collections import Counter
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Literal, Tuple
 
 from app.youtube.scoring import is_likely_short_video
@@ -19,13 +20,16 @@ from app.utils import (
 )
 from app.review.service import review_script
 from app.watchlist.firestore_repo import (
+    GENERATED_SCRIPTS_COLLECTION,
     FirestoreUnavailableError,
     FirestoreWatchlistRepository,
+    PROCESSED_VIDEOS_COLLECTION,
 )
 from app.watchlist.models import (
     AutomationChannelResultItem,
     ChannelCheckVideoItem,
     CheckWatchlistChannelResponse,
+    CreateProductionJobResponse,
     CreateWatchlistChannelResponse,
     CreatedScriptJobItem,
     GeneratedScript,
@@ -33,6 +37,8 @@ from app.watchlist.models import (
     ListWatchlistScriptJobsResponse,
     PendingJobRunResultItem,
     ProcessedVideo,
+    ProductionJob,
+    ProductionJobCreateRequest,
     ReviewGeneratedScriptJobResponse,
     RunAutomationCycleResponse,
     RunPendingScriptJobsResponse,
@@ -40,6 +46,16 @@ from app.watchlist.models import (
     ScriptJob,
     WatchlistChannel,
     WatchlistChannelCreateRequest,
+    WatchlistChannelStatusResponse,
+    WatchlistDashboardCounts,
+    WatchlistDashboardHealth,
+    WatchlistDashboardResponse,
+    WatchlistErrorCodeSummaryItem,
+    WatchlistErrorsSummaryResponse,
+    WatchlistJobActionResponse,
+    WatchlistSkipReasonSummaryItem,
+    WatchlistStuckRunningAnalysisResponse,
+    WatchlistStuckRunningJobItem,
 )
 
 logger = logging.getLogger(__name__)
@@ -1188,6 +1204,18 @@ def run_automation_cycle(
     out.job_results = list(job_batch.results)
     extra = [w for w in job_batch.warnings if w not in out.warnings]
     out.warnings.extend(extra)
+    try:
+        repo.set_last_automation_cycle_at(utc_now_iso())
+    except FirestoreUnavailableError:
+        out.warnings.append(
+            "Konnte last_run_cycle_at in watchlist_meta nicht schreiben (Firestore)."
+        )
+    except Exception as e:
+        logger.warning(
+            "watchlist run_automation_cycle meta persist failed: type=%s",
+            type(e).__name__,
+        )
+        out.warnings.append("Konnte last_run_cycle_at nicht speichern.")
     return out
 
 
@@ -1255,3 +1283,486 @@ def review_generated_script_for_job(
         )
         return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
     return ReviewGeneratedScriptJobResponse(job_id=jid, review=resp, warnings=ws)
+
+
+def _parse_iso_to_utc(s: str) -> datetime | None:
+    raw = (s or "").strip()
+    if not raw:
+        return None
+    try:
+        if raw.endswith("Z"):
+            raw = raw[:-1] + "+00:00"
+        dt = datetime.fromisoformat(raw)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+def _count_or_warn(
+    label_de: str,
+    fn: Callable[[], int],
+    warnings: List[str],
+) -> int:
+    v = fn()
+    if v < 0:
+        warnings.append(
+            f"Zählung „{label_de}“ über Firestore-Aggregation nicht verfügbar "
+            "(Index/Client); Wert als 0 gesetzt."
+        )
+        return 0
+    return v
+
+
+def analyze_stuck_running_script_jobs(
+    threshold_minutes: int = 45,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> WatchlistStuckRunningAnalysisResponse:
+    """Nur Analyse: ``running``-Jobs mit ``started_at`` älter als Schwelle — kein Auto-Fix."""
+    repo = repo or FirestoreWatchlistRepository()
+    thr = max(5, min(int(threshold_minutes), 24 * 60))
+    ws: List[str] = []
+    try:
+        running = repo.list_running_script_jobs()
+    except FirestoreUnavailableError:
+        raise
+    now = datetime.now(timezone.utc)
+    cut = now - timedelta(minutes=thr)
+    stuck: List[WatchlistStuckRunningJobItem] = []
+    missing_started = 0
+    for j in running:
+        st = _parse_iso_to_utc(j.started_at or "")
+        if st is None:
+            missing_started += 1
+            continue
+        if st <= cut:
+            stuck.append(
+                WatchlistStuckRunningJobItem(
+                    job_id=j.id,
+                    started_at=j.started_at,
+                    channel_id=j.channel_id,
+                    video_id=j.video_id,
+                )
+            )
+    if missing_started:
+        ws.append(
+            f"{missing_started} running Job(s) ohne auswertbares started_at "
+            "(manuell prüfen)."
+        )
+    if stuck:
+        ws.append(
+            f"{len(stuck)} Job(s) seit mindestens {thr} Minuten im Status „running“."
+        )
+    return WatchlistStuckRunningAnalysisResponse(
+        threshold_minutes=thr,
+        stuck_jobs=stuck,
+        warnings=ws,
+    )
+
+
+def get_watchlist_dashboard(
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+    stuck_threshold_minutes: int = 45,
+) -> WatchlistDashboardResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    health_ws: List[str] = []
+    try:
+        ch_resp = list_channels(repo=repo)
+    except FirestoreUnavailableError:
+        raise
+    chs = ch_resp.channels
+    pv_total = _count_or_warn(
+        "processed_videos gesamt",
+        lambda: repo.count_collection(PROCESSED_VIDEOS_COLLECTION),
+        health_ws,
+    )
+    pv_skipped = _count_or_warn(
+        "processed_videos übersprungen",
+        lambda: repo.count_processed_videos_by_status("skipped"),
+        health_ws,
+    )
+    pv_tr = _count_or_warn(
+        "processed_videos transcript_not_available",
+        lambda: repo.count_processed_videos_by_skip_reason(
+            "transcript_not_available"
+        ),
+        health_ws,
+    )
+    sj_pending = _count_or_warn(
+        "script_jobs pending",
+        lambda: repo.count_script_jobs_by_status("pending"),
+        health_ws,
+    )
+    sj_running = _count_or_warn(
+        "script_jobs running",
+        lambda: repo.count_script_jobs_by_status("running"),
+        health_ws,
+    )
+    sj_completed = _count_or_warn(
+        "script_jobs completed",
+        lambda: repo.count_script_jobs_by_status("completed"),
+        health_ws,
+    )
+    sj_failed = _count_or_warn(
+        "script_jobs failed",
+        lambda: repo.count_script_jobs_by_status("failed"),
+        health_ws,
+    )
+    sj_skipped = _count_or_warn(
+        "script_jobs skipped",
+        lambda: repo.count_script_jobs_by_status("skipped"),
+        health_ws,
+    )
+    gs_total = _count_or_warn(
+        "generated_scripts gesamt",
+        lambda: repo.count_collection(GENERATED_SCRIPTS_COLLECTION),
+        health_ws,
+    )
+    counts = WatchlistDashboardCounts(
+        channels_active=sum(1 for c in chs if c.status == "active"),
+        channels_paused=sum(1 for c in chs if c.status == "paused"),
+        channels_error=sum(1 for c in chs if c.status == "error"),
+        processed_videos_total=pv_total,
+        processed_videos_skipped_total=pv_skipped,
+        processed_videos_transcript_not_available_total=pv_tr,
+        script_jobs_pending=sj_pending,
+        script_jobs_running=sj_running,
+        script_jobs_completed=sj_completed,
+        script_jobs_failed=sj_failed,
+        script_jobs_skipped=sj_skipped,
+        generated_scripts_total=gs_total,
+    )
+
+    last_ok: str | None = None
+    try:
+        last_ok = repo.get_latest_completed_job_completed_at()
+        if last_ok is None and sj_completed > 0:
+            health_ws.append(
+                "Es gibt completed Jobs, aber der neueste completed_at "
+                "konnte nicht gelesen werden (Index oder Daten inkonsistent)."
+            )
+    except Exception as e:
+        logger.warning(
+            "dashboard latest completed lookup failed: type=%s", type(e).__name__
+        )
+        health_ws.append(
+            "Letzter erfolgreicher Job-Zeitpunkt nicht verfügbar (Query-Fehler)."
+        )
+
+    last_cycle: str | None = None
+    try:
+        last_cycle = repo.get_last_automation_cycle_at()
+    except FirestoreUnavailableError:
+        raise
+    except Exception as e:
+        logger.warning(
+            "dashboard last cycle read failed: type=%s", type(e).__name__
+        )
+        health_ws.append("last_run_cycle_at konnte nicht gelesen werden.")
+
+    try:
+        stuck_info = analyze_stuck_running_script_jobs(
+            stuck_threshold_minutes, repo=repo
+        )
+        health_ws.extend(stuck_info.warnings)
+    except FirestoreUnavailableError:
+        raise
+    except Exception as e:
+        logger.warning("dashboard stuck analysis failed: type=%s", type(e).__name__)
+        health_ws.append("Stuck-Job-Analyse übersprungen (unerwarteter Fehler).")
+
+    return WatchlistDashboardResponse(
+        counts=counts,
+        health=WatchlistDashboardHealth(
+            last_successful_job_at=last_ok,
+            last_run_cycle_at=last_cycle,
+            warnings=health_ws,
+        ),
+    )
+
+
+def _job_error_code_key(job: ScriptJob) -> str:
+    c = (job.error_code or "").strip()
+    if c:
+        return c
+    return "(empty_error_code)"
+
+
+def get_watchlist_errors_summary(
+    *,
+    max_docs: int = 500,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> WatchlistErrorsSummaryResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    warnings: List[str] = []
+    cap = max(50, min(int(max_docs), 2000))
+    try:
+        jobs, trunc_j = repo.stream_script_jobs_for_error_summary(max_docs=cap)
+        pvs, trunc_p = repo.stream_processed_videos_skipped_for_summary(max_docs=cap)
+    except FirestoreUnavailableError:
+        raise
+
+    if trunc_j:
+        warnings.append(
+            f"script_jobs-Stichprobe erreichte das Limit ({cap}); Aggregation unvollständig."
+        )
+    if trunc_p:
+        warnings.append(
+            f"processed_videos-Stichprobe erreichte das Limit ({cap}); Aggregation unvollständig."
+        )
+
+    code_counter: Counter[str] = Counter()
+    code_samples: Dict[str, List[str]] = {}
+    for j in jobs:
+        key = _job_error_code_key(j)
+        code_counter[key] += 1
+        if key not in code_samples:
+            code_samples[key] = []
+        if len(code_samples[key]) < 3:
+            code_samples[key].append(j.id)
+
+    skip_counter: Counter[str] = Counter()
+    skip_samples: Dict[str, List[str]] = {}
+    for pv in pvs:
+        key = (pv.skip_reason or "").strip() or "(empty_skip_reason)"
+        skip_counter[key] += 1
+        if key not in skip_samples:
+            skip_samples[key] = []
+        if len(skip_samples[key]) < 3:
+            skip_samples[key].append(pv.video_id)
+
+    by_err = [
+        WatchlistErrorCodeSummaryItem(
+            error_code=k,
+            count=v,
+            sample_job_ids=list(code_samples.get(k, [])),
+        )
+        for k, v in sorted(
+            code_counter.items(), key=lambda x: (-x[1], x[0])
+        )
+    ]
+    by_skip = [
+        WatchlistSkipReasonSummaryItem(
+            skip_reason=k,
+            count=v,
+            sample_video_ids=list(skip_samples.get(k, [])),
+        )
+        for k, v in sorted(
+            skip_counter.items(), key=lambda x: (-x[1], x[0])
+        )
+    ]
+
+    warnings.append(
+        "Error-Summary basiert auf Stichproben fehlgeschlagener/übersprungener Jobs "
+        "und übersprungener Videos (kein vollständiger Collection-Scan)."
+    )
+    return WatchlistErrorsSummaryResponse(
+        by_error_code=by_err,
+        by_skip_reason=by_skip,
+        warnings=warnings,
+        scanned_script_jobs=len(jobs),
+        scanned_processed_videos=len(pvs),
+    )
+
+
+def retry_script_job(
+    job_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> WatchlistJobActionResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    jid = (job_id or "").strip()
+    ws: List[str] = []
+    if not jid:
+        ws.append("job_id is empty.")
+        return WatchlistJobActionResponse(job=None, warnings=ws)
+    try:
+        job = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+    if job is None:
+        ws.append("Script job not found.")
+        return WatchlistJobActionResponse(job=None, warnings=ws)
+    if job.status not in ("failed", "skipped"):
+        ws.append(
+            f"Retry nur für failed/skipped sinnvoll (aktuell: {job.status})."
+        )
+        return WatchlistJobActionResponse(job=job, warnings=ws)
+    try:
+        repo.reset_script_job_to_pending(jid)
+    except FirestoreUnavailableError:
+        raise
+    try:
+        refreshed = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+    return WatchlistJobActionResponse(job=refreshed or job, warnings=ws)
+
+
+def skip_script_job_manually(
+    job_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> WatchlistJobActionResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    jid = (job_id or "").strip()
+    ws: List[str] = []
+    if not jid:
+        ws.append("job_id is empty.")
+        return WatchlistJobActionResponse(job=None, warnings=ws)
+    try:
+        job = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+    if job is None:
+        ws.append("Script job not found.")
+        return WatchlistJobActionResponse(job=None, warnings=ws)
+    if job.status not in ("pending", "failed"):
+        ws.append(
+            "Skip nur für pending oder failed vorgesehen "
+            f"(aktuell: {job.status})."
+        )
+        return WatchlistJobActionResponse(job=job, warnings=ws)
+    try:
+        repo.mark_script_job_skipped_manual(
+            jid,
+            error_code="manual_skip",
+            error_message="manual_skip",
+        )
+    except FirestoreUnavailableError:
+        raise
+    try:
+        refreshed = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+    return WatchlistJobActionResponse(job=refreshed or job, warnings=ws)
+
+
+def pause_watchlist_channel(
+    channel_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> WatchlistChannelStatusResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    cid = (channel_id or "").strip()
+    ws: List[str] = []
+    if not cid:
+        ws.append("channel_id is empty.")
+        return WatchlistChannelStatusResponse(channel=None, warnings=ws)
+    try:
+        ch = repo.get_watch_channel(cid)
+    except FirestoreUnavailableError:
+        raise
+    if ch is None:
+        ws.append("Watchlist channel not found.")
+        return WatchlistChannelStatusResponse(channel=None, warnings=ws)
+    now_iso = utc_now_iso()
+    try:
+        repo.patch_watch_channel_fields(
+            cid, {"status": "paused", "updated_at": now_iso}
+        )
+    except FirestoreUnavailableError:
+        raise
+    refreshed = ch.model_copy(
+        update={"status": "paused", "updated_at": now_iso},
+    )
+    return WatchlistChannelStatusResponse(channel=refreshed, warnings=ws)
+
+
+def resume_watchlist_channel(
+    channel_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> WatchlistChannelStatusResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    cid = (channel_id or "").strip()
+    ws: List[str] = []
+    if not cid:
+        ws.append("channel_id is empty.")
+        return WatchlistChannelStatusResponse(channel=None, warnings=ws)
+    try:
+        ch = repo.get_watch_channel(cid)
+    except FirestoreUnavailableError:
+        raise
+    if ch is None:
+        ws.append("Watchlist channel not found.")
+        return WatchlistChannelStatusResponse(channel=None, warnings=ws)
+    if ch.status != "paused":
+        ws.append(
+            f"Resume ist für „paused“ gedacht (aktueller Status: {ch.status})."
+        )
+        return WatchlistChannelStatusResponse(channel=ch, warnings=ws)
+    now_iso = utc_now_iso()
+    try:
+        repo.patch_watch_channel_fields(
+            cid, {"status": "active", "updated_at": now_iso}
+        )
+    except FirestoreUnavailableError:
+        raise
+    refreshed = ch.model_copy(
+        update={"status": "active", "updated_at": now_iso},
+    )
+    return WatchlistChannelStatusResponse(channel=refreshed, warnings=ws)
+
+
+def create_production_job_from_script_job(
+    job_id: str,
+    req: ProductionJobCreateRequest | None = None,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> CreateProductionJobResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    body = req or ProductionJobCreateRequest()
+    jid = (job_id or "").strip()
+    ws: List[str] = []
+    if not jid:
+        ws.append("job_id is empty.")
+        return CreateProductionJobResponse(job=None, created=False, warnings=ws)
+    try:
+        job = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+    if job is None:
+        ws.append("Script job not found.")
+        return CreateProductionJobResponse(job=None, created=False, warnings=ws)
+    if job.status != "completed":
+        ws.append(
+            f"Production-Job nur für completed ScriptJobs (aktuell: {job.status})."
+        )
+        return CreateProductionJobResponse(job=None, created=False, warnings=ws)
+    gid = (job.generated_script_id or job.id or "").strip()
+    if not gid:
+        ws.append("Kein generated_script_id am Job gesetzt.")
+        return CreateProductionJobResponse(job=None, created=False, warnings=ws)
+    try:
+        existing = repo.get_production_job(gid)
+    except FirestoreUnavailableError:
+        raise
+    if existing:
+        ws.append(
+            "Production-Job für dieses generated_script_id existiert bereits."
+        )
+        return CreateProductionJobResponse(
+            job=existing, created=False, warnings=ws
+        )
+    now_iso = utc_now_iso()
+    pj = ProductionJob(
+        id=gid,
+        generated_script_id=gid,
+        script_job_id=job.id,
+        status="queued",
+        content_category=body.content_category,
+        visual_style=body.visual_style,
+        narrator_style=body.narrator_style,
+        thumbnail_prompt=body.thumbnail_prompt,
+        created_at=now_iso,
+        updated_at=now_iso,
+    )
+    try:
+        repo.create_production_job(pj)
+    except FirestoreUnavailableError:
+        raise
+    return CreateProductionJobResponse(job=pj, created=True, warnings=ws)
