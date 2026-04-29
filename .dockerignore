@@ -1,0 +1,25 @@
+# Secrets und lokale Konfiguration
+.env
+.env.*
+!.env.example
+
+# Python / venv
+.venv
+venv
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Git und IDE
+.git
+.gitignore
+.cursor
+
+# Tests und Artefakte (nicht fürs Runtime-Image nötig)
+.pytest_cache
+.mypy_cache
+*.egg-info
+dist
+build

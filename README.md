@@ -9,7 +9,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - FastAPI-App läuft lokal.
 - Endpoint `POST /generate-script` ist funktionsfähig.
 - `GET /health` liefert den Service-Status.
-- OpenAI ist optional und wird über `.env` aktiviert.
+- OpenAI ist optional und wird über Umgebungsvariablen (lokal z. B. `.env`) aktiviert.
 - Der LLM-Modus nutzt strikt geparste JSON-Ausgabe.
 - Ein stabiler Fallback bleibt aktiv, wenn OpenAI fehlt oder fehlschlägt.
 - `AGENTS.md` enthält verbindliche Agent-Regeln.
@@ -158,11 +158,32 @@ curl -X POST http://127.0.0.1:8000/generate-script \
 - Endpoint-Tests per `curl` oder Postman durchführen.
 - Prüfe `GET /health` und mindestens einen `POST /generate-script` Request.
 
-## 16. Docker / Cloud Run Vorbereitung
+## 16. Docker / Cloud Run
 
-- Dockerfile ist vorhanden.
-- Image bauen und lokal testen.
-- Für Cloud Run: Image in Registry hochladen und Cloud Run mit Umgebungsvariablen deployen.
+### Lokales Image
+
+```bash
+docker build -t news-to-video-api .
+docker run --rm -p 8080:8080 news-to-video-api
+# Health: curl http://127.0.0.1:8080/health
+```
+
+Der Container lauscht auf **0.0.0.0**. Der Port kommt aus der Umgebungsvariable **`PORT`** (Standard **8080**). So ist das Image mit **Google Cloud Run** kompatibel, wo `PORT` zur Laufzeit gesetzt wird.
+
+### Google Cloud Run (Kurzüberblick)
+
+1. **Artifact Registry** (oder Container Registry) vorbereiten und Image bauen/pushen, z. B.:
+   ```bash
+   docker build -t REGION-docker.pkg.dev/PROJECT/REPO/news-to-video-api:latest .
+   docker push REGION-docker.pkg.dev/PROJECT/REPO/news-to-video-api:latest
+   ```
+2. **Service deployen** mit dem Image; Cloud Run setzt `PORT` automatisch — die App muss diesen Port verwenden (tut sie im Dockerfile).
+3. **Secrets / Konfiguration** niemals ins Image backen. OpenAI optional über Laufzeit-Konfiguration:
+   - `OPENAI_API_KEY` — nur als Umgebungsvariable oder Secret (z. B. Secret Manager an Cloud Run binden).
+   - `OPENAI_MODEL` — optional als Umgebungsvariable (z. B. `gpt-4o-mini`), sonst Default aus `app/config.py`.
+4. **Health Check**: Cloud Run prüft per HTTP; `GET /health` liefert `{"status":"healthy"}` mit HTTP 200 — geeignet als Liveness-/Startup-Kontext.
+
+Ohne `OPENAI_API_KEY` läuft die API im dokumentierten Fallback-Modus.
 
 ## 17. Sicherheit / Secret Handling
 
