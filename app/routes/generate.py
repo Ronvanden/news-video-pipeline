@@ -39,10 +39,16 @@ async def generate_script(request: GenerateScriptRequest):
         
         # Generate title
         title = generate_title(translated)
+        source_word_count = count_words(translated)
         
         # Generate script
         generator = ScriptGenerator()
-        title, hook, chapters, full_script, mode, reason = generator.generate_script(title, key_points, request.duration_minutes)
+        title, hook, chapters, full_script, mode, reason = generator.generate_script(
+            title,
+            key_points,
+            request.duration_minutes,
+            source_word_count,
+        )
         
         # Sources and warnings
         sources = [request.url]
