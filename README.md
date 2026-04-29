@@ -34,7 +34,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - **Phase 4 V1:** `POST /review-script` — heuristische Originalitäts- und Nähe-zur-Quelle-Prüfung (keine Rechtsberatung, kein Auto-Publish)
 - **Phase 5 V1 Schritt 1–4:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`**, **`GET /watchlist/jobs`**, **`POST /watchlist/jobs/{job_id}/run`** — Kanäle und **`processed_videos`** in Firestore; bei **`auto_generate_script=true`** prüft der Kanal-Check vor **`pending`**-Jobs einen **Transcript-Preflight** (gleiche Abruflogik wie **`POST /youtube/generate-script`**); **`pending`** entstehen nur bei verfügbarem Transkript; Speicherung in **`generated_scripts`**.
 - **Phase 5.5–5.7 (Automation-Layer):** **`POST /watchlist/channels/{channel_id}/recheck-video/{video_id}`** (ein Video erneut prüfen, mit Warnung bei einzelner `processed_videos`-Entfernung), **`POST /watchlist/jobs/run-pending`** (pending Jobs im Batch ausführen, Limit Default 3, Max 10), **`POST /watchlist/automation/run-cycle`** (scheduler-tauglicher Zyklus: aktive Kanäle prüfen, danach pending Jobs; Body `channel_limit` / `job_limit`; schreibt bei Erfolg **`last_run_cycle_at`** in Firestore **`watchlist_meta/automation`**) und optional **`POST /watchlist/jobs/{job_id}/review`** (nutzt dieselbe Heuristik wie **`POST /review-script`**, ohne ScriptJob-Status zu ändern). **Kein** Cloud-Scheduler-Deploy in diesem Schritt — nur HTTP-Schnittstellen. Details: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
-- **Phase 5.8–6.2 (Control Tower & Production Foundation):** **`GET /watchlist/dashboard`** (Snapshot-Zähler für Kanäle, Videos, Jobs, Skripte, Health-Hinweise inkl. optional „stuck running“-Jobs), **`GET /watchlist/errors/summary`** (Stichprobe nach **`error_code`** / **`skip_reason`** mit Beispiel-IDs), **Queue-Governance:** **`POST /watchlist/jobs/{job_id}/retry`**, **`…/skip`**, **`POST /watchlist/channels/{channel_id}/pause`** / **`…/resume`**, **`POST /watchlist/jobs/{job_id}/create-production-job`** (Collection **`production_jobs`**, idempotent pro **`generated_script_id`**; **keine** Video-Generierung). Pending-Liste nutzt Firestore-Query **`status == pending`** (Index siehe [DEPLOYMENT.md](DEPLOYMENT.md)). **`ScriptJob`** optional mit **`attempt_count`** / **`last_attempt_at`** (ohne Pflichtmigration).
+- **Phase 5.8–6.5 (Control Tower & Production Jobs):** wie 5.8–6.2, zusätzlich **`GET /production/jobs`**, **`GET /production/jobs/{id}`**, **`POST /production/jobs/{id}/skip`** (**`queued`**/**`failed`** → **`skipped`**), **`POST /production/jobs/{id}/retry`** (**`failed`**/**`skipped`** → **`queued`**); **keine** Render-Pipeline in diesen Routen; Dashboard-Zähler per Firestore-Aggregation und begrenztem Stream-Fallback; **`POST /watchlist/jobs/{job_id}/review`** persistiert bei **`completed` + `generated_script_id`** unter **`review_results`** und verknüpft **`script_jobs.review_result_id`** (optional **`processed_videos`**). Pending-Liste **Index**: [DEPLOYMENT.md](DEPLOYMENT.md). **`ScriptJob`** optional **`attempt_count`** / **`last_attempt_at`**. Ausführlich: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
 
 ## 4. Projektstruktur
 
@@ -53,7 +53,8 @@ app/
     ├── generate.py   # /generate-script Endpoint
     ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
     ├── review.py     # /review-script
-    └── watchlist.py  # Watchlist-CRUD, Kanal-Check, Jobs, POST …/jobs/{id}/run (Phase 5)
+    ├── watchlist.py  # Watchlist-CRUD, Kanal-Check, Jobs, POST …/jobs/{id}/run (Phase 5)
+    └── production.py # /production/jobs (Liste, Detail, Skip, Retry; Phase 6.5)
 
 Dockerfile
 README.md
@@ -296,16 +297,14 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 - **`POST /watchlist/jobs/{job_id}/run`** führt einen **`pending`**- oder **`failed`**-Job aus (nicht erneut bei **`completed`**, **`running`**, **`skipped`** — siehe HTTP-Status **409** bei Konflikten). **`job_id`** entspricht in V1 der **`video_id`** (wie bei **`GET /watchlist/jobs`**).
 - Es wird dieselbe interne Pipeline wie **`POST /youtube/generate-script`** genutzt (**kein** HTTP-Selbstaufruf); bei Erfolg liegt das Skript in **`generated_scripts`** (Document-ID in V1 = **`job_id`**), der Job erhält **`generated_script_id`**, **`processed_videos.status`** kann **`script_generated`** werden.
 - **`RunScriptJobResponse`:** `job`, optional **`script`**, **`warnings`**. Fehler sind über **`job.error`** und optional **`job.error_code`** standardisiert (z. B. **`transcript_not_available`**, **`script_generation_empty`**, **`script_generation_failed`**, **`firestore_write_failed`**); menschenlesbare Hinweise stehen in **`warnings`**. Selbst bei Preflight kann ein späterer **`run`** noch **`failed`** werden (Transkript zwischenzeitlich nicht mehr verfügbar). Transkript-/Parse-Probleme führen zu **`failed`** am Job und **keinem** Eintrag in **`generated_scripts`** (kein HTTP **500** für diese erwartbaren Fälle).
-- **In diesem Schritt bewusst nicht:** Review ausführen oder **`review_results`** schreiben; Scheduler; automatischer Massen-Run; Voiceover/Rendering/Publish.
+- Review für den Job erfolgt erst nach separatem **`POST /watchlist/jobs/{job_id}/review`** (**`review_results`**, wenn **`completed`** und **`generated_script_id`** gesetzt); in Schritt 4 bewusst kein automatisches Review oder Rendering; kein Scheduler.
 
-**Phase 5.8–6.2 — Control Tower (nur Lesen / Steuerung / Produktions-Stubs)**
+**Phase 5.8–6.5 — Control Tower & Production Jobs**
 
-- **`GET /watchlist/dashboard`**: aggregierte Zähler (`channels` nach Status, **`processed_videos`**, **`script_jobs`**, **`generated_scripts_total`**) und **`health`** (`last_successful_job_at`, `last_run_cycle_at` aus **`watchlist_meta`**, Warnungen u. a. bei fehlgeschlagenen Aggregationen oder sehr lange „running“-Jobs). Kein impliziter Pipeline-Lauf.
-- **`GET /watchlist/errors/summary`**: Query-Parameter **`max_docs`** (50–2000, Standard 500): Stichprobe **`script_jobs`** mit Status **`failed`/`skipped`** und **`processed_videos`** mit **`skipped`**, gruppiert nach **`error_code`** bzw. **`skip_reason`**, jeweils mit wenigen Beispiel-IDs; **`warnings`** bei Stichproben-Limit.
-- **`POST /watchlist/jobs/{job_id}/retry`**: **`failed`** oder **`skipped`** → **`pending`**, **`error`**/**`error_code`** geleert (Felder **`started_at`**/**`completed_at`** entfernt). **`attempt_count`** erhöht sich erst wieder beim nächsten **`…/run`** (siehe **`mark_script_job_running`**).
-- **`POST /watchlist/jobs/{job_id}/skip`**: **`pending`** oder **`failed`** → **`skipped`**, **`error_code`** = **`manual_skip`**.
-- **`POST /watchlist/channels/{channel_id}/pause`** / **`…/resume`**: setzt **`watch_channels.status`** auf **`paused`** bzw. (**nur wenn vorher paused**) auf **`active`**.
-- **`POST /watchlist/jobs/{job_id}/create-production-job`**: nur bei **`completed`**-Job mit **`generated_script_id`**; legt höchstens ein **`production_jobs`**-Dokument pro **`generated_script_id`** an (Document-ID = **`generated_script_id`**); **`generated_scripts`** unverändert. Optionaler JSON-Body: **`ProductionJobCreateRequest`** (Stil-/Kategorie-Felder, aktuell Platzhalter für spätere Phasen).
+- **`GET /watchlist/dashboard`**: Zähler (**`processed_videos_total`**, **`script_jobs`** je Status, **`generated_scripts_total`**) und **`health`**; Firestore **`RunAggregationQuery`**, bei Bedarf Fallback **bis 65 535 Docs** Stream-Zählung pro Abfrage. Kein Pipeline-Lauf.
+- **`POST /watchlist/jobs/{job_id}/review`**: **`completed`**, **`generated_script_id`** und Skriptinhalt erforderlich; schreibt **`review_results`**, **`script_jobs.review_result_id`**, optional **`processed_videos.review_result_id`**; Speichern fehlgeschlagen → weiterhin **`200`** mit Warnung (**ScriptJob bleibt unverändert**).
+- **`GET /watchlist/errors/summary`**, Retry/Skip, Pause/Resume, **`POST …/create-production-job`**: wie zuvor in Abschnitten 5.8–6.2 dokumentiert (**`production_jobs`**-Stub ohne Rendering).
+- **`GET /production/jobs`** (`limit` 1–200), **`GET /production/jobs/{production_job_id}`**, **`POST /production/jobs/{production_job_id}/skip`**, **`POST /production/jobs/{production_job_id}/retry`**: nur Status in Firestore (**kein** Video-Render).
 
 Beispiel:
 
@@ -313,7 +312,7 @@ Beispiel:
 curl -s -X POST "http://127.0.0.1:8000/watchlist/jobs/VIDEO_ID_HERE/run"
 ```
 
-**Noch nicht umgesetzt (geplant):** Review-Persistenz aus dem Job (Phase 5 Schritt 5), Scheduler, Auto-Publish, Voiceover, Video-Rendering (Überblick [PIPELINE_PLAN.md](PIPELINE_PLAN.md)).
+**Noch nicht umgesetzt (geplant):** Cloud-Scheduler-Deploy, Auto-Publish, Voiceover, echtes Video-Rendering (Überblick [PIPELINE_PLAN.md](PIPELINE_PLAN.md)).
 
 Beispiel **Kanal anlegen** (Kanal-URL mit `/channel/UC…` empfohlen):
 

@@ -1,4 +1,4 @@
-"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``.
+"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``, ``review_results``, ``production_jobs``.
 
 Client ist injizierbar (Unit-Tests mit Mock).
 """
@@ -13,6 +13,7 @@ from app.watchlist.models import (
     GeneratedScript,
     ProcessedVideo,
     ProductionJob,
+    ReviewResultStored,
     ScriptJob,
     WatchlistChannel,
 )
@@ -23,6 +24,7 @@ COLLECTION_NAME = "watch_channels"
 PROCESSED_VIDEOS_COLLECTION = "processed_videos"
 SCRIPT_JOBS_COLLECTION = "script_jobs"
 GENERATED_SCRIPTS_COLLECTION = "generated_scripts"
+REVIEW_RESULTS_COLLECTION = "review_results"
 PRODUCTION_JOBS_COLLECTION = "production_jobs"
 WATCHLIST_META_COLLECTION = "watchlist_meta"
 WATCHLIST_META_AUTOMATION_DOC = "automation"
@@ -532,42 +534,83 @@ class FirestoreWatchlistRepository:
 
     @staticmethod
     def _aggregation_count(query) -> int:
-        """Gibt die Anzahl zurück oder ``-1`` bei Fehler (z. B. fehlender Index)."""
+        """Gibt die Anzahl zurück oder ``-1`` bei Fehler (z. B. fehlender Index).
+
+        Wertet alle ``AggregationResult``-Batches aus; Aliase vom Server können
+        von ``all`` abweichen — dann wird der erste Zählwert genutzt.
+        """
         try:
-            from google.cloud.firestore_v1.aggregation import AggregationQuery
+            from google.cloud.firestore_v1.aggregation import (
+                AggregationQuery,
+                AggregationResult,
+            )
         except Exception:
             return -1
         try:
-            aq = AggregationQuery(query)
-            aq.count(alias="all")
-            for result in aq.get():
-                for agg in result:
+            aq = AggregationQuery(query).count(alias="all")
+            raw = aq.get()
+            batches = list(raw) if raw is not None else []
+            for batch in batches:
+                if isinstance(batch, AggregationResult):
+                    return int(batch.value)
+                if not isinstance(batch, (list, tuple)):
+                    continue
+                for agg in batch:
                     if getattr(agg, "alias", None) == "all":
                         return int(agg.value)
+                for agg in batch:
+                    return int(agg.value)
         except Exception as e:
             logger.warning(
                 "Firestore aggregation count failed: type=%s", type(e).__name__
             )
             return -1
-        return 0
+        return -1
+
+    def _count_query_stream_fallback(self, query, *, cap: int = 65535) -> int:
+        """Begrenzte Zählpass per Stream, wenn Aggregation nicht verfügbar ist."""
+        try:
+            n = 0
+            for _ in query.limit(cap + 1).stream():
+                n += 1
+                if n > cap:
+                    return -1
+            return n
+        except Exception as e:
+            logger.warning(
+                "Firestore stream count fallback failed: type=%s", type(e).__name__
+            )
+            return -1
 
     def count_collection(self, collection_name: str) -> int:
         ref = self._ensure_client().collection(collection_name)
-        return self._aggregation_count(ref)
+        agg = self._aggregation_count(ref)
+        if agg >= 0:
+            return agg
+        return self._count_query_stream_fallback(ref)
 
     def count_processed_videos_by_status(self, status: str) -> int:
         q = self._processed_collection_ref().where("status", "==", status)
-        return self._aggregation_count(q)
+        agg = self._aggregation_count(q)
+        if agg >= 0:
+            return agg
+        return self._count_query_stream_fallback(q)
 
     def count_processed_videos_by_skip_reason(self, skip_reason: str) -> int:
         q = self._processed_collection_ref().where(
             "skip_reason", "==", skip_reason
         )
-        return self._aggregation_count(q)
+        agg = self._aggregation_count(q)
+        if agg >= 0:
+            return agg
+        return self._count_query_stream_fallback(q)
 
     def count_script_jobs_by_status(self, status: str) -> int:
         q = self._script_jobs_collection_ref().where("status", "==", status)
-        return self._aggregation_count(q)
+        agg = self._aggregation_count(q)
+        if agg >= 0:
+            return agg
+        return self._count_query_stream_fallback(q)
 
     def get_latest_completed_job_completed_at(self) -> Optional[str]:
         try:
@@ -687,6 +730,91 @@ class FirestoreWatchlistRepository:
                 "Firestore is not reachable or rejected the write."
             ) from e
         return job
+
+    def _review_results_collection_ref(self):
+        return self._ensure_client().collection(REVIEW_RESULTS_COLLECTION)
+
+    def create_review_result(self, record: ReviewResultStored) -> ReviewResultStored:
+        doc_id = record.id
+        try:
+            self._review_results_collection_ref().document(doc_id).set(
+                record.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore review_results set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return record
+
+    def set_script_job_review_result_id(
+        self, job_id: str, review_result_id: str
+    ) -> None:
+        try:
+            self._script_jobs_collection_ref().document(job_id).update(
+                {"review_result_id": review_result_id}
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs review_result_id update failed: type=%s",
+                type(e).__name__,
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def update_processed_video_review_result_id(
+        self, video_id: str, review_result_id: str
+    ) -> None:
+        try:
+            self._processed_collection_ref().document(video_id).update(
+                {"review_result_id": review_result_id}
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore processed_videos review_result_id failed: type=%s",
+                type(e).__name__,
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def list_production_jobs(self, limit: int = 50) -> List[ProductionJob]:
+        lim = max(1, min(int(limit), 200))
+        try:
+            snaps = self._production_jobs_collection_ref().stream()
+        except Exception as e:
+            logger.warning(
+                "Firestore production_jobs stream failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[ProductionJob] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ProductionJob.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid production_jobs row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(key=lambda j: j.created_at or "", reverse=True)
+        return out[:lim]
+
+    def patch_production_job(self, doc_id: str, fields: Dict[str, Any]) -> None:
+        try:
+            self._production_jobs_collection_ref().document(doc_id).update(fields)
+        except Exception as e:
+            logger.warning(
+                "Firestore production_jobs patch failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
 
     def stream_script_jobs_for_error_summary(
         self, *, max_docs: int

@@ -5,6 +5,7 @@ from app.routes.generate import router as generate_router
 from app.routes.youtube import router as youtube_router
 from app.routes.review import router as review_router
 from app.routes.watchlist import router as watchlist_router
+from app.routes.production import router as production_router
 import logging
 import json
 
@@ -33,6 +34,7 @@ app.include_router(generate_router)
 app.include_router(youtube_router)
 app.include_router(review_router)
 app.include_router(watchlist_router)
+app.include_router(production_router)
 
 @app.get("/health")
 async def health():

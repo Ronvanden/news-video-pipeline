@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Literal, Optional
 
-from app.models import Chapter, ReviewScriptResponse
+from app.models import Chapter, ReviewIssue, ReviewRecommendation, ReviewScriptResponse, SimilarityFlag
 
 ChannelStatusLiteral = Literal["active", "paused", "error"]
 CheckIntervalLiteral = Literal["manual", "hourly", "daily", "weekly"]
@@ -222,6 +222,22 @@ class ReviewGeneratedScriptJobResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+class ReviewResultStored(BaseModel):
+    """Firestore ``review_results`` — analog ReviewScriptResponse, mit Verknüpfungen."""
+
+    id: str
+    script_job_id: str
+    generated_script_id: str
+    source_url: str = ""
+    risk_level: str = ""
+    originality_score: int = Field(ge=0, le=100, default=0)
+    similarity_flags: List[SimilarityFlag] = Field(default_factory=list)
+    issues: List[ReviewIssue] = Field(default_factory=list)
+    recommendations: List[ReviewRecommendation] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    created_at: str
+
+
 ProductionJobStatusLiteral = Literal[
     "queued", "in_progress", "completed", "failed", "skipped"
 ]
@@ -254,6 +270,18 @@ class ProductionJobCreateRequest(BaseModel):
 class CreateProductionJobResponse(BaseModel):
     job: Optional[ProductionJob] = None
     created: bool = True
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ListProductionJobsResponse(BaseModel):
+    jobs: List[ProductionJob] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ProductionJobActionResponse(BaseModel):
+    """Detail / Aktionen für ``production_jobs`` (kein Rendering)."""
+
+    job: Optional[ProductionJob] = None
     warnings: List[str] = Field(default_factory=list)
 
 

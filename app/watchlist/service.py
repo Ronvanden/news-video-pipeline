@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import uuid
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Literal, Tuple
@@ -40,6 +41,7 @@ from app.watchlist.models import (
     ProductionJob,
     ProductionJobCreateRequest,
     ReviewGeneratedScriptJobResponse,
+    ReviewResultStored,
     RunAutomationCycleResponse,
     RunPendingScriptJobsResponse,
     RunScriptJobResponse,
@@ -56,6 +58,8 @@ from app.watchlist.models import (
     WatchlistSkipReasonSummaryItem,
     WatchlistStuckRunningAnalysisResponse,
     WatchlistStuckRunningJobItem,
+    ListProductionJobsResponse,
+    ProductionJobActionResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -1247,7 +1251,14 @@ def review_generated_script_for_job(
         )
         return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
 
-    script_id = job.generated_script_id or jid
+    gid_raw = (job.generated_script_id or "").strip()
+    if not gid_raw:
+        ws.append(
+            "Review nur mit gesetztem generated_script_id am ScriptJob (kein Skriptbezug)."
+        )
+        return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
+
+    script_id = gid_raw
     try:
         gs = repo.get_generated_script(script_id)
     except FirestoreUnavailableError:
@@ -1282,6 +1293,54 @@ def review_generated_script_for_job(
             "Review-Schritt konnte nicht ausgeführt werden; gespeichertes Skript und Job-Status bleiben unverändert."
         )
         return ReviewGeneratedScriptJobResponse(job_id=jid, review=None, warnings=ws)
+
+    rid = f"rr_{uuid.uuid4().hex[:24]}"
+    stored = ReviewResultStored(
+        id=rid,
+        script_job_id=jid,
+        generated_script_id=gid_raw,
+        source_url=req.source_url,
+        risk_level=str(resp.risk_level),
+        originality_score=resp.originality_score,
+        similarity_flags=list(resp.similarity_flags),
+        issues=list(resp.issues),
+        recommendations=list(resp.recommendations),
+        warnings=list(resp.warnings or []),
+        created_at=utc_now_iso(),
+    )
+    try:
+        repo.create_review_result(stored)
+        repo.set_script_job_review_result_id(jid, rid)
+        try:
+            pv_link = repo.get_processed_video(job.video_id)
+        except FirestoreUnavailableError:
+            raise
+        if pv_link is not None:
+            same_job = (pv_link.script_job_id or "").strip() == jid
+            same_script = (pv_link.generated_script_id or "").strip() == gid_raw
+            if same_job or same_script:
+                try:
+                    repo.update_processed_video_review_result_id(
+                        pv_link.video_id, rid
+                    )
+                except FirestoreUnavailableError:
+                    ws.append(
+                        "Review gespeichert; Verknüpfung auf processed_videos "
+                        "konnte nicht gesetzt werden (Firestore)."
+                    )
+    except FirestoreUnavailableError:
+        raise
+    except Exception as e:
+        logger.warning(
+            "review_result persist failed: job_id=%s type=%s",
+            jid,
+            type(e).__name__,
+        )
+        ws.append(
+            "Review-Ergebnis konnte nicht in Firestore gespeichert werden; "
+            "HTTP-Antwort enthält die Auswertung, ScriptJob-Status unverändert."
+        )
+
     return ReviewGeneratedScriptJobResponse(job_id=jid, review=resp, warnings=ws)
 
 
@@ -1308,8 +1367,8 @@ def _count_or_warn(
     v = fn()
     if v < 0:
         warnings.append(
-            f"Zählung „{label_de}“ über Firestore-Aggregation nicht verfügbar "
-            "(Index/Client); Wert als 0 gesetzt."
+            f"Zählung „{label_de}“ nicht ermittelbar (Firestore-Aggregation/Stream); "
+            "Wert als 0 gesetzt."
         )
         return 0
     return v
@@ -1766,3 +1825,125 @@ def create_production_job_from_script_job(
     except FirestoreUnavailableError:
         raise
     return CreateProductionJobResponse(job=pj, created=True, warnings=ws)
+
+
+def list_production_jobs(
+    limit: int = 50,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> ListProductionJobsResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    try:
+        jobs = repo.list_production_jobs(limit=limit)
+    except FirestoreUnavailableError:
+        raise
+    return ListProductionJobsResponse(jobs=jobs, warnings=[])
+
+
+def get_production_job_detail(
+    production_job_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> ProductionJobActionResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        ws.append("production_job_id is empty.")
+        return ProductionJobActionResponse(job=None, warnings=ws)
+    try:
+        job = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if job is None:
+        ws.append("Production job not found.")
+        return ProductionJobActionResponse(job=None, warnings=ws)
+    return ProductionJobActionResponse(job=job, warnings=ws)
+
+
+def skip_production_job(
+    production_job_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> ProductionJobActionResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        ws.append("production_job_id is empty.")
+        return ProductionJobActionResponse(job=None, warnings=ws)
+    try:
+        job = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if job is None:
+        ws.append("Production job not found.")
+        return ProductionJobActionResponse(job=None, warnings=ws)
+    if job.status not in ("queued", "failed"):
+        ws.append(
+            "Skip nur für Status „queued“ oder „failed“ vorgesehen "
+            f"(aktuell: {job.status})."
+        )
+        return ProductionJobActionResponse(job=job, warnings=ws)
+    now_iso = utc_now_iso()
+    try:
+        repo.patch_production_job(
+            pid,
+            {
+                "status": "skipped",
+                "updated_at": now_iso,
+                "error": "",
+                "error_code": "",
+            },
+        )
+    except FirestoreUnavailableError:
+        raise
+    try:
+        refreshed = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    return ProductionJobActionResponse(job=refreshed or job, warnings=ws)
+
+
+def retry_production_job(
+    production_job_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> ProductionJobActionResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        ws.append("production_job_id is empty.")
+        return ProductionJobActionResponse(job=None, warnings=ws)
+    try:
+        job = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if job is None:
+        ws.append("Production job not found.")
+        return ProductionJobActionResponse(job=None, warnings=ws)
+    if job.status not in ("failed", "skipped"):
+        ws.append(
+            "Retry nur für Status „failed“ oder „skipped“ vorgesehen "
+            f"(aktuell: {job.status})."
+        )
+        return ProductionJobActionResponse(job=job, warnings=ws)
+    now_iso = utc_now_iso()
+    try:
+        repo.patch_production_job(
+            pid,
+            {
+                "status": "queued",
+                "updated_at": now_iso,
+                "error": "",
+                "error_code": "",
+            },
+        )
+    except FirestoreUnavailableError:
+        raise
+    try:
+        refreshed = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    return ProductionJobActionResponse(job=refreshed or job, warnings=ws)
