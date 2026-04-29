@@ -6,7 +6,7 @@ import logging
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Literal, Tuple
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 from app.youtube.scoring import is_likely_short_video
 from app.youtube.service import get_latest_channel_videos
@@ -24,6 +24,7 @@ from app.watchlist.scene_plan import (
     build_scenes_from_generated_script,
     decide_plan_status,
 )
+from app.watchlist.scene_asset_prompts import build_scene_asset_items
 from app.watchlist.firestore_repo import (
     GENERATED_SCRIPTS_COLLECTION,
     FirestoreUnavailableError,
@@ -52,6 +53,10 @@ from app.watchlist.models import (
     ScenePlan,
     ScenePlanGenerateResponse,
     ScenePlanGetResponse,
+    SceneAssets,
+    SceneAssetsGenerateRequest,
+    SceneAssetsGenerateResponse,
+    SceneAssetsGetResponse,
     ScriptJob,
     WatchlistChannel,
     WatchlistChannelCreateRequest,
@@ -2049,3 +2054,107 @@ def get_scene_plan_for_production_job(
     if sp is None:
         return ScenePlanGetResponse(scene_plan=None, warnings=["Scene plan not found."])
     return ScenePlanGetResponse(scene_plan=sp, warnings=[])
+
+
+_SCENE_ASSETS_IDEMP_WARN = (
+    "Scene-Assets existierten bereits — keine Neuerstellung (idempotent)."
+)
+
+
+def generate_scene_assets(
+    production_job_id: str,
+    req: Optional[SceneAssetsGenerateRequest] = None,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> SceneAssetsGenerateResponse:
+    """Erzeugt ``scene_assets`` aus ``scene_plans`` (Prompt-Entwürfe, kein Rendering)."""
+    repo = repo or FirestoreWatchlistRepository()
+    body = req or SceneAssetsGenerateRequest()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return SceneAssetsGenerateResponse(
+            scene_assets=None,
+            warnings=["production_job_id is empty."],
+        )
+    try:
+        existing = repo.get_scene_assets(pid)
+    except FirestoreUnavailableError:
+        raise
+    if existing is not None:
+        ws = [_SCENE_ASSETS_IDEMP_WARN]
+        return SceneAssetsGenerateResponse(scene_assets=existing, warnings=ws)
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return SceneAssetsGenerateResponse(
+            scene_assets=None,
+            warnings=["Production job not found."],
+        )
+    try:
+        plan = repo.get_scene_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+    if plan is None:
+        return SceneAssetsGenerateResponse(
+            scene_assets=None,
+            warnings=["Scene plan not found."],
+        )
+    scenes_src = list(plan.scenes or [])
+    if not scenes_src:
+        return SceneAssetsGenerateResponse(
+            scene_assets=None,
+            warnings=["Scene plan has no scenes; generate scene plan first."],
+        )
+
+    style = body.style_profile
+    items, eng_warns = build_scene_asset_items(scenes_src, style_profile=style)
+    merged_warns = list(plan.warnings or []) + list(eng_warns)
+    st = "ready" if items else "failed"
+    now_iso = utc_now_iso()
+    doc = SceneAssets(
+        id=pid,
+        production_job_id=pid,
+        scene_plan_id=(plan.id or pid).strip() or pid,
+        generated_script_id=(plan.generated_script_id or "").strip() or (
+            pj.generated_script_id or ""
+        ),
+        script_job_id=(plan.script_job_id or "").strip() or (pj.script_job_id or ""),
+        style_profile=style,
+        status=st,
+        asset_version=1,
+        scenes=items,
+        warnings=merged_warns,
+        created_at=now_iso,
+        updated_at=now_iso,
+    )
+    try:
+        repo.upsert_scene_assets(doc)
+    except FirestoreUnavailableError:
+        raise
+    return SceneAssetsGenerateResponse(scene_assets=doc, warnings=list(merged_warns))
+
+
+def get_scene_assets_for_production_job(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> SceneAssetsGetResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return SceneAssetsGetResponse(
+            scene_assets=None,
+            warnings=["production_job_id is empty."],
+        )
+    try:
+        sa = repo.get_scene_assets(pid)
+    except FirestoreUnavailableError:
+        raise
+    if sa is None:
+        return SceneAssetsGetResponse(
+            scene_assets=None,
+            warnings=["Scene assets not found."],
+        )
+    return SceneAssetsGetResponse(scene_assets=sa, warnings=[])

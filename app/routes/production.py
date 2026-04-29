@@ -1,6 +1,7 @@
-"""Production-Jobs — Liste, Detail, Skip/Retry, Szenenplan (BA 6.6); kein Rendering."""
+"""Production-Jobs — Liste, Detail, Skip/Retry, Szenenplan (BA 6.6), Scene-Assets (BA 6.7); kein Rendering."""
 
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -9,6 +10,9 @@ from app.watchlist.firestore_repo import FirestoreUnavailableError
 from app.watchlist.models import (
     ListProductionJobsResponse,
     ProductionJobActionResponse,
+    SceneAssetsGenerateRequest,
+    SceneAssetsGenerateResponse,
+    SceneAssetsGetResponse,
     ScenePlanGenerateResponse,
     ScenePlanGetResponse,
 )
@@ -109,5 +113,45 @@ async def production_get_scene_plan(production_job_id: str):
         raise HTTPException(status_code=503, detail=msg)
     if out.scene_plan is None:
         detail = out.warnings[0] if out.warnings else "Scene plan not found."
+        raise HTTPException(status_code=404, detail=detail)
+    return out
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/scene-assets/generate",
+    response_model=SceneAssetsGenerateResponse,
+)
+async def production_generate_scene_assets(
+    production_job_id: str,
+    body: Optional[SceneAssetsGenerateRequest] = None,
+):
+    """Prompt-Entwürfe je Szene (Firestore ``scene_assets``); deterministisch, idempotent."""
+    try:
+        out = watchlist_service.generate_scene_assets(
+            production_job_id, body, repo=None
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST scene-assets/generate failed: Firestore unavailable")
+        body503 = SceneAssetsGenerateResponse(scene_assets=None, warnings=[msg])
+        return JSONResponse(status_code=503, content=body503.model_dump())
+    if out.scene_assets is None:
+        detail = out.warnings[0] if out.warnings else "Not found."
+        raise HTTPException(status_code=404, detail=detail)
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/scene-assets",
+    response_model=SceneAssetsGetResponse,
+)
+async def production_get_scene_assets(production_job_id: str):
+    try:
+        out = watchlist_service.get_scene_assets_for_production_job(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if out.scene_assets is None:
+        detail = out.warnings[0] if out.warnings else "Scene assets not found."
         raise HTTPException(status_code=404, detail=detail)
     return out

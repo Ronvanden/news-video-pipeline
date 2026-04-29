@@ -334,6 +334,63 @@ class ScenePlanGetResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+SceneAssetStatusLiteral = Literal["draft", "ready", "failed"]
+SceneAssetStyleProfileLiteral = Literal[
+    "documentary",
+    "news",
+    "cinematic",
+    "faceless_youtube",
+    "true_crime",
+]
+
+
+class SceneAssetItem(BaseModel):
+    """Eine Szene mit Prompt-Entwürfen (BA 6.7)."""
+
+    scene_number: int = Field(ge=1)
+    title: str
+    voiceover_chunk: str = ""
+    image_prompt: str = ""
+    video_prompt: str = ""
+    thumbnail_prompt: str = ""
+    camera_direction: str = ""
+    mood: str = ""
+    asset_type: SceneAssetTypeLiteral = "generated"
+
+
+class SceneAssets(BaseModel):
+    """Firestore ``scene_assets`` — Document-ID = ``production_job_id``."""
+
+    id: str
+    production_job_id: str
+    scene_plan_id: str
+    generated_script_id: str
+    script_job_id: str
+    style_profile: SceneAssetStyleProfileLiteral = "documentary"
+    status: SceneAssetStatusLiteral = "draft"
+    asset_version: int = Field(default=1, ge=1)
+    scenes: List[SceneAssetItem] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class SceneAssetsGenerateRequest(BaseModel):
+    """Optionaler Body für POST …/scene-assets/generate."""
+
+    style_profile: SceneAssetStyleProfileLiteral = "documentary"
+
+
+class SceneAssetsGenerateResponse(BaseModel):
+    scene_assets: Optional[SceneAssets] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class SceneAssetsGetResponse(BaseModel):
+    scene_assets: Optional[SceneAssets] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
 class DevFixtureCompletedScriptJobRequest(BaseModel):
     """Nur aktiv wenn ENABLE_TEST_FIXTURES=true — Endpoint-Doku BA 6.6.1."""
 

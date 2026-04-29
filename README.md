@@ -55,7 +55,7 @@ app/
     ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
     ├── review.py     # /review-script
     ├── watchlist.py  # Watchlist-CRUD, Kanal-Check, Jobs, POST …/jobs/{id}/run (Phase 5)
-    ├── production.py # /production/jobs (+ BA 6.6 scene-plan Generate/Get)
+    ├── production.py # /production/jobs (+ BA 6.6 scene-plan, BA 6.7 scene-assets)
     └── dev_fixtures.py # BA 6.6.1: POST /dev/fixtures/* nur bei ENABLE_TEST_FIXTURES
 
 Dockerfile
@@ -308,6 +308,7 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 - **`GET /watchlist/errors/summary`**, Retry/Skip, Pause/Resume, **`POST …/create-production-job`**: wie zuvor in Abschnitten 5.8–6.2 dokumentiert (**`production_jobs`**-Stub ohne Rendering).
 - **`GET /production/jobs`** (`limit` 1–200), **`GET /production/jobs/{production_job_id}`**, **`POST /production/jobs/{production_job_id}/skip`**, **`POST /production/jobs/{production_job_id}/retry`**: nur Status in Firestore (**kein** Video-Render).
 - **`POST /production/jobs/{production_job_id}/scene-plan/generate`**, **`GET /production/jobs/{production_job_id}/scene-plan`**: Szenenplan (**BA 6.6**) in Collection **`scene_plans`** (Doc-ID = **`production_job_id`**); deterministische Aufteilung aus **`generated_scripts`**-Kapiteln bzw. Fallback **`full_script`**; erste Generierung wird persistiert — erneuter Aufruf gibt den bestehenden Plan mit Warnhinweis zurück (idempotent).
+- **`POST /production/jobs/{production_job_id}/scene-assets/generate`**, **`GET /production/jobs/{production_job_id}/scene-assets`**: Prompt-Entwürfe pro Szene (**BA 6.7**) in **`scene_assets`** (Doc-ID = **`production_job_id`**), auf Basis eines vorhandenen **`scene_plans`**; optionaler JSON-Body `{"style_profile": "documentary" | "news" | "cinematic" | "faceless_youtube" | "true_crime"}` (Default `documentary`). Keine Anbindung an Leonardo, Kling oder andere Renderer — nur Text-Prompts. Idempotent wie der Szenenplan.
 - **`POST /dev/fixtures/completed-script-job`**: nur für Dev/Test — bei **`ENABLE_TEST_FIXTURES=true`** (`.env`) ohne YouTube einen **`completed`** Job + **`generated_scripts`** (+ optional **`production_jobs`**); Job-IDs mit Präfix **`dev_fixture_`**. Ohne Flag: **403**.
 
 Beispiel:
