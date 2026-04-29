@@ -1,4 +1,7 @@
-"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``, ``review_results``, ``production_jobs``, ``scene_plans``, ``scene_assets``, ``voice_plans``, ``render_manifests``, ``production_checklists``.
+"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``,
+``generated_scripts``, ``review_results``, ``production_jobs``, ``scene_plans``, ``scene_assets``,
+``voice_plans``, ``render_manifests``, ``production_checklists``, ``provider_configs``, ``production_files``,
+``execution_jobs``, ``production_costs``, ``pipeline_audits``, ``recovery_actions``, ``pipeline_escalations``.
 
 Client ist injizierbar (Unit-Tests mit Mock).
 """
@@ -10,10 +13,17 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 from app.watchlist.models import (
+    ExecutionJob,
     GeneratedScript,
+    PipelineAudit,
+    PipelineEscalation,
     ProcessedVideo,
     ProductionChecklist,
+    ProductionCosts,
+    ProductionFileRecord,
     ProductionJob,
+    ProviderConfig,
+    RecoveryAction,
     RenderManifest,
     ReviewResultStored,
     SceneAssets,
@@ -38,6 +48,13 @@ RENDER_MANIFESTS_COLLECTION = "render_manifests"
 PRODUCTION_CHECKLISTS_COLLECTION = "production_checklists"
 WATCHLIST_META_COLLECTION = "watchlist_meta"
 WATCHLIST_META_AUTOMATION_DOC = "automation"
+PROVIDER_CONFIGS_COLLECTION = "provider_configs"
+PRODUCTION_FILES_COLLECTION = "production_files"
+EXECUTION_JOBS_COLLECTION = "execution_jobs"
+PRODUCTION_COSTS_COLLECTION = "production_costs"
+PIPELINE_AUDITS_COLLECTION = "pipeline_audits"
+RECOVERY_ACTIONS_COLLECTION = "recovery_actions"
+PIPELINE_ESCALATIONS_COLLECTION = "pipeline_escalations"
 
 
 def _utc_now_iso() -> str:
@@ -826,6 +843,20 @@ class FirestoreWatchlistRepository:
                 "Firestore is not reachable or rejected the update."
             ) from e
 
+    def patch_script_job(self, doc_id: str, fields: Dict[str, Any]) -> None:
+        did = (doc_id or "").strip()
+        if not did:
+            return
+        try:
+            self._script_jobs_collection_ref().document(did).update(fields)
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs patch failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
     def _scene_plans_collection_ref(self):
         return self._ensure_client().collection(SCENE_PLANS_COLLECTION)
 
@@ -1116,3 +1147,504 @@ class FirestoreWatchlistRepository:
                 )
                 continue
         return out, truncated
+
+    def _provider_configs_collection_ref(self):
+        return self._ensure_client().collection(PROVIDER_CONFIGS_COLLECTION)
+
+    def list_provider_configs(self) -> List[ProviderConfig]:
+        try:
+            snaps = self._provider_configs_collection_ref().stream()
+        except Exception as e:
+            logger.warning(
+                "Firestore provider_configs stream failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[ProviderConfig] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ProviderConfig.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid provider_configs row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(key=lambda c: c.provider_name)
+        return out
+
+    def get_provider_config(self, provider_name: str) -> Optional[ProviderConfig]:
+        pid = (provider_name or "").strip()
+        if not pid:
+            return None
+        try:
+            snap = self._provider_configs_collection_ref().document(pid).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore provider_configs get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return ProviderConfig.model_validate(merged)
+        except Exception:
+            return None
+
+    def upsert_provider_config(self, doc: ProviderConfig) -> ProviderConfig:
+        doc_id = (doc.id or doc.provider_name or "").strip()
+        if not doc_id:
+            raise FirestoreUnavailableError(
+                "provider_configs Document-ID darf nicht leer sein."
+            )
+        try:
+            self._provider_configs_collection_ref().document(doc_id).set(
+                doc.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore provider_configs set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return doc
+
+    def _production_files_collection_ref(self):
+        return self._ensure_client().collection(PRODUCTION_FILES_COLLECTION)
+
+    def list_production_files_for_job(
+        self, production_job_id: str
+    ) -> List[ProductionFileRecord]:
+        pj = (production_job_id or "").strip()
+        if not pj:
+            return []
+        try:
+            q = self._production_files_collection_ref().where(
+                "production_job_id", "==", pj
+            )
+            snaps = list(q.stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore production_files query failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[ProductionFileRecord] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ProductionFileRecord.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid production_files row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(key=lambda x: (x.file_type, x.scene_number, x.storage_path))
+        return out
+
+    def get_production_file_by_id(self, doc_id: str) -> Optional[ProductionFileRecord]:
+        did = (doc_id or "").strip()
+        if not did:
+            return None
+        try:
+            snap = self._production_files_collection_ref().document(did).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore production_files get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return ProductionFileRecord.model_validate(merged)
+        except Exception:
+            return None
+
+    def upsert_production_file(self, doc: ProductionFileRecord) -> ProductionFileRecord:
+        did = (doc.id or "").strip()
+        if not did:
+            raise FirestoreUnavailableError(
+                "production_files Document-ID darf nicht leer sein."
+            )
+        try:
+            self._production_files_collection_ref().document(did).set(
+                doc.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore production_files set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return doc
+
+    def _execution_jobs_collection_ref(self):
+        return self._ensure_client().collection(EXECUTION_JOBS_COLLECTION)
+
+    def list_execution_jobs_for_job(
+        self, production_job_id: str
+    ) -> List[ExecutionJob]:
+        pj = (production_job_id or "").strip()
+        if not pj:
+            return []
+        try:
+            q = self._execution_jobs_collection_ref().where(
+                "production_job_id", "==", pj
+            )
+            snaps = list(q.stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore execution_jobs query failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[ExecutionJob] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ExecutionJob.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid execution_jobs row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(
+            key=lambda j: (
+                j.priority,
+                j.job_type,
+                j.scene_number or 0,
+                j.id,
+            )
+        )
+        return out
+
+    def get_execution_job(self, doc_id: str) -> Optional[ExecutionJob]:
+        did = (doc_id or "").strip()
+        if not did:
+            return None
+        try:
+            snap = self._execution_jobs_collection_ref().document(did).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore execution_jobs get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return ExecutionJob.model_validate(merged)
+        except Exception:
+            return None
+
+    def upsert_execution_job(self, job: ExecutionJob) -> ExecutionJob:
+        did = (job.id or "").strip()
+        if not did:
+            raise FirestoreUnavailableError(
+                "execution_jobs Document-ID darf nicht leer sein."
+            )
+        try:
+            self._execution_jobs_collection_ref().document(did).set(
+                job.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore execution_jobs set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return job
+
+    def _production_costs_collection_ref(self):
+        return self._ensure_client().collection(PRODUCTION_COSTS_COLLECTION)
+
+    def get_production_costs(
+        self, production_job_id: str
+    ) -> Optional[ProductionCosts]:
+        did = (production_job_id or "").strip()
+        if not did:
+            return None
+        try:
+            snap = self._production_costs_collection_ref().document(did).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore production_costs get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return ProductionCosts.model_validate(merged)
+        except Exception:
+            return None
+
+    def upsert_production_costs(self, pc: ProductionCosts) -> ProductionCosts:
+        pid = (pc.production_job_id or "").strip()
+        doc_id = (pc.id or pid).strip()
+        if not doc_id:
+            raise FirestoreUnavailableError(
+                "production_costs Document-ID darf nicht leer sein."
+            )
+        merged = pc.model_copy(
+            update={
+                "id": doc_id,
+                "production_job_id": pid or doc_id,
+            }
+        )
+        try:
+            self._production_costs_collection_ref().document(doc_id).set(
+                merged.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore production_costs set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return merged
+
+    def _pipeline_audits_collection_ref(self):
+        return self._ensure_client().collection(PIPELINE_AUDITS_COLLECTION)
+
+    def get_pipeline_audit(self, doc_id: str) -> Optional[PipelineAudit]:
+        did = (doc_id or "").strip()
+        if not did:
+            return None
+        try:
+            snap = self._pipeline_audits_collection_ref().document(did).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore pipeline_audits get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return PipelineAudit.model_validate(merged)
+        except Exception:
+            return None
+
+    def upsert_pipeline_audit(self, row: PipelineAudit) -> PipelineAudit:
+        did = (row.id or "").strip()
+        if not did:
+            raise FirestoreUnavailableError(
+                "pipeline_audits Document-ID darf nicht leer sein."
+            )
+        try:
+            self._pipeline_audits_collection_ref().document(did).set(row.model_dump())
+        except Exception as e:
+            logger.warning(
+                "Firestore pipeline_audits set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return row
+
+    def patch_pipeline_audit(self, doc_id: str, fields: Dict[str, Any]) -> None:
+        did = (doc_id or "").strip()
+        if not did:
+            return
+        try:
+            self._pipeline_audits_collection_ref().document(did).update(fields)
+        except Exception as e:
+            logger.warning(
+                "Firestore pipeline_audits patch failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def stream_pipeline_audits_recent(self, limit: int = 600) -> List[PipelineAudit]:
+        """Neueste Stichprobe (ohne garantierte Sortierung durch Server). Client-seitig sortiert."""
+        lim = max(1, min(int(limit), 2500))
+        try:
+            snaps = list(self._pipeline_audits_collection_ref().limit(lim).stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore pipeline_audits stream failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[PipelineAudit] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(PipelineAudit.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid pipeline_audits row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(key=lambda x: x.detected_at or "", reverse=True)
+        return out
+
+    def _recovery_actions_collection_ref(self):
+        return self._ensure_client().collection(RECOVERY_ACTIONS_COLLECTION)
+
+    def upsert_recovery_action(self, row: RecoveryAction) -> RecoveryAction:
+        did = (row.id or "").strip()
+        if not did:
+            raise FirestoreUnavailableError(
+                "recovery_actions Document-ID darf nicht leer sein."
+            )
+        try:
+            self._recovery_actions_collection_ref().document(did).set(
+                row.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore recovery_actions set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return row
+
+    def stream_recovery_actions_recent(self, limit: int = 50) -> List[RecoveryAction]:
+        lim = max(1, min(int(limit), 300))
+        try:
+            snaps = list(self._recovery_actions_collection_ref().limit(lim).stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore recovery_actions stream failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[RecoveryAction] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(RecoveryAction.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid recovery_actions row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(key=lambda x: x.created_at or "", reverse=True)
+        return out
+
+    def _pipeline_escalations_collection_ref(self):
+        return self._ensure_client().collection(PIPELINE_ESCALATIONS_COLLECTION)
+
+    def upsert_pipeline_escalation(self, row: PipelineEscalation) -> PipelineEscalation:
+        did = (row.escalation_id or "").strip()
+        if not did:
+            raise FirestoreUnavailableError(
+                "pipeline_escalations escalation_id darf nicht leer sein."
+            )
+        try:
+            self._pipeline_escalations_collection_ref().document(did).set(
+                row.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore pipeline_escalations set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return row
+
+    def stream_pipeline_escalations_recent(self, limit: int = 200) -> List[PipelineEscalation]:
+        lim = max(1, min(int(limit), 500))
+        try:
+            snaps = list(
+                self._pipeline_escalations_collection_ref().limit(lim).stream()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore pipeline_escalations stream failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[PipelineEscalation] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            if merged.get("escalation_id") in (None, "") and merged.get("id"):
+                merged["escalation_id"] = merged["id"]
+            try:
+                if not merged.get("escalation_id"):
+                    merged["escalation_id"] = snap.id
+                out.append(PipelineEscalation.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid pipeline_escalations row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(key=lambda x: x.created_at or "", reverse=True)
+        return out
+
+    def _pipeline_escalations_collection_ref(self):
+        return self._ensure_client().collection(PIPELINE_ESCALATIONS_COLLECTION)
+
+    def upsert_pipeline_escalation(self, row: PipelineEscalation) -> PipelineEscalation:
+        did = (row.escalation_id or "").strip()
+        if not did:
+            raise FirestoreUnavailableError(
+                "pipeline_escalations escalation_id darf nicht leer sein."
+            )
+        try:
+            self._pipeline_escalations_collection_ref().document(did).set(
+                row.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore pipeline_escalations set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return row
+
+    def stream_pipeline_escalations_recent(self, limit: int = 200) -> List[PipelineEscalation]:
+        lim = max(1, min(int(limit), 500))
+        try:
+            snaps = list(self._pipeline_escalations_collection_ref().limit(lim).stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore pipeline_escalations stream failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[PipelineEscalation] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            if "escalation_id" not in merged and merged.get("id"):
+                merged["escalation_id"] = merged["id"]
+            try:
+                if not merged.get("escalation_id"):
+                    merged["escalation_id"] = snap.id
+                out.append(PipelineEscalation.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid pipeline_escalations row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(key=lambda x: x.created_at or "", reverse=True)
+        return out

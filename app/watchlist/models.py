@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
-from typing import List, Literal, Optional
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from typing import Any, Dict, List, Literal, Optional
 
 from app.models import Chapter, ReviewIssue, ReviewRecommendation, ReviewScriptResponse, SimilarityFlag
 
@@ -65,7 +65,14 @@ class ListWatchlistChannelsResponse(BaseModel):
 ProcessedVideoStatusLiteral = Literal["seen", "skipped", "script_generated"]
 ChannelCheckItemStatusLiteral = Literal["new", "known", "skipped"]
 
-ScriptJobStatusLiteral = Literal["pending", "running", "completed", "failed", "skipped"]
+ScriptJobStatusLiteral = Literal[
+    "pending",
+    "running",
+    "completed",
+    "failed",
+    "skipped",
+    "stuck",
+]
 SourceTypeYoutubeTranscript = Literal["youtube_transcript"]
 
 
@@ -118,6 +125,7 @@ class ScriptJob(BaseModel):
     review_result_id: Optional[str] = None
     attempt_count: int = Field(default=0, ge=0)
     last_attempt_at: Optional[str] = None
+    pipeline_step_retry_counts: Dict[str, int] = Field(default_factory=dict)
 
 
 class CreatedScriptJobItem(BaseModel):
@@ -250,6 +258,9 @@ ProductionJobStatusLiteral = Literal[
     "completed",
     "failed",
     "skipped",
+    "stuck",
+    "retryable",
+    "partial_failed",
 ]
 
 
@@ -268,6 +279,7 @@ class ProductionJob(BaseModel):
     updated_at: str
     error: str = ""
     error_code: str = ""
+    pipeline_step_retry_counts: Dict[str, int] = Field(default_factory=dict)
 
 
 class ProductionJobCreateRequest(BaseModel):
@@ -659,3 +671,414 @@ class WatchlistStuckRunningAnalysisResponse(BaseModel):
     threshold_minutes: int = 45
     stuck_jobs: List[WatchlistStuckRunningJobItem] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
+
+
+# --- BA 7.5–7.7: Daily Cycle, Provider-Readiness, Storage Foundation ---
+
+
+class RunDailyProductionCycleRequest(BaseModel):
+    channel_limit: int = Field(default=3, ge=1, le=50)
+    job_limit: int = Field(default=3, ge=1, le=10)
+    production_limit: int = Field(default=3, ge=1, le=50)
+    dry_run: bool = True
+
+
+class DailyCycleStepResult(BaseModel):
+    """Einzelergebnis im Daily Cycle (Debugging / Transparenz)."""
+
+    step: str = ""
+    production_job_id: str = ""
+    script_job_id: str = ""
+    outcome: str = ""
+    detail: str = ""
+
+
+class RunDailyProductionCycleResponse(BaseModel):
+    checked_channels: int = 0
+    completed_jobs: int = 0
+    failed_jobs: int = 0
+    production_jobs_created: int = 0
+    scene_plans_created: int = 0
+    scene_assets_created: int = 0
+    voice_plans_created: int = 0
+    render_manifests_created: int = 0
+    checklists_initialized: int = 0
+    warnings: List[str] = Field(default_factory=list)
+    results: List[DailyCycleStepResult] = Field(default_factory=list)
+
+
+ProviderNameLiteral = Literal[
+    "elevenlabs",
+    "openai",
+    "google",
+    "leonardo",
+    "kling",
+    "runway",
+    "generic",
+]
+ProviderConfigStatusLiteral = Literal["ready", "disabled", "error"]
+
+
+class ProviderConfig(BaseModel):
+    """Firestore ``provider_configs`` — Konfigurationsstatus ohne Secrets."""
+
+    id: str
+    provider_name: ProviderNameLiteral
+    enabled: bool = False
+    dry_run: bool = True
+    monthly_budget_limit: float = Field(default=0.0, ge=0)
+    current_month_estimated_cost: float = Field(default=0.0, ge=0)
+    status: ProviderConfigStatusLiteral = "disabled"
+    notes: str = ""
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class ProviderConfigUpsertRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: Optional[bool] = None
+    dry_run: Optional[bool] = None
+    monthly_budget_limit: Optional[float] = Field(default=None, ge=0)
+    current_month_estimated_cost: Optional[float] = Field(default=None, ge=0)
+    status: Optional[ProviderConfigStatusLiteral] = None
+    notes: Optional[str] = None
+
+
+class ListProviderConfigsResponse(BaseModel):
+    configs: List[ProviderConfig] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ProviderStatusItem(BaseModel):
+    provider_name: ProviderNameLiteral
+    enabled: bool = False
+    dry_run: bool = True
+    status: ProviderConfigStatusLiteral = "disabled"
+
+
+class ProviderStatusResponse(BaseModel):
+    providers: List[ProviderStatusItem] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+ProductionFileTypeLiteral = Literal[
+    "export_json",
+    "export_markdown",
+    "export_csv",
+    "voice",
+    "image",
+    "video",
+    "thumbnail",
+    "manifest",
+]
+ProductionFileRecordStatusLiteral = Literal["planned", "ready", "failed"]
+
+
+class ProductionFileRecord(BaseModel):
+    """Firestore ``production_files`` — geplante Artefakte (ohne echte Blob-Uploads)."""
+
+    id: str
+    production_job_id: str
+    file_type: ProductionFileTypeLiteral
+    storage_path: str = ""
+    public_url: str = ""
+    status: ProductionFileRecordStatusLiteral = "planned"
+    provider_name: ProviderNameLiteral = "generic"
+    scene_number: int = Field(default=0, ge=0)
+    created_at: str = ""
+    updated_at: str = ""
+    error: str = ""
+    error_code: str = ""
+
+
+class ListProductionFilesResponse(BaseModel):
+    files: List[ProductionFileRecord] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class PlanProductionFilesResponse(BaseModel):
+    """Antwort nach ``/files/plan`` — neu geplant + bereits vorhanden."""
+
+    files: List[ProductionFileRecord] = Field(default_factory=list)
+    planned_new: int = 0
+    skipped_existing_planned: int = 0
+    warnings: List[str] = Field(default_factory=list)
+
+
+# --- BA 7.8–7.9: Execution Queue & Budget-Schätzungen (keine echten Provider-Calls) ---
+
+
+ExecutionJobStatusLiteral = Literal[
+    "queued",
+    "running",
+    "completed",
+    "failed",
+    "skipped",
+]
+
+ExecutionJobTypeLiteral = Literal[
+    "voice_generate",
+    "image_generate",
+    "video_generate",
+    "thumbnail_generate",
+    "export_package",
+]
+
+
+class ExecutionJob(BaseModel):
+    """Firestore ``execution_jobs`` — ausführbare Tasks (Queue), Doc-ID deterministisch."""
+
+    id: str
+    production_job_id: str
+    production_file_id: Optional[str] = None
+    job_type: ExecutionJobTypeLiteral
+    provider_name: ProviderNameLiteral = "generic"
+    scene_number: Optional[int] = None
+    status: ExecutionJobStatusLiteral = "queued"
+    priority: int = Field(default=3, ge=1, le=5)
+    input_payload: Dict[str, Any] = Field(default_factory=dict)
+    output_reference: str = ""
+    estimated_cost: float = Field(default=0.0, ge=0.0)
+    error: str = ""
+    error_code: str = ""
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class ExecutionQueueInitResponse(BaseModel):
+    """Nach ``POST …/execution/init``."""
+
+    production_job_id: str
+    jobs: List[ExecutionJob] = Field(default_factory=list)
+    created_new: int = 0
+    reused_existing: int = 0
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ExecutionQueueGetResponse(BaseModel):
+    jobs: List[ExecutionJob] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ProductionCosts(BaseModel):
+    """Firestore ``production_costs`` — Doc-ID = ``production_job_id``."""
+
+    id: str
+    production_job_id: str
+    estimated_total_cost: float = Field(default=0.0, ge=0.0)
+    actual_total_cost: float = Field(default=0.0, ge=0.0)
+    currency: str = "EUR"
+    voice_cost_estimate: float = Field(default=0.0, ge=0.0)
+    image_cost_estimate: float = Field(default=0.0, ge=0.0)
+    video_cost_estimate: float = Field(default=0.0, ge=0.0)
+    thumbnail_cost_estimate: float = Field(default=0.0, ge=0.0)
+    buffer_cost_estimate: float = Field(default=0.0, ge=0.0)
+    warnings: List[str] = Field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class ProductionCostsCalculateResponse(BaseModel):
+    costs: Optional[ProductionCosts] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ProductionCostsGetResponse(BaseModel):
+    costs: Optional[ProductionCosts] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+# --- BA 8.0–8.2: Audit, Recovery, Monitoring ---
+
+
+PipelineAuditSeverityLiteral = Literal["info", "warning", "critical"]
+PipelineAuditStatusLiteral = Literal["open", "resolved", "ignored"]
+PipelineRecommendedActionLiteral = Literal[
+    "retry",
+    "reset",
+    "rebuild",
+    "retry_scene_plan",
+    "retry_scene_assets",
+    "retry_voice_plan",
+    "retry_render_manifest",
+    "retry_execution_job",
+    "retry_cost_estimate",
+    "reset_pipeline_step",
+]
+
+
+RecoveryActionKindLiteral = Literal[
+    "retry_scene_plan",
+    "retry_scene_assets",
+    "retry_voice_plan",
+    "retry_render_manifest",
+    "retry_execution_job",
+    "retry_cost_estimate",
+    "retry_production_files",
+    "reset_pipeline_step",
+    "full_rebuild",
+]
+RecoveryActionStatusLiteral = Literal["pending", "completed", "failed"]
+
+
+class PipelineAuditDraft(BaseModel):
+    audit_type: str
+    severity: PipelineAuditSeverityLiteral
+    detected_issue: str = ""
+    recommended_action: PipelineRecommendedActionLiteral = "rebuild"
+    auto_repairable: bool = False
+    production_job_id: Optional[str] = None
+    script_job_id: Optional[str] = None
+    extra_slug: Optional[str] = None
+
+
+class PipelineAudit(BaseModel):
+    """Firestore ``pipeline_audits``."""
+
+    id: str
+    production_job_id: Optional[str] = None
+    script_job_id: Optional[str] = None
+    audit_type: str = ""
+    severity: PipelineAuditSeverityLiteral = "info"
+    status: PipelineAuditStatusLiteral = "open"
+    detected_issue: str = ""
+    recommended_action: PipelineRecommendedActionLiteral = "rebuild"
+    auto_repairable: bool = False
+    detected_at: str = ""
+    resolved_at: Optional[str] = None
+    notes: str = ""
+
+
+class PipelineAuditRunRequest(BaseModel):
+    """Optionaler Begrenzer für Smoke-Loads (Firestore)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    stuck_threshold_minutes: int = Field(default=45, ge=5, le=1440)
+    production_job_limit: int = Field(default=80, ge=1, le=250)
+    resolve_missing_from_scan_set: bool = Field(
+        default=True,
+        description="Offene audits für dieselbe Produkt-Jobs-Untermenge ohne Befunde als resolved markieren.",
+    )
+
+
+class PipelineAuditRunResponse(BaseModel):
+    scanned_production_jobs: int = 0
+    scanned_script_jobs_stuck_candidates: int = 0
+    audits_written: int = 0
+    audits_resolved: int = 0
+    audits: List[PipelineAudit] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ListPipelineAuditsResponse(BaseModel):
+    audits: List[PipelineAudit] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ProductionRecoveryRetryRequest(BaseModel):
+    """Gezielter Neuaufbau eines Pipeline-Schrittes (unterscheidet sich vom klassischen Produktjob-„retry”)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    step: str = Field(
+        ...,
+        min_length=2,
+        max_length=64,
+        description=(
+            "scene_plan | scene_assets | voice_plan | render_manifest | "
+            "execution | costs | files | full_rebuild"
+        ),
+    )
+
+
+class RecoveryAction(BaseModel):
+    """Firestore ``recovery_actions`` — Protokolle."""
+
+    id: str
+    production_job_id: str
+    action_kind: RecoveryActionKindLiteral
+    requested_step_raw: str = ""
+    status: RecoveryActionStatusLiteral = "completed"
+    detail: str = ""
+    warnings: List[str] = Field(default_factory=list)
+    created_at: str = ""
+    finished_at: str = ""
+
+
+class ProductionPipelineRecoveryResponse(BaseModel):
+    action: RecoveryAction
+    warnings: List[str] = Field(default_factory=list)
+
+
+class PipelineMonitoringSummaryResponse(BaseModel):
+    audits_open_critical: int = 0
+    audits_open_warning: int = 0
+    audits_open_info: int = 0
+    audits_recent_resolved_sample: List[PipelineAudit] = Field(default_factory=list)
+    recovery_actions_recent: List[RecoveryAction] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+# --- BA 8.3: Status-Normalisierung & Eskalationen ---
+
+
+PipelineEscalationSeverityLiteral = Literal["low", "medium", "high", "critical"]
+PipelineEscalationCategoryLiteral = Literal[
+    "repeated_failure",
+    "provider_failure_cluster",
+    "dead_after_recovery",
+    "cost_anomaly",
+    "repairable_gap",
+]
+
+
+class PipelineEscalation(BaseModel):
+    """Firestore ``pipeline_escalations`` — Doc-ID deterministisch (siehe Service)."""
+
+    escalation_id: str
+    production_job_id: Optional[str] = None
+    script_job_id: Optional[str] = None
+    severity: PipelineEscalationSeverityLiteral = "medium"
+    category: PipelineEscalationCategoryLiteral
+    reason: str = ""
+    retry_count: int = Field(default=0, ge=0)
+    provider_flag: Optional[str] = None
+    created_at: str = ""
+
+
+class StatusNormalizeRunRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    stuck_running_minutes: int = Field(default=45, ge=5, le=1440)
+    queued_stall_minutes: int = Field(default=120, ge=15, le=2880)
+    production_job_scan_limit: int = Field(default=120, ge=1, le=250)
+    script_job_scan_limit: int = Field(default=200, ge=1, le=600)
+    max_step_retries: int = Field(default=3, ge=1, le=50)
+    cost_anomaly_ratio: float = Field(default=3.0, ge=1.05, le=100.0)
+    provider_failed_cluster_threshold: int = Field(default=3, ge=2, le=500)
+    dry_run: bool = False
+    retry_reason: str = Field(
+        default="status_normalize_run",
+        min_length=1,
+        max_length=500,
+    )
+
+
+class StatusNormalizeRunResponse(BaseModel):
+    orphaned_detected: int = 0
+    stuck_normalized: int = 0
+    queued_retryable_marked: int = 0
+    partial_failed_marked: int = 0
+    repairable_gap_escalations: int = 0
+    escalations_upserted: int = 0
+    hard_fails_retry_cap: int = 0
+    actions_log: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ListPipelineEscalationsResponse(BaseModel):
+    escalations: List[PipelineEscalation] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+

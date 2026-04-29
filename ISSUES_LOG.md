@@ -28,6 +28,14 @@ Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
 
 | 2026-04-30 | Production / Produktpaket BA 6.8–7.0 | Voice-Manifest, gebündeltes Render-Manifest, Connector-Stubs ohne TTS/APIs | Produktpfad soll Daten schichten ohne Skript-Vertrag zu brechen | Collections **`voice_plans`**, **`render_manifests`**; `voice_plan.py`, `render_manifest.py`, `connector_export.py`; Endpoints voice-plan / render-manifest / export | umgesetzt (`unittest discover`, `compileall`) | Kein Commit ohne Rückmeldung |
 
+| 2026-04-30 | Production / Dispatch & Kontrolle BA 7.8–7.9 | Geplante **`production_files`** ohne ausführbare Tasks und ohne grobe Budgetsicht für ein Video | Produktionspfad braucht operative Queue-Schicht vor echten APIs; Kostentransparenz als Schätzung | Collections **`execution_jobs`** (deterministische IDs ab **`pfile_*`** → **`exjob_*`**), **`production_costs`** (Doc-ID = **`production_job_id`**); **`execution_queue.py`**, **`cost_calculator.py`**; **`POST …/execution/init`** / **`GET …/execution`** / **`POST …/costs/calculate`** / **`GET …/costs`** — keine Provider-Calls | umgesetzt (`tests/test_ba78_79_execution_budget.py`, `compileall`) | ohne Commit angefragt |
+
+| 2026-04-30 | Automation / Provider / Storage **BA 7.5–7.7** | Scheduler-Endpunkt und Storage-Meta ohne echte Medien-Uploads vorbereiten | Daily-Cycle (**`dry_run`** ohne Writes), **`provider_configs`** / **`production_files`**, Router **`providers.py`** | umgesetzt (`tests/test_ba75_77_automation_provider_storage.py`, `unittest`, `compileall`) | Kein Commit ohne Rückmeldung |
+
+| 2026-04-30 | Operations / Hardening **BA 8.0–8.2** | Pipeline-Brüche und Drift nicht strukturiert erkennbar; kein gezieltes Re-Run pro Schritt | Nach Produktionsfeatures Fokus Kontrolle/Stabilität | **`pipeline_audits`**, **`recovery_actions`**, `pipeline_audit_scan.py`; **`POST /production/audit/run`**, **`GET /production/audit`**, **`POST …/recovery/retry`**, **`GET /production/monitoring/summary`** — Recovery getrennt vom Legacy-**`POST …/jobs/{id}/retry`** | umgesetzt (`tests/test_ba80_82_hardening.py`, `unittest discover`) | ohne Commit |
+
+| 2026-04-30 | Operations / Kontrolle **BA 8.3** | Audits allein stabilisieren keine Statusketten automatisch | Eskalationsschicht + Retry-Disziplin pro Schritt nach Max-Retries | Collection **`pipeline_escalations`**, **`status_normalizer.py`**, zusätzliche **`production_jobs`/`script_jobs`-Status (u. a. `stuck`, `retryable`, `partial_failed`) + Endpoints **`POST /production/status/normalize/run`**, **`GET /production/status/escalations`** — **kein** Bruch der Skript-APIs | umgesetzt (`tests/test_ba83_status_normalization.py`, `unittest discover`, `compileall`) | _(siehe Git-Log „BA 8.3…“)_ |
+
 ---
 
 ## Hinweise

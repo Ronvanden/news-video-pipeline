@@ -6,7 +6,7 @@ import logging
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
+from typing import Any, Callable, Dict, List, Literal, Optional, Set, Tuple
 
 from app.youtube.scoring import is_likely_short_video
 from app.youtube.service import get_latest_channel_videos
@@ -20,7 +20,18 @@ from app.utils import (
     generate_script_from_youtube_video,
 )
 from app.review.service import review_script
-from app.watchlist.connector_export import build_connector_export_payload
+from app.watchlist.cost_calculator import (
+    build_production_costs_document,
+    compute_category_totals_v1,
+    count_production_files_by_file_type,
+)
+from app.watchlist.execution_queue import build_execution_job_stub
+from app.watchlist.pipeline_audit_scan import (
+    pipeline_audit_document_id_from_draft,
+    scan_production_job_for_issues,
+    scan_stuck_running_script_issues,
+)
+from app.watchlist.status_normalizer import normalize_pipeline_status
 from app.watchlist.export_download import (
     build_provider_templates as build_provider_templates_dict,
     export_download_body,
@@ -56,20 +67,35 @@ from app.watchlist.models import (
     CreateProductionJobResponse,
     CreateWatchlistChannelResponse,
     CreatedScriptJobItem,
+    DailyCycleStepResult,
     GeneratedScript,
+    ExecutionQueueGetResponse,
+    ExecutionQueueInitResponse,
+    ExecutionJob,
     ListWatchlistChannelsResponse,
     ListWatchlistScriptJobsResponse,
+    ListProviderConfigsResponse,
+    ListProductionFilesResponse,
     PendingJobRunResultItem,
+    PlanProductionFilesResponse,
     ProcessedVideo,
+    ProductionFileRecord,
     ProductionJob,
     ProductionJobCreateRequest,
     ProductionConnectorExportResponse,
+    ProductionFileTypeLiteral,
+    ProviderConfig,
+    ProviderConfigUpsertRequest,
+    ProviderNameLiteral,
+    ProviderStatusItem,
+    ProviderStatusResponse,
     RenderManifest,
     RenderManifestGenerateResponse,
     RenderManifestGetResponse,
     ReviewGeneratedScriptJobResponse,
     ReviewResultStored,
     RunAutomationCycleResponse,
+    RunDailyProductionCycleResponse,
     RunPendingScriptJobsResponse,
     RunScriptJobResponse,
     ScenePlan,
@@ -100,6 +126,22 @@ from app.watchlist.models import (
     ProductionChecklist,
     ProductionChecklistResponse,
     ProductionChecklistUpdateRequest,
+    ProductionCostsCalculateResponse,
+    ProductionCostsGetResponse,
+    ProductionCosts,
+    ListPipelineAuditsResponse,
+    PipelineAudit,
+    PipelineAuditDraft,
+    PipelineAuditRunRequest,
+    PipelineAuditRunResponse,
+    StatusNormalizeRunRequest,
+    StatusNormalizeRunResponse,
+    ListPipelineEscalationsResponse,
+    PipelineMonitoringSummaryResponse,
+    ProductionPipelineRecoveryResponse,
+    ProductionRecoveryRetryRequest,
+    RecoveryAction,
+    RecoveryActionKindLiteral,
     ProductionJobActionResponse,
 )
 
@@ -1262,6 +1304,1256 @@ def run_automation_cycle(
         )
         out.warnings.append("Konnte last_run_cycle_at nicht speichern.")
     return out
+
+
+def _completed_script_jobs_missing_production(
+    repo: FirestoreWatchlistRepository,
+    limit: int,
+) -> List[ScriptJob]:
+    try:
+        jobs = repo.list_script_jobs(500)
+    except FirestoreUnavailableError:
+        raise
+    eligible: List[ScriptJob] = []
+    for j in jobs:
+        if j.status != "completed":
+            continue
+        gid = (j.generated_script_id or "").strip()
+        if not gid:
+            continue
+        try:
+            pj = repo.get_production_job(gid)
+        except FirestoreUnavailableError:
+            raise
+        if pj is None:
+            eligible.append(j)
+    eligible.sort(
+        key=lambda x: (x.completed_at or x.created_at or ""),
+        reverse=True,
+    )
+    lim = max(0, min(int(limit), 50))
+    return eligible[:lim]
+
+
+def _scene_count_for_file_plan(repo: FirestoreWatchlistRepository, pid: str) -> int:
+    try:
+        sa = repo.get_scene_assets(pid)
+        if sa is not None and sa.scenes:
+            return max(1, len(sa.scenes))
+        sp = repo.get_scene_plan(pid)
+        if sp is not None and sp.scenes:
+            return max(1, len(sp.scenes))
+    except FirestoreUnavailableError:
+        raise
+    return 1
+
+
+def _production_file_doc_id(
+    production_job_id: str,
+    file_type: str,
+    scene_number: int,
+) -> str:
+    safe = "".join(
+        ch if (ch.isalnum() or ch in "-_") else "_" for ch in production_job_id
+    )
+    return f"pfile_{safe}_{file_type}_{scene_number:04d}"
+
+
+ALL_PROVIDER_NAMES: Tuple[ProviderNameLiteral, ...] = (
+    "elevenlabs",
+    "openai",
+    "google",
+    "leonardo",
+    "kling",
+    "runway",
+    "generic",
+)
+
+
+def run_daily_production_cycle(
+    channel_limit: int = 3,
+    job_limit: int = 3,
+    production_limit: int = 3,
+    dry_run: bool = True,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+    get_videos: Optional[Callable[..., Dict[str, Any]]] = None,
+    transcript_checker: Optional[Callable[[str], Tuple[bool, List[str]]]] = None,
+    generate_fn: Optional[Callable[..., Any]] = None,
+) -> RunDailyProductionCycleResponse:
+    """Scheduler-tauglicher End-to-End-Lauf: Watchlist → Jobs → Production-Artefakte."""
+    repo = repo or FirestoreWatchlistRepository()
+    ch_lim = max(1, min(int(channel_limit), 50))
+    jb_lim = max(1, min(int(job_limit), 10))
+    prod_lim = max(1, min(int(production_limit), 50))
+
+    out = RunDailyProductionCycleResponse(
+        warnings=[],
+        results=[],
+    )
+
+    if not dry_run:
+        try:
+            auto = run_automation_cycle(
+                channel_limit=ch_lim,
+                job_limit=jb_lim,
+                repo=repo,
+                get_videos=get_videos,
+                transcript_checker=transcript_checker,
+                generate_fn=generate_fn,
+            )
+        except FirestoreUnavailableError:
+            raise
+        out.checked_channels = auto.checked_channels
+        out.completed_jobs = auto.completed_jobs
+        out.failed_jobs = auto.failed_jobs
+        out.warnings.extend(auto.warnings)
+        for jr in auto.job_results:
+            out.results.append(
+                DailyCycleStepResult(
+                    step="pending_script_job",
+                    script_job_id=jr.job_id,
+                    outcome=str(jr.outcome),
+                    detail=(jr.warnings[0] if jr.warnings else ""),
+                )
+            )
+        for ch in auto.channel_results:
+            out.results.append(
+                DailyCycleStepResult(
+                    step="watchlist_channel",
+                    outcome="ok" if ch.ok else "failed",
+                    detail=ch.channel_id,
+                )
+            )
+    else:
+        try:
+            listed = list_channels(repo=repo)
+        except FirestoreUnavailableError:
+            raise
+        active = [c for c in listed.channels if c.status == "active"]
+        slice_ch = sorted(active, key=lambda c: c.channel_id)[:ch_lim]
+        out.checked_channels = len(slice_ch)
+        out.warnings.append(
+            "dry_run: Watchlist-Kanalchecks und Pending-Skriptjobs wurden nicht "
+            "ausgeführt (keine Schreibvorgänge)."
+        )
+
+    # --- Script-Jobs ohne Production-Job anlegen ---
+    try:
+        need_pj = _completed_script_jobs_missing_production(repo, prod_lim)
+    except FirestoreUnavailableError:
+        raise
+
+    for sj in need_pj:
+        if dry_run:
+            out.production_jobs_created += 1
+            out.results.append(
+                DailyCycleStepResult(
+                    step="create_production_job",
+                    script_job_id=sj.id,
+                    outcome="dry_run",
+                    detail="Would create production job.",
+                )
+            )
+            continue
+        try:
+            cr = create_production_job_from_script_job(sj.id, repo=repo)
+            if cr.created and cr.job is not None:
+                out.production_jobs_created += 1
+            out.results.append(
+                DailyCycleStepResult(
+                    step="create_production_job",
+                    script_job_id=sj.id,
+                    outcome="ok" if cr.created else "skipped",
+                    detail=(cr.warnings[0] if cr.warnings else ""),
+                )
+            )
+        except FirestoreUnavailableError:
+            raise
+        except Exception as e:
+            logger.warning(
+                "daily cycle create production job failed: job_id=%s type=%s",
+                sj.id,
+                type(e).__name__,
+            )
+            out.results.append(
+                DailyCycleStepResult(
+                    step="create_production_job",
+                    script_job_id=sj.id,
+                    outcome="failed",
+                    detail=type(e).__name__,
+                )
+            )
+            out.warnings.append(
+                f"Production-Job-Erstellung fehlgeschlagen (script_job_id={sj.id})."
+            )
+
+    # --- Production-Pipeline (max. prod_lim neueste Jobs) ---
+    try:
+        pjobs = repo.list_production_jobs(300)
+    except FirestoreUnavailableError:
+        raise
+    pjobs.sort(key=lambda j: j.created_at or "", reverse=True)
+    batch = pjobs[:prod_lim]
+
+    for pj in batch:
+        pid = (pj.id or "").strip()
+        if not pid:
+            continue
+
+        if dry_run:
+            try:
+                if repo.get_scene_plan(pid) is None:
+                    gs_id = (pj.generated_script_id or "").strip()
+                    gs_ok = False
+                    if gs_id:
+                        gs_ok = repo.get_generated_script(gs_id) is not None
+                    if gs_ok:
+                        out.scene_plans_created += 1
+                if (
+                    repo.get_scene_plan(pid) is not None
+                    and repo.get_scene_assets(pid) is None
+                ):
+                    out.scene_assets_created += 1
+                if (
+                    repo.get_scene_assets(pid) is not None
+                    and repo.get_voice_plan(pid) is None
+                ):
+                    out.voice_plans_created += 1
+                if (
+                    repo.get_voice_plan(pid) is not None
+                    and repo.get_render_manifest(pid) is None
+                ):
+                    out.render_manifests_created += 1
+                if repo.get_production_checklist(pid) is None:
+                    out.checklists_initialized += 1
+            except FirestoreUnavailableError:
+                raise
+            except Exception as e:
+                logger.warning(
+                    "daily cycle dry_run inspect failed: production_job_id=%s type=%s",
+                    pid,
+                    type(e).__name__,
+                )
+                out.warnings.append(
+                    f"dry_run Inspektion fehlgeschlagen (production_job_id={pid})."
+                )
+            continue
+
+        def _run_step(
+            label: str,
+            fn: Callable[[], None],
+        ) -> None:
+            try:
+                fn()
+            except FirestoreUnavailableError:
+                raise
+            except Exception as e:
+                logger.warning(
+                    "daily cycle %s failed: production_job_id=%s type=%s",
+                    label,
+                    pid,
+                    type(e).__name__,
+                )
+                out.warnings.append(
+                    f"{label} fehlgeschlagen ({pid}): {type(e).__name__}."
+                )
+                out.results.append(
+                    DailyCycleStepResult(
+                        step=label,
+                        production_job_id=pid,
+                        outcome="failed",
+                        detail=type(e).__name__,
+                    )
+                )
+
+        def step_scene_plan() -> None:
+            before_sp = repo.get_scene_plan(pid)
+            sp_out = generate_scene_plan(pid, repo=repo)
+            if before_sp is None and sp_out.scene_plan is not None:
+                out.scene_plans_created += 1
+
+        def step_assets() -> None:
+            before_sa = repo.get_scene_assets(pid)
+            sa_out = generate_scene_assets(
+                pid, SceneAssetsGenerateRequest(), repo=repo
+            )
+            if before_sa is None and sa_out.scene_assets is not None:
+                out.scene_assets_created += 1
+
+        def step_voice() -> None:
+            before_vp = repo.get_voice_plan(pid)
+            vp_out = generate_voice_plan(
+                pid, VoicePlanGenerateRequest(), repo=repo
+            )
+            if before_vp is None and vp_out.voice_plan is not None:
+                out.voice_plans_created += 1
+
+        def step_manifest() -> None:
+            before_rm = repo.get_render_manifest(pid)
+            rm_out = generate_render_manifest(pid, repo=repo)
+            if before_rm is None and rm_out.render_manifest is not None:
+                out.render_manifests_created += 1
+
+        def step_checklist() -> None:
+            before_cl = repo.get_production_checklist(pid)
+            cl_out = initialize_checklist(pid, repo=repo)
+            if before_cl is None and cl_out.checklist is not None:
+                out.checklists_initialized += 1
+
+        try:
+            _run_step("scene_plan", step_scene_plan)
+            _run_step("scene_assets", step_assets)
+            _run_step("voice_plan", step_voice)
+            _run_step("render_manifest", step_manifest)
+            _run_step("checklist", step_checklist)
+        except FirestoreUnavailableError:
+            raise
+
+    return out
+
+
+def normalize_provider_route_name(name: str) -> ProviderNameLiteral:
+    n = (name or "").strip().lower()
+    allowed = set(ALL_PROVIDER_NAMES)
+    if n not in allowed:
+        raise ValueError("Unknown provider_name.")
+    return n  # type: ignore[return-value]
+
+
+def list_provider_configs_service(
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ListProviderConfigsResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    try:
+        rows = repo.list_provider_configs()
+    except FirestoreUnavailableError:
+        raise
+    return ListProviderConfigsResponse(configs=rows, warnings=[])
+
+
+def upsert_provider_config_service(
+    provider_name: str,
+    body: ProviderConfigUpsertRequest,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProviderConfig:
+    repo = repo or FirestoreWatchlistRepository()
+    name = normalize_provider_route_name(provider_name)
+    now = utc_now_iso()
+    try:
+        existing = repo.get_provider_config(name)
+    except FirestoreUnavailableError:
+        raise
+    base_data: Dict[str, Any]
+    if existing is None:
+        base_data = {
+            "id": name,
+            "provider_name": name,
+            "enabled": False,
+            "dry_run": True,
+            "monthly_budget_limit": 0.0,
+            "current_month_estimated_cost": 0.0,
+            "status": "disabled",
+            "notes": "",
+            "created_at": now,
+            "updated_at": now,
+        }
+    else:
+        base_data = existing.model_dump()
+    if body.enabled is not None:
+        base_data["enabled"] = body.enabled
+    if body.dry_run is not None:
+        base_data["dry_run"] = body.dry_run
+    if body.monthly_budget_limit is not None:
+        base_data["monthly_budget_limit"] = float(body.monthly_budget_limit)
+    if body.current_month_estimated_cost is not None:
+        base_data["current_month_estimated_cost"] = float(
+            body.current_month_estimated_cost
+        )
+    if body.status is not None:
+        base_data["status"] = body.status
+    if body.notes is not None:
+        base_data["notes"] = body.notes
+    merged = ProviderConfig.model_validate(base_data)
+    merged = merged.model_copy(update={"updated_at": now})
+    if existing is None:
+        merged = merged.model_copy(update={"created_at": now})
+    try:
+        repo.upsert_provider_config(merged)
+    except FirestoreUnavailableError:
+        raise
+    return merged
+
+
+def get_provider_status_service(
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProviderStatusResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    try:
+        stored_list = repo.list_provider_configs()
+    except FirestoreUnavailableError:
+        raise
+    by_name = {c.provider_name: c for c in stored_list}
+    items: List[ProviderStatusItem] = []
+    for name in ALL_PROVIDER_NAMES:
+        row = by_name.get(name)
+        if row is None:
+            items.append(
+                ProviderStatusItem(
+                    provider_name=name,
+                    enabled=False,
+                    dry_run=True,
+                    status="disabled",
+                )
+            )
+        else:
+            items.append(
+                ProviderStatusItem(
+                    provider_name=row.provider_name,
+                    enabled=row.enabled,
+                    dry_run=row.dry_run,
+                    status=row.status,
+                )
+            )
+    return ProviderStatusResponse(providers=items, warnings=[])
+
+
+def plan_production_files_service(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> PlanProductionFilesResponse:
+    """Geplante Storage-Pfade anlegen (idempotent für ``planned``)."""
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        return PlanProductionFilesResponse(
+            files=[], planned_new=0, skipped_existing_planned=0, warnings=["empty id"]
+        )
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return PlanProductionFilesResponse(
+            files=[], planned_new=0, skipped_existing_planned=0, warnings=["not found"]
+        )
+
+    n_scenes = _scene_count_for_file_plan(repo, pid)
+    now = utc_now_iso()
+
+    desired: List[ProductionFileRecord] = []
+
+    def add_rec(
+        ft: ProductionFileTypeLiteral,
+        path: str,
+        scene_no: int,
+        prov: ProviderNameLiteral,
+    ) -> None:
+        desired.append(
+            ProductionFileRecord(
+                id=_production_file_doc_id(pid, ft, scene_no),
+                production_job_id=pid,
+                file_type=ft,
+                storage_path=path,
+                public_url="",
+                status="planned",
+                provider_name=prov,
+                scene_number=scene_no,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+
+    base = pid
+    add_rec(
+        "export_json",
+        f"exports/{base}/production.json",
+        0,
+        "generic",
+    )
+    add_rec(
+        "manifest",
+        f"exports/{base}/manifest.json",
+        0,
+        "generic",
+    )
+    add_rec(
+        "export_markdown",
+        f"exports/{base}/production.md",
+        0,
+        "generic",
+    )
+    add_rec(
+        "export_csv",
+        f"exports/{base}/production.csv",
+        0,
+        "generic",
+    )
+    add_rec(
+        "thumbnail",
+        f"thumbnails/{base}/thumbnail.png",
+        0,
+        "generic",
+    )
+    for i in range(1, n_scenes + 1):
+        sn = f"{i:03d}"
+        add_rec(
+            "voice",
+            f"voice/{base}/scene_{sn}.mp3",
+            i,
+            "elevenlabs",
+        )
+        add_rec(
+            "image",
+            f"images/{base}/scene_{sn}.png",
+            i,
+            "leonardo",
+        )
+        add_rec(
+            "video",
+            f"videos/{base}/scene_{sn}.mp4",
+            i,
+            "kling",
+        )
+
+    planned_new = 0
+    skipped = 0
+    out_files: List[ProductionFileRecord] = []
+
+    for rec in desired:
+        try:
+            ex = repo.get_production_file_by_id(rec.id)
+        except FirestoreUnavailableError:
+            raise
+        if ex is not None and ex.status == "planned":
+            skipped += 1
+            out_files.append(ex)
+            continue
+        if ex is not None:
+            out_files.append(ex)
+            continue
+        try:
+            repo.upsert_production_file(rec)
+        except FirestoreUnavailableError:
+            raise
+        planned_new += 1
+        out_files.append(rec)
+
+    out_files.sort(key=lambda x: (x.file_type, x.scene_number, x.storage_path))
+    return PlanProductionFilesResponse(
+        files=out_files,
+        planned_new=planned_new,
+        skipped_existing_planned=skipped,
+        warnings=ws,
+    )
+
+
+def list_production_files_service(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ListProductionFilesResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return ListProductionFilesResponse(files=[], warnings=["empty id"])
+    try:
+        rows = repo.list_production_files_for_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    return ListProductionFilesResponse(files=rows, warnings=[])
+
+
+def init_execution_queue_service(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ExecutionQueueInitResponse:
+    """Aus ``production_files`` ausführbare ``execution_jobs`` erzeugen (idempotent)."""
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        return ExecutionQueueInitResponse(
+            production_job_id="",
+            jobs=[],
+            created_new=0,
+            reused_existing=0,
+            warnings=["production_job_id ist leer."],
+        )
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return ExecutionQueueInitResponse(
+            production_job_id=pid,
+            jobs=[],
+            created_new=0,
+            reused_existing=0,
+            warnings=["not found"],
+        )
+    try:
+        files = repo.list_production_files_for_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if not files:
+        ws.append(
+            "Keine production_files — zuerst POST …/production/jobs/{id}/files/plan ausführen."
+        )
+        return ExecutionQueueInitResponse(
+            production_job_id=pid,
+            jobs=[],
+            created_new=0,
+            reused_existing=0,
+            warnings=ws,
+        )
+
+    cat = compute_category_totals_v1(repo=repo, pj=pj)
+    counts = count_production_files_by_file_type(files)
+    now = utc_now_iso()
+    jobs_out: List[ExecutionJob] = []
+    created_new = 0
+    reused_existing = 0
+
+    for pf in sorted(files, key=lambda x: (x.file_type, x.scene_number, x.id)):
+        try:
+            stub = build_execution_job_stub(
+                pf,
+                production_job_id=pid,
+                repo=repo,
+                cat=cat,
+                file_type_counts=counts,
+                now_iso=now,
+            )
+        except FirestoreUnavailableError:
+            raise
+        try:
+            existing = repo.get_execution_job(stub.id)
+        except FirestoreUnavailableError:
+            raise
+        if existing is not None:
+            jobs_out.append(existing)
+            reused_existing += 1
+            continue
+        try:
+            repo.upsert_execution_job(stub)
+        except FirestoreUnavailableError:
+            raise
+        created_new += 1
+        jobs_out.append(stub)
+
+    if reused_existing > 0:
+        ws.append(
+            "Ein oder mehrere execution_jobs existierten bereits; bestehende Einträge wurden nicht überschrieben (idempotent)."
+        )
+    jobs_sorted = sorted(
+        jobs_out,
+        key=lambda j: (
+            getattr(j, "priority", 5),
+            getattr(j, "job_type", ""),
+            getattr(j, "scene_number", None) or 0,
+            getattr(j, "id", ""),
+        ),
+    )
+    return ExecutionQueueInitResponse(
+        production_job_id=pid,
+        jobs=jobs_sorted,
+        created_new=created_new,
+        reused_existing=reused_existing,
+        warnings=ws,
+    )
+
+
+def list_execution_jobs_service(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ExecutionQueueGetResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        return ExecutionQueueGetResponse(jobs=[], warnings=["production_job_id ist leer."])
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return ExecutionQueueGetResponse(jobs=[], warnings=["not found"])
+    try:
+        jobs = repo.list_execution_jobs_for_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    return ExecutionQueueGetResponse(jobs=jobs, warnings=ws)
+
+
+def calculate_production_costs_service(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProductionCostsCalculateResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    ws: List[str] = []
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return ProductionCostsCalculateResponse(costs=None, warnings=["production_job_id ist leer."])
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return ProductionCostsCalculateResponse(costs=None, warnings=["not found"])
+
+    existed: Optional[ProductionCosts] = None
+    try:
+        existed = repo.get_production_costs(pid)
+    except FirestoreUnavailableError:
+        raise
+
+    existed_created = getattr(existed, "created_at", None) if existed else None
+
+    merged = build_production_costs_document(
+        repo=repo,
+        pj=pj,
+        now_iso=utc_now_iso(),
+        existing_created_at=existed_created if isinstance(existed_created, str) else None,
+    )
+    try:
+        repo.upsert_production_costs(merged)
+    except FirestoreUnavailableError:
+        raise
+    return ProductionCostsCalculateResponse(costs=merged, warnings=ws)
+
+
+def get_production_costs_service(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProductionCostsGetResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        return ProductionCostsGetResponse(costs=None, warnings=["production_job_id ist leer."])
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return ProductionCostsGetResponse(costs=None, warnings=["not found"])
+    try:
+        row = repo.get_production_costs(pid)
+    except FirestoreUnavailableError:
+        raise
+    if row is None:
+        ws.append("production_costs nicht berechnet — POST …/costs/calculate nutzen.")
+    return ProductionCostsGetResponse(costs=row, warnings=ws)
+
+
+def _pipeline_audit_row_from_draft(
+    *,
+    draft: PipelineAuditDraft,
+    doc_id: str,
+    now_iso: str,
+    existing: Optional[PipelineAudit],
+) -> PipelineAudit:
+    first_at = getattr(existing, "detected_at", None) if existing else None
+    detected_at_val = (
+        first_at if isinstance(first_at, str) and first_at.strip() else now_iso
+    )
+    prev_notes = getattr(existing, "notes", "") if existing else ""
+    return PipelineAudit(
+        id=doc_id,
+        production_job_id=draft.production_job_id,
+        script_job_id=draft.script_job_id,
+        audit_type=draft.audit_type,
+        severity=draft.severity,
+        status="open",
+        detected_issue=draft.detected_issue,
+        recommended_action=draft.recommended_action,
+        auto_repairable=draft.auto_repairable,
+        detected_at=detected_at_val,
+        resolved_at=None,
+        notes=prev_notes or "",
+    )
+
+
+def run_pipeline_audit_service(
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+    body: Optional[PipelineAuditRunRequest] = None,
+) -> PipelineAuditRunResponse:
+    """Lädt Produktjobs + läuft Stuck-Analyse für ScriptJobs; persistiert Audits."""
+    repo = repo or FirestoreWatchlistRepository()
+    req = body if body is not None else PipelineAuditRunRequest()
+    ws: List[str] = []
+    now_iso = utc_now_iso()
+
+    drafts: List[PipelineAuditDraft] = []
+    stuck_drafts: List[PipelineAuditDraft] = []
+    try:
+        stuck_drafts = scan_stuck_running_script_issues(
+            repo, threshold_minutes=req.stuck_threshold_minutes
+        )
+        drafts.extend(stuck_drafts)
+    except FirestoreUnavailableError:
+        raise
+
+    scanned_pids: List[str] = []
+    try:
+        pjobs = repo.list_production_jobs(limit=req.production_job_limit)
+    except FirestoreUnavailableError:
+        raise
+    for pj in pjobs:
+        scanned_pids.append(pj.id)
+        try:
+            drafts.extend(
+                scan_production_job_for_issues(
+                    repo,
+                    pj_id=pj.id,
+                    pj_status=pj.status,
+                    generated_script_ref=pj.generated_script_id,
+                )
+            )
+        except FirestoreUnavailableError:
+            raise
+
+    this_run_doc_ids: Set[str] = set()
+    written: List[PipelineAudit] = []
+    audits_written = 0
+    for d in drafts:
+        doc_id = pipeline_audit_document_id_from_draft(d)
+        existing: Optional[PipelineAudit] = None
+        try:
+            existing = repo.get_pipeline_audit(doc_id)
+        except FirestoreUnavailableError:
+            raise
+        row = _pipeline_audit_row_from_draft(
+            draft=d, doc_id=doc_id, now_iso=now_iso, existing=existing
+        )
+        try:
+            repo.upsert_pipeline_audit(row)
+        except FirestoreUnavailableError:
+            raise
+        this_run_doc_ids.add(doc_id)
+        written.append(row)
+        audits_written += 1
+
+    resolved_cnt = 0
+    scanned_set = set(scanned_pids)
+    if req.resolve_missing_from_scan_set and (scanned_set or drafts):
+        try:
+            opens = repo.stream_pipeline_audits_recent(limit=2200)
+        except FirestoreUnavailableError:
+            raise
+        open_only = [a for a in opens if getattr(a, "status", "") == "open"]
+        for a in open_only:
+            if a.id in this_run_doc_ids:
+                continue
+            pj_here = (a.production_job_id or "").strip()
+            if not pj_here:
+                continue
+            if pj_here in scanned_set:
+                resolve_me = True
+            else:
+                resolve_me = False
+            if resolve_me:
+                try:
+                    repo.patch_pipeline_audit(
+                        a.id,
+                        {"status": "resolved", "resolved_at": now_iso},
+                    )
+                except FirestoreUnavailableError:
+                    raise
+                resolved_cnt += 1
+
+    return PipelineAuditRunResponse(
+        scanned_production_jobs=len(scanned_set),
+        scanned_script_jobs_stuck_candidates=len(stuck_drafts),
+        audits_written=audits_written,
+        audits_resolved=resolved_cnt,
+        audits=written,
+        warnings=ws,
+    )
+
+
+def list_pipeline_audits_service(
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+    limit: int = 150,
+    status: Optional[str] = None,
+    severity: Optional[str] = None,
+) -> ListPipelineAuditsResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    lim = max(1, min(int(limit), 500))
+    ws: List[str] = []
+    try:
+        rows = repo.stream_pipeline_audits_recent(limit=2200)
+    except FirestoreUnavailableError:
+        raise
+    filt: List[PipelineAudit] = []
+    st_ok = (status or "").strip().lower() if status else None
+    sv_ok = (severity or "").strip().lower() if severity else None
+    for r in rows:
+        if st_ok:
+            rr = getattr(r, "status", "") or ""
+            if (rr or "").lower() != st_ok:
+                continue
+        if sv_ok:
+            sev = getattr(r, "severity", "") or ""
+            if (sev or "").lower() != sv_ok:
+                continue
+        filt.append(r)
+        if len(filt) >= lim:
+            break
+    return ListPipelineAuditsResponse(audits=filt[:lim], warnings=ws)
+
+
+def _normalize_recovery_step(raw: str) -> str:
+    s = (raw or "").strip().lower().replace("-", "_")
+    aliases = {
+        "sceneplan": "scene_plan",
+        "scene_assets": "scene_assets",
+        "voiceplan": "voice_plan",
+        "voice_plan": "voice_plan",
+        "render": "render_manifest",
+        "manifest": "render_manifest",
+        "execution_queue": "execution",
+        "cost": "costs",
+        "budget": "costs",
+        "production_files": "files",
+    }
+    return aliases.get(s, s)
+
+
+def retry_production_pipeline_step_service(
+    production_job_id: str,
+    body: ProductionRecoveryRetryRequest,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProductionPipelineRecoveryResponse:
+    """Gezielt Generate-/Planning-Schritte erneut ausführen — getrennt von Status-„retry“."""
+    repo = repo or FirestoreWatchlistRepository()
+    ws: List[str] = []
+    pid = (production_job_id or "").strip()
+    if not pid:
+        ra = RecoveryAction(
+            id="rec_invalid",
+            production_job_id="",
+            action_kind="retry_scene_plan",
+            requested_step_raw=(body.step or ""),
+            status="failed",
+            detail="production_job_id leer",
+            warnings=["production_job_id leer"],
+            created_at=utc_now_iso(),
+            finished_at=utc_now_iso(),
+        )
+        return ProductionPipelineRecoveryResponse(action=ra, warnings=ws)
+    step = _normalize_recovery_step(body.step)
+    rid = f"rec_{uuid.uuid4().hex[:26]}"
+    now_start = utc_now_iso()
+
+    kind: RecoveryActionKindLiteral = "retry_scene_plan"
+    warn_accum: List[str] = []
+
+    def _finalize(
+        *,
+        kk: RecoveryActionKindLiteral,
+        ok: bool,
+        detail_txt: str,
+    ) -> RecoveryAction:
+        finished = utc_now_iso()
+        ra = RecoveryAction(
+            id=rid,
+            production_job_id=pid,
+            action_kind=kk,
+            requested_step_raw=body.step or "",
+            status="completed" if ok else "failed",
+            detail=detail_txt,
+            warnings=list(warn_accum),
+            created_at=now_start,
+            finished_at=finished,
+        )
+        try:
+            repo.upsert_recovery_action(ra)
+        except FirestoreUnavailableError:
+            raise
+        return ra
+
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        ra = RecoveryAction(
+            id=rid,
+            production_job_id=pid,
+            action_kind="reset_pipeline_step",
+            requested_step_raw=body.step or "",
+            status="failed",
+            detail="Production job nicht gefunden",
+            warnings=["not found"],
+            created_at=now_start,
+            finished_at=utc_now_iso(),
+        )
+        try:
+            repo.upsert_recovery_action(ra)
+        except FirestoreUnavailableError:
+            raise
+        return ProductionPipelineRecoveryResponse(action=ra, warnings=["not found"])
+
+    ok_detail = "ok"
+
+    try:
+        if step in ("scene_plan",):
+            kind = "retry_scene_plan"
+            out = generate_scene_plan(pid, repo=repo)
+            if out.scene_plan is None:
+                ws.extend(out.warnings or [])
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(
+                        kk=kind,
+                        ok=False,
+                        detail_txt=out.warnings[0] if out.warnings else "scene_plan failed",
+                    ),
+                    warnings=list(ws),
+                )
+
+        elif step in ("scene_assets",):
+            kind = "retry_scene_assets"
+            out_a = generate_scene_assets(
+                pid, SceneAssetsGenerateRequest(), repo=repo
+            )
+            if out_a.scene_assets is None:
+                ws.extend(out_a.warnings or [])
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(
+                        kk=kind,
+                        ok=False,
+                        detail_txt=out_a.warnings[0]
+                        if out_a.warnings
+                        else "scene_assets failed",
+                    ),
+                    warnings=list(ws),
+                )
+
+        elif step in ("voice_plan",):
+            kind = "retry_voice_plan"
+            out_v = generate_voice_plan(
+                pid,
+                VoicePlanGenerateRequest(),
+                repo=repo,
+            )
+            if out_v.voice_plan is None:
+                ws.extend(out_v.warnings or [])
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(
+                        kk=kind,
+                        ok=False,
+                        detail_txt=out_v.warnings[0]
+                        if out_v.warnings
+                        else "voice_plan failed",
+                    ),
+                    warnings=list(ws),
+                )
+
+        elif step in ("render_manifest",):
+            kind = "retry_render_manifest"
+            out_rm = generate_render_manifest(pid, repo=repo)
+            if out_rm.render_manifest is None:
+                ws.extend(out_rm.warnings or [])
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(
+                        kk=kind,
+                        ok=False,
+                        detail_txt=out_rm.warnings[0]
+                        if out_rm.warnings
+                        else "render_manifest failed",
+                    ),
+                    warnings=list(ws),
+                )
+
+        elif step in ("execution",):
+            kind = "retry_execution_job"
+            ex_out = init_execution_queue_service(pid, repo=repo)
+            ws.extend(ex_out.warnings or [])
+            ok_detail = f"jobs={len(ex_out.jobs)} created_new={ex_out.created_new}"
+
+        elif step in ("costs",):
+            kind = "retry_cost_estimate"
+            c_out = calculate_production_costs_service(pid, repo=repo)
+            if c_out.costs is None:
+                ws.extend(c_out.warnings or [])
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(
+                        kk=kind,
+                        ok=False,
+                        detail_txt=c_out.warnings[0]
+                        if c_out.warnings
+                        else "costs failed",
+                    ),
+                    warnings=list(ws),
+                )
+
+        elif step in ("files",):
+            kind = "retry_production_files"
+            fp = plan_production_files_service(pid, repo=repo)
+            ws.extend(fp.warnings or [])
+            ok_detail = f"planned_new={fp.planned_new}"
+
+        elif step == "full_rebuild":
+            kind = "full_rebuild"
+            seq_warnings: List[str] = []
+
+            sp = generate_scene_plan(pid, repo=repo)
+            if sp.scene_plan is None:
+                seq_warnings.extend(sp.warnings or [])
+                warn_accum.extend(seq_warnings)
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(
+                        kk=kind,
+                        ok=False,
+                        detail_txt="scene_plan blocking",
+                    ),
+                    warnings=list(warn_accum),
+                )
+            sa2 = generate_scene_assets(
+                pid, SceneAssetsGenerateRequest(), repo=repo
+            )
+            if sa2.scene_assets is None:
+                seq_warnings.extend(sa2.warnings or [])
+                warn_accum.extend(seq_warnings)
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(kk=kind, ok=False, detail_txt="scene_assets blocking"),
+                    warnings=list(warn_accum),
+                )
+            vp2 = generate_voice_plan(
+                pid, VoicePlanGenerateRequest(), repo=repo
+            )
+            if vp2.voice_plan is None:
+                seq_warnings.extend(vp2.warnings or [])
+                warn_accum.extend(seq_warnings)
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(kk=kind, ok=False, detail_txt="voice_plan blocking"),
+                    warnings=list(warn_accum),
+                )
+            rm2 = generate_render_manifest(pid, repo=repo)
+            if rm2.render_manifest is None:
+                seq_warnings.extend(rm2.warnings or [])
+                warn_accum.extend(seq_warnings)
+                return ProductionPipelineRecoveryResponse(
+                    action=_finalize(
+                        kk=kind, ok=False, detail_txt="render_manifest blocking"
+                    ),
+                    warnings=list(warn_accum),
+                )
+            pf2 = plan_production_files_service(pid, repo=repo)
+            seq_warnings.extend(pf2.warnings or [])
+            init_execution_queue_service(pid, repo=repo)
+            calculate_production_costs_service(pid, repo=repo)
+            warn_accum.extend(seq_warnings)
+            ok_detail = "full_rebuild ok"
+
+        else:
+            ws.append(f"Unbekannter recovery step: {body.step}")
+            warn_accum.extend(ws)
+            return ProductionPipelineRecoveryResponse(
+                action=_finalize(
+                    kk="reset_pipeline_step",
+                    ok=False,
+                    detail_txt=f"unsupported step={body.step}",
+                ),
+                warnings=list(warn_accum),
+            )
+
+        warn_accum.extend(ws)
+        return ProductionPipelineRecoveryResponse(
+            action=_finalize(kk=kind, ok=True, detail_txt=ok_detail),
+            warnings=list(warn_accum),
+        )
+    except FirestoreUnavailableError:
+        raise
+
+
+def pipeline_monitoring_summary_service(
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> PipelineMonitoringSummaryResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    ws: List[str] = []
+    try:
+        audits = repo.stream_pipeline_audits_recent(limit=1500)
+    except FirestoreUnavailableError:
+        raise
+    oc = ow = oi = 0
+    for a in audits:
+        if getattr(a, "status", "") != "open":
+            continue
+        se = (getattr(a, "severity", "") or "").lower()
+        if se == "critical":
+            oc += 1
+        elif se == "warning":
+            ow += 1
+        elif se == "info":
+            oi += 1
+    resolved_recent = [
+        a
+        for a in audits
+        if getattr(a, "status", "") == "resolved"
+    ][:24]
+    try:
+        rec = repo.stream_recovery_actions_recent(limit=30)
+    except FirestoreUnavailableError:
+        raise
+    return PipelineMonitoringSummaryResponse(
+        audits_open_critical=oc,
+        audits_open_warning=ow,
+        audits_open_info=oi,
+        audits_recent_resolved_sample=resolved_recent,
+        recovery_actions_recent=rec,
+        warnings=ws,
+    )
+
+
+def run_status_normalization_service(
+    *,
+    body: StatusNormalizeRunRequest,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> StatusNormalizeRunResponse:
+    """BA 8.3 — Statusketten stabilisieren und Eskalationen schreiben."""
+    repo = repo or FirestoreWatchlistRepository()
+    now_iso = utc_now_iso()
+    try:
+        recovery = repo.stream_recovery_actions_recent(limit=120)
+    except FirestoreUnavailableError:
+        raise
+    resp, _ = normalize_pipeline_status(
+        repo,
+        opts=body,
+        utc_now_iso=now_iso,
+        recent_recovery_actions=recovery,
+    )
+    return resp
+
+
+def list_pipeline_escalations_service(
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+    limit: int = 150,
+) -> ListPipelineEscalationsResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    lim = max(1, min(int(limit), 400))
+    try:
+        rows = repo.stream_pipeline_escalations_recent(limit=lim)
+    except FirestoreUnavailableError:
+        raise
+    return ListPipelineEscalationsResponse(escalations=rows, warnings=[])
 
 
 def review_generated_script_for_job(

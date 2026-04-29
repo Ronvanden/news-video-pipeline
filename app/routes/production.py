@@ -1,20 +1,38 @@
 """Production-Jobs — Liste, Detail, Skip/Retry, Szenenplan (BA 6.6), Scene-Assets (BA 6.7),
 Voice-Plan (BA 6.8), Render-Manifest (BA 6.9), Connector-Export (BA 7.0),
 Production OS: Export-Download & Provider-Templates (BA 7.1–7.2), Checkliste (BA 7.3),
-Status-Workflow (BA 7.4); kein Rendering/TTS."""
+Status-Workflow (BA 7.4), Execution Queue & Budget (BA 7.8–7.9); Audit / Recovery / Monitoring (BA 8.0–8.2);
+Status-Normalisierung & Eskalationen (BA 8.3); kein echtes Rendering/TTS."""
 
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from fastapi.responses import JSONResponse, Response
 
 from app.watchlist.firestore_repo import FirestoreUnavailableError
 from app.watchlist.models import (
+    ExecutionQueueGetResponse,
+    ExecutionQueueInitResponse,
+    ListPipelineAuditsResponse,
+    PipelineAuditRunRequest,
+    PipelineAuditRunResponse,
+    PipelineMonitoringSummaryResponse,
+    StatusNormalizeRunRequest,
+    StatusNormalizeRunResponse,
+    ListPipelineEscalationsResponse,
+    ProductionCostsCalculateResponse,
+    ProductionCostsGetResponse,
+    ProductionPipelineRecoveryResponse,
+    ProductionRecoveryRetryRequest,
     ListProductionJobsResponse,
+    ListProductionFilesResponse,
+    PlanProductionFilesResponse,
     ProductionChecklistResponse,
     ProductionChecklistUpdateRequest,
     ProductionJobActionResponse,
+    RunDailyProductionCycleRequest,
+    RunDailyProductionCycleResponse,
     ProductionConnectorExportResponse,
     RenderManifestGenerateResponse,
     RenderManifestGetResponse,
@@ -350,3 +368,234 @@ async def production_get_scene_assets(production_job_id: str):
         detail = out.warnings[0] if out.warnings else "Scene assets not found."
         raise HTTPException(status_code=404, detail=detail)
     return out
+
+
+@router.post(
+    "/production/automation/run-daily-cycle",
+    response_model=RunDailyProductionCycleResponse,
+)
+async def production_run_daily_cycle(
+    req: RunDailyProductionCycleRequest = Body(...),
+):
+    """BA 7.5 — Watchlist-Zyklus, Pending-Jobs, Production-Artefakte; dry_run ohne Schreibzugriffe."""
+    try:
+        return watchlist_service.run_daily_production_cycle(
+            channel_limit=req.channel_limit,
+            job_limit=req.job_limit,
+            production_limit=req.production_limit,
+            dry_run=req.dry_run,
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning(
+            "POST /production/automation/run-daily-cycle failed: Firestore unavailable"
+        )
+        body = RunDailyProductionCycleResponse(warnings=[msg])
+        return JSONResponse(status_code=503, content=body.model_dump())
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/files/plan",
+    response_model=PlanProductionFilesResponse,
+)
+async def production_files_plan(production_job_id: str):
+    """BA 7.7 — geplante Storage-Pfade persistieren (``planned``, idempotent)."""
+    try:
+        out = watchlist_service.plan_production_files_service(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST files/plan failed: Firestore unavailable")
+        body = PlanProductionFilesResponse(
+            files=[], planned_new=0, skipped_existing_planned=0, warnings=[msg]
+        )
+        return JSONResponse(status_code=503, content=body.model_dump())
+    if any(w == "not found" for w in (out.warnings or [])):
+        raise HTTPException(status_code=404, detail="Production job not found.")
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/files",
+    response_model=ListProductionFilesResponse,
+)
+async def production_files_list(production_job_id: str):
+    """BA 7.7 — Artefakt-Metadaten für einen Production Job."""
+    try:
+        dj = watchlist_service.get_production_job_detail(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if dj.job is None:
+        raise HTTPException(status_code=404, detail="Production job not found.")
+    try:
+        return watchlist_service.list_production_files_service(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/execution/init",
+    response_model=ExecutionQueueInitResponse,
+)
+async def production_execution_queue_init(production_job_id: str):
+    """BA 7.8 — Aus ``production_files`` werden ``execution_jobs`` aufgebaut (idempotent)."""
+    try:
+        out = watchlist_service.init_execution_queue_service(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST execution/init failed: Firestore unavailable")
+        body = ExecutionQueueInitResponse(
+            production_job_id=production_job_id,
+            jobs=[],
+            created_new=0,
+            reused_existing=0,
+            warnings=[msg],
+        )
+        return JSONResponse(status_code=503, content=body.model_dump())
+    if any(w == "not found" for w in (out.warnings or [])):
+        raise HTTPException(status_code=404, detail="Production job not found.")
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/execution",
+    response_model=ExecutionQueueGetResponse,
+)
+async def production_execution_queue_get(production_job_id: str):
+    try:
+        out = watchlist_service.list_execution_jobs_service(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if any(w == "not found" for w in (out.warnings or [])):
+        raise HTTPException(status_code=404, detail="Production job not found.")
+    return out
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/costs/calculate",
+    response_model=ProductionCostsCalculateResponse,
+)
+async def production_costs_calculate(production_job_id: str):
+    """BA 7.9 — Kosten-Schätzung (EUR) berechnen und in ``production_costs`` persistieren."""
+    try:
+        out = watchlist_service.calculate_production_costs_service(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST costs/calculate failed: Firestore unavailable")
+        body = ProductionCostsCalculateResponse(costs=None, warnings=[msg])
+        return JSONResponse(status_code=503, content=body.model_dump())
+    if any(w == "not found" for w in (out.warnings or [])):
+        raise HTTPException(status_code=404, detail="Production job not found.")
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/costs",
+    response_model=ProductionCostsGetResponse,
+)
+async def production_costs_get(production_job_id: str):
+    try:
+        out = watchlist_service.get_production_costs_service(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if any(w == "not found" for w in (out.warnings or [])):
+        raise HTTPException(status_code=404, detail="Production job not found.")
+    return out
+
+
+@router.post(
+    "/production/audit/run",
+    response_model=PipelineAuditRunResponse,
+)
+async def production_audit_run(body: PipelineAuditRunRequest):
+    """BA 8.0 — Audit-Funde persistieren."""
+    try:
+        return watchlist_service.run_pipeline_audit_service(body=body)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST /production/audit/run failed")
+        fb = PipelineAuditRunResponse(warnings=[msg])
+        return JSONResponse(status_code=503, content=fb.model_dump())
+
+
+@router.get(
+    "/production/audit",
+    response_model=ListPipelineAuditsResponse,
+)
+async def production_audit_list(
+    limit: int = Query(150, ge=1, le=500),
+    status_filter: Optional[str] = Query(None, alias="status"),
+    severity: Optional[str] = Query(None),
+):
+    try:
+        return watchlist_service.list_pipeline_audits_service(
+            limit=limit,
+            status=status_filter,
+            severity=severity,
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/recovery/retry",
+    response_model=ProductionPipelineRecoveryResponse,
+)
+async def production_pipeline_recovery_retry(
+    production_job_id: str,
+    body: ProductionRecoveryRetryRequest,
+):
+    """BA 8.1 — Schritt-gezielt erneut (nicht Produktjobs-„retry„)."""
+    try:
+        return watchlist_service.retry_production_pipeline_step_service(
+            production_job_id,
+            body,
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+
+
+@router.get(
+    "/production/monitoring/summary",
+    response_model=PipelineMonitoringSummaryResponse,
+)
+async def production_monitoring_summary():
+    """BA 8.2 — Kennzahlen Audits / Recovery-Protokolle."""
+    try:
+        return watchlist_service.pipeline_monitoring_summary_service()
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+
+
+@router.post(
+    "/production/status/normalize/run",
+    response_model=StatusNormalizeRunResponse,
+)
+async def production_status_normalize_run(body: StatusNormalizeRunRequest):
+    """BA 8.3 — Pipeline-Status stabilisieren, Eskalationen persistieren."""
+    try:
+        return watchlist_service.run_status_normalization_service(body=body)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST /production/status/normalize/run failed")
+        fb = StatusNormalizeRunResponse(warnings=[msg])
+        return JSONResponse(status_code=503, content=fb.model_dump())
+
+
+@router.get(
+    "/production/status/escalations",
+    response_model=ListPipelineEscalationsResponse,
+)
+async def production_status_escalations(limit: int = Query(120, ge=1, le=400)):
+    """BA 8.3 — letzte Einträge in ``pipeline_escalations``."""
+    try:
+        return watchlist_service.list_pipeline_escalations_service(limit=limit)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
