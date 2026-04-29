@@ -80,16 +80,69 @@ def _topic_clarity_points(title: str) -> Tuple[int, str]:
     return 24, "langer Titel, Fokus evtl. diffus"
 
 
-def _shorts_and_noise_penalty(title: str, duration_seconds: int | None) -> Tuple[int, str]:
+def _url_suggests_shorts(video_url: str) -> bool:
+    u = (video_url or "").strip().lower()
+    if not u:
+        return False
+    return "/shorts/" in u or u.rstrip("/").endswith("/shorts")
+
+
+def _title_suggests_shorts(title: str) -> bool:
+    low = (title or "").strip().lower()
+    if not low:
+        return False
+    if "#shorts" in low:
+        return True
+    if low == "shorts":
+        return True
+    if re.search(r"\[shorts\]", low):
+        return True
+    if re.search(r"\(shorts\)", low):
+        return True
+    if re.search(r"(\||-)\s*shorts\s*$", low):
+        return True
+    if re.search(r"\bshorts\s*$", low):
+        return True
+    return False
+
+
+def _metadata_suggests_shorts(media_keywords: str) -> bool:
+    s = (media_keywords or "").strip().lower()
+    if not s:
+        return False
+    for part in re.split(r"[,;]+", s):
+        if part.strip() in ("shorts", "#shorts", "youtube shorts"):
+            return True
+    return bool(re.search(r"\bshorts\b", s))
+
+
+def _shorts_and_noise_penalty(
+    title: str,
+    duration_seconds: int | None,
+    video_url: str = "",
+    media_keywords: str = "",
+) -> Tuple[int, str]:
     reasons: list[str] = []
     penalty = 0
-    low = (title or "").lower()
-    if "#shorts" in low or "shorts" == low.strip():
+    shorts_hint = (
+        _url_suggests_shorts(video_url)
+        or _title_suggests_shorts(title)
+        or _metadata_suggests_shorts(media_keywords)
+    )
+    if shorts_hint:
         penalty += 25
-        reasons.append("Shorts-Hinweis im Titel")
+        reasons.append("Shorts-Hinweis erkannt")
     if duration_seconds is not None and duration_seconds > 0 and duration_seconds < 60:
         penalty += 20
         reasons.append("sehr kurze Laufzeit (<60s)")
+    if (
+        shorts_hint
+        and duration_seconds is not None
+        and duration_seconds > 0
+        and 60 <= duration_seconds < 90
+    ):
+        penalty += 10
+        reasons.append("kurze Laufzeit bei Shorts-Hinweis (60–90s)")
     if len((title or "").strip()) < 8:
         penalty += 12
         reasons.append("Titel sehr knapp")
@@ -126,10 +179,14 @@ def score_video(
     title: str,
     published_at: str,
     duration_seconds: int | None,
+    video_url: str = "",
+    media_keywords: str = "",
 ) -> Tuple[int, str]:
     r_pts, r_note = _recency_points(published_at)
     t_pts, t_note = _topic_clarity_points(title)
-    pen, p_note = _shorts_and_noise_penalty(title, duration_seconds)
+    pen, p_note = _shorts_and_noise_penalty(
+        title, duration_seconds, video_url=video_url, media_keywords=media_keywords
+    )
     raw = r_pts + t_pts - pen
     score = max(0, min(100, raw))
     reason = (

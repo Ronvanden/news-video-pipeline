@@ -26,7 +26,13 @@ def get_latest_channel_videos(channel_url: str, max_results: int) -> Dict[str, A
 
     videos: List[Dict[str, Any]] = []
     for e in entries:
-        sc, reason = score_video(e.title, e.published_at, e.duration_seconds)
+        sc, reason = score_video(
+            e.title,
+            e.published_at,
+            e.duration_seconds,
+            video_url=e.url,
+            media_keywords=e.media_keywords,
+        )
         summary = build_summary_from_title(e.title)
         videos.append(
             {

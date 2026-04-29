@@ -38,6 +38,7 @@ class RssVideoEntry:
     url: str
     published_at: str
     duration_seconds: int | None
+    media_keywords: str = ""
 
 
 def _entry_video_id(entry: ET.Element) -> str:
@@ -57,6 +58,15 @@ def _parse_duration(entry: ET.Element) -> int | None:
             if dur is not None and str(dur).isdigit():
                 return int(dur)
     return None
+
+
+def _parse_media_keywords(entry: ET.Element) -> str:
+    for el in entry.iter():
+        if el.tag == f"{{{_MEDIA_NS}}}keywords" or el.tag.endswith("}keywords"):
+            t = (el.text or "").strip()
+            if t:
+                return t
+    return ""
 
 
 def fetch_channel_feed_entries(channel_id: str, max_results: int) -> Tuple[str, List[RssVideoEntry], List[str]]:
@@ -113,6 +123,7 @@ def fetch_channel_feed_entries(channel_id: str, max_results: int) -> Tuple[str, 
         if not href and video_id:
             href = f"https://www.youtube.com/watch?v={video_id}"
         dur = _parse_duration(entry)
+        kw = _parse_media_keywords(entry)
         entries.append(
             RssVideoEntry(
                 title=title_text,
@@ -120,6 +131,7 @@ def fetch_channel_feed_entries(channel_id: str, max_results: int) -> Tuple[str, 
                 url=href,
                 published_at=published,
                 duration_seconds=dur,
+                media_keywords=kw,
             )
         )
 
