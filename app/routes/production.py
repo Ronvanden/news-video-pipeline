@@ -1,15 +1,19 @@
 """Production-Jobs — Liste, Detail, Skip/Retry, Szenenplan (BA 6.6), Scene-Assets (BA 6.7),
-Voice-Plan (BA 6.8), Render-Manifest (BA 6.9), Connector-Export (BA 7.0); kein Rendering/TTS."""
+Voice-Plan (BA 6.8), Render-Manifest (BA 6.9), Connector-Export (BA 7.0),
+Production OS: Export-Download & Provider-Templates (BA 7.1–7.2), Checkliste (BA 7.3),
+Status-Workflow (BA 7.4); kein Rendering/TTS."""
 
 import logging
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from app.watchlist.firestore_repo import FirestoreUnavailableError
 from app.watchlist.models import (
     ListProductionJobsResponse,
+    ProductionChecklistResponse,
+    ProductionChecklistUpdateRequest,
     ProductionJobActionResponse,
     ProductionConnectorExportResponse,
     RenderManifestGenerateResponse,
@@ -234,6 +238,102 @@ async def production_connector_export(production_job_id: str):
     except FirestoreUnavailableError as e:
         msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
         raise HTTPException(status_code=503, detail=msg)
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/export/download",
+)
+async def production_export_download(
+    production_job_id: str,
+    export_format: str = Query(
+        "json",
+        alias="format",
+        description="json | markdown | csv | txt",
+    ),
+):
+    """BA 7.1 — Manifest + Provider-Templates als Download (read-only)."""
+    fmt = (export_format or "json").strip().lower()
+    if fmt not in ("json", "markdown", "csv", "txt"):
+        raise HTTPException(
+            status_code=422,
+            detail="Unsupported format; use json, markdown, csv, or txt.",
+        )
+    try:
+        body, media_type, filename, warns = watchlist_service.generate_export_download(
+            production_job_id, fmt
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if body is None:
+        detail = warns[0] if warns else "Export nicht möglich."
+        raise HTTPException(status_code=404, detail=detail)
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"',
+    }
+    return Response(content=body, media_type=media_type, headers=headers)
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/checklist/init",
+    response_model=ProductionChecklistResponse,
+)
+async def production_checklist_init(production_job_id: str):
+    """BA 7.3 — Checkliste anlegen oder bestehende mit Auto-Flags zurückgeben."""
+    try:
+        out = watchlist_service.initialize_checklist(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST checklist/init failed: Firestore unavailable")
+        body = ProductionChecklistResponse(checklist=None, warnings=[msg])
+        return JSONResponse(status_code=503, content=body.model_dump())
+    if out.checklist is None:
+        raise HTTPException(
+            status_code=404,
+            detail=out.warnings[0] if out.warnings else "Production job not found.",
+        )
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/checklist",
+    response_model=ProductionChecklistResponse,
+)
+async def production_checklist_get(production_job_id: str):
+    try:
+        out = watchlist_service.get_production_checklist_for_job(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if out.checklist is None:
+        raise HTTPException(
+            status_code=404,
+            detail=out.warnings[0] if out.warnings else "Checklist not found.",
+        )
+    return out
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/checklist/update",
+    response_model=ProductionChecklistResponse,
+)
+async def production_checklist_update(
+    production_job_id: str,
+    body: ProductionChecklistUpdateRequest,
+):
+    try:
+        out = watchlist_service.update_checklist(production_job_id, body)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST checklist/update failed: Firestore unavailable")
+        resp = ProductionChecklistResponse(checklist=None, warnings=[msg])
+        return JSONResponse(status_code=503, content=resp.model_dump())
+    if out.checklist is None:
+        raise HTTPException(
+            status_code=404,
+            detail=out.warnings[0] if out.warnings else "Checklist not found.",
+        )
+    return out
 
 
 @router.get(

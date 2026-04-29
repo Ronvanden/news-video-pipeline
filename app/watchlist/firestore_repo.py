@@ -1,4 +1,4 @@
-"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``, ``review_results``, ``production_jobs``, ``scene_plans``, ``scene_assets``, ``voice_plans``, ``render_manifests``.
+"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``, ``review_results``, ``production_jobs``, ``scene_plans``, ``scene_assets``, ``voice_plans``, ``render_manifests``, ``production_checklists``.
 
 Client ist injizierbar (Unit-Tests mit Mock).
 """
@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Optional
 from app.watchlist.models import (
     GeneratedScript,
     ProcessedVideo,
+    ProductionChecklist,
     ProductionJob,
     RenderManifest,
     ReviewResultStored,
@@ -34,6 +35,7 @@ SCENE_PLANS_COLLECTION = "scene_plans"
 SCENE_ASSETS_COLLECTION = "scene_assets"
 VOICE_PLANS_COLLECTION = "voice_plans"
 RENDER_MANIFESTS_COLLECTION = "render_manifests"
+PRODUCTION_CHECKLISTS_COLLECTION = "production_checklists"
 WATCHLIST_META_COLLECTION = "watchlist_meta"
 WATCHLIST_META_AUTOMATION_DOC = "automation"
 
@@ -1001,6 +1003,56 @@ class FirestoreWatchlistRepository:
                 "Firestore is not reachable or rejected the write."
             ) from e
         return manifest
+
+    def _production_checklists_collection_ref(self):
+        return self._ensure_client().collection(PRODUCTION_CHECKLISTS_COLLECTION)
+
+    def get_production_checklist(
+        self, production_job_id: str
+    ) -> Optional[ProductionChecklist]:
+        doc_id = (production_job_id or "").strip()
+        if not doc_id:
+            return None
+        try:
+            snap = self._production_checklists_collection_ref().document(doc_id).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore production_checklists get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return ProductionChecklist.model_validate(merged)
+        except Exception as e:
+            logger.warning(
+                "invalid production_checklists doc: id=%s type=%s",
+                snap.id,
+                type(e).__name__,
+            )
+            return None
+
+    def upsert_production_checklist(self, doc: ProductionChecklist) -> ProductionChecklist:
+        doc_id = (doc.production_job_id or doc.id or "").strip()
+        if not doc_id:
+            raise FirestoreUnavailableError(
+                "production_checklists Document-ID darf nicht leer sein."
+            )
+        try:
+            self._production_checklists_collection_ref().document(doc_id).set(
+                doc.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore production_checklists set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return doc
 
     def stream_script_jobs_for_error_summary(
         self, *, max_docs: int

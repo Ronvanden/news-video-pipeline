@@ -123,7 +123,7 @@ class Ba67SceneAssetsService(unittest.TestCase):
         self.assertIs(out.scene_assets, existing)
         self.assertEqual(len(out.warnings), 1)
         self.assertIn("idempotent", out.warnings[0].lower())
-        repo.get_production_job.assert_not_called()
+        repo.get_production_job.assert_called_once_with("pj1")
         repo.upsert_scene_assets.assert_not_called()
 
     def test_style_profile_variations(self):

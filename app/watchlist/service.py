@@ -21,6 +21,14 @@ from app.utils import (
 )
 from app.review.service import review_script
 from app.watchlist.connector_export import build_connector_export_payload
+from app.watchlist.export_download import (
+    build_provider_templates as build_provider_templates_dict,
+    export_download_body,
+)
+from app.watchlist.production_checklist import (
+    auto_checklist_booleans,
+    compute_target_production_status,
+)
 from app.watchlist.scene_plan import (
     build_scenes_from_generated_script,
     decide_plan_status,
@@ -89,6 +97,9 @@ from app.watchlist.models import (
     WatchlistStuckRunningAnalysisResponse,
     WatchlistStuckRunningJobItem,
     ListProductionJobsResponse,
+    ProductionChecklist,
+    ProductionChecklistResponse,
+    ProductionChecklistUpdateRequest,
     ProductionJobActionResponse,
 )
 
@@ -1909,9 +1920,19 @@ def skip_production_job(
     if job is None:
         ws.append("Production job not found.")
         return ProductionJobActionResponse(job=None, warnings=ws)
-    if job.status not in ("queued", "failed"):
+    _skip_ok = (
+        "queued",
+        "failed",
+        "planning_ready",
+        "assets_ready",
+        "voice_ready",
+        "editing_ready",
+        "upload_ready",
+        "in_progress",
+    )
+    if job.status not in _skip_ok:
         ws.append(
-            "Skip nur für Status „queued“ oder „failed“ vorgesehen "
+            "Skip ist für diesen Produktionsstatus nicht vorgesehen "
             f"(aktuell: {job.status})."
         )
         return ProductionJobActionResponse(job=job, warnings=ws)
@@ -1979,6 +2000,292 @@ def retry_production_job(
     return ProductionJobActionResponse(job=refreshed or job, warnings=ws)
 
 
+_CHECKLIST_EXISTS_WARN_DE = (
+    "Checklist existiert bereits — bestehendes Dokument zurückgegeben (Auto-Flags aktualisiert)."
+)
+
+
+def sync_production_status_from_checklist(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+    checklist_override: Optional[ProductionChecklist] = None,
+) -> None:
+    """``production_jobs.status`` anhand Artefakte + Checkliste (kein Überspringen von failed/skipped/legacy)."""
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return
+    try:
+        job = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if job is None:
+        return
+    cl: Optional[ProductionChecklist] = checklist_override
+    if cl is None:
+        try:
+            cl = repo.get_production_checklist(pid)
+        except FirestoreUnavailableError:
+            raise
+    target = compute_target_production_status(
+        current_status=job.status,
+        production_job_id=pid,
+        repo=repo,
+        checklist=cl,
+    )
+    if not target:
+        return
+    now_iso = utc_now_iso()
+    try:
+        repo.patch_production_job(
+            pid, {"status": target, "updated_at": now_iso}
+        )
+    except FirestoreUnavailableError:
+        raise
+
+
+def _safe_sync_production_status(
+    production_job_id: str,
+    repo: FirestoreWatchlistRepository,
+) -> None:
+    try:
+        sync_production_status_from_checklist(production_job_id, repo=repo)
+    except FirestoreUnavailableError:
+        raise
+    except Exception as e:
+        logger.warning(
+            "sync_production_status_from_checklist failed: job_id=%s type=%s",
+            production_job_id,
+            type(e).__name__,
+        )
+
+
+def _apply_auto_to_checklist(
+    cl: ProductionChecklist,
+    repo: FirestoreWatchlistRepository,
+    pid: str,
+) -> ProductionChecklist:
+    auto = auto_checklist_booleans(repo, pid)
+    data = cl.model_dump()
+    for key, val in auto.items():
+        if val is True:
+            data[key] = True
+    return ProductionChecklist.model_validate(data)
+
+
+def initialize_checklist(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProductionChecklistResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        ws.append("production_job_id is empty.")
+        return ProductionChecklistResponse(checklist=None, warnings=ws)
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        ws.append("Production job not found.")
+        return ProductionChecklistResponse(checklist=None, warnings=ws)
+    now_iso = utc_now_iso()
+    try:
+        existing = repo.get_production_checklist(pid)
+    except FirestoreUnavailableError:
+        raise
+    if existing is not None:
+        merged = _apply_auto_to_checklist(existing, repo, pid)
+        merged = merged.model_copy(update={"updated_at": now_iso})
+        try:
+            repo.upsert_production_checklist(merged)
+        except FirestoreUnavailableError:
+            raise
+        sync_production_status_from_checklist(
+            pid, repo=repo, checklist_override=merged
+        )
+        ws.append(_CHECKLIST_EXISTS_WARN_DE)
+        return ProductionChecklistResponse(checklist=merged, warnings=ws)
+
+    auto = auto_checklist_booleans(repo, pid)
+    doc = ProductionChecklist(
+        id=pid,
+        production_job_id=pid,
+        script_ready=bool(auto.get("script_ready")),
+        scene_plan_ready=bool(auto.get("scene_plan_ready")),
+        scene_assets_ready=bool(auto.get("scene_assets_ready")),
+        voice_plan_ready=bool(auto.get("voice_plan_ready")),
+        render_manifest_ready=bool(auto.get("render_manifest_ready")),
+        thumbnail_ready=False,
+        editing_ready=False,
+        upload_ready=False,
+        published=False,
+        notes="",
+        created_at=now_iso,
+        updated_at=now_iso,
+    )
+    try:
+        repo.upsert_production_checklist(doc)
+    except FirestoreUnavailableError:
+        raise
+    sync_production_status_from_checklist(pid, repo=repo, checklist_override=doc)
+    return ProductionChecklistResponse(checklist=doc, warnings=ws)
+
+
+def get_production_checklist_for_job(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProductionChecklistResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return ProductionChecklistResponse(
+            checklist=None, warnings=["production_job_id is empty."]
+        )
+    try:
+        cl = repo.get_production_checklist(pid)
+    except FirestoreUnavailableError:
+        raise
+    if cl is None:
+        return ProductionChecklistResponse(
+            checklist=None, warnings=["Checklist not found."]
+        )
+    return ProductionChecklistResponse(checklist=cl, warnings=[])
+
+
+def update_checklist(
+    production_job_id: str,
+    body: ProductionChecklistUpdateRequest,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProductionChecklistResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    ws: List[str] = []
+    if not pid:
+        ws.append("production_job_id is empty.")
+        return ProductionChecklistResponse(checklist=None, warnings=ws)
+    try:
+        existing = repo.get_production_checklist(pid)
+    except FirestoreUnavailableError:
+        raise
+    if existing is None:
+        ws.append("Checklist not found.")
+        return ProductionChecklistResponse(checklist=None, warnings=ws)
+    data = existing.model_dump()
+    if body.thumbnail_ready is not None:
+        data["thumbnail_ready"] = body.thumbnail_ready
+    if body.editing_ready is not None:
+        data["editing_ready"] = body.editing_ready
+    if body.upload_ready is not None:
+        data["upload_ready"] = body.upload_ready
+    if body.published is not None:
+        data["published"] = body.published
+    if body.notes is not None:
+        data["notes"] = body.notes
+    merged = ProductionChecklist.model_validate(data)
+    merged = _apply_auto_to_checklist(merged, repo, pid)
+    merged = merged.model_copy(update={"updated_at": utc_now_iso()})
+    try:
+        repo.upsert_production_checklist(merged)
+    except FirestoreUnavailableError:
+        raise
+    sync_production_status_from_checklist(pid, repo=repo, checklist_override=merged)
+    return ProductionChecklistResponse(checklist=merged, warnings=ws)
+
+
+def build_provider_templates(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> Dict[str, Any]:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return {}
+    pj: Optional[ProductionJob] = None
+    rm_doc: Optional[RenderManifest] = None
+    vp: Optional[VoicePlan] = None
+    gs: Optional[GeneratedScript] = None
+    try:
+        pj = repo.get_production_job(pid)
+        rm_doc = repo.get_render_manifest(pid)
+        vp = repo.get_voice_plan(pid)
+        if pj is not None:
+            gid = (pj.generated_script_id or "").strip()
+            if gid:
+                gs = repo.get_generated_script(gid)
+    except FirestoreUnavailableError:
+        raise
+    return build_provider_templates_dict(
+        manifest=rm_doc,
+        voice_plan=vp,
+        production_job=pj,
+        generated_script=gs,
+    )
+
+
+def generate_export_download(
+    production_job_id: str,
+    fmt: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> Tuple[Optional[bytes], str, str, List[str]]:
+    """Liefert ``(body, media_type, filename, warnings)``; ``body is None`` bei 404-Fehler."""
+    repo = repo or FirestoreWatchlistRepository()
+    ws: List[str] = []
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return None, "", "", ["production_job_id is empty."]
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return None, "", "", ["Production job not found."]
+    try:
+        manifest = repo.get_render_manifest(pid)
+    except FirestoreUnavailableError:
+        raise
+    if manifest is None:
+        return None, "", "", ["Render manifest not found."]
+    vp: Optional[VoicePlan] = None
+    gs: Optional[GeneratedScript] = None
+    try:
+        vp = repo.get_voice_plan(pid)
+        gid = (pj.generated_script_id or "").strip()
+        if gid:
+            gs = repo.get_generated_script(gid)
+    except FirestoreUnavailableError:
+        raise
+    templates = build_provider_templates_dict(
+        manifest=manifest,
+        voice_plan=vp,
+        production_job=pj,
+        generated_script=gs,
+    )
+    title = ""
+    if gs is not None and (gs.title or "").strip():
+        title = (gs.title or "").strip()
+    elif pj is not None:
+        title = ((pj.thumbnail_prompt or "").strip() or pj.id or "").strip()
+    try:
+        body, mt, suf = export_download_body(
+            fmt,
+            manifest=manifest,
+            provider_templates=templates,
+            title=title,
+        )
+    except ValueError as e:
+        return None, "", "", [str(e)]
+    fname = f"production_{pid}_export.{suf}"
+    return body, mt, fname, ws
+
+
 _SCENE_PLAN_IDEMP_WARN = (
     "Szenenplan existierte bereits — keine Neuerstellung (idempotent)."
 )
@@ -2002,6 +2309,7 @@ def generate_scene_plan(
     except FirestoreUnavailableError:
         raise
     if existing:
+        _safe_sync_production_status(pid, repo)
         return ScenePlanGenerateResponse(
             scene_plan=existing,
             warnings=[_SCENE_PLAN_IDEMP_WARN],
@@ -2052,6 +2360,7 @@ def generate_scene_plan(
     except FirestoreUnavailableError:
         raise
 
+    _safe_sync_production_status(pid, repo)
     out_warn = list(lw)
     return ScenePlanGenerateResponse(scene_plan=plan, warnings=out_warn)
 
@@ -2100,6 +2409,7 @@ def generate_scene_assets(
         raise
     if existing is not None:
         ws = [_SCENE_ASSETS_IDEMP_WARN]
+        _safe_sync_production_status(pid, repo)
         return SceneAssetsGenerateResponse(scene_assets=existing, warnings=ws)
     try:
         pj = repo.get_production_job(pid)
@@ -2151,6 +2461,7 @@ def generate_scene_assets(
         repo.upsert_scene_assets(doc)
     except FirestoreUnavailableError:
         raise
+    _safe_sync_production_status(pid, repo)
     return SceneAssetsGenerateResponse(scene_assets=doc, warnings=list(merged_warns))
 
 
@@ -2207,6 +2518,7 @@ def generate_voice_plan(
     except FirestoreUnavailableError:
         raise
     if existing is not None:
+        _safe_sync_production_status(pid, repo)
         return VoicePlanGenerateResponse(
             voice_plan=existing,
             warnings=[_VOICE_PLAN_IDEMP_WARN],
@@ -2255,6 +2567,7 @@ def generate_voice_plan(
         repo.upsert_voice_plan(doc)
     except FirestoreUnavailableError:
         raise
+    _safe_sync_production_status(pid, repo)
     return VoicePlanGenerateResponse(voice_plan=doc, warnings=list(merged_warns))
 
 
@@ -2312,6 +2625,7 @@ def generate_render_manifest(
     except FirestoreUnavailableError:
         raise
     if existing_rm is not None:
+        _safe_sync_production_status(pid, repo)
         return RenderManifestGenerateResponse(
             render_manifest=existing_rm,
             warnings=[_RENDER_MANIFEST_IDEMP_WARN],
@@ -2384,6 +2698,7 @@ def generate_render_manifest(
         repo.upsert_render_manifest(rm_doc)
     except FirestoreUnavailableError:
         raise
+    _safe_sync_production_status(pid, repo)
     out_warn = list(mw)
     return RenderManifestGenerateResponse(render_manifest=rm_doc, warnings=out_warn)
 

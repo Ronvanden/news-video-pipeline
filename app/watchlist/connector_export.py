@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.watchlist.models import (
     ConnectorExportMetadata,
@@ -16,8 +16,8 @@ from app.watchlist.models import (
 
 
 def thumbnail_prompt_resolve(
-    pj: ProductionJob | None,
-    assets: SceneAssets | None,
+    pj: Optional[ProductionJob],
+    assets: Optional[SceneAssets],
 ) -> str:
     if pj is not None and (pj.thumbnail_prompt or "").strip():
         return (pj.thumbnail_prompt or "").strip()
@@ -29,7 +29,7 @@ def thumbnail_prompt_resolve(
     return ""
 
 
-def build_capcut_timeline_hint(manifest: RenderManifest | None) -> Dict[str, Any]:
+def build_capcut_timeline_hint(manifest: Optional[RenderManifest]) -> Dict[str, Any]:
     if manifest is None or not manifest.timeline:
         return {
             "order": [],
@@ -51,11 +51,11 @@ def build_capcut_timeline_hint(manifest: RenderManifest | None) -> Dict[str, Any
 
 def build_connector_export_payload(
     *,
-    production_job: ProductionJob | None,
-    manifest: RenderManifest | None,
-    voice_plan: VoicePlan | None,
-    scene_assets: SceneAssets | None,
-    generated_script: GeneratedScript | None,
+    production_job: Optional[ProductionJob],
+    manifest: Optional[RenderManifest],
+    voice_plan: Optional[VoicePlan],
+    scene_assets: Optional[SceneAssets],
+    generated_script: Optional[GeneratedScript],
     render_manifest_warnings: List[str],
 ) -> ConnectorExportPayload:
     warns = list(render_manifest_warnings or [])

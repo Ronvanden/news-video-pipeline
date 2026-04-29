@@ -35,7 +35,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - **Phase 5 V1 Schritt 1–4:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`**, **`GET /watchlist/jobs`**, **`POST /watchlist/jobs/{job_id}/run`** — Kanäle und **`processed_videos`** in Firestore; bei **`auto_generate_script=true`** prüft der Kanal-Check vor **`pending`**-Jobs einen **Transcript-Preflight** (gleiche Abruflogik wie **`POST /youtube/generate-script`**); **`pending`** entstehen nur bei verfügbarem Transkript; Speicherung in **`generated_scripts`**.
 - **Phase 5.5–5.7 (Automation-Layer):** **`POST /watchlist/channels/{channel_id}/recheck-video/{video_id}`** (ein Video erneut prüfen, mit Warnung bei einzelner `processed_videos`-Entfernung), **`POST /watchlist/jobs/run-pending`** (pending Jobs im Batch ausführen, Limit Default 3, Max 10), **`POST /watchlist/automation/run-cycle`** (scheduler-tauglicher Zyklus: aktive Kanäle prüfen, danach pending Jobs; Body `channel_limit` / `job_limit`; schreibt bei Erfolg **`last_run_cycle_at`** in Firestore **`watchlist_meta/automation`**) und optional **`POST /watchlist/jobs/{job_id}/review`** (nutzt dieselbe Heuristik wie **`POST /review-script`**, ohne ScriptJob-Status zu ändern). **Kein** Cloud-Scheduler-Deploy in diesem Schritt — nur HTTP-Schnittstellen. Details: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
 - **Phase 5.8–6.6 (Control Tower & Production Jobs):** … Ausführlich: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
-- **BA 6.8–7.0 (Voice Layer, Render Manifest, Connector Export):** neue Firestore-Collections **`voice_plans`**, **`render_manifests`**; Endpoints **`POST/GET /production/jobs/{id}/voice-plan`**, **`POST/GET …/render-manifest`**, **`GET …/export`** — nur strukturierte Daten und JSON, **kein** echtes TTS, kein Video-Render, keine Provider-API-Aufrufe. Details und Tests: [PIPELINE_PLAN.md](PIPELINE_PLAN.md), `tests/test_ba68_6970_production_voice_render_export.py`.
+- **BA 6.8–7.4 (Voice, Render Manifest, Connector + Production OS):** Firestore **`voice_plans`**, **`render_manifests`**, **`production_checklists`**; Endpoints Voice-/Render-/Export sowie **`GET …/export/download?format=`** (json/markdown/csv/txt), Provider-Templates im JSON-Paket, Checkliste (**`/checklist/init|GET|update`**), erweiterter **`production_jobs.status`** (Workflow bis **`published`**). Keine Provider-APIs; Details [PIPELINE_PLAN.md](PIPELINE_PLAN.md), Tests `tests/test_ba68_6970_production_voice_render_export.py`, **`tests/test_ba714_production_os.py`**.
 - **BA 6.6.1 (nur lokale/integration Tests):** `POST /dev/fixtures/completed-script-job` — optional mit `ENABLE_TEST_FIXTURES=true` in `.env`; legt ohne YouTube-Anruf einen **completed** `script_jobs`-Eintrag, **`generated_scripts`** mit Kapiteln und optional **`production_jobs`** an (IDs immer Präfix `dev_fixture_`). **In Produktion deaktiviert lassen.**
 
 ## 4. Projektstruktur
@@ -56,7 +56,7 @@ app/
     ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
     ├── review.py     # /review-script
     ├── watchlist.py  # Watchlist-CRUD, Kanal-Check, Jobs, POST …/jobs/{id}/run (Phase 5)
-    ├── production.py # /production/jobs (+ scene-plan … scene-assets … voice-plan … render-manifest … export BA 6.6–7.0)
+    ├── production.py # /production/jobs (+ scene-plan … export BA 6.6–7.0 + BA 7.1–7.4 Export-Download / Checkliste / Status)
     └── dev_fixtures.py # BA 6.6.1: POST /dev/fixtures/* nur bei ENABLE_TEST_FIXTURES
 
 Dockerfile
@@ -312,7 +312,10 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 - **`POST /production/jobs/{production_job_id}/scene-assets/generate`**, **`GET /production/jobs/{production_job_id}/scene-assets`**: Prompt-Entwürfe pro Szene (**BA 6.7**) in **`scene_assets`** (Doc-ID = **`production_job_id`**), auf Basis eines vorhandenen **`scene_plans`**; optionaler JSON-Body `{"style_profile": "documentary" | "news" | "cinematic" | "faceless_youtube" | "true_crime"}` (Default `documentary`). Keine Anbindung an Leonardo, Kling oder andere Renderer — nur Text-Prompts. Idempotent wie der Szenenplan.
 - **`POST /production/jobs/{production_job_id}/voice-plan/generate`**, **`GET /production/jobs/{production_job_id}/voice-plan`**: Voice-Blöcke aus **`voiceover_chunk`** (**BA 6.8**, Collection **`voice_plans`**); optionaler Body `voice_profile`: `documentary` \| `news` \| `dramatic` \| `soft` (**kein** TTS). Idempotent wenn bereits vorhanden.
 - **`POST /production/jobs/{production_job_id}/render-manifest/generate`**, **`GET /production/jobs/{production_job_id}/render-manifest`**: Maschinenmanifest (**BA 6.9**, **`render_manifests`**) aus Production-Bausteinen; ohne **`scene_assets`** kein Persist (**404** beim Generate); ohne Voice-Plan **Status** `incomplete` mit Warnungen.
-- **`GET /production/jobs/{production_job_id}/export`**: BA 7.0 — JSON mit `generic_manifest`, `elevenlabs_blocks`, `kling_prompts`, `leonardo_prompts`, `thumbnail_prompt`, `capcut_timeline_hint`, `metadata` (lokal aus Firestore/Fallbacks — **ohne** API-Calls).
+- **`GET /production/jobs/{production_job_id}/export`**: BA 7.0 — JSON mit `generic_manifest`, `elevenlabs_blocks`, … (**Connector**, keine APIs).
+- **`GET /production/jobs/{production_job_id}/export/download?format=json|markdown|csv|txt`** (**BA 7.1–7.2**): Dateidownload mit vollem Manifest-Paket (`manifest` + `provider_templates`: `elevenlabs_ready`, `kling_ready`, `leonardo_ready`, `capcut_ready`, `youtube_upload_ready`). Ohne **`render_manifest`** → **404**.
+- **`POST /production/jobs/{production_job_id}/checklist/init`**, **`GET …/checklist`**, **`POST …/checklist/update`** (**BA 7.3**): Collection **`production_checklists`** (Doc-ID = **`production_job_id`**); Auto-Flags aus vorhandenen Artefakten; erneutes **init** aktualisiert Flags und liefert Warnung. Checklist-**update** mit JSON-Body (z. B. `editing_ready`, `upload_ready`, `published`, `notes`).
+- **`production_jobs.status`** (**BA 7.4**, Workflow): `queued` → `planning_ready` → `assets_ready` → `voice_ready` → `editing_ready` → `upload_ready` → `published` (plus Legacy `in_progress`/`completed`, Terminal `failed`/`skipped`). Fortschritt wird nach Artefakt-Generierung und nach Checklisten-Schreibvorgängen synchronisiert.
 - **`POST /dev/fixtures/completed-script-job`**: nur für Dev/Test — bei **`ENABLE_TEST_FIXTURES=true`** (`.env`) ohne YouTube einen **`completed`** Job + **`generated_scripts`** (+ optional **`production_jobs`**); Job-IDs mit Präfix **`dev_fixture_`**. Ohne Flag: **403**.
 
 ```bash
@@ -347,7 +350,7 @@ curl -s -X POST "http://127.0.0.1:8000/watchlist/channels/UC_x5XG1OV2P6uZZ5FSM9T
 curl -s "http://127.0.0.1:8000/watchlist/jobs"
 ```
 
-**Tests:** `tests/test_watchlist_models.py`, `tests/test_watchlist_service.py`, `tests/test_watchlist_check_channel.py`, `tests/test_watchlist_run_job.py`, `tests/test_watchlist_automation_phases.py`, **`tests/test_watchlist_control_tower.py`**, `tests/test_ba661_dev_fixtures.py`, `tests/test_ba68_6970_production_voice_render_export.py` (Firestore und RSS bzw. Script-Pipeline **gemockt**; keine Pflicht für Live-Firestore-Verbindung).
+**Tests:** `tests/test_watchlist_models.py`, `tests/test_watchlist_service.py`, `tests/test_watchlist_check_channel.py`, `tests/test_watchlist_run_job.py`, `tests/test_watchlist_automation_phases.py`, **`tests/test_watchlist_control_tower.py`**, `tests/test_ba661_dev_fixtures.py`, `tests/test_ba68_6970_production_voice_render_export.py`, **`tests/test_ba714_production_os.py`** (Firestore und RSS bzw. Script-Pipeline **gemockt**; keine Pflicht für Live-Firestore-Verbindung).
 
 
 ## 10. Beispiel: GET /health

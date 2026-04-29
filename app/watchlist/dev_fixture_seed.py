@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from app.models import Chapter
 from app.utils import count_words
@@ -33,7 +33,7 @@ def _utc_now_iso() -> str:
     )
 
 
-def finalize_fixture_job_id(fixture_id: str | None) -> str:
+def finalize_fixture_job_id(fixture_id: Optional[str]) -> str:
     """``dev_fixture_<Suffix>``; Suffix zufällig oder aus ``fixture_id``."""
     suf = (fixture_id or "").strip()
     if not suf:
@@ -45,7 +45,7 @@ def finalize_fixture_job_id(fixture_id: str | None) -> str:
     return f"{_DEV_FIXTURE_PREFIX}{suf}"
 
 
-def _sample_chapters_and_script(job_id_short: str) -> tuple[list[Chapter], str]:
+def _sample_chapters_and_script(job_id_short: str) -> Tuple[List[Chapter], str]:
     c1 = (
         "Kurzfassung: Dieses Skript wird nur für Entwicklungstests erzeugt. "
         "Es verweist auf keine echte Videotranskription und braucht keinen API-Zugriff."
@@ -79,14 +79,14 @@ if TYPE_CHECKING:
 
 def seed_completed_script_job_fixture(
     *,
-    fixture_job_id_raw: str | None,
+    fixture_job_id_raw: Optional[str],
     create_production_job: bool,
     repo: "FirestoreWatchlistRepository",
-) -> tuple[
+) -> Tuple[
     ScriptJob,
     GeneratedScript,
-    ProductionJob | None,
-    list[str],
+    Optional[ProductionJob],
+    List[str],
 ]:
     """
     Schreibt completed ``script_job``, ``generated_script`` und optional ``production_jobs``.
@@ -144,8 +144,8 @@ def seed_completed_script_job_fixture(
     repo.create_generated_script(gs)
     repo.create_script_job(job)
 
-    pj_done: ProductionJob | None = None
-    warns: list[str] = []
+    pj_done: Optional[ProductionJob] = None
+    warns: List[str] = []
 
     if create_production_job:
         if repo.get_production_job(jid) is not None:

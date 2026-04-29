@@ -239,7 +239,17 @@ class ReviewResultStored(BaseModel):
 
 
 ProductionJobStatusLiteral = Literal[
-    "queued", "in_progress", "completed", "failed", "skipped"
+    "queued",
+    "planning_ready",
+    "assets_ready",
+    "voice_ready",
+    "editing_ready",
+    "upload_ready",
+    "published",
+    "in_progress",
+    "completed",
+    "failed",
+    "skipped",
 ]
 
 
@@ -503,6 +513,43 @@ class ConnectorExportPayload(BaseModel):
 
 class ProductionConnectorExportResponse(BaseModel):
     export: ConnectorExportPayload
+    warnings: List[str] = Field(default_factory=list)
+
+
+ExportDownloadFormatLiteral = Literal["json", "markdown", "csv", "txt"]
+
+
+class ProductionChecklist(BaseModel):
+    """Firestore ``production_checklists`` — Document-ID = ``production_job_id``."""
+
+    id: str
+    production_job_id: str
+    script_ready: bool = False
+    scene_plan_ready: bool = False
+    scene_assets_ready: bool = False
+    voice_plan_ready: bool = False
+    render_manifest_ready: bool = False
+    thumbnail_ready: bool = False
+    editing_ready: bool = False
+    upload_ready: bool = False
+    published: bool = False
+    notes: str = ""
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class ProductionChecklistUpdateRequest(BaseModel):
+    """Manuelle Checklisten-Felder (Artefakt-Felder werden serverseitig mit ``True`` ergänzt)."""
+
+    thumbnail_ready: Optional[bool] = None
+    editing_ready: Optional[bool] = None
+    upload_ready: Optional[bool] = None
+    published: Optional[bool] = None
+    notes: Optional[str] = None
+
+
+class ProductionChecklistResponse(BaseModel):
+    checklist: Optional[ProductionChecklist] = None
     warnings: List[str] = Field(default_factory=list)
 
 
