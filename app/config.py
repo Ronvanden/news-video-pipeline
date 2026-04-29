@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "News to Video Pipeline"
     debug: bool = False
+    #: Nur Entwicklung/Test: ``POST /dev/fixtures/*`` (siehe README).
+    enable_test_fixtures: bool = False
     openai_api_key: str = ""
     openai_model: str = "gpt-3.5-turbo"
     #: Firestore-Datenbank-ID (Named DB, z. B. „watchlist“; nicht „(default)“).

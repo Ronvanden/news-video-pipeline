@@ -334,6 +334,41 @@ class ScenePlanGetResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+class DevFixtureCompletedScriptJobRequest(BaseModel):
+    """Nur aktiv wenn ENABLE_TEST_FIXTURES=true — Endpoint-Doku BA 6.6.1."""
+
+    fixture_id: Optional[str] = Field(
+        default=None,
+        max_length=80,
+        description="Optionaler Suffix; Job-ID wird dev_fixture_<Suffix> oder dev_fixture_<Zufällig>.",
+    )
+    create_production_job: bool = True
+
+    @field_validator("fixture_id")
+    @classmethod
+    def fixture_id_safe(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = (v or "").strip()
+        if not s:
+            return None
+        for ch in s:
+            if ch.isalnum() or ch in ("_", "-"):
+                continue
+            raise ValueError("fixture_id: nur ASCII [A-Za-z0-9_-] erlaubt.")
+        return s
+
+
+class DevFixtureCompletedScriptJobResponse(BaseModel):
+    """Antwort nach erfolgreicher Dev-Fixture-Erzeugung."""
+
+    job_id: str
+    generated_script_id: str
+    production_job_id: Optional[str] = None
+    production_job_created: bool = False
+    warnings: List[str] = Field(default_factory=list)
+
+
 class WatchlistDashboardHealth(BaseModel):
     last_successful_job_at: Optional[str] = None
     last_run_cycle_at: Optional[str] = None

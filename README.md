@@ -34,7 +34,8 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - **Phase 4 V1:** `POST /review-script` — heuristische Originalitäts- und Nähe-zur-Quelle-Prüfung (keine Rechtsberatung, kein Auto-Publish)
 - **Phase 5 V1 Schritt 1–4:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`**, **`GET /watchlist/jobs`**, **`POST /watchlist/jobs/{job_id}/run`** — Kanäle und **`processed_videos`** in Firestore; bei **`auto_generate_script=true`** prüft der Kanal-Check vor **`pending`**-Jobs einen **Transcript-Preflight** (gleiche Abruflogik wie **`POST /youtube/generate-script`**); **`pending`** entstehen nur bei verfügbarem Transkript; Speicherung in **`generated_scripts`**.
 - **Phase 5.5–5.7 (Automation-Layer):** **`POST /watchlist/channels/{channel_id}/recheck-video/{video_id}`** (ein Video erneut prüfen, mit Warnung bei einzelner `processed_videos`-Entfernung), **`POST /watchlist/jobs/run-pending`** (pending Jobs im Batch ausführen, Limit Default 3, Max 10), **`POST /watchlist/automation/run-cycle`** (scheduler-tauglicher Zyklus: aktive Kanäle prüfen, danach pending Jobs; Body `channel_limit` / `job_limit`; schreibt bei Erfolg **`last_run_cycle_at`** in Firestore **`watchlist_meta/automation`**) und optional **`POST /watchlist/jobs/{job_id}/review`** (nutzt dieselbe Heuristik wie **`POST /review-script`**, ohne ScriptJob-Status zu ändern). **Kein** Cloud-Scheduler-Deploy in diesem Schritt — nur HTTP-Schnittstellen. Details: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
-- **Phase 5.8–6.6 (Control Tower & Production Jobs):** wie 5.8–6.2, zusätzlich **`GET /production/jobs`**, **`GET /production/jobs/{id}`**, **`POST /production/jobs/{id}/skip`** (**`queued`**/**`failed`** → **`skipped`**), **`POST /production/jobs/{id}/retry`** (**`failed`**/**`skipped`** → **`queued`**), **`POST /production/jobs/{id}/scene-plan/generate`**, **`GET /production/jobs/{id}/scene-plan`** (**BA 6.6**, deterministischer Szenenplan in **`scene_plans`** ohne LLM-Pflicht, Doc-ID = **`production_job_id`**); **keine** Render-Pipeline in diesen Routen; Dashboard-Zähler per Firestore-Aggregation und begrenztem Stream-Fallback; **`POST /watchlist/jobs/{job_id}/review`** persistiert bei **`completed` + `generated_script_id`** unter **`review_results`** und verknüpft **`script_jobs.review_result_id`** (optional **`processed_videos`**). Pending-Liste **Index**: [DEPLOYMENT.md](DEPLOYMENT.md). **`ScriptJob`** optional **`attempt_count`** / **`last_attempt_at`**. Ausführlich: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
+- **Phase 5.8–6.6 (Control Tower & Production Jobs):** … Ausführlich: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
+- **BA 6.6.1 (nur lokale/integration Tests):** `POST /dev/fixtures/completed-script-job` — optional mit `ENABLE_TEST_FIXTURES=true` in `.env`; legt ohne YouTube-Anruf einen **completed** `script_jobs`-Eintrag, **`generated_scripts`** mit Kapiteln und optional **`production_jobs`** an (IDs immer Präfix `dev_fixture_`). **In Produktion deaktiviert lassen.**
 
 ## 4. Projektstruktur
 
@@ -54,7 +55,8 @@ app/
     ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
     ├── review.py     # /review-script
     ├── watchlist.py  # Watchlist-CRUD, Kanal-Check, Jobs, POST …/jobs/{id}/run (Phase 5)
-    └── production.py # /production/jobs (+ BA 6.6 scene-plan Generate/Get)
+    ├── production.py # /production/jobs (+ BA 6.6 scene-plan Generate/Get)
+    └── dev_fixtures.py # BA 6.6.1: POST /dev/fixtures/* nur bei ENABLE_TEST_FIXTURES
 
 Dockerfile
 README.md
@@ -306,6 +308,7 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 - **`GET /watchlist/errors/summary`**, Retry/Skip, Pause/Resume, **`POST …/create-production-job`**: wie zuvor in Abschnitten 5.8–6.2 dokumentiert (**`production_jobs`**-Stub ohne Rendering).
 - **`GET /production/jobs`** (`limit` 1–200), **`GET /production/jobs/{production_job_id}`**, **`POST /production/jobs/{production_job_id}/skip`**, **`POST /production/jobs/{production_job_id}/retry`**: nur Status in Firestore (**kein** Video-Render).
 - **`POST /production/jobs/{production_job_id}/scene-plan/generate`**, **`GET /production/jobs/{production_job_id}/scene-plan`**: Szenenplan (**BA 6.6**) in Collection **`scene_plans`** (Doc-ID = **`production_job_id`**); deterministische Aufteilung aus **`generated_scripts`**-Kapiteln bzw. Fallback **`full_script`**; erste Generierung wird persistiert — erneuter Aufruf gibt den bestehenden Plan mit Warnhinweis zurück (idempotent).
+- **`POST /dev/fixtures/completed-script-job`**: nur für Dev/Test — bei **`ENABLE_TEST_FIXTURES=true`** (`.env`) ohne YouTube einen **`completed`** Job + **`generated_scripts`** (+ optional **`production_jobs`**); Job-IDs mit Präfix **`dev_fixture_`**. Ohne Flag: **403**.
 
 Beispiel:
 
