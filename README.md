@@ -32,7 +32,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - YouTube Video-to-Script V1: Transkript aus Video-URL → strukturiertes Skript (`POST /youtube/generate-script`)
 - YouTube-Kanal-Discovery V1: neueste Videos strukturiert mit Heuristik (`score`, `reason`, `summary` aus Metadaten)
 - **Phase 4 V1:** `POST /review-script` — heuristische Originalitäts- und Nähe-zur-Quelle-Prüfung (keine Rechtsberatung, kein Auto-Publish)
-- **Phase 5 V1 Schritt 1–3:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`**, **`GET /watchlist/jobs`** — Kanäle und **`processed_videos`** in Firestore; bei **`auto_generate_script=true`** werden **`script_jobs`** mit Status **`pending`** angelegt (**keine** Ausführung, keine automatische Skripterzeugung ohne späteren Job-Run — siehe README / [PIPELINE_PLAN.md](PIPELINE_PLAN.md))
+- **Phase 5 V1 Schritt 1–4:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`**, **`GET /watchlist/jobs`**, **`POST /watchlist/jobs/{job_id}/run`** — Kanäle und **`processed_videos`** in Firestore; bei **`auto_generate_script=true`** werden **`script_jobs`** mit Status **`pending`** angelegt; ein Job wird **nur** durch **`run`** ausgeführt und das Ergebnis in **`generated_scripts`** gespeichert (**kein** Review-Schritt, **kein** Scheduler in diesem Schritt — siehe README / [PIPELINE_PLAN.md](PIPELINE_PLAN.md))
 
 ## 4. Projektstruktur
 
@@ -44,14 +44,14 @@ app/
 ├── models.py         # Pydantic Request-/Response-Modelle
 ├── utils.py          # Extraktion, Generierung, LLM und Fallback
 ├── review/           # Phase 4: Originalitäts-Heuristiken + Review-Service
-├── watchlist/        # Phase 5: Watchlist (Firestore, Jobs pending)
+├── watchlist/        # Phase 5: Watchlist (Firestore, Jobs, generated_scripts)
 ├── youtube/          # Kanal-Auflösung, RSS, Scoring (ohne Data API)
 └── routes/
     ├── __init__.py
     ├── generate.py   # /generate-script Endpoint
     ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
     ├── review.py     # /review-script
-    └── watchlist.py  # Watchlist-CRUD, Kanal-Check, /watchlist/jobs (Phase 5)
+    └── watchlist.py  # Watchlist-CRUD, Kanal-Check, Jobs, POST …/jobs/{id}/run (Phase 5)
 
 Dockerfile
 README.md
@@ -258,7 +258,7 @@ curl -s -X POST "http://127.0.0.1:8000/review-script" ^
 
 **Tests (Smoke):** Im Repo unter `tests/test_review_script.py` (u. a. identischer Text → `high`, kurze Quelle → `Source text is short…`, YouTube → strengere `warning`). Zusätzlich: `python -m compileall app` und `python -m unittest tests.test_review_script`.
 
-### Watchlist — Phase 5 V1 (Schritte 1–3)
+### Watchlist — Phase 5 V1 (Schritte 1–4)
 
 Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collection **`watch_channels`**, Document-ID = YouTube-`channel_id`). Neue bzw. bereits bekannte Videos pro Kanal werden in **`processed_videos`** gehalten (Document-ID = **`video_id`**, global eindeutig), damit beim nächsten Check **keine** Doppel-Kandidaten mehr auftauchen. **Ohne** erfolgreiche Auflösung einer **Channel-ID (UC…)** wird beim Anlegen nichts persistiert (Handles können an Consent-/Bot-Seiten scheitern — `warnings` wie bei `POST /youtube/latest-videos`).
 
@@ -279,13 +279,26 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 
 **POST** `/watchlist/channels/{channel_id}/check` prüft einen **gespeicherten** Kanal (nur `status=active`): wie `POST /youtube/latest-videos` (RSS, **`max_results`**), **Score**, Shorts-Regel (`ignore_shorts`), **`min_score`**; schreibt **`processed_videos`** (`seen` oder `skipped`). Antwort: **`CheckWatchlistChannelResponse`** mit **`new_videos`**, **`known_videos`**, **`skipped_videos`**, **`created_processed_videos`**, **`created_jobs`**, **`warnings`**.
 
-**Schritt 3 – Script-Jobs (pending, noch kein Run)**
+**Schritt 3 – Script-Jobs (pending vor Run)**
 
 - Ist **`auto_generate_script=true`** und der Check legt ein **neues**, für die Heuristik **geeignetes** Video (`seen`) an, wird in der Collection **`script_jobs`** (Document-ID = **`video_id`**, ein Job pro Video in V1) ein Eintrag mit **`status: "pending"`** erstellt; **`processed_videos.script_job_id`** wird gesetzt. Die Check-Antwort listet neu angelegte Jobs kompakt unter **`created_jobs`** (u. a. `id`, `video_id`, `video_url`, `status`, `target_language`, `duration_minutes`).
-- **Keine automatische Skripterzeugung** in Schritt 3; **keine** Job-Ausführung aus dem Check heraus. Ausführung und Speicherung eines generierten Skripts sind **Phase 5 Schritt 4** (**`POST /watchlist/jobs/{job_id}/run`**, geplant — siehe [PIPELINE_PLAN.md](PIPELINE_PLAN.md)).
+- **Keine automatische Skripterzeugung** im Check; Ausführung und Speicherung eines Skripts erfolgen in **Schritt 4** über **`POST /watchlist/jobs/{job_id}/run`**.
 - **`GET /watchlist/jobs`** listet persistierte Jobs (Parameter `limit`, Standard 50; **keine** Ausführung).
 
-**Noch nicht umgesetzt (geplant):** Job-Run nach Check, Review-Persistenz aus dem Job, Scheduler, Auto-Publish, Voiceover, Video-Rendering (Überblick [PIPELINE_PLAN.md](PIPELINE_PLAN.md)).
+**Schritt 4 – Script-Job manuell ausführen (`generated_scripts`)**
+
+- **`POST /watchlist/jobs/{job_id}/run`** führt einen **`pending`**- oder **`failed`**-Job aus (nicht erneut bei **`completed`**, **`running`**, **`skipped`** — siehe HTTP-Status **409** bei Konflikten). **`job_id`** entspricht in V1 der **`video_id`** (wie bei **`GET /watchlist/jobs`**).
+- Es wird dieselbe interne Pipeline wie **`POST /youtube/generate-script`** genutzt (**kein** HTTP-Selbstaufruf); bei Erfolg liegt das Skript in **`generated_scripts`** (Document-ID in V1 = **`job_id`**), der Job erhält **`generated_script_id`**, **`processed_videos.status`** kann **`script_generated`** werden.
+- **`RunScriptJobResponse`:** `job`, optional **`script`**, **`warnings`**. Transkript-/Parse-Probleme führen zu **`failed`** am Job und **keinem** Eintrag in **`generated_scripts`** (kein HTTP **500** für diese erwartbaren Fälle).
+- **In diesem Schritt bewusst nicht:** Review ausführen oder **`review_results`** schreiben; Scheduler; automatischer Massen-Run; Voiceover/Rendering/Publish.
+
+Beispiel:
+
+```bash
+curl -s -X POST "http://127.0.0.1:8000/watchlist/jobs/VIDEO_ID_HERE/run"
+```
+
+**Noch nicht umgesetzt (geplant):** Review-Persistenz aus dem Job (Phase 5 Schritt 5), Scheduler, Auto-Publish, Voiceover, Video-Rendering (Überblick [PIPELINE_PLAN.md](PIPELINE_PLAN.md)).
 
 Beispiel **Kanal anlegen** (Kanal-URL mit `/channel/UC…` empfohlen):
 
@@ -313,7 +326,7 @@ curl -s -X POST "http://127.0.0.1:8000/watchlist/channels/UC_x5XG1OV2P6uZZ5FSM9T
 curl -s "http://127.0.0.1:8000/watchlist/jobs"
 ```
 
-**Tests:** `tests/test_watchlist_models.py`, `tests/test_watchlist_service.py`, `tests/test_watchlist_check_channel.py` (Firestore und RSS **gemockt**; keine Pflicht für Live-Firestore-Verbindung).
+**Tests:** `tests/test_watchlist_models.py`, `tests/test_watchlist_service.py`, `tests/test_watchlist_check_channel.py`, `tests/test_watchlist_run_job.py` (Firestore und RSS bzw. Script-Pipeline **gemockt**; keine Pflicht für Live-Firestore-Verbindung).
 
 
 ## 10. Beispiel: GET /health

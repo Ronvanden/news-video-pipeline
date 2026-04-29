@@ -1,4 +1,4 @@
-"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``.
+"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``.
 
 Client ist injizierbar (Unit-Tests mit Mock).
 """
@@ -6,15 +6,21 @@ Client ist injizierbar (Unit-Tests mit Mock).
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
-from app.watchlist.models import ProcessedVideo, ScriptJob, WatchlistChannel
+from app.watchlist.models import GeneratedScript, ProcessedVideo, ScriptJob, WatchlistChannel
 
 logger = logging.getLogger(__name__)
 
 COLLECTION_NAME = "watch_channels"
 PROCESSED_VIDEOS_COLLECTION = "processed_videos"
 SCRIPT_JOBS_COLLECTION = "script_jobs"
+GENERATED_SCRIPTS_COLLECTION = "generated_scripts"
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def get_firestore_client():
@@ -116,6 +122,9 @@ class FirestoreWatchlistRepository:
     def _script_jobs_collection_ref(self):
         return self._ensure_client().collection(SCRIPT_JOBS_COLLECTION)
 
+    def _generated_scripts_collection_ref(self):
+        return self._ensure_client().collection(GENERATED_SCRIPTS_COLLECTION)
+
     def get_script_job(self, job_id: str) -> Optional[ScriptJob]:
         try:
             snap = self._script_jobs_collection_ref().document(job_id).get()
@@ -173,6 +182,118 @@ class FirestoreWatchlistRepository:
                 continue
         out.sort(key=lambda j: j.created_at or "", reverse=True)
         return out[:lim]
+
+    def mark_script_job_running(self, job_id: str) -> None:
+        try:
+            self._script_jobs_collection_ref().document(job_id).update(
+                {"status": "running", "started_at": _utc_now_iso()}
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs mark running failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def mark_script_job_completed(self, job_id: str, generated_script_id: str) -> None:
+        try:
+            self._script_jobs_collection_ref().document(job_id).update(
+                {
+                    "status": "completed",
+                    "completed_at": _utc_now_iso(),
+                    "generated_script_id": generated_script_id,
+                    "error": "",
+                }
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs mark completed failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def mark_script_job_failed(self, job_id: str, error: str) -> None:
+        err_short = (error or "")[:2000]
+        try:
+            self._script_jobs_collection_ref().document(job_id).update(
+                {
+                    "status": "failed",
+                    "completed_at": _utc_now_iso(),
+                    "error": err_short,
+                }
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore script_jobs mark failed failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
+
+    def create_generated_script(self, script: GeneratedScript) -> GeneratedScript:
+        doc_id = script.id
+        try:
+            self._generated_scripts_collection_ref().document(doc_id).set(
+                script.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore generated_scripts set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return script
+
+    def get_generated_script(self, script_id: str) -> Optional[GeneratedScript]:
+        try:
+            snap = self._generated_scripts_collection_ref().document(script_id).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore generated_scripts get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        data = snap.to_dict() or {}
+        merged = self._doc_to_dict(data, snap.id)
+        try:
+            return GeneratedScript.model_validate(merged)
+        except Exception as e:
+            logger.warning(
+                "invalid generated_scripts doc: script_id=%s type=%s",
+                snap.id,
+                type(e).__name__,
+            )
+            return None
+
+    def update_processed_video_status(
+        self,
+        video_id: str,
+        status: str,
+        *,
+        script_job_id: Optional[str] = None,
+        generated_script_id: Optional[str] = None,
+    ) -> None:
+        payload: Dict[str, Any] = {"status": status}
+        if script_job_id is not None:
+            payload["script_job_id"] = script_job_id
+        if generated_script_id is not None:
+            payload["generated_script_id"] = generated_script_id
+        try:
+            self._processed_collection_ref().document(video_id).update(payload)
+        except Exception as e:
+            logger.warning(
+                "Firestore processed_videos status update failed: type=%s",
+                type(e).__name__,
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the update."
+            ) from e
 
     def update_processed_video_job_link(self, video_id: str, script_job_id: str) -> None:
         try:

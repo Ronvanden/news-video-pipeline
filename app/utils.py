@@ -567,6 +567,86 @@ def build_script_response_from_extracted_text(
 
     return title, hook, chapters, full_script, sources, warnings
 
+
+def generate_script_from_youtube_video(
+    video_url: str,
+    target_language: str = "de",
+    duration_minutes: int = 10,
+):
+    """
+    Gleiche fachliche Pipeline wie ``POST /youtube/generate-script``, ohne HTTP.
+    Liefert immer ``GenerateScriptResponse`` — keine Exceptions bei erwartbaren Transcript-Problemen.
+    """
+    from app.models import GenerateScriptResponse
+
+    transcript_warning = (
+        "Quelle: YouTube-Untertitel/Transkript; das Skript ist eine eigenständige "
+        "deutschsprachige Story-Formulierung, keine wörtliche Abschrift."
+    )
+    try:
+        video_id = extract_video_id(video_url)
+        if not video_id:
+            return GenerateScriptResponse(
+                title="",
+                hook="",
+                chapters=[],
+                full_script="",
+                sources=[],
+                warnings=[
+                    "Could not parse a YouTube video id from video_url.",
+                ],
+            )
+
+        canonical_url = f"https://www.youtube.com/watch?v={video_id}"
+        transcript = fetch_youtube_transcript_by_video_id(video_id)
+        if not (transcript or "").strip():
+            return GenerateScriptResponse(
+                title="",
+                hook="",
+                chapters=[],
+                full_script="",
+                sources=[canonical_url],
+                warnings=["Transcript not available for this video."],
+            )
+
+        title, hook, chapters, full_script, sources, warnings = (
+            build_script_response_from_extracted_text(
+                extracted_text=transcript,
+                source_url=canonical_url,
+                target_language=target_language,
+                duration_minutes=duration_minutes,
+                extraction_warnings=[],
+                extra_warnings=[transcript_warning],
+            )
+        )
+
+        return GenerateScriptResponse(
+            title=title,
+            hook=hook,
+            chapters=chapters,
+            full_script=full_script,
+            sources=sources,
+            warnings=warnings,
+        )
+    except Exception as e:
+        logger.error(
+            "generate_script_from_youtube_video failed: %s message=%s",
+            type(e).__name__,
+            str(e)[:300],
+        )
+        return GenerateScriptResponse(
+            title="",
+            hook="",
+            chapters=[],
+            full_script="",
+            sources=[],
+            warnings=[
+                "Die Anfrage konnte nicht vollständig verarbeitet werden. "
+                f"Technischer Hinweis: {type(e).__name__}.",
+            ],
+        )
+
+
 def summarize_text(text: str, sentences_count: int = 10) -> str:
     """Summarize text using LSA."""
     try:

@@ -10,6 +10,7 @@ from app.youtube.scoring import is_likely_short_video
 from app.youtube.service import get_latest_channel_videos
 from app.youtube.rss import fetch_channel_feed_entries
 from app.youtube.resolver import resolve_channel_id
+from app.utils import count_words, generate_script_from_youtube_video
 from app.watchlist.firestore_repo import (
     FirestoreUnavailableError,
     FirestoreWatchlistRepository,
@@ -19,15 +20,25 @@ from app.watchlist.models import (
     CheckWatchlistChannelResponse,
     CreateWatchlistChannelResponse,
     CreatedScriptJobItem,
+    GeneratedScript,
     ListWatchlistChannelsResponse,
     ListWatchlistScriptJobsResponse,
     ProcessedVideo,
+    RunScriptJobResponse,
     ScriptJob,
     WatchlistChannel,
     WatchlistChannelCreateRequest,
 )
 
 logger = logging.getLogger(__name__)
+
+
+class ScriptJobNotFoundError(Exception):
+    """Kein Script-Job mit dieser ID."""
+
+class ScriptJobConflictError(Exception):
+    def __init__(self, detail: str):
+        self.detail = detail
 
 
 def utc_now_iso() -> str:
@@ -178,6 +189,165 @@ def list_script_jobs(
         raise FirestoreUnavailableError(str(e)) from e
 
     return ListWatchlistScriptJobsResponse(jobs=jobs, warnings=[])
+
+
+def run_script_job(
+    job_id: str,
+    repo: FirestoreWatchlistRepository | None = None,
+    generate_fn: Callable[..., Any] | None = None,
+) -> RunScriptJobResponse:
+    """Lädt einen pending/failed Job, erzeugt ein Skript wie ``/youtube/generate-script``, persistiert ``generated_scripts``."""
+    repo = repo or FirestoreWatchlistRepository()
+    gen = generate_fn or generate_script_from_youtube_video
+
+    jid = (job_id or "").strip()
+    if not jid:
+        raise ScriptJobNotFoundError()
+
+    try:
+        job = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+
+    if job is None:
+        raise ScriptJobNotFoundError()
+
+    out_warnings: List[str] = []
+
+    if job.status == "completed":
+        out_warnings.append("Script job already completed.")
+        script_loaded: GeneratedScript | None = None
+        if job.generated_script_id:
+            try:
+                script_loaded = repo.get_generated_script(job.generated_script_id)
+            except FirestoreUnavailableError:
+                raise
+        return RunScriptJobResponse(job=job, script=script_loaded, warnings=out_warnings)
+
+    if job.status == "running":
+        raise ScriptJobConflictError("Script job is already running.")
+
+    if job.status == "skipped":
+        raise ScriptJobConflictError("Script job cannot be run (skipped status).")
+
+    if job.status not in ("pending", "failed"):
+        raise ScriptJobConflictError(
+            f"Script job cannot be run (status={job.status})."
+        )
+
+    try:
+        repo.mark_script_job_running(jid)
+    except FirestoreUnavailableError:
+        raise
+
+    try:
+        job_after_run = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+
+    job_running = job_after_run if job_after_run is not None else job
+
+    gs = gen(
+        job_running.video_url,
+        target_language=job_running.target_language,
+        duration_minutes=job_running.duration_minutes,
+    )
+
+    full = (gs.full_script or "").strip()
+    if not full:
+        err_msg = "Generated script is empty."
+        for w in gs.warnings or []:
+            if "Transcript not available" in w:
+                err_msg = "Transcript not available for this video."
+                break
+            if "Could not parse a YouTube video id" in w:
+                err_msg = "Could not parse a YouTube video id from video_url."
+                break
+        try:
+            repo.mark_script_job_failed(jid, err_msg)
+        except FirestoreUnavailableError:
+            raise
+        try:
+            job_failed = repo.get_script_job(jid)
+        except FirestoreUnavailableError:
+            raise
+        final_job = job_failed if job_failed else job_running
+        tw = list(gs.warnings or [])
+        if err_msg and err_msg not in tw:
+            tw.append(err_msg)
+        return RunScriptJobResponse(job=final_job, script=None, warnings=tw)
+
+    wc = count_words(gs.full_script)
+    created_iso = utc_now_iso()
+    gs_doc = GeneratedScript(
+        id=jid,
+        script_job_id=jid,
+        source_url=job_running.video_url,
+        source_type="youtube_transcript",
+        title=gs.title,
+        hook=gs.hook,
+        chapters=list(gs.chapters),
+        full_script=gs.full_script,
+        sources=list(gs.sources or []),
+        warnings=list(gs.warnings or []),
+        word_count=wc,
+        created_at=created_iso,
+    )
+
+    try:
+        repo.create_generated_script(gs_doc)
+    except FirestoreUnavailableError:
+        try:
+            repo.mark_script_job_failed(
+                jid, "Could not persist generated script."
+            )
+        except FirestoreUnavailableError:
+            pass
+        raise
+
+    try:
+        repo.mark_script_job_completed(jid, jid)
+    except FirestoreUnavailableError:
+        try:
+            repo.mark_script_job_failed(
+                jid, "Could not update script job after saving script."
+            )
+        except FirestoreUnavailableError:
+            pass
+        raise
+
+    try:
+        job_done = repo.get_script_job(jid)
+    except FirestoreUnavailableError:
+        raise
+
+    final_job = job_done if job_done else job_running
+
+    pv = None
+    try:
+        pv = repo.get_processed_video(job_running.video_id)
+    except FirestoreUnavailableError:
+        raise
+    if pv:
+        try:
+            repo.update_processed_video_status(
+                job_running.video_id,
+                "script_generated",
+                script_job_id=jid,
+                generated_script_id=jid,
+            )
+        except FirestoreUnavailableError:
+            raise
+    else:
+        out_warnings.append(
+            "processed_videos entry not found; video status was not updated."
+        )
+
+    return RunScriptJobResponse(
+        job=final_job,
+        script=gs_doc,
+        warnings=out_warnings,
+    )
 
 
 def _try_create_script_job_for_seen_video(

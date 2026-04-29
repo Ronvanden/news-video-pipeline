@@ -1,9 +1,11 @@
-"""Watchlist-spezifische Request-/Response-Modelle (Phase 5 Watchlist — Script-Jobs Modell Schritt 3)."""
+"""Watchlist-spezifische Request-/Response-Modelle (Phase 5 Watchlist — Jobs, Skript-Persistenz)."""
 
 from __future__ import annotations
 
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Literal, Optional
+
+from app.models import Chapter
 
 ChannelStatusLiteral = Literal["active", "paused", "error"]
 CheckIntervalLiteral = Literal["manual", "hourly", "daily", "weekly"]
@@ -60,7 +62,7 @@ class ListWatchlistChannelsResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
-ProcessedVideoStatusLiteral = Literal["seen", "skipped"]
+ProcessedVideoStatusLiteral = Literal["seen", "skipped", "script_generated"]
 ChannelCheckItemStatusLiteral = Literal["new", "known", "skipped"]
 
 ScriptJobStatusLiteral = Literal["pending", "running", "completed", "failed", "skipped"]
@@ -81,6 +83,7 @@ class ProcessedVideo(BaseModel):
     is_short: bool = False
     skip_reason: str = ""
     script_job_id: Optional[str] = None
+    generated_script_id: Optional[str] = None
     review_result_id: Optional[str] = None
     last_error: str = ""
 
@@ -137,4 +140,27 @@ class CheckWatchlistChannelResponse(BaseModel):
 
 class ListWatchlistScriptJobsResponse(BaseModel):
     jobs: List[ScriptJob] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class GeneratedScript(BaseModel):
+    """Persistiertes Skript (Firestore ``generated_scripts``, Vertrag analog ``GenerateScriptResponse``)."""
+
+    id: str
+    script_job_id: str
+    source_url: str
+    source_type: SourceTypeYoutubeTranscript = "youtube_transcript"
+    title: str
+    hook: str
+    chapters: List[Chapter] = Field(default_factory=list)
+    full_script: str = ""
+    sources: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    word_count: int = 0
+    created_at: str
+
+
+class RunScriptJobResponse(BaseModel):
+    job: ScriptJob
+    script: Optional[GeneratedScript] = None
     warnings: List[str] = Field(default_factory=list)
