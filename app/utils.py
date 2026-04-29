@@ -173,8 +173,8 @@ def extract_key_points(text: str) -> List[str]:
 class ScriptGenerator:
     """Generator for video scripts with fallback options."""
     
-    def generate_script(self, title: str, key_points: List[str], duration_minutes: int, source_word_count: int = 0) -> Tuple[str, List[dict], str, str, str]:
-        """Generate script structure based on duration. Returns hook, chapters, full_script, mode, reason."""
+    def generate_script(self, title: str, key_points: List[str], duration_minutes: int, source_word_count: int = 0) -> Tuple[str, str, List[dict], str, str, str]:
+        """Generate script structure based on duration. Returns title, hook, chapters, full_script, mode, reason."""
         target_word_count = duration_minutes * 140
         min_word_count = max(int(target_word_count * 0.85), 200)
         max_word_count = int(target_word_count * 1.15)
@@ -210,7 +210,7 @@ class ScriptGenerator:
         min_word_count: int,
         max_word_count: int,
         source_word_count: int,
-    ) -> Tuple[str, List[dict], str, str, str]:
+    ) -> Tuple[str, str, List[dict], str, str, str]:
         """Generate script using OpenAI."""
         try:
             client = openai.OpenAI(api_key=settings.openai_api_key)
@@ -327,7 +327,7 @@ Gib die Antwort exakt als Objekt zurück:
             sanitized_reason = f"Unexpected error: {type(e).__name__}"
         
         logger.info("Falling back to local generation")
-        hook, chapters, full_script, _, _ = self._generate_fallback(
+        _, hook, chapters, full_script, _, _ = self._generate_fallback(
             title,
             key_points,
             duration_minutes,
@@ -337,7 +337,7 @@ Gib die Antwort exakt als Objekt zurück:
             max_word_count,
             source_word_count,
         )
-        return hook, chapters, full_script, "fallback", sanitized_reason
+        return title, hook, chapters, full_script, "fallback", sanitized_reason
     
     def _generate_fallback(
         self,
@@ -349,7 +349,7 @@ Gib die Antwort exakt als Objekt zurück:
         min_word_count: int,
         max_word_count: int,
         source_word_count: int,
-    ) -> Tuple[str, List[dict], str, str, str]:
+    ) -> Tuple[str, str, List[dict], str, str, str]:
         """Fallback script generation."""
         hook = f"Entdecken Sie die neuesten Entwicklungen in diesem spannenden Thema: {title}"
         
@@ -417,7 +417,7 @@ Gib die Antwort exakt als Objekt zurück:
             full_script = f"{full_script}\n\n{additional}"
             current_word_count = count_words(full_script)
         
-        return hook, chapters, full_script, "fallback", ""
+        return title, hook, chapters, full_script, "fallback", ""
     
     def _expand_key_points(self, key_points: List[str], target_word_count: int) -> List[str]:
         """Expand key points to reach target word count without hallucinating."""
