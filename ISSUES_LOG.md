@@ -1,0 +1,25 @@
+# Issues-Log
+
+Gelöste und offene **Projektprobleme** (technisch und prozessual). Keine Secrets, keine `.env`-Inhalte.  
+Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
+
+---
+
+## Tabelle
+
+| Datum | Bereich | Problem | Ursache | Fix | Status | Commit/Revision |
+|-------|---------|---------|---------|-----|--------|-----------------|
+| *n/a* | Config / Pydantic | `BaseSettings` nicht verfügbar bzw. Import-Fehler nach Dependency-Upgrade | In Pydantic v2 liegt `BaseSettings` im Paket `pydantic-settings`, nicht mehr im Kernpaket | `pydantic-settings` als Abhängigkeit; Settings-Klasse von `pydantic_settings` importieren | gelöst | *(siehe Repo-Historie)* |
+| *n/a* | NLP / NLTK | LookupError für `punkt_tab` beim Satz-Split | NLTK-Daten/Tokenizer-Erwartung (`punkt` vs. `punkt_tab`) je nach NLTK-Version | Fallback oder kompatibler Download/Tokenizer-Pfad; defensive Initialisierung | gelöst | *(siehe Repo-Historie)* |
+| *n/a* | Cloud Run / OpenAI | Authentifizierung bei OpenAI schlägt fehl trotz gesetztem Secret | Führende/nachfolgende **Leerzeichen oder Zeilenumbrüche** im Secret-Manager-Wert | API-Key vor Verwendung **trimmen**; Secret-Wert in GCP ohne Whitespace pflegen | gelöst | *(siehe Repo-Historie)* |
+| *n/a* | HTTP / OpenAI Client | `APIConnectionError` oder abgelehnte Verbindung wegen **ungültigem HTTP-Header** | Nicht erlaubte Zeichen in einem Custom-Header (z. B. User-Agent), den die Library mitsendet | Header bereinigen oder entfernen; nur erlaubte Header-Werte setzen | gelöst | *(siehe Repo-Historie)* |
+| *n/a* | LLM / Skriptlogik | Kurzer erster LLM-Output wurde **fälschlich als Fehler** gewertet und löste vollständigen Fallback aus | Zu strenge Schwellenlogik zwischen „zu kurz“ und „retry/expand“ | Zweiten **Expansion-Pass** bzw. differenzierte Behandlung; Fallback nur bei echtem Fehlschlag; siehe `app/utils.py` und `warnings` | gelöst | *(siehe Repo-Historie)* |
+| *n/a* | Prozess / IDE | Agent (Codex) arbeitete an **falscher oder veralteter Verzeichnisstruktur** | Mehrere Projekt-Roots oder veralteter Chat-Kontext ohne aktuelle `app/`-Layout | Immer Workspace-Root und `AGENTS.md`/`README.md` als Referenz; Phasenplan in [PIPELINE_PLAN.md](PIPELINE_PLAN.md) vor größeren Änderungen lesen | gelöst (prozessual) | — |
+
+---
+
+## Hinweise
+
+- **Datum**: Bei älteren Fixes kann das exakte Datum unbekannt sein — dann `*n/a*` oder ungefähre Iteration notieren.  
+- **Commit/Revision**: Konkreten Hash eintragen, sobald der Fix im Git nachvollziehbar ist.  
+- **Offene Issues**: Neue Zeilen mit Status `offen` oder `in Arbeit` ergänzen; nach Fix auf `gelöst` setzen und Commit verlinken.

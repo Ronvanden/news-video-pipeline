@@ -4,6 +4,8 @@
 
 Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL oder einem YouTube-Link ein strukturiertes YouTube-Skript erzeugt. Fokus liegt auf einer sicheren, modularen Pipeline mit optionaler LLM-Unterstützung und stabiler Fallback-Logik.
 
+**Planung:** Phasen, Status und Akzeptanzkriterien für die gesamte Pipeline stehen in [PIPELINE_PLAN.md](PIPELINE_PLAN.md). Gelöste und dokumentierte Vorfälle: [ISSUES_LOG.md](ISSUES_LOG.md). Vorlage für neue Module: [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md).
+
 ## 2. Aktueller MVP-Status
 
 - FastAPI-App läuft lokal.

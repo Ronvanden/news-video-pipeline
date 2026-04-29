@@ -92,3 +92,9 @@
 - Stelle sicher, dass LLM-Komponenten optional bleiben.
 - Pflege eine klare Fehler- und Warnlogik.
 - Priorisiere Erweiterbarkeit für zusätzliche Quellen, Regeln und Ausgabeformate.
+
+## 15. Projektplanung und Änderungsdisziplin
+- Vor **größeren Änderungen** `PIPELINE_PLAN.md` prüfen und betroffene Phase sowie Status (`done` / `next` / `planned`) bewusst setzen oder aktualisieren.
+- Bei **Fehlern, Incidents oder wiederkehrenden Bugs** `ISSUES_LOG.md` aktualisieren (Bereich, Ursache, Fix, Status, Commit-Referenz — keine Secrets).
+- **Neue Module** idealerweise zuerst mit `MODULE_TEMPLATE.md` planen (Scope, Nicht-Ziele, Tests, Deployment-Risiken).
+- **Keine Commits** ohne die vereinbarten Checks (mindestens `python -m compileall app`, relevante Endpoint-Tests laut Testing Rules) und ohne **Abgleich** mit dem dokumentierten Phasenstatus, soweit die Änderung eine Pipeline-Phase betrifft.
