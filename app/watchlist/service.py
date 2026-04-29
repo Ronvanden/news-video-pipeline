@@ -20,11 +20,21 @@ from app.utils import (
     generate_script_from_youtube_video,
 )
 from app.review.service import review_script
+from app.watchlist.connector_export import build_connector_export_payload
 from app.watchlist.scene_plan import (
     build_scenes_from_generated_script,
     decide_plan_status,
 )
 from app.watchlist.scene_asset_prompts import build_scene_asset_items
+from app.watchlist.render_manifest import (
+    EXPORT_VERSION as RENDER_MANIFEST_EXPORT_VERSION,
+    build_timeline,
+    decide_manifest_status,
+)
+from app.watchlist.voice_plan import (
+    build_voice_blocks,
+    decide_voice_plan_status,
+)
 from app.watchlist.firestore_repo import (
     GENERATED_SCRIPTS_COLLECTION,
     FirestoreUnavailableError,
@@ -45,6 +55,10 @@ from app.watchlist.models import (
     ProcessedVideo,
     ProductionJob,
     ProductionJobCreateRequest,
+    ProductionConnectorExportResponse,
+    RenderManifest,
+    RenderManifestGenerateResponse,
+    RenderManifestGetResponse,
     ReviewGeneratedScriptJobResponse,
     ReviewResultStored,
     RunAutomationCycleResponse,
@@ -58,6 +72,10 @@ from app.watchlist.models import (
     SceneAssetsGenerateResponse,
     SceneAssetsGetResponse,
     ScriptJob,
+    VoicePlan,
+    VoicePlanGenerateRequest,
+    VoicePlanGenerateResponse,
+    VoicePlanGetResponse,
     WatchlistChannel,
     WatchlistChannelCreateRequest,
     WatchlistChannelStatusResponse,
@@ -2158,3 +2176,305 @@ def get_scene_assets_for_production_job(
             warnings=["Scene assets not found."],
         )
     return SceneAssetsGetResponse(scene_assets=sa, warnings=[])
+
+
+_VOICE_PLAN_IDEMP_WARN = (
+    "Voice-Plan existierte bereits — keine Neuerstellung (idempotent)."
+)
+
+_RENDER_MANIFEST_IDEMP_WARN = (
+    "Render-Manifest existierte bereits — keine Neuerstellung (idempotent)."
+)
+
+
+def generate_voice_plan(
+    production_job_id: str,
+    req: Optional[VoicePlanGenerateRequest] = None,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> VoicePlanGenerateResponse:
+    """Erzeugt ``voice_plans`` aus Scene-Assets (kein TTS)."""
+    repo = repo or FirestoreWatchlistRepository()
+    body = req or VoicePlanGenerateRequest()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return VoicePlanGenerateResponse(
+            voice_plan=None,
+            warnings=["production_job_id is empty."],
+        )
+    try:
+        existing = repo.get_voice_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+    if existing is not None:
+        return VoicePlanGenerateResponse(
+            voice_plan=existing,
+            warnings=[_VOICE_PLAN_IDEMP_WARN],
+        )
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return VoicePlanGenerateResponse(
+            voice_plan=None,
+            warnings=["Production job not found."],
+        )
+    try:
+        assets = repo.get_scene_assets(pid)
+    except FirestoreUnavailableError:
+        raise
+    if assets is None:
+        return VoicePlanGenerateResponse(
+            voice_plan=None,
+            warnings=["Scene assets not found; generate scene assets first."],
+        )
+    merged_warns = list(assets.warnings or [])
+    blocks, bw = build_voice_blocks(
+        pj, assets, voice_profile=body.voice_profile
+    )
+    merged_warns.extend(bw)
+    st = decide_voice_plan_status(blocks, assets)
+    merged_warns = _dedupe_preserve_order(merged_warns)
+    now_iso = utc_now_iso()
+    doc = VoicePlan(
+        id=pid,
+        production_job_id=pid,
+        scene_assets_id=pid,
+        generated_script_id=(assets.generated_script_id or pj.generated_script_id or "").strip(),
+        script_job_id=(assets.script_job_id or pj.script_job_id or "").strip(),
+        voice_profile=body.voice_profile,
+        status=st if st in ("ready", "failed") else "failed",
+        voice_version=1,
+        blocks=blocks,
+        warnings=merged_warns,
+        created_at=now_iso,
+        updated_at=now_iso,
+    )
+    try:
+        repo.upsert_voice_plan(doc)
+    except FirestoreUnavailableError:
+        raise
+    return VoicePlanGenerateResponse(voice_plan=doc, warnings=list(merged_warns))
+
+
+def _dedupe_preserve_order(seq: List[str]) -> List[str]:
+    seen: set[str] = set()
+    out: List[str] = []
+    for x in seq:
+        k = str(x).strip()
+        if not k or k in seen:
+            continue
+        seen.add(k)
+        out.append(k)
+    return out
+
+
+def get_voice_plan_for_production_job(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> VoicePlanGetResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return VoicePlanGetResponse(
+            voice_plan=None,
+            warnings=["production_job_id is empty."],
+        )
+    try:
+        vp = repo.get_voice_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+    if vp is None:
+        return VoicePlanGetResponse(
+            voice_plan=None,
+            warnings=["Voice plan not found."],
+        )
+    return VoicePlanGetResponse(voice_plan=vp, warnings=[])
+
+
+def generate_render_manifest(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> RenderManifestGenerateResponse:
+    """Bündelt Bausteine in ``render_manifests`` (ohne externe Aufrufe)."""
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return RenderManifestGenerateResponse(
+            render_manifest=None,
+            warnings=["production_job_id is empty."],
+        )
+    try:
+        existing_rm = repo.get_render_manifest(pid)
+    except FirestoreUnavailableError:
+        raise
+    if existing_rm is not None:
+        return RenderManifestGenerateResponse(
+            render_manifest=existing_rm,
+            warnings=[_RENDER_MANIFEST_IDEMP_WARN],
+        )
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return RenderManifestGenerateResponse(
+            render_manifest=None,
+            warnings=["Production job not found."],
+        )
+    try:
+        assets = repo.get_scene_assets(pid)
+    except FirestoreUnavailableError:
+        raise
+    if assets is None:
+        return RenderManifestGenerateResponse(
+            render_manifest=None,
+            warnings=["Scene assets not found — cannot assemble render manifest."],
+        )
+
+    try:
+        sp = repo.get_scene_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+    try:
+        vp = repo.get_voice_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+
+    timeline, est_total = build_timeline(sp, assets, vp)
+    st = decide_manifest_status(
+        production_job=pj,
+        scene_plan=sp,
+        scene_assets=assets,
+        voice_plan=vp,
+    )
+    mw: List[str] = []
+    mw.extend(sp.warnings if sp else [])
+    mw.extend(assets.warnings if assets else [])
+    if vp:
+        mw.extend(vp.warnings or [])
+    else:
+        mw.append(
+            "Voice Plan fehlt — Render-Manifest ist unvollständig (Timeline nutzt Fallback-Text)."
+        )
+    if sp is None:
+        mw.append("Scene Plan fehlt — Dauer-Schätzungen nutzen Fallback-Werte.")
+
+    mw = _dedupe_preserve_order(mw)
+    now_iso = utc_now_iso()
+    rm_doc = RenderManifest(
+        id=pid,
+        production_job_id=pid,
+        production_job=pj,
+        scene_plan=sp,
+        scene_assets=assets,
+        voice_plan=vp,
+        timeline=timeline,
+        estimated_total_duration_seconds=est_total,
+        export_version=RENDER_MANIFEST_EXPORT_VERSION,
+        status=st,
+        warnings=mw,
+        created_at=now_iso,
+        updated_at=now_iso,
+    )
+    try:
+        repo.upsert_render_manifest(rm_doc)
+    except FirestoreUnavailableError:
+        raise
+    out_warn = list(mw)
+    return RenderManifestGenerateResponse(render_manifest=rm_doc, warnings=out_warn)
+
+
+def get_render_manifest_for_production_job(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> RenderManifestGetResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return RenderManifestGetResponse(
+            render_manifest=None,
+            warnings=["production_job_id is empty."],
+        )
+    try:
+        rm = repo.get_render_manifest(pid)
+    except FirestoreUnavailableError:
+        raise
+    if rm is None:
+        return RenderManifestGetResponse(
+            render_manifest=None,
+            warnings=["Render manifest not found."],
+        )
+    return RenderManifestGetResponse(render_manifest=rm, warnings=[])
+
+
+def get_production_connector_export(
+    production_job_id: str,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProductionConnectorExportResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    ws: List[str] = []
+    pid = (production_job_id or "").strip()
+    if not pid:
+        ws.append("production_job_id is empty.")
+        return ProductionConnectorExportResponse(
+            export=build_connector_export_payload(
+                production_job=None,
+                manifest=None,
+                voice_plan=None,
+                scene_assets=None,
+                generated_script=None,
+                render_manifest_warnings=ws,
+            ),
+            warnings=ws,
+        )
+
+    pj: Optional[ProductionJob] = None
+    gs: Optional[GeneratedScript] = None
+    vp: Optional[VoicePlan] = None
+    rm_doc: Optional[RenderManifest] = None
+    sa: Optional[SceneAssets] = None
+
+    try:
+        pj = repo.get_production_job(pid)
+        if pj is None:
+            ws.append("Production job nicht geladen oder nicht vorhanden.")
+        else:
+            gid = (pj.generated_script_id or "").strip()
+            if gid:
+                gs = repo.get_generated_script(gid)
+        vp = repo.get_voice_plan(pid)
+        rm_doc = repo.get_render_manifest(pid)
+        sa = repo.get_scene_assets(pid)
+        if pj is None and sa is None:
+            ws.append("Keine exportierbaren Bausteine für diese ID.")
+    except FirestoreUnavailableError:
+        raise
+
+    extra = list(rm_doc.warnings) if rm_doc else []
+    block_warns = build_connector_export_payload(
+        production_job=pj,
+        manifest=rm_doc,
+        voice_plan=vp,
+        scene_assets=sa,
+        generated_script=gs,
+        render_manifest_warnings=extra,
+    )
+    top = list(block_warns.metadata.warnings or [])
+    top.extend(ws)
+    merged = _dedupe_preserve_order(top)
+    return ProductionConnectorExportResponse(
+        export=block_warns.model_copy(
+            update={
+                "metadata": block_warns.metadata.model_copy(
+                    update={"warnings": merged}
+                )
+            }
+        ),
+        warnings=merged,
+    )

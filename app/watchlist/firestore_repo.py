@@ -1,4 +1,4 @@
-"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``, ``review_results``, ``production_jobs``, ``scene_plans``, ``scene_assets``.
+"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``, ``review_results``, ``production_jobs``, ``scene_plans``, ``scene_assets``, ``voice_plans``, ``render_manifests``.
 
 Client ist injizierbar (Unit-Tests mit Mock).
 """
@@ -13,10 +13,12 @@ from app.watchlist.models import (
     GeneratedScript,
     ProcessedVideo,
     ProductionJob,
+    RenderManifest,
     ReviewResultStored,
     SceneAssets,
     ScenePlan,
     ScriptJob,
+    VoicePlan,
     WatchlistChannel,
 )
 
@@ -30,6 +32,8 @@ REVIEW_RESULTS_COLLECTION = "review_results"
 PRODUCTION_JOBS_COLLECTION = "production_jobs"
 SCENE_PLANS_COLLECTION = "scene_plans"
 SCENE_ASSETS_COLLECTION = "scene_assets"
+VOICE_PLANS_COLLECTION = "voice_plans"
+RENDER_MANIFESTS_COLLECTION = "render_manifests"
 WATCHLIST_META_COLLECTION = "watchlist_meta"
 WATCHLIST_META_AUTOMATION_DOC = "automation"
 
@@ -907,6 +911,96 @@ class FirestoreWatchlistRepository:
                 "Firestore is not reachable or rejected the write."
             ) from e
         return assets
+
+    def _voice_plans_collection_ref(self):
+        return self._ensure_client().collection(VOICE_PLANS_COLLECTION)
+
+    def get_voice_plan(self, production_job_id: str) -> Optional[VoicePlan]:
+        doc_id = (production_job_id or "").strip()
+        if not doc_id:
+            return None
+        try:
+            snap = self._voice_plans_collection_ref().document(doc_id).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore voice_plans get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return VoicePlan.model_validate(merged)
+        except Exception as e:
+            logger.warning(
+                "invalid voice_plans doc: id=%s type=%s", snap.id, type(e).__name__
+            )
+            return None
+
+    def upsert_voice_plan(self, plan: VoicePlan) -> VoicePlan:
+        doc_id = (plan.production_job_id or plan.id or "").strip()
+        if not doc_id:
+            raise FirestoreUnavailableError("voice_plans Document-ID darf nicht leer sein.")
+        try:
+            self._voice_plans_collection_ref().document(doc_id).set(
+                plan.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore voice_plans set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return plan
+
+    def _render_manifests_collection_ref(self):
+        return self._ensure_client().collection(RENDER_MANIFESTS_COLLECTION)
+
+    def get_render_manifest(self, production_job_id: str) -> Optional[RenderManifest]:
+        doc_id = (production_job_id or "").strip()
+        if not doc_id:
+            return None
+        try:
+            snap = self._render_manifests_collection_ref().document(doc_id).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore render_manifests get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return RenderManifest.model_validate(merged)
+        except Exception as e:
+            logger.warning(
+                "invalid render_manifests doc: id=%s type=%s", snap.id, type(e).__name__
+            )
+            return None
+
+    def upsert_render_manifest(self, manifest: RenderManifest) -> RenderManifest:
+        doc_id = (manifest.production_job_id or manifest.id or "").strip()
+        if not doc_id:
+            raise FirestoreUnavailableError(
+                "render_manifests Document-ID darf nicht leer sein."
+            )
+        try:
+            self._render_manifests_collection_ref().document(doc_id).set(
+                manifest.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore render_manifests set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return manifest
 
     def stream_script_jobs_for_error_summary(
         self, *, max_docs: int

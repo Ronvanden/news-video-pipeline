@@ -391,6 +391,121 @@ class SceneAssetsGetResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+VoicePlanStatusLiteral = Literal["ready", "failed"]
+VoiceProfileLiteral = Literal["documentary", "news", "dramatic", "soft"]
+TtsProviderHintLiteral = Literal["elevenlabs", "openai", "google", "generic"]
+RenderManifestStatusLiteral = Literal["ready", "incomplete", "failed"]
+
+
+class VoiceBlock(BaseModel):
+    """Strukturierte VO-Zeilen aus einem ``voiceover_chunk`` (Scene-Asset)."""
+
+    scene_number: int = Field(ge=1)
+    title: str
+    voice_text: str
+    estimated_duration_seconds: int = Field(default=1, ge=1)
+    speaker_style: str = ""
+    pause_after_seconds: float = Field(default=0.25, ge=0.0)
+    tts_provider_hint: TtsProviderHintLiteral = "generic"
+    pronunciation_notes: str = ""
+
+
+class VoicePlan(BaseModel):
+    """Firestore ``voice_plans`` — Doc-ID = ``production_job_id``."""
+
+    id: str
+    production_job_id: str
+    scene_assets_id: str
+    generated_script_id: str
+    script_job_id: str
+    voice_profile: VoiceProfileLiteral = "documentary"
+    status: VoicePlanStatusLiteral = "ready"
+    voice_version: int = Field(default=1, ge=1)
+    blocks: List[VoiceBlock] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class VoicePlanGenerateRequest(BaseModel):
+    voice_profile: VoiceProfileLiteral = "documentary"
+
+
+class VoicePlanGenerateResponse(BaseModel):
+    voice_plan: Optional[VoicePlan] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class VoicePlanGetResponse(BaseModel):
+    voice_plan: Optional[VoicePlan] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class TimelineItem(BaseModel):
+    """Zeile in der Produktions-Timeline (BA 6.9)."""
+
+    scene_number: int = Field(ge=1)
+    voice_text: str = ""
+    image_prompt: str = ""
+    video_prompt: str = ""
+    camera_direction: str = ""
+    duration_seconds: int = Field(default=1, ge=1)
+    asset_type: SceneAssetTypeLiteral = "generated"
+    transition_hint: str = ""
+
+
+class RenderManifest(BaseModel):
+    """Firestore ``render_manifests`` — Doc-ID = ``production_job_id``."""
+
+    id: str
+    production_job_id: str
+    production_job: Optional[ProductionJob] = None
+    scene_plan: Optional[ScenePlan] = None
+    scene_assets: Optional[SceneAssets] = None
+    voice_plan: Optional[VoicePlan] = None
+    timeline: List[TimelineItem] = Field(default_factory=list)
+    estimated_total_duration_seconds: int = Field(default=0, ge=0)
+    export_version: str = "7.0.0"
+    status: RenderManifestStatusLiteral = "incomplete"
+    warnings: List[str] = Field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class RenderManifestGenerateResponse(BaseModel):
+    render_manifest: Optional[RenderManifest] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class RenderManifestGetResponse(BaseModel):
+    render_manifest: Optional[RenderManifest] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ConnectorExportMetadata(BaseModel):
+    title: str = ""
+    description_draft: str = ""
+    tags: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ConnectorExportPayload(BaseModel):
+    """BA 7.0 — reiner JSON-Export, keine Provider-Calls."""
+
+    generic_manifest: dict = Field(default_factory=dict)
+    elevenlabs_blocks: List[dict] = Field(default_factory=list)
+    kling_prompts: List[dict] = Field(default_factory=list)
+    leonardo_prompts: List[dict] = Field(default_factory=list)
+    thumbnail_prompt: str = ""
+    capcut_timeline_hint: dict = Field(default_factory=dict)
+    metadata: ConnectorExportMetadata = Field(default_factory=ConnectorExportMetadata)
+
+
+class ProductionConnectorExportResponse(BaseModel):
+    export: ConnectorExportPayload
+    warnings: List[str] = Field(default_factory=list)
+
+
 class DevFixtureCompletedScriptJobRequest(BaseModel):
     """Nur aktiv wenn ENABLE_TEST_FIXTURES=true — Endpoint-Doku BA 6.6.1."""
 

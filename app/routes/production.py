@@ -1,4 +1,5 @@
-"""Production-Jobs — Liste, Detail, Skip/Retry, Szenenplan (BA 6.6), Scene-Assets (BA 6.7); kein Rendering."""
+"""Production-Jobs — Liste, Detail, Skip/Retry, Szenenplan (BA 6.6), Scene-Assets (BA 6.7),
+Voice-Plan (BA 6.8), Render-Manifest (BA 6.9), Connector-Export (BA 7.0); kein Rendering/TTS."""
 
 import logging
 from typing import Optional
@@ -10,11 +11,17 @@ from app.watchlist.firestore_repo import FirestoreUnavailableError
 from app.watchlist.models import (
     ListProductionJobsResponse,
     ProductionJobActionResponse,
+    ProductionConnectorExportResponse,
+    RenderManifestGenerateResponse,
+    RenderManifestGetResponse,
     SceneAssetsGenerateRequest,
     SceneAssetsGenerateResponse,
     SceneAssetsGetResponse,
     ScenePlanGenerateResponse,
     ScenePlanGetResponse,
+    VoicePlanGenerateRequest,
+    VoicePlanGenerateResponse,
+    VoicePlanGetResponse,
 )
 from app.watchlist import service as watchlist_service
 
@@ -139,6 +146,94 @@ async def production_generate_scene_assets(
         detail = out.warnings[0] if out.warnings else "Not found."
         raise HTTPException(status_code=404, detail=detail)
     return out
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/voice-plan/generate",
+    response_model=VoicePlanGenerateResponse,
+)
+async def production_generate_voice_plan(
+    production_job_id: str,
+    body: Optional[VoicePlanGenerateRequest] = None,
+):
+    """Strukturierter Voice-Plan (Firestore ``voice_plans``), kein TTS."""
+    try:
+        out = watchlist_service.generate_voice_plan(
+            production_job_id, body or VoicePlanGenerateRequest(), repo=None
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST voice-plan/generate failed: Firestore unavailable")
+        body503 = VoicePlanGenerateResponse(voice_plan=None, warnings=[msg])
+        return JSONResponse(status_code=503, content=body503.model_dump())
+    if out.voice_plan is None:
+        detail = out.warnings[0] if out.warnings else "Not found."
+        raise HTTPException(status_code=404, detail=detail)
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/voice-plan",
+    response_model=VoicePlanGetResponse,
+)
+async def production_get_voice_plan(production_job_id: str):
+    try:
+        out = watchlist_service.get_voice_plan_for_production_job(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if out.voice_plan is None:
+        detail = out.warnings[0] if out.warnings else "Voice plan not found."
+        raise HTTPException(status_code=404, detail=detail)
+    return out
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/render-manifest/generate",
+    response_model=RenderManifestGenerateResponse,
+)
+async def production_generate_render_manifest(production_job_id: str):
+    """Produktions-Manifest (Firestore ``render_manifests``)."""
+    try:
+        out = watchlist_service.generate_render_manifest(production_job_id, repo=None)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST render-manifest/generate failed: Firestore unavailable")
+        body503 = RenderManifestGenerateResponse(render_manifest=None, warnings=[msg])
+        return JSONResponse(status_code=503, content=body503.model_dump())
+    if out.render_manifest is None:
+        detail = out.warnings[0] if out.warnings else "Not found."
+        raise HTTPException(status_code=404, detail=detail)
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/render-manifest",
+    response_model=RenderManifestGetResponse,
+)
+async def production_get_render_manifest(production_job_id: str):
+    try:
+        out = watchlist_service.get_render_manifest_for_production_job(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if out.render_manifest is None:
+        detail = out.warnings[0] if out.warnings else "Render manifest not found."
+        raise HTTPException(status_code=404, detail=detail)
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/export",
+    response_model=ProductionConnectorExportResponse,
+)
+async def production_connector_export(production_job_id: str):
+    """Connector-JSON (ElevenLabs/Kling/Leo-Stubs — keine Provider-Aufrufe)."""
+    try:
+        return watchlist_service.get_production_connector_export(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
 
 
 @router.get(
