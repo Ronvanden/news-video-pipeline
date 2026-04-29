@@ -94,7 +94,14 @@ class TestWatchlistCheckChannel(unittest.TestCase):
 
         repo.create_processed_video.side_effect = create_pv
 
-        resp = watchlist_service.check_channel(ch.channel_id, repo=repo, get_videos=feed)
+        chk = MagicMock()
+
+        resp = watchlist_service.check_channel(
+            ch.channel_id,
+            repo=repo,
+            get_videos=feed,
+            transcript_checker=chk,
+        )
 
         self.assertEqual(len(resp.new_videos), 1)
         self.assertEqual(resp.new_videos[0].video_id, "v_new")
@@ -105,6 +112,7 @@ class TestWatchlistCheckChannel(unittest.TestCase):
         self.assertEqual(pv_store["v_new"].status, "seen")
         self.assertIn("w-feed", resp.warnings)
         repo.get_script_job.assert_not_called()
+        chk.assert_not_called()
 
     def test_c_auto_on_creates_pending_script_job(self):
         repo = _make_check_repo()
@@ -122,7 +130,15 @@ class TestWatchlistCheckChannel(unittest.TestCase):
 
         repo.create_script_job.side_effect = capture_job
 
-        resp = watchlist_service.check_channel(ch.channel_id, repo=repo, get_videos=feed)
+        def tr_ok(video_id: str):
+            return True, []
+
+        resp = watchlist_service.check_channel(
+            ch.channel_id,
+            repo=repo,
+            get_videos=feed,
+            transcript_checker=tr_ok,
+        )
 
         self.assertEqual(len(resp.created_jobs), 1)
         cj = resp.created_jobs[0]
@@ -135,6 +151,61 @@ class TestWatchlistCheckChannel(unittest.TestCase):
         self.assertEqual(captured_jobs[0].status, "pending")
         self.assertEqual(captured_jobs[0].source_type, "youtube_transcript")
         repo.update_processed_video_job_link.assert_called_once_with("v_job", "v_job")
+
+    def test_c2_auto_on_transcript_unavailable_no_job_skipped(self):
+        repo = _make_check_repo()
+        ch = _channel(cid="UC_no_tr", auto_generate_script=True)
+        repo.get_watch_channel.return_value = ch
+        vidrow = _vid(vid="v_notr", score=65)
+        feed = MagicMock(return_value={"channel": ch.channel_name, "videos": [vidrow], "warnings": []})
+        repo.get_processed_video.return_value = None
+
+        def tr_no(video_id: str):
+            from app.utils import WARN_TRANSCRIPT_UNAVAILABLE
+
+            return False, [WARN_TRANSCRIPT_UNAVAILABLE]
+
+        resp = watchlist_service.check_channel(
+            ch.channel_id,
+            repo=repo,
+            get_videos=feed,
+            transcript_checker=tr_no,
+        )
+
+        self.assertEqual(resp.created_jobs, [])
+        repo.create_script_job.assert_not_called()
+        self.assertEqual(len(resp.skipped_videos), 1)
+        self.assertEqual(resp.skipped_videos[0].skip_reason, "transcript_not_available")
+        self.assertEqual(len(resp.new_videos), 0)
+        pv_arg = repo.create_processed_video.call_args[0][0]
+        self.assertEqual(pv_arg.status, "skipped")
+        self.assertEqual(pv_arg.skip_reason, "transcript_not_available")
+        self.assertTrue(
+            any("Transkript nicht verfügbar" in w for w in resp.warnings),
+            resp.warnings,
+        )
+
+    def test_c3_auto_on_transcript_check_failed_no_job(self):
+        repo = _make_check_repo()
+        ch = _channel(cid="UC_chk_fail", auto_generate_script=True)
+        repo.get_watch_channel.return_value = ch
+        vidrow = _vid(vid="v_cf", score=65)
+        feed = MagicMock(return_value={"channel": ch.channel_name, "videos": [vidrow], "warnings": []})
+        repo.get_processed_video.return_value = None
+
+        def tr_fail(video_id: str):
+            return False, ["Transcript availability could not be verified (technical error)."]
+
+        resp = watchlist_service.check_channel(
+            ch.channel_id,
+            repo=repo,
+            get_videos=feed,
+            transcript_checker=tr_fail,
+        )
+
+        self.assertEqual(resp.created_jobs, [])
+        self.assertEqual(resp.skipped_videos[0].skip_reason, "transcript_check_failed")
+        self.assertTrue(any("technisch fehlgeschlagen" in w for w in resp.warnings))
 
     def test_d_repeat_check_known_no_job_call(self):
         repo = _make_check_repo()
@@ -236,7 +307,12 @@ class TestWatchlistCheckChannel(unittest.TestCase):
         )
         repo.get_script_job.return_value = existing_job
 
-        resp = watchlist_service.check_channel(ch.channel_id, repo=repo, get_videos=feed)
+        resp = watchlist_service.check_channel(
+            ch.channel_id,
+            repo=repo,
+            get_videos=feed,
+            transcript_checker=lambda vid: (True, []),
+        )
 
         self.assertEqual(resp.created_jobs, [])
         repo.create_script_job.assert_not_called()

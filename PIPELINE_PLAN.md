@@ -210,6 +210,15 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 5. Optional **Review** aus Job heraus — **`review_results`** speichern.
 6. **Scheduler** später (V1.1+) mit Absicherung.
 
+#### Stabilisierung zwischen Schritt 4 und Schritt 5 (Quality Gate: Transcript-Preflight, Job-Fehlercodes)
+
+| | |
+|--|--|
+| **Status** | **done** (Qualitätssicherung; **keine** neue Hauptphase; Gesamt-Phase 5 weiterhin **nicht** `done`) |
+| **Ziel** | Vor **`pending`**-Job-Anlage beim Kanal-Check prüfen, ob ein **öffentliches Transkript** für das Video abrufbar ist (gleicher Abrufpfad wie **`POST /youtube/generate-script`**); transcriptlose oder technisch nicht prüfbare Videos **ohne** **`pending`**-Job erfassen (**`processed_videos`** **`skipped`** mit **`skip_reason`**). Job-Run-Fehler **`failed`** mit standardisierten **`error`** / **`error_code`** statt nur Freitext. |
+| **Nicht-Ziel** | Scheduler, Review-Persistenz (bleibt Schritt **5** geplant), neue große Features. |
+| **Akzeptanz** | Keine Roh-Transkript-Persistenz durch Preflight; **`/generate-script`**-Verträge unverändert; Watchlist-Tests mit Mocks grün; Dokumentation/README ergänzt. |
+
 ---
 
 ### Phase 6 — Script Job Speicherung
@@ -290,4 +299,4 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 3. **Nach Incidents oder wiederkehrenden Bugs**: [ISSUES_LOG.md](ISSUES_LOG.md) aktualisieren (Datum, Ursache, Fix, Commit-Referenz).  
 4. **Commits**: nur mit Tests/Checks laut [AGENTS.md](AGENTS.md) und Statusabgleich hier.
 
-Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-29** — Phase 5 Schritt 4 „Job manuell ausführen / generated_scripts“ ergänzt (Schritt 5 Review-Persistenz bleibt geplant); Datum bei späteren Änderungen im Commit vermerken.
+Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-29** — Stabilisierung „Transcript-Preflight / Job-Fehlercodes“ zwischen Phase-5-Schritt 4 und Schritt 5 ergänzt; Datum bei späteren Änderungen im Commit vermerken.

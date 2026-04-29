@@ -9,7 +9,10 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models import Chapter, GenerateScriptResponse
-from app.utils import generate_script_from_youtube_video
+from app.utils import (
+    check_youtube_transcript_available_by_video_id,
+    generate_script_from_youtube_video,
+)
 from app.watchlist.firestore_repo import FirestoreUnavailableError, FirestoreWatchlistRepository
 from app.watchlist.models import GeneratedScript, ProcessedVideo, ScriptJob
 from app.watchlist import service as watchlist_service
@@ -117,10 +120,36 @@ class TestRunScriptJobService(unittest.TestCase):
         out = watchlist_service.run_script_job("vid_run", repo=repo, generate_fn=gen)
 
         repo.mark_script_job_failed.assert_called_once()
-        self.assertIn("Transcript", repo.mark_script_job_failed.call_args[0][1])
+        fail_args = repo.mark_script_job_failed.call_args
+        self.assertEqual(fail_args[0][1], "transcript_not_available")
+        self.assertEqual(
+            fail_args.kwargs.get("error_code"), "transcript_not_available"
+        )
         repo.create_generated_script.assert_not_called()
         self.assertIsNone(out.script)
         self.assertTrue(any("Transcript" in w for w in out.warnings))
+
+    def test_c2_empty_script_generation_empty_code(self):
+        repo = MagicMock(spec=FirestoreWatchlistRepository)
+        job = _pending_job()
+        repo.get_script_job.return_value = job
+
+        def gen(*_a, **_kw):
+            return GenerateScriptResponse(
+                title="",
+                hook="",
+                chapters=[],
+                full_script="",
+                sources=[],
+                warnings=["Target word count: 1400, Actual word count: 0"],
+            )
+
+        watchlist_service.run_script_job("vid_run", repo=repo, generate_fn=gen)
+
+        repo.mark_script_job_failed.assert_called_once()
+        self.assertEqual(
+            repo.mark_script_job_failed.call_args[0][1], "script_generation_empty"
+        )
 
     def test_d_completed_idempotent(self):
         repo = MagicMock(spec=FirestoreWatchlistRepository)
@@ -175,9 +204,9 @@ class TestRunScriptJobService(unittest.TestCase):
             watchlist_service.run_script_job("vid_run", repo=repo, generate_fn=gen)
 
         repo.mark_script_job_failed.assert_called()
-        self.assertIn(
-            "persist",
-            repo.mark_script_job_failed.call_args[0][1].lower(),
+        self.assertEqual(
+            repo.mark_script_job_failed.call_args[0][1],
+            watchlist_service.JOB_ERR_FIRESTORE_WRITE,
         )
 
 
@@ -199,6 +228,29 @@ class TestRunScriptJobRoute(unittest.TestCase):
             c = TestClient(app)
             r = c.post("/watchlist/jobs/x/run")
             self.assertEqual(r.status_code, 409)
+
+
+class TestTranscriptPreflightUtils(unittest.TestCase):
+    @patch("app.utils.fetch_youtube_transcript_by_video_id", return_value="hello transcript text")
+    def test_preflight_ok(self, _m):
+        ok, w = check_youtube_transcript_available_by_video_id("dQw4w9WgXcQ")
+        self.assertTrue(ok)
+        self.assertEqual(w, [])
+
+    @patch("app.utils.fetch_youtube_transcript_by_video_id", return_value="   ")
+    def test_preflight_empty_returns_warning(self, _m):
+        ok, w = check_youtube_transcript_available_by_video_id("dQw4w9WgXcQ")
+        self.assertFalse(ok)
+        self.assertTrue(any("Transcript not available" in x for x in w))
+
+    @patch(
+        "app.utils.fetch_youtube_transcript_by_video_id",
+        side_effect=RuntimeError("network"),
+    )
+    def test_preflight_exception_technical_warning(self, _m):
+        ok, w = check_youtube_transcript_available_by_video_id("dQw4w9WgXcQ")
+        self.assertFalse(ok)
+        self.assertTrue(any("could not be verified" in x.lower() for x in w))
 
 
 class TestYoutubeGenerateScriptUsesSharedFn(unittest.TestCase):

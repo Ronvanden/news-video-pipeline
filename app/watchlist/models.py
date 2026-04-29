@@ -113,6 +113,7 @@ class ScriptJob(BaseModel):
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
     error: str = ""
+    error_code: str = ""
     generated_script_id: Optional[str] = None
     review_result_id: Optional[str] = None
 

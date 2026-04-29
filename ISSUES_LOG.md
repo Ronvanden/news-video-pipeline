@@ -16,6 +16,8 @@ Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
 | *n/a* | LLM / Skriptlogik | Kurzer erster LLM-Output wurde **fälschlich als Fehler** gewertet und löste vollständigen Fallback aus | Zu strenge Schwellenlogik zwischen „zu kurz“ und „retry/expand“ | Zweiten **Expansion-Pass** bzw. differenzierte Behandlung; Fallback nur bei echtem Fehlschlag; siehe `app/utils.py` und `warnings` | gelöst | *(siehe Repo-Historie)* |
 | *n/a* | Prozess / IDE | Agent (Codex) arbeitete an **falscher oder veralteter Verzeichnisstruktur** | Mehrere Projekt-Roots oder veralteter Chat-Kontext ohne aktuelle `app/`-Layout | Immer Workspace-Root und `AGENTS.md`/`README.md` als Referenz; Phasenplan in [PIPELINE_PLAN.md](PIPELINE_PLAN.md) vor größeren Änderungen lesen | gelöst (prozessual) | — |
 
+| 2026-04-29 | Watchlist / Jobs | Pending **`script_jobs`** wurden auch für Videos ohne abrufbares **Transkript** angelegt; späterer **`run`** schlug erwartbar mit „Transcript not available“ fehl | Transcript-Verfügbarkeit wurde erst beim Job-Run geprüft (RSS liefert keine Caption-Verfügbarkeit) | Transcript-Preflight beim Kanal-Check (**`auto_generate_script=true`**, nach Score/Shorts-Filtern); ohne Transkript **`processed_videos`** **`skipped`** (**`transcript_not_available`**) und **kein** Job; Job-Run mit standardisierten **`error`** / **`error_code`** | fixed after implementation | pending commit |
+
 ---
 
 ## Hinweise

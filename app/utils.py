@@ -460,6 +460,42 @@ def fetch_youtube_transcript_by_video_id(video_id: str) -> str:
     return ""
 
 
+WARN_TRANSCRIPT_UNAVAILABLE = "Transcript not available for this video."
+
+
+def check_youtube_transcript_available_by_video_id(
+    video_id: str,
+) -> Tuple[bool, List[str]]:
+    """
+    Prüft, ob für ein Video ein Untertitel-/Transkript-Text abrufbar ist — ohne dauerhafte
+    Speicherung von Rohtranskripten und ohne Transkripttext zu loggen.
+
+    Nutzt dieselbe Abruflogik wie ``fetch_youtube_transcript_by_video_id`` /
+    ``generate_script_from_youtube_video``.
+    """
+    warnings: List[str] = []
+    vid = (video_id or "").strip()
+    if not vid:
+        warnings.append("Could not parse a YouTube video id.")
+        return False, warnings
+    try:
+        text = fetch_youtube_transcript_by_video_id(vid)
+        if (text or "").strip():
+            return True, []
+        warnings.append(WARN_TRANSCRIPT_UNAVAILABLE)
+        return False, warnings
+    except Exception as e:
+        logger.info(
+            "Transcript availability check failed for video_id=%s: %s",
+            vid,
+            type(e).__name__,
+        )
+        warnings.append(
+            "Transcript availability could not be verified (technical error)."
+        )
+        return False, warnings
+
+
 def extract_video_id(url: str) -> str:
     """Extract YouTube video ID from watch, youtu.be, shorts, or embed URLs."""
     raw = (url or "").strip()
@@ -606,7 +642,7 @@ def generate_script_from_youtube_video(
                 chapters=[],
                 full_script="",
                 sources=[canonical_url],
-                warnings=["Transcript not available for this video."],
+                warnings=[WARN_TRANSCRIPT_UNAVAILABLE],
             )
 
         title, hook, chapters, full_script, sources, warnings = (

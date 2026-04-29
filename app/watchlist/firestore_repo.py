@@ -204,6 +204,7 @@ class FirestoreWatchlistRepository:
                     "completed_at": _utc_now_iso(),
                     "generated_script_id": generated_script_id,
                     "error": "",
+                    "error_code": "",
                 }
             )
         except Exception as e:
@@ -214,14 +215,23 @@ class FirestoreWatchlistRepository:
                 "Firestore is not reachable or rejected the update."
             ) from e
 
-    def mark_script_job_failed(self, job_id: str, error: str) -> None:
+    def mark_script_job_failed(
+        self,
+        job_id: str,
+        error: str,
+        *,
+        error_code: Optional[str] = None,
+    ) -> None:
         err_short = (error or "")[:2000]
+        ec = error_code if error_code is not None else error
+        ec_short = (ec or "")[:200]
         try:
             self._script_jobs_collection_ref().document(job_id).update(
                 {
                     "status": "failed",
                     "completed_at": _utc_now_iso(),
                     "error": err_short,
+                    "error_code": ec_short,
                 }
             )
         except Exception as e:

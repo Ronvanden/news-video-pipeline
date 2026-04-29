@@ -32,7 +32,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - YouTube Video-to-Script V1: Transkript aus Video-URL → strukturiertes Skript (`POST /youtube/generate-script`)
 - YouTube-Kanal-Discovery V1: neueste Videos strukturiert mit Heuristik (`score`, `reason`, `summary` aus Metadaten)
 - **Phase 4 V1:** `POST /review-script` — heuristische Originalitäts- und Nähe-zur-Quelle-Prüfung (keine Rechtsberatung, kein Auto-Publish)
-- **Phase 5 V1 Schritt 1–4:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`**, **`GET /watchlist/jobs`**, **`POST /watchlist/jobs/{job_id}/run`** — Kanäle und **`processed_videos`** in Firestore; bei **`auto_generate_script=true`** werden **`script_jobs`** mit Status **`pending`** angelegt; ein Job wird **nur** durch **`run`** ausgeführt und das Ergebnis in **`generated_scripts`** gespeichert (**kein** Review-Schritt, **kein** Scheduler in diesem Schritt — siehe README / [PIPELINE_PLAN.md](PIPELINE_PLAN.md))
+- **Phase 5 V1 Schritt 1–4:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`**, **`GET /watchlist/jobs`**, **`POST /watchlist/jobs/{job_id}/run`** — Kanäle und **`processed_videos`** in Firestore; bei **`auto_generate_script=true`** prüft der Kanal-Check vor **`pending`**-Jobs einen **Transcript-Preflight** (gleiche Abruflogik wie **`POST /youtube/generate-script`**); **`pending`** entstehen nur bei verfügbarem Transkript. Ausführung nur über **`run`**, Speicherung in **`generated_scripts`** (**kein** Review-Schritt, **kein** Scheduler — siehe README / [PIPELINE_PLAN.md](PIPELINE_PLAN.md)). Für einen Live-Erfolgstest: zuerst ein Video mit **`POST /youtube/generate-script`** testen — nicht jedes YouTube-Video hat ein abrufbares Transkript (technische Kanäle können häufig transcriptlose Videos liefern).
 
 ## 4. Projektstruktur
 
@@ -281,7 +281,11 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 
 **Schritt 3 – Script-Jobs (pending vor Run)**
 
-- Ist **`auto_generate_script=true`** und der Check legt ein **neues**, für die Heuristik **geeignetes** Video (`seen`) an, wird in der Collection **`script_jobs`** (Document-ID = **`video_id`**, ein Job pro Video in V1) ein Eintrag mit **`status: "pending"`** erstellt; **`processed_videos.script_job_id`** wird gesetzt. Die Check-Antwort listet neu angelegte Jobs kompakt unter **`created_jobs`** (u. a. `id`, `video_id`, `video_url`, `status`, `target_language`, `duration_minutes`).
+- Ist **`auto_generate_script=true`** und das Feed-Video hat alle Filter (**Shorts**, **`min_score`**) passiert, prüft der Service vor einer **`pending`**-Job-Anlage einen **Transcript-Preflight** (öffentliche Untertitel gleicher Weg wie **`POST /youtube/generate-script`** — keine Speicherung von Roh-Transkripten).
+  - **Transkript abrufbar:** **`processed_videos.status`** = **`seen`**, in **`script_jobs`** (**Document-ID** = **`video_id`**) **`pending`**; **`processed_videos.script_job_id`** wird gesetzt; Eintrag unter **`created_jobs`** (u. a. `id`, `video_id`, `video_url`, `status`, `target_language`, `duration_minutes`).
+  - **Kein Transkript:** **`processed_videos.status`** = **`skipped`**, **`skip_reason`** = **`transcript_not_available`**; **kein** **`script_jobs`**-Eintrag; Video steht unter **`skipped_videos`**. Aggregate **`warnings`** im Response bei mehreren Treffern, keine unnötig langen Texte pro Video.
+  - **Technischer Preflight-Fehler:** keine **`pending`**-Job-Anlage; Video **`skipped`** mit **`skip_reason`** **`transcript_check_failed`** (später keine Blind-Kosten durch später sicher scheitende Runs).
+- Mit **`auto_generate_script=false`** entstehen wie zuvor **keine** neuen **`script_jobs`** (Videos können **`seen`** ohne Job sein).
 - **Keine automatische Skripterzeugung** im Check; Ausführung und Speicherung eines Skripts erfolgen in **Schritt 4** über **`POST /watchlist/jobs/{job_id}/run`**.
 - **`GET /watchlist/jobs`** listet persistierte Jobs (Parameter `limit`, Standard 50; **keine** Ausführung).
 
@@ -289,7 +293,7 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 
 - **`POST /watchlist/jobs/{job_id}/run`** führt einen **`pending`**- oder **`failed`**-Job aus (nicht erneut bei **`completed`**, **`running`**, **`skipped`** — siehe HTTP-Status **409** bei Konflikten). **`job_id`** entspricht in V1 der **`video_id`** (wie bei **`GET /watchlist/jobs`**).
 - Es wird dieselbe interne Pipeline wie **`POST /youtube/generate-script`** genutzt (**kein** HTTP-Selbstaufruf); bei Erfolg liegt das Skript in **`generated_scripts`** (Document-ID in V1 = **`job_id`**), der Job erhält **`generated_script_id`**, **`processed_videos.status`** kann **`script_generated`** werden.
-- **`RunScriptJobResponse`:** `job`, optional **`script`**, **`warnings`**. Transkript-/Parse-Probleme führen zu **`failed`** am Job und **keinem** Eintrag in **`generated_scripts`** (kein HTTP **500** für diese erwartbaren Fälle).
+- **`RunScriptJobResponse`:** `job`, optional **`script`**, **`warnings`**. Fehler sind über **`job.error`** und optional **`job.error_code`** standardisiert (z. B. **`transcript_not_available`**, **`script_generation_empty`**, **`script_generation_failed`**, **`firestore_write_failed`**); menschenlesbare Hinweise stehen in **`warnings`**. Selbst bei Preflight kann ein späterer **`run`** noch **`failed`** werden (Transkript zwischenzeitlich nicht mehr verfügbar). Transkript-/Parse-Probleme führen zu **`failed`** am Job und **keinem** Eintrag in **`generated_scripts`** (kein HTTP **500** für diese erwartbaren Fälle).
 - **In diesem Schritt bewusst nicht:** Review ausführen oder **`review_results`** schreiben; Scheduler; automatischer Massen-Run; Voiceover/Rendering/Publish.
 
 Beispiel:
