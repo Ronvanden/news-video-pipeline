@@ -90,13 +90,13 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 
 | | |
 |--|--|
-| **Status** | **next** |
-| **Ziel** | Zusätzliche Prüfstufe: z. B. Nähe zum Quelltext, Mindestlänge, Strukturchecks, optionale Heuristiken oder LLM-„Second opinion“ — **ohne** den bestehenden Generate-Vertrag zu brechen (neuer Endpoint oder optionale Flags nach MODULE_TEMPLATE). |
-| **Endpoints** | *noch nicht definiert* (z. B. `POST /review-script` oder interner Schritt) |
-| **Relevante Dateien** | *neu geplant* — z. B. `app/review/` oder Erweiterung `app/utils.py` (nur nach Plan) |
-| **Akzeptanzkriterien** | Klare Eingabe/Ausgabe-Spezifikation; keine heimlichen Änderungen am `GenerateScriptResponse` ohne explizite Projektentscheidung; dokumentierte Grenzen (kein juristisches Plagiatstool). |
-| **Bekannte Grenzen** | Automatische Originalitätsbewertung ist heuristisch; menschliche Redaktion bleibt maßgeblich. |
-| **Nächster Schritt** | MODULE_TEMPLATE ausfüllen; API-Entwurf; Minimal-Tests (Happy Path + Fehlertext). |
+| **Status** | **next** (Planung für V1 abgestimmt; Implementierung folgt gesondertem Bauauftrag) |
+| **Ziel** | Zusätzliche Prüfstufe vor Voiceover/Bild/Video: Nähe zum Quelltext, lange ähnliche Passagen, grobe Struktur-/Einordnungs-Signale — **hybrid** (lokale Heuristiken + optionaler LLM-Teil für qualitative Empfehlungen). **`GenerateScriptResponse` von `/generate-script` und `/youtube/generate-script` bleibt unverändert**; Review als eigener Endpoint und Vertrag. |
+| **Endpoints (geplant)** | `POST /review-script` — Request: u. a. `source_url`, `source_type`, `source_text`, `generated_script` (inhaltlich = `full_script` aus Generate), `target_language`; Response: u. a. `risk_level`, `originality_score`, `similarity_flags`, `issues`, `recommendations`, `warnings` (Detail siehe Projektplanung / MODULE_TEMPLATE). |
+| **Relevante Dateien (geplant)** | Neu: `app/review/` (`__init__.py`, `originality.py`, ggf. `llm_review.py`, `service.py`); neu: `app/routes/review.py`; Anbindung in `app/main.py`; Modelle in `app/models.py`; Doku `README.md` nach Implementierung. |
+| **Akzeptanzkriterien (V1-Zielbild)** | 200 oder validierter Client-/Fehlerpfad ohne unerwartete 500; kein Secret-/.env-Zugriff im Review-Modul; `risk_level` nachvollziehbar aus Heuristik (+ ggf. LLM nur als Zusatzsignal); bei identischem `source_text` und `generated_script` → `high`; eigenständiges Skript → `low` oder `medium` möglich; konkrete `recommendations`; `python -m compileall app` grün; Tests mindestens für identisch / stark ähnlich / eigenständig + YouTube-Strenge + fehlender Kurz-`source_text`. |
+| **Bekannte Grenzen** | Keine Rechtsberatung, keine Freigabe zum Veröffentlichen; keine dauerhafte Speicherung von `source_text` ohne spätere Produktentscheidung; Heuristiken können false positive/negative liefern — menschliche Redaktion bleibt maßgeblich. |
+| **Nächster Schritt** | [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md) für „Script Review API“ ausfüllen; Implementierungs-Bauauftrag: Modelle, `app/review/*`, Route registrieren, Tests, README-Abschnitt. |
 
 ---
 
