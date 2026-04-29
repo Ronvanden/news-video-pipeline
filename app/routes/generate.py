@@ -61,13 +61,18 @@ async def generate_script(request: GenerateScriptRequest):
         if len(full_script) < 500:
             warnings.append("Script may be too short for 10-minute video")
         
-        # Add mode warning
+        # Add mode warning (fallback stays short on purpose — no article padding)
+        fallback_note = (
+            "Fallback mode: script is condensed from the source and not artificially lengthened; "
+            "duration target may be missed to avoid repeating article text."
+        )
         if mode == "llm":
             warnings.append("Generated using LLM mode")
         elif reason:
-            warnings.append(f"LLM generation failed: {reason}. Generated using fallback mode.")
+            r = reason.rstrip(".")
+            warnings.append(f"LLM generation failed: {r}. {fallback_note}")
         else:
-            warnings.append("Generated using fallback mode")
+            warnings.append(fallback_note)
         
         return GenerateScriptResponse(
             title=title,

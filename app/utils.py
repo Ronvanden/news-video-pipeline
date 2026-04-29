@@ -1,4 +1,5 @@
 import logging
+import json
 from typing import List, Tuple
 import re
 from urllib.parse import urlparse
@@ -15,6 +16,106 @@ except ImportError:
     openai = None
 
 logger = logging.getLogger(__name__)
+
+_SECRET_PATTERNS = (
+    # Maskierte oder kurze sk-...-Fragmente (OpenAI liefert z. B. sk-inval***0000)
+    (re.compile(r"sk-[A-Za-z0-9_*.-]{4,}"), "[REDACTED_KEY]"),
+    (re.compile(r"(?i)Bearer\s+[A-Za-z0-9._+=-]{12,}"), "Bearer [REDACTED]"),
+    (re.compile(r"(?i)(api[_-]?key|authorization)\s*[:=]\s*[^\s\"']{8,}"), r"\1=[REDACTED]"),
+)
+
+
+def _sanitize_openai_text(text: str, max_len: int = 200) -> str:
+    """Strip likely secrets and truncate for logs and client-facing warnings."""
+    if not text:
+        return ""
+    t = text.replace("\n", " ").replace("\r", " ").strip()
+    for pattern, repl in _SECRET_PATTERNS:
+        t = pattern.sub(repl, t)
+    if len(t) > max_len:
+        t = t[: max_len - 3].rstrip() + "..."
+    return t
+
+
+def _openai_nested_error_message(body: object) -> str:
+    if not isinstance(body, dict):
+        return ""
+    err = body.get("error")
+    if isinstance(err, dict):
+        msg = err.get("message")
+        if msg:
+            return str(msg)
+    return ""
+
+
+def _coerce_openai_error_text(exc: BaseException) -> str:
+    """Prefer API body JSON message; strip noisy client wrappers."""
+    raw = ""
+    if openai and isinstance(exc, openai.APIError):
+        raw = _openai_nested_error_message(exc.body) or getattr(exc, "message", "") or str(exc)
+    else:
+        raw = getattr(exc, "message", "") or str(exc)
+    m = re.match(r"Error code:\s*\d+\s*-\s*", raw)
+    if m:
+        raw = raw[m.end() :].strip()
+    inner = _openai_nested_error_message_from_text(raw)
+    return inner or raw
+
+
+def _openai_nested_error_message_from_text(blob: str) -> str:
+    """Best-effort: pull error.message from a stringified dict (when body wasn't parsed)."""
+    if not blob or "message" not in blob:
+        return ""
+    m = re.search(r"['\"]message['\"]\s*:\s*['\"]([^'\"]{1,500})['\"]", blob)
+    if m:
+        return m.group(1)
+    return ""
+
+
+def _openai_error_summary(exc: BaseException) -> Tuple[str, str]:
+    """
+    Build (log_line, public_reason) for OpenAI errors.
+    public_reason is safe to surface in API warnings (sanitized, no secrets).
+    """
+    cls = type(exc).__name__
+    status = getattr(exc, "status_code", None)
+    if status is None and getattr(exc, "response", None) is not None:
+        try:
+            status = exc.response.status_code
+        except Exception:
+            status = None
+
+    raw = _coerce_openai_error_text(exc)
+
+    safe = _sanitize_openai_text(raw, max_len=220)
+    req_id = getattr(exc, "request_id", None) if openai and isinstance(exc, openai.APIStatusError) else None
+    err_type = getattr(exc, "type", None) if openai and isinstance(exc, openai.APIError) else None
+    code = getattr(exc, "code", None) if openai and isinstance(exc, openai.APIError) else None
+
+    log_parts = [f"{cls}"]
+    if status is not None:
+        log_parts.append(f"status={status}")
+    if err_type:
+        log_parts.append(f"type={err_type}")
+    if code:
+        log_parts.append(f"code={code}")
+    if req_id:
+        log_parts.append(f"request_id={req_id}")
+    log_parts.append(f"message={safe or '[no message]'}")
+
+    log_line = " ".join(log_parts)
+
+    if status is not None and safe:
+        public = f"{cls} HTTP {status}: {safe}"
+    elif status is not None:
+        public = f"{cls} HTTP {status}"
+    elif safe:
+        public = f"{cls}: {safe}"
+    else:
+        public = cls
+
+    return log_line, public
+
 
 def extract_text_from_url(url: str) -> Tuple[str, List[str]]:
     """Extract text from news URL or YouTube transcript. Returns text and warnings."""
@@ -261,7 +362,6 @@ Gib die Antwort exakt als Objekt zurück:
             )
             
             result = response.choices[0].message.content
-            import json
             if isinstance(result, dict):
                 data = result
             else:
@@ -284,11 +384,17 @@ Gib die Antwort exakt als Objekt zurück:
             
             full_script_words = count_words(full_script)
             if full_script_words < min_word_count:
-                logger.warning(f"LLM output too short ({full_script_words} words), extending locally")
-                full_script = self._extend_script(full_script, key_points, title_text, target_word_count, min_word_count)
+                logger.warning(
+                    "LLM output too short (%s words), applying single short framing block (no padding loop)",
+                    full_script_words,
+                )
+                full_script = self._extend_script(full_script, min_word_count)
                 full_script_words = count_words(full_script)
                 if full_script_words < min_word_count:
-                    logger.warning(f"Extended script still too short ({full_script_words} words), fallback to local generation")
+                    logger.warning(
+                        "Script still below minimum (%s words) after framing; using local fallback",
+                        full_script_words,
+                    )
                     return self._generate_fallback(
                         title,
                         key_points,
@@ -302,29 +408,16 @@ Gib die Antwort exakt als Objekt zurück:
             
             return title_text, hook, chapters, full_script, "llm", ""
         
-        except openai.APIError as e:
-            status_code = getattr(e, 'status_code', 'unknown')
-            message = getattr(e, 'message', str(e))
-            logger.error(f"OpenAI API error: {type(e).__name__} status={status_code} message={message}")
-            sanitized_reason = f"API error {status_code}"
-        except openai.RateLimitError as e:
-            message = getattr(e, 'message', str(e))
-            logger.error(f"OpenAI rate limit: {type(e).__name__} message={message}")
-            sanitized_reason = "Rate limit exceeded"
-        except openai.AuthenticationError as e:
-            message = getattr(e, 'message', str(e))
-            logger.error(f"OpenAI auth error: {type(e).__name__} message={message}")
-            sanitized_reason = "Authentication failed"
         except openai.OpenAIError as e:
-            message = getattr(e, 'message', str(e))
-            logger.error(f"OpenAI error: {type(e).__name__} message={message}")
-            sanitized_reason = "OpenAI request failed"
+            log_line, sanitized_reason = _openai_error_summary(e)
+            logger.error("OpenAI request failed: %s", log_line)
         except json.JSONDecodeError as e:
-            logger.error(f"OpenAI JSON parse error: {type(e).__name__} message={str(e)}")
-            sanitized_reason = "Invalid response format"
+            logger.error("OpenAI JSON parse error: %s message=%s", type(e).__name__, str(e)[:300])
+            sanitized_reason = "Invalid response format (JSON)"
         except Exception as e:
-            logger.error(f"OpenAI generation failed: {type(e).__name__} message={str(e)}")
-            sanitized_reason = f"Unexpected error: {type(e).__name__}"
+            safe = _sanitize_openai_text(str(e), max_len=200)
+            logger.error("OpenAI generation failed: %s message=%s", type(e).__name__, safe or str(type(e).__name__))
+            sanitized_reason = f"{type(e).__name__}" + (f": {safe}" if safe else "")
         
         logger.info("Falling back to local generation")
         _, hook, chapters, full_script, _, _ = self._generate_fallback(
@@ -409,85 +502,42 @@ Gib die Antwort exakt als Objekt zurück:
         full_script_parts.append(cta)
         
         full_script = "\n\n".join(full_script_parts)
-        current_word_count = count_words(full_script)
-        while current_word_count < target_word_count:
-            additional = self._build_additional_narrative(target_word_count - current_word_count, key_points)
-            if not additional:
-                break
-            full_script = f"{full_script}\n\n{additional}"
-            current_word_count = count_words(full_script)
-        
         return title, hook, chapters, full_script, "fallback", ""
     
     def _expand_key_points(self, key_points: List[str], target_word_count: int) -> List[str]:
-        """Expand key points to reach target word count without hallucinating."""
-        current_words = sum(len(point.split()) for point in key_points)
-        expanded = key_points.copy()
-        if current_words >= target_word_count * 0.75:
-            return expanded
-        
-        for point in key_points:
-            if current_words >= target_word_count * 0.9:
-                break
-            if len(expanded) < target_word_count // 60:
-                rephrased = f"Das Wichtigste daran ist: {point}"
-            else:
-                rephrased = f"Außerdem zeigt sich: {point}"
-            expanded.append(rephrased)
-            current_words += len(rephrased.split())
-        
-        return expanded
+        """Use each extracted point once; do not repeat source sentences to pad length."""
+        del target_word_count  # length targets are handled via warnings, not duplication
+        return [p.strip() for p in key_points if p.strip()]
 
     def _build_chapter_content(self, title: str, points: List[str]) -> str:
-        """Build chapter content from key points with added explanation."""
-        sentences = []
+        """One bullet per fact; no second sentence that re-quotes the same line."""
+        if not points:
+            return (
+                "Aus der Quelle lassen sich hier keine weiteren Einzelpunkte sauber ausgliedern; "
+                "wir bleiben bei einer knappen Zusammenfassung ohne Wiederholung des Fließtexts."
+            )
+        bullets = []
+        seen_lower = set()
         for point in points:
-            sentences.append(f"{point}."
-                             if point.endswith('.') else f"{point}.")
-            sentences.append(f"Dazu lässt sich ergänzen, dass {point.lower()}" if len(point.split()) < 15 else f"Dazu gehört vor allem: {point.lower()}")
-        if len(sentences) < 4:
-            sentences.append("Diese Aspekte sind wichtig, um das Thema umfassend zu verstehen.")
-        return " ".join(sentences)
+            p = point.strip().rstrip(".")
+            if not p:
+                continue
+            key = p.lower()[:120]
+            if key in seen_lower:
+                continue
+            seen_lower.add(key)
+            bullets.append(f"– {p}.")
+        return " ".join(bullets) if bullets else self._build_chapter_content(title, [])
 
-    def _build_additional_narrative(self, missing_words: int, key_points: List[str]) -> str:
-        """Add more narrative content when the fallback script is too short."""
-        if missing_words <= 0:
-            return ""
-        narrative = [
-            "Wir vertiefen die Perspektive und betrachten zusätzliche Zusammenhänge, die für das Verständnis wichtig sind.",
-            "Dabei achten wir darauf, bei belegbaren Fakten zu bleiben und die zentrale Aussage klar herauszuarbeiten.",
-        ]
-        if key_points:
-            narrative.append(f"Insbesondere sind die folgenden Punkte zu beachten: {', '.join(key_points[:3])}.")
-        return " ".join(narrative)
-
-    def _extend_script(self, script: str, key_points: List[str], title: str, target_word_count: int, min_word_count: int) -> str:
-        """Extend an LLM script with additional non-hallucinating narrative."""
+    def _extend_script(self, script: str, min_word_count: int) -> str:
+        """At most one short editorial bridge — no loops that paste the same block many times."""
         if count_words(script) >= min_word_count:
             return script
-
-        additional_parts = [
-            "Darüber hinaus ordnen wir den bisherigen Inhalt ein und erklären, welche Bedeutung er für die aktuelle Debatte hat.",
-        ]
-        if key_points:
-            for i, point in enumerate(key_points[:6], start=1):
-                additional_parts.append(
-                    f"Punkt {i}: {point}. Diese Aussage lässt sich in den größeren Kontext einordnen, weil sie grundlegende Fragen zur Umsetzung und zu den möglichen Konsequenzen aufwirft."
-                )
-        additional_parts.append(
-            "Wir beschreiben nun, welche Auswirkungen diese Entwicklungen auf die Betroffenen haben könnten und worauf man in den kommenden Wochen achten sollte."
+        bridge = (
+            "Einordnung: Wo die Quelle nicht weiter ausführt, erweitern wir den Text hier bewusst nicht "
+            "und wiederholen die Fakten nicht zur Streckung."
         )
-        additional_parts.append(
-            "Zum Abschluss fassen wir zusammen, warum diese Entwicklung weiter beobachtet werden sollte und welche Fragen noch offen bleiben."
-        )
-
-        extended = f"{script}\n\n" + "\n\n".join(additional_parts)
-        while count_words(extended) < target_word_count:
-            extended += "\n\n" + (
-                "Zusätzlich betrachten wir die Risiken und Chancen, die sich aus dieser Lage ergeben. "
-                "Wichtig ist dabei, klar zwischen den vorhandenen Fakten und den noch offenen Fragen zu unterscheiden."
-            )
-        return extended
+        return f"{script}\n\n{bridge}"
 
 
 def generate_title(text: str) -> str:
