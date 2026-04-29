@@ -9,6 +9,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - FastAPI-App läuft lokal.
 - **Cloud MVP v1:** Bereitstellung auf **Google Cloud Run** mit öffentlicher Service-URL, `GET /health` und `POST /generate-script` online nutzbar. Details, Deploy-Befehl, Secret Manager und Test-`curl`: [DEPLOYMENT.md](DEPLOYMENT.md).
 - Endpoint `POST /generate-script` ist funktionsfähig.
+- Endpoint `POST /youtube/generate-script` (V1): YouTube-Video-URL → Transkript → eigenständiges deutschsprachiges Skript (ohne YouTube Data API-Key).
 - Endpoint `POST /youtube/latest-videos` (V1): YouTube-Kanal prüfen und neueste Videos per RSS abrufen (ohne YouTube Data API-Key).
 - `GET /health` liefert den Service-Status.
 - OpenAI ist optional und wird über Umgebungsvariablen (lokal z. B. `.env`) aktiviert.
@@ -26,6 +27,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - Lokaler Fallback-Modus ohne API-Schlüssel
 - UTF-8-Response-Handling
 - Klare Warnungen bei Unsicherheit oder unzureichendem Inhalt
+- YouTube Video-to-Script V1: Transkript aus Video-URL → strukturiertes Skript (`POST /youtube/generate-script`)
 - YouTube-Kanal-Discovery V1: neueste Videos strukturiert mit Heuristik (`score`, `reason`, `summary` aus Metadaten)
 
 ## 4. Projektstruktur
@@ -41,7 +43,7 @@ app/
 └── routes/
     ├── __init__.py
     ├── generate.py   # /generate-script Endpoint
-    └── youtube.py    # /youtube/latest-videos Endpoint
+    └── youtube.py    # /youtube/generate-script, /youtube/latest-videos
 
 Dockerfile
 README.md
@@ -107,6 +109,50 @@ Die API ist dann unter `http://127.0.0.1:8000` erreichbar.
   }
   ```
 
+### POST /youtube/generate-script
+
+**Zweck:** Aus einer **YouTube-Video-URL** das **Transkript** (Untertitel) laden und daraus ein **eigenständiges, deutschsprachiges Story-Skript** erzeugen — im gleichen festen Antwortformat wie `POST /generate-script` (`GenerateScriptResponse`).
+
+**Request-Body:**
+
+```json
+{
+  "video_url": "string",
+  "target_language": "de",
+  "duration_minutes": 10
+}
+```
+
+**Response:** `GenerateScriptResponse` (Vertrag unverändert):
+
+```json
+{
+  "title": "",
+  "hook": "",
+  "chapters": [],
+  "full_script": "",
+  "sources": [],
+  "warnings": []
+}
+```
+
+**Unterstützte URL-Formate** (Auszug):
+
+- `youtube.com/watch?v=…` (z. B. `https://www.youtube.com/watch?v=…`)
+- `youtu.be/…`
+- Pfade mit `/shorts/`
+- Pfade mit `/embed/`
+- Pfade mit `/live/`
+
+**Transkript fehlt:** Die API antwortet mit **HTTP 200** und einem **leeren bzw. minimalen Vertrag**; in `warnings` erscheint u. a.:
+
+`Transcript not available for this video.`
+
+**Hinweise:**
+
+- **Kein YouTube Data API Key** nötig (öffentliche Untertitel, z. B. über `youtube-transcript-api`).
+- **Keine automatische Veröffentlichung** und keine Speicherung des Outputs in diesem Endpoint.
+
 ### POST /youtube/latest-videos
 
 **Zweck:** Einen YouTube-Kanal prüfen und die **neuesten Videos** strukturiert zurückgeben (Metadaten aus dem Kanal-Feed, keine automatische Veröffentlichung, kein Scheduler).
@@ -169,7 +215,17 @@ curl -X POST http://127.0.0.1:8000/generate-script \
   -d '{"url":"https://example.com/news","target_language":"de","duration_minutes":10}'
 ```
 
-## 12. Beispiel: POST /youtube/latest-videos
+## 12. Beispiel: POST /youtube/generate-script
+
+Lokaler Test (Standard-Port `8000`). Verwende eine **Video-URL, für die Untertitel/Transkript bei YouTube verfügbar sind**. Unter Windows kann `curl` ein PowerShell-Alias sein; ggf. `curl.exe` nutzen.
+
+```bash
+curl -X POST http://127.0.0.1:8000/youtube/generate-script \
+  -H "Content-Type: application/json" \
+  -d '{"video_url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","target_language":"de","duration_minutes":10}'
+```
+
+## 13. Beispiel: POST /youtube/latest-videos
 
 Lokaler Test (Standard-Port `8000`, siehe Abschnitt „Server starten“). Beispiel mit **Kanal-URL** `https://www.youtube.com/channel/UC…` (robuster als `@handle`). Unter Windows kann `curl` ein PowerShell-Alias sein; ggf. `curl.exe` nutzen oder den Request mit einem anderen HTTP-Client senden.
 
@@ -181,7 +237,7 @@ curl -X POST http://127.0.0.1:8000/youtube/latest-videos \
 
 **Hinweis:** Für diesen Endpoint sind keine zusätzlichen Secrets nötig; es werden hier keine Geheimnisse dokumentiert.
 
-## 13. Beispiel-Response
+## 14. Beispiel-Response
 
 ```json
 {
@@ -196,28 +252,28 @@ curl -X POST http://127.0.0.1:8000/youtube/latest-videos \
 
 > Der Antwortvertrag ist fix: `title`, `hook`, `chapters`, `full_script`, `sources`, `warnings`.
 
-## 14. LLM-Modus vs. Fallback-Modus
+## 15. LLM-Modus vs. Fallback-Modus
 
 - LLM-Modus: Aktiv, wenn `OPENAI_API_KEY` gesetzt ist und OpenAI erfolgreich antwortet.
 - Antwort wird strikt als JSON geparst.
 - Fallback-Modus: Aktiv, wenn kein API-Key vorliegt oder OpenAI fehlschlägt.
 - Fallback liefert weiterhin valide Struktur, ohne neue Fakten zu erfinden.
 
-## 15. Warnings erklärt
+## 16. Warnings erklärt
 
 - `warnings` enthält Hinweise zu unsicherer Quelle, ungenügendem Inhalt oder Fallback-Einsatz.
 - Warnings machen transparent, wenn der Output nicht die gewünschte Länge oder Qualität erreichen kann.
 
-## 16. Lokale Tests
+## 17. Lokale Tests
 
 - App kompilieren:
   ```bash
   python -m compileall app
   ```
 - Endpoint-Tests per `curl` oder Postman durchführen.
-- Prüfe `GET /health`, mindestens einen `POST /generate-script` Request und bei Bedarf `POST /youtube/latest-videos` (z. B. mit `/channel/UC…`).
+- Prüfe `GET /health`, mindestens einen `POST /generate-script` Request, bei Bedarf `POST /youtube/generate-script` (Video mit verfügbarem Transkript) und `POST /youtube/latest-videos` (z. B. mit `/channel/UC…`).
 
-## 17. Docker / Cloud Run
+## 18. Docker / Cloud Run
 
 **Cloud MVP v1 (URL, Deploy, Secret Manager, Online-Tests):** [DEPLOYMENT.md](DEPLOYMENT.md)
 
@@ -246,24 +302,24 @@ Der Container lauscht auf **0.0.0.0**. Der Port kommt aus der Umgebungsvariable 
 
 Ohne `OPENAI_API_KEY` läuft die API im dokumentierten Fallback-Modus.
 
-## 18. Sicherheit / Secret Handling
+## 19. Sicherheit / Secret Handling
 
 - `.env` darf niemals in Git landen.
 - Geheimnisse bleiben lokal und werden nicht im README dokumentiert.
 - Nur `OPENAI_API_KEY` optional in `.env` konfigurieren.
 
-## 19. Agent-Regeln / AGENTS.md Hinweis
+## 20. Agent-Regeln / AGENTS.md Hinweis
 
 - `AGENTS.md` enthält verbindliche Regeln für Agent-Verhalten und redaktionelle Qualität.
 - Änderungen am Workflow oder an der Scriptqualität sollten dort dokumentiert werden.
 
-## 20. Bekannte Grenzen
+## 21. Bekannte Grenzen
 
 - Kein 100% verlässliches LLM für Faktenprüfung.
 - Qualitätsgrenzen hängen von URL-Extraktion und Artikeltext ab.
 - Manche Inhalte können kurz bleiben, wenn die Quelle nur wenig Text liefert.
 
-## 21. Nächste Schritte
+## 22. Nächste Schritte
 
 - Weitere Quellen-Extraktion und Artikelerkennung hinzufügen.
 - Erweiterte Kapitel- und Timing-Logik implementieren.

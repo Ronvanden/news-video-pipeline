@@ -2,7 +2,7 @@ import logging
 import json
 from typing import List, Tuple, Optional
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 import trafilatura
 from youtube_transcript_api import YouTubeTranscriptApi
 from deep_translator import GoogleTranslator
@@ -400,25 +400,172 @@ def count_words(text: str) -> int:
     return len(text.split())
 
 def extract_youtube_transcript(url: str) -> str:
-    """Extract transcript from YouTube video."""
+    """Extract transcript from YouTube video (watch, youtu.be, shorts)."""
+    vid = extract_video_id(url)
+    if not vid:
+        return ""
+    return fetch_youtube_transcript_by_video_id(vid)
+
+
+def _joined_transcript_text(fetched) -> str:
+    """Build plain text from FetchedTranscript (snippets with .text)."""
     try:
-        video_id = extract_video_id(url)
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'de'])
-        text = " ".join([item['text'] for item in transcript])
-        return text
-    except Exception as e:
-        logger.error(f"Error extracting YouTube transcript: {e}")
+        return " ".join(
+            getattr(s, "text", "") or ""
+            for s in fetched
+            if getattr(s, "text", "")
+        )
+    except Exception:
         return ""
 
-def extract_video_id(url: str) -> str:
-    """Extract YouTube video ID from URL."""
-    parsed = urlparse(url)
-    if parsed.hostname == 'youtu.be':
-        return parsed.path[1:]
-    if parsed.hostname in ('www.youtube.com', 'youtube.com'):
-        if parsed.path == '/watch':
-            return parsed.query.split('v=')[1].split('&')[0]
+
+def fetch_youtube_transcript_by_video_id(video_id: str) -> str:
+    """
+    Fetch caption text for a video id via youtube-transcript-api (no Data API).
+    Tries preferred languages first, then any available track.
+    Compatible with youtube-transcript-api instance API (fetch/list).
+    """
+    if not video_id:
+        return ""
+    api = YouTubeTranscriptApi()
+    try:
+        fetched = api.fetch(
+            video_id, languages=["de", "en", "en-US", "en-GB"]
+        )
+        text = _joined_transcript_text(fetched)
+        if text.strip():
+            return text
+    except Exception as first_exc:
+        logger.info(
+            "Primary transcript fetch failed for video_id=%s: %s",
+            video_id,
+            type(first_exc).__name__,
+        )
+    try:
+        transcript_list = api.list(video_id)
+        for tr in transcript_list:
+            try:
+                fetched = tr.fetch()
+                text = _joined_transcript_text(fetched)
+                if text.strip():
+                    return text
+            except Exception:
+                continue
+    except Exception as e:
+        logger.info(
+            "Transcript listing failed for video_id=%s: %s",
+            video_id,
+            type(e).__name__,
+        )
     return ""
+
+
+def extract_video_id(url: str) -> str:
+    """Extract YouTube video ID from watch, youtu.be, shorts, or embed URLs."""
+    raw = (url or "").strip()
+    if not raw:
+        return ""
+    parsed = urlparse(raw)
+    host = (parsed.hostname or "").lower().rstrip(".")
+    path = (parsed.path or "").strip("/")
+
+    if host == "youtu.be":
+        part = path.split("/")[0] if path else ""
+        return _normalize_video_id(part)
+
+    if host in ("www.youtube.com", "youtube.com", "m.youtube.com", "www.youtube-nocookie.com"):
+        if path.startswith("watch") or path == "watch":
+            qs = parse_qs(parsed.query)
+            v = (qs.get("v") or [""])[0]
+            return _normalize_video_id(v.split("&")[0] if v else "")
+        if path.startswith("shorts/"):
+            part = path.split("/", 1)[1].split("/")[0] if "/" in path else ""
+            return _normalize_video_id(part.split("?")[0])
+        if path.startswith("embed/"):
+            part = path.split("/", 1)[1].split("/")[0] if "/" in path else ""
+            return _normalize_video_id(part.split("?")[0])
+        if path.startswith("live/"):
+            part = path.split("/", 1)[1].split("/")[0] if "/" in path else ""
+            return _normalize_video_id(part.split("?")[0])
+
+    return ""
+
+
+def _normalize_video_id(fragment: str) -> str:
+    """Keep typical 11-char YouTube ids; strip query junk."""
+    if not fragment:
+        return ""
+    vid = fragment.strip()
+    if "&" in vid:
+        vid = vid.split("&", 1)[0]
+    m = re.match(r"^([A-Za-z0-9_-]{11})", vid)
+    if m:
+        return m.group(1)
+    return ""
+
+
+def build_script_response_from_extracted_text(
+    *,
+    extracted_text: str,
+    source_url: str,
+    target_language: str,
+    duration_minutes: int,
+    extraction_warnings: Optional[List[str]] = None,
+    extra_warnings: Optional[List[str]] = None,
+) -> Tuple[str, str, List[dict], str, List[str], List[str]]:
+    """
+    Shared pipeline: summarized/structured script from plain text (article or transcript).
+    Returns title, hook, chapters (dicts), full_script, sources, warnings.
+    """
+    warnings: List[str] = list(extraction_warnings or [])
+    if extra_warnings:
+        warnings.extend(extra_warnings)
+
+    summary = summarize_text(extracted_text, sentences_count=20)
+
+    if target_language == "de":
+        translated = translate_to_german(summary)
+    else:
+        translated = summary
+
+    key_points = extract_key_points(translated)
+    title = generate_title(translated)
+    source_word_count = count_words(translated)
+
+    generator = ScriptGenerator()
+    title, hook, chapters, full_script, mode, reason = generator.generate_script(
+        title,
+        key_points,
+        duration_minutes,
+        source_word_count,
+    )
+
+    sources = [source_url]
+    target_word_count = duration_minutes * 140
+    actual_word_count = count_words(full_script)
+    warnings.append(f"Target word count: {target_word_count}, Actual word count: {actual_word_count}")
+    if actual_word_count < target_word_count * 0.5:
+        warnings.append(
+            "Script is significantly shorter than target. Content may be insufficient for the requested duration."
+        )
+    if len(full_script) < 500:
+        warnings.append("Script may be too short for 10-minute video")
+
+    fallback_note = (
+        "Fallback mode: script is condensed from the source and not artificially lengthened; "
+        "duration target may be missed to avoid repeating the source text."
+    )
+    if mode == "llm":
+        warnings.append("Generated using LLM mode")
+        if reason:
+            warnings.append(reason)
+    elif reason:
+        r = reason.rstrip(".")
+        warnings.append(f"LLM generation failed: {r}. {fallback_note}")
+    else:
+        warnings.append(fallback_note)
+
+    return title, hook, chapters, full_script, sources, warnings
 
 def summarize_text(text: str, sentences_count: int = 10) -> str:
     """Summarize text using LSA."""

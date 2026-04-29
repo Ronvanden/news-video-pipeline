@@ -6,6 +6,12 @@ class GenerateScriptRequest(BaseModel):
     target_language: str = "de"
     duration_minutes: int = 10
 
+
+class YouTubeGenerateScriptRequest(BaseModel):
+    video_url: str = Field(..., min_length=1)
+    target_language: str = "de"
+    duration_minutes: int = 10
+
 class Chapter(BaseModel):
     title: str
     content: str
