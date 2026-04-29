@@ -1,6 +1,7 @@
 """Watchlist-Endpunkte (Phase 5: CRUD, Check, Script-Jobs inkl. manueller Run)."""
 
 import logging
+from typing import Optional
 
 from fastapi import APIRouter, Body, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -261,7 +262,7 @@ async def watchlist_resume_channel(channel_id: str):
 )
 async def watchlist_create_production_job(
     job_id: str,
-    req: ProductionJobCreateRequest | None = Body(None),
+    req: Optional[ProductionJobCreateRequest] = Body(None),
 ):
     try:
         return watchlist_service.create_production_job_from_script_job(
