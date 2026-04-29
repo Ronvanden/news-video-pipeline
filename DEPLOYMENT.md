@@ -52,6 +52,16 @@ gcloud run deploy news-to-video-pipeline \
 
 Ohne gesetztes Secret bzw. ohne Key läuft die Anwendung im dokumentierten **Fallback-Modus** (kein LLM).
 
+## Firestore (Phase 5 Watchlist)
+
+Für **Watchlist** (`POST/GET /watchlist/channels`) ist **Google Firestore** (Native Mode) im **gleichen GCP-Projekt** wie Cloud Run zu aktivieren.
+
+- **IAM:** Dem **Cloud-Run-Dienstkonto** Rolle **`roles/datastore.user`** (Zugriff auf Firestore/Datastore) zuweisen.
+- **Lokal:** Projekt setzen (z. B. Umgebungsvariable `GOOGLE_CLOUD_PROJECT` auf die Projekt-ID); **Application Default Credentials** via `gcloud auth application-default login` (keine Service-Account-JSON-Dateien im Repository).
+- Alternativ **Firestore-Emulator** für Entwicklung/Test (siehe Google-Dokumentation).
+
+Keine Firestore- oder GCP-**Secret-Werte** in dieser Datei ablegen.
+
 ## Online-Test mit curl
 
 **Health:**

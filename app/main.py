@@ -4,6 +4,7 @@ from app.config import settings
 from app.routes.generate import router as generate_router
 from app.routes.youtube import router as youtube_router
 from app.routes.review import router as review_router
+from app.routes.watchlist import router as watchlist_router
 import logging
 import json
 
@@ -31,6 +32,7 @@ app = FastAPI(
 app.include_router(generate_router)
 app.include_router(youtube_router)
 app.include_router(review_router)
+app.include_router(watchlist_router)
 
 @app.get("/health")
 async def health():

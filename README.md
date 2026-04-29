@@ -32,6 +32,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - YouTube Video-to-Script V1: Transkript aus Video-URL → strukturiertes Skript (`POST /youtube/generate-script`)
 - YouTube-Kanal-Discovery V1: neueste Videos strukturiert mit Heuristik (`score`, `reason`, `summary` aus Metadaten)
 - **Phase 4 V1:** `POST /review-script` — heuristische Originalitäts- und Nähe-zur-Quelle-Prüfung (keine Rechtsberatung, kein Auto-Publish)
+- **Phase 5 V1 Schritt 1:** `POST /watchlist/channels`, `GET /watchlist/channels` — YouTube-Kanal in Firestore speichern/abfragen (Kanal muss als **Channel-ID** auflösbar sein; **kein** Channel-Check/Jobs/Scheduler in diesem Schritt — siehe README)
 
 ## 4. Projektstruktur
 
@@ -43,12 +44,14 @@ app/
 ├── models.py         # Pydantic Request-/Response-Modelle
 ├── utils.py          # Extraktion, Generierung, LLM und Fallback
 ├── review/           # Phase 4: Originalitäts-Heuristiken + Review-Service
+├── watchlist/        # Phase 5: Watchlist (Firestore CRUD, Schritt 1+)
 ├── youtube/          # Kanal-Auflösung, RSS, Scoring (ohne Data API)
 └── routes/
     ├── __init__.py
     ├── generate.py   # /generate-script Endpoint
     ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
-    └── review.py     # /review-script
+    ├── review.py     # /review-script
+    └── watchlist.py  # /watchlist/channels (Phase 5)
 
 Dockerfile
 README.md
@@ -255,6 +258,39 @@ curl -s -X POST "http://127.0.0.1:8000/review-script" ^
 
 **Tests (Smoke):** Im Repo unter `tests/test_review_script.py` (u. a. identischer Text → `high`, kurze Quelle → `Source text is short…`, YouTube → strengere `warning`). Zusätzlich: `python -m compileall app` und `python -m unittest tests.test_review_script`.
 
+### Watchlist (`/watchlist/channels`) — Phase 5 V1 Schritt 1
+
+Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collection `watch_channels`, Document-ID = YouTube-`channel_id`). **Ohne** erfolgreiche Auflösung einer **Channel-ID (UC…)** wird nichts persistiert (Handles können an Consent-/Bot-Seiten scheitern — `warnings` wie bei `POST /youtube/latest-videos`).
+
+**Voraussetzungen:**
+
+- Firestore im GCP-Projekt (Native Mode) aktiviert und **Application Default Credentials** lokal (z. B. `gcloud auth application-default login`) bzw. auf Cloud Run über das Dienst-Service-Account; siehe [DEPLOYMENT.md](DEPLOYMENT.md).
+
+**Noch nicht in Schritt 1:** manueller/automatisierter Kanal-Check (`POST /youtube/latest-videos`-Pfad), `processed_videos`, Script-Jobs, Scheduler.
+
+**Request (POST):** `WatchlistChannelCreateRequest` — Felder u. a. `channel_url`, `check_interval` (`manual` | `hourly` | `daily` | `weekly`), `max_results` (1–50), `auto_generate_script`, `auto_review_script`, `target_language`, `duration_minutes` (1–60), `min_score` (0–100), `ignore_shorts`, `notes`.
+
+**Responses:** `CreateWatchlistChannelResponse` bzw. `ListWatchlistChannelsResponse` mit `warnings`. Wenn Firestore nicht erreichbar ist: **503** mit Hinweis in `warnings` (ohne Secrets). Wenn die **Channel-ID nicht auflösbar** ist: **200** mit `channel: null` und erklärenden `warnings`.
+
+**GET** `/watchlist/channels` listet gespeicherte Kanäle (nach `created_at`, neueste zuerst).
+
+Beispiel **Kanal anlegen** (Kanal-URL mit `/channel/UC…` empfohlen):
+
+```bash
+curl -s -X POST "http://127.0.0.1:8000/watchlist/channels" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"channel_url\":\"https://www.youtube.com/channel/UC_x5XG1OV2P6uZZ5FSM9Ttw\",\"check_interval\":\"manual\",\"max_results\":5}"
+```
+
+Liste:
+
+```bash
+curl -s "http://127.0.0.1:8000/watchlist/channels"
+```
+
+**Tests:** `tests/test_watchlist_models.py`, `tests/test_watchlist_service.py` (Firestore **gemockt**; keine Pflicht für Live-Firestore-Verbindung).
+
+
 ## 10. Beispiel: GET /health
 
 ```bash
@@ -332,7 +368,7 @@ curl -X POST http://127.0.0.1:8000/youtube/latest-videos \
   python -m compileall app
   ```
 - Endpoint-Tests per `curl` oder Postman durchführen.
-- Prüfe `GET /health`, mindestens einen `POST /generate-script` Request, bei Bedarf `POST /youtube/generate-script` (Video mit verfügbarem Transkript) und `POST /youtube/latest-videos` (z. B. mit `/channel/UC…`).
+- Prüfe `GET /health`, mindestens einen `POST /generate-script` Request, bei Bedarf `POST /youtube/generate-script` (Video mit verfügbarem Transkript), `POST /youtube/latest-videos` (z. B. mit `/channel/UC…`). Watchlist: `tests/test_watchlist_*` (Firestore optional live testen, siehe [DEPLOYMENT.md](DEPLOYMENT.md)).
 
 ## 18. Docker / Cloud Run
 
