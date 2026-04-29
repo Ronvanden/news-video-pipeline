@@ -8,9 +8,12 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
+from app.watchlist.models import ProcessedVideo, WatchlistChannel
+
 logger = logging.getLogger(__name__)
 
 COLLECTION_NAME = "watch_channels"
+PROCESSED_VIDEOS_COLLECTION = "processed_videos"
 
 
 def get_firestore_client():
@@ -104,4 +107,82 @@ class FirestoreWatchlistRepository:
         for snap in snaps:
             merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
             out.append(merged)
+        return out
+
+    def _processed_collection_ref(self):
+        return self._ensure_client().collection(PROCESSED_VIDEOS_COLLECTION)
+
+    def get_watch_channel(self, channel_id: str) -> Optional[WatchlistChannel]:
+        doc = self.get_watch_channel_doc(channel_id)
+        if not doc:
+            return None
+        try:
+            return WatchlistChannel.model_validate(doc)
+        except Exception as e:
+            logger.warning(
+                "invalid watch_channels document: doc_id=%s type=%s",
+                channel_id,
+                type(e).__name__,
+            )
+            return None
+
+    def get_processed_video(self, video_id: str) -> Optional[ProcessedVideo]:
+        try:
+            snap = self._processed_collection_ref().document(video_id).get()
+        except Exception as e:
+            logger.warning("Firestore processed_videos get failed: type=%s", type(e).__name__)
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        data = snap.to_dict() or {}
+        merged = self._doc_to_dict(data, snap.id)
+        try:
+            return ProcessedVideo.model_validate(merged)
+        except Exception as e:
+            logger.warning(
+                "invalid processed_videos doc: video_id=%s type=%s",
+                snap.id,
+                type(e).__name__,
+            )
+            return None
+
+    def create_processed_video(self, video: ProcessedVideo) -> ProcessedVideo:
+        doc_id = video.video_id
+        try:
+            self._processed_collection_ref().document(doc_id).set(video.model_dump())
+        except Exception as e:
+            logger.warning("Firestore processed_videos set failed: type=%s", type(e).__name__)
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return video
+
+    def list_processed_videos_by_channel(self, channel_id: str) -> List[ProcessedVideo]:
+        try:
+            snaps = (
+                self._processed_collection_ref()
+                .where("channel_id", "==", channel_id)
+                .stream()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore processed_videos query failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[ProcessedVideo] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ProcessedVideo.model_validate(merged))
+            except Exception as e:
+                logger.warning(
+                    "skip invalid processed_videos row: doc_id=%s type=%s",
+                    snap.id,
+                    type(e).__name__,
+                )
+                continue
         return out

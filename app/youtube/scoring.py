@@ -196,3 +196,21 @@ def score_video(
         f"Gesamt {score}/100."
     )
     return score, reason
+
+
+def is_likely_short_video(
+    title: str,
+    video_url: str = "",
+    duration_seconds: int | None = None,
+    media_keywords: str = "",
+) -> bool:
+    """Heuristik wie bei ``score_video`` (URL ``/shorts/``, Titel, Keywords, sehr kurze Laufzeit)."""
+    if (
+        _url_suggests_shorts(video_url)
+        or _title_suggests_shorts(title)
+        or _metadata_suggests_shorts(media_keywords)
+    ):
+        return True
+    if duration_seconds is not None and duration_seconds > 0 and duration_seconds < 60:
+        return True
+    return False

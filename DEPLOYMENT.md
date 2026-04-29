@@ -55,8 +55,9 @@ Ohne gesetztes Secret bzw. ohne Key läuft die Anwendung im dokumentierten **Fal
 
 ## Firestore (Phase 5 Watchlist)
 
-Für **Watchlist** (`POST/GET /watchlist/channels`) ist **Google Firestore** (Native Mode) im **gleichen GCP-Projekt** wie Cloud Run zu aktivieren.
+Für **Watchlist** (`POST/GET /watchlist/channels`, `POST /watchlist/channels/{channel_id}/check`) ist **Google Firestore** (Native Mode) im **gleichen GCP-Projekt** wie Cloud Run zu aktivieren.
 
+- **Collections:** u. a. **`watch_channels`** (Kanal-Dokumente, Document-ID = YouTube-`channel_id`) und **`processed_videos`** (bekannte/übersprungene Videos, Document-ID = **`video_id`** — wird vom manuellen Check angelegt).
 - **Named Database:** In der Konsole eine Firestore-Datenbank mit ID **`watchlist`** anlegen (oder `FIRESTORE_DATABASE` auf dieselbe ID setzen). Der Client nutzt `firestore.Client(database=…)` gemäß Konfiguration (`app/config.py`).
 - **IAM:** Dem **Cloud-Run-Dienstkonto** Rolle **`roles/datastore.user`** (Zugriff auf Firestore/Datastore) zuweisen.
 - **Lokal:** Projekt setzen (z. B. Umgebungsvariable `GOOGLE_CLOUD_PROJECT` auf die Projekt-ID); **Application Default Credentials** via `gcloud auth application-default login` (keine Service-Account-JSON-Dateien im Repository).

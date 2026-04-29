@@ -8,7 +8,19 @@ from app.youtube.resolver import resolve_channel_id
 from app.youtube.rss import fetch_channel_feed_entries
 from app.youtube.scoring import build_summary_from_title, score_video
 
-def get_latest_channel_videos(channel_url: str, max_results: int) -> Dict[str, Any]:
+
+def get_latest_channel_videos(
+    channel_url: str,
+    max_results: int,
+    *,
+    include_feed_metadata: bool = False,
+) -> Dict[str, Any]:
+    """Liefert neueste Videos aus dem Kanal-RSS.
+
+    ``include_feed_metadata`` ist nur für interne Aufrufe (z. B. Watchlist-Check):
+    ergänzt pro Video ``duration_seconds`` und ``media_keywords`` — der
+    öffentliche Endpoint ``POST /youtube/latest-videos`` nutzt den Default ``False``.
+    """
     warnings: List[str] = []
     n = max(1, int(max_results))
 
@@ -34,17 +46,19 @@ def get_latest_channel_videos(channel_url: str, max_results: int) -> Dict[str, A
             media_keywords=e.media_keywords,
         )
         summary = build_summary_from_title(e.title)
-        videos.append(
-            {
-                "title": e.title,
-                "url": e.url,
-                "video_id": e.video_id,
-                "published_at": e.published_at,
-                "summary": summary,
-                "score": sc,
-                "reason": reason,
-            }
-        )
+        row: Dict[str, Any] = {
+            "title": e.title,
+            "url": e.url,
+            "video_id": e.video_id,
+            "published_at": e.published_at,
+            "summary": summary,
+            "score": sc,
+            "reason": reason,
+        }
+        if include_feed_metadata:
+            row["duration_seconds"] = e.duration_seconds
+            row["media_keywords"] = e.media_keywords
+        videos.append(row)
 
     return {
         "channel": display_name or channel_id,

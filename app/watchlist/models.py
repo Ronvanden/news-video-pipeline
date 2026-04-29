@@ -58,3 +58,46 @@ class CreateWatchlistChannelResponse(BaseModel):
 class ListWatchlistChannelsResponse(BaseModel):
     channels: List[WatchlistChannel] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
+
+
+ProcessedVideoStatusLiteral = Literal["seen", "skipped"]
+ChannelCheckItemStatusLiteral = Literal["new", "known", "skipped"]
+
+
+class ProcessedVideo(BaseModel):
+    id: str
+    channel_id: str
+    video_id: str
+    video_url: str
+    title: str
+    published_at: str
+    first_seen_at: str
+    status: ProcessedVideoStatusLiteral
+    score: int = 0
+    reason: str = ""
+    is_short: bool = False
+    skip_reason: str = ""
+    script_job_id: Optional[str] = None
+    review_result_id: Optional[str] = None
+    last_error: str = ""
+
+
+class ChannelCheckVideoItem(BaseModel):
+    title: str = ""
+    url: str = ""
+    video_id: str = ""
+    published_at: str = ""
+    score: int = 0
+    reason: str = ""
+    is_short: bool = False
+    status: ChannelCheckItemStatusLiteral = "new"
+    skip_reason: str = ""
+
+
+class CheckWatchlistChannelResponse(BaseModel):
+    channel_id: str
+    new_videos: List[ChannelCheckVideoItem] = Field(default_factory=list)
+    known_videos: List[ChannelCheckVideoItem] = Field(default_factory=list)
+    skipped_videos: List[ChannelCheckVideoItem] = Field(default_factory=list)
+    created_processed_videos: int = 0
+    warnings: List[str] = Field(default_factory=list)

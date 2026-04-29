@@ -32,7 +32,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - YouTube Video-to-Script V1: Transkript aus Video-URL → strukturiertes Skript (`POST /youtube/generate-script`)
 - YouTube-Kanal-Discovery V1: neueste Videos strukturiert mit Heuristik (`score`, `reason`, `summary` aus Metadaten)
 - **Phase 4 V1:** `POST /review-script` — heuristische Originalitäts- und Nähe-zur-Quelle-Prüfung (keine Rechtsberatung, kein Auto-Publish)
-- **Phase 5 V1 Schritt 1:** `POST /watchlist/channels`, `GET /watchlist/channels` — YouTube-Kanal in Firestore speichern/abfragen (Kanal muss als **Channel-ID** auflösbar sein; **kein** Channel-Check/Jobs/Scheduler in diesem Schritt — siehe README)
+- **Phase 5 V1 Schritt 1–2:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`** — Kanal in Firestore speichern, manuell prüfen, **`processed_videos`** (keine Script-Jobs, keine automatische Skripterzeugung — siehe README)
 
 ## 4. Projektstruktur
 
@@ -44,14 +44,14 @@ app/
 ├── models.py         # Pydantic Request-/Response-Modelle
 ├── utils.py          # Extraktion, Generierung, LLM und Fallback
 ├── review/           # Phase 4: Originalitäts-Heuristiken + Review-Service
-├── watchlist/        # Phase 5: Watchlist (Firestore CRUD, Schritt 1+)
+├── watchlist/        # Phase 5: Watchlist (Firestore, Schritt 1–2)
 ├── youtube/          # Kanal-Auflösung, RSS, Scoring (ohne Data API)
 └── routes/
     ├── __init__.py
     ├── generate.py   # /generate-script Endpoint
     ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
     ├── review.py     # /review-script
-    └── watchlist.py  # /watchlist/channels (Phase 5)
+    └── watchlist.py  # /watchlist/channels, /watchlist/channels/{id}/check (Phase 5)
 
 Dockerfile
 README.md
@@ -258,22 +258,28 @@ curl -s -X POST "http://127.0.0.1:8000/review-script" ^
 
 **Tests (Smoke):** Im Repo unter `tests/test_review_script.py` (u. a. identischer Text → `high`, kurze Quelle → `Source text is short…`, YouTube → strengere `warning`). Zusätzlich: `python -m compileall app` und `python -m unittest tests.test_review_script`.
 
-### Watchlist (`/watchlist/channels`) — Phase 5 V1 Schritt 1
+### Watchlist (`/watchlist/channels`, `/watchlist/channels/{channel_id}/check`) — Phase 5 V1 Schritt 1–2
 
-Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collection `watch_channels`, Document-ID = YouTube-`channel_id`). **Ohne** erfolgreiche Auflösung einer **Channel-ID (UC…)** wird nichts persistiert (Handles können an Consent-/Bot-Seiten scheitern — `warnings` wie bei `POST /youtube/latest-videos`).
+Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collection **`watch_channels`**, Document-ID = YouTube-`channel_id`). Neue bzw. bereits bekannte Videos pro Kanal werden in **`processed_videos`** gehalten (Document-ID = **`video_id`**, global eindeutig), damit beim nächsten Check **keine** Doppel-Kandidaten mehr auftauchen. **Ohne** erfolgreiche Auflösung einer **Channel-ID (UC…)** wird beim Anlegen nichts persistiert (Handles können an Consent-/Bot-Seiten scheitern — `warnings` wie bei `POST /youtube/latest-videos`).
 
 **Voraussetzungen:**
 
 - Firestore im GCP-Projekt (Native Mode), **Named Database** mit ID **`watchlist`** (oder passende ID in der Konsole anlegen). Die App verwendet standardmäßig die Umgebungsvariable **`FIRESTORE_DATABASE=watchlist`** (siehe `app/config.py`; überschreibbar, Standard ist `watchlist`).
 - **Application Default Credentials** lokal (z. B. `gcloud auth application-default login`) bzw. auf Cloud Run über das Dienst-Service-Account; siehe [DEPLOYMENT.md](DEPLOYMENT.md).
 
-**Noch nicht in Schritt 1:** manueller/automatisierter Kanal-Check (`POST /youtube/latest-videos`-Pfad), `processed_videos`, Script-Jobs, Scheduler.
+**Schritt 1 – CRUD**
 
-**Request (POST):** `WatchlistChannelCreateRequest` — Felder u. a. `channel_url`, `check_interval` (`manual` | `hourly` | `daily` | `weekly`), `max_results` (1–50), `auto_generate_script`, `auto_review_script`, `target_language`, `duration_minutes` (1–60), `min_score` (0–100), `ignore_shorts`, `notes`.
+**Noch nicht umgesetzt:** Script-Jobs, Job-Runs, automatische Skripterzeugung nach Check, Scheduler, Auto-Publish, Voiceover, Video-Rendering (siehe [PIPELINE_PLAN.md](PIPELINE_PLAN.md)).
 
-**Responses:** `CreateWatchlistChannelResponse` bzw. `ListWatchlistChannelsResponse` mit `warnings`. Wenn Firestore nicht erreichbar ist: **503** mit Hinweis in `warnings` (ohne Secrets). Wenn die **Channel-ID nicht auflösbar** ist: **200** mit `channel: null` und erklärenden `warnings`.
+**Request (POST Anlegen):** `WatchlistChannelCreateRequest` — Felder u. a. `channel_url`, `check_interval` (`manual` | `hourly` | `daily` | `weekly`), `max_results` (1–50), `auto_generate_script`, `auto_review_script`, `target_language`, `duration_minutes` (1–60), `min_score` (0–100), `ignore_shorts`, `notes`.
+
+**Responses (Anlegen/Liste):** `CreateWatchlistChannelResponse` bzw. `ListWatchlistChannelsResponse` mit `warnings`. Wenn Firestore nicht erreichbar ist: **503** mit Hinweis in `warnings` (ohne Secrets). Wenn die **Channel-ID nicht auflösbar** ist: **200** mit `channel: null` und erklärenden `warnings`.
 
 **GET** `/watchlist/channels` listet gespeicherte Kanäle (nach `created_at`, neueste zuerst).
+
+**Schritt 2 – manueller Kanal-Check**
+
+**POST** `/watchlist/channels/{channel_id}/check` prüft einen **gespeicherten** Kanal (nur `status=active`): ruft wie `POST /youtube/latest-videos` die neuesten Einträge per RSS/`max_results`, wendet **Score**/Shorts-/Schwelllogik an und schreibt **`processed_videos`** (u. a. `seen` für Kandidaten, `skipped` bei Shorts oder Score unter `min_score`, damit diese nicht bei jedem Lauf erneut als „neu“ erscheinen). Antwort: `CheckWatchlistChannelResponse` mit `new_videos`, `known_videos`, `skipped_videos`, `created_processed_videos`, `warnings`. Kein Skript-Job, keine Skripterzeugung.
 
 Beispiel **Kanal anlegen** (Kanal-URL mit `/channel/UC…` empfohlen):
 
@@ -289,7 +295,13 @@ Liste:
 curl -s "http://127.0.0.1:8000/watchlist/channels"
 ```
 
-**Tests:** `tests/test_watchlist_models.py`, `tests/test_watchlist_service.py` (Firestore **gemockt**; keine Pflicht für Live-Firestore-Verbindung).
+Manueller **Check**:
+
+```bash
+curl -s -X POST "http://127.0.0.1:8000/watchlist/channels/UC_x5XG1OV2P6uZZ5FSM9Ttw/check"
+```
+
+**Tests:** `tests/test_watchlist_models.py`, `tests/test_watchlist_service.py`, `tests/test_watchlist_check_channel.py` (Firestore und RSS **gemockt**; keine Pflicht für Live-Firestore-Verbindung).
 
 
 ## 10. Beispiel: GET /health

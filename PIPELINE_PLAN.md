@@ -20,7 +20,7 @@ Eine **zuverlässige, modulare Pipeline** von **Quellen** (Nachrichten-URLs, You
 | YouTube Transkript → Skript | `POST /youtube/generate-script` — gleicher Response-Vertrag wie Generate |
 | Kanal-Discovery | `POST /youtube/latest-videos` — RSS, Scoring, ohne Data API |
 | Review / Originalität | `POST /review-script` — V1 heuristisch (Phase 4 **done**) |
-| Persistenz Jobs / Watchlist / Voice / Bild / Render / Publish | Teilweise (Phase 5 Schritt 1: Watchlist **CRUD** + Firestore `watch_channels` — keine Jobs/Checks/Scheduler bis Schritt 2+) |
+| Persistenz Jobs / Watchlist / Voice / Bild / Render / Publish | Teilweise (Phase 5 Schritt 1–2: Watchlist **CRUD** + manueller **`/check`** + Firestore `watch_channels` /**`processed_videos`** — keine Script-Jobs/Auto-Run/Scheduler bis Schritt 3+) |
 
 Details zu Deploy und Tests: [README.md](README.md), [DEPLOYMENT.md](DEPLOYMENT.md).  
 Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
@@ -105,7 +105,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | | |
 |--|--|
 | **Status** | **next** (Phase 5 weiterhin aktiv; Schritt 1 wie unten dokumentiert vorhanden; Gesamtphase **nicht** `done`) |
-| **Umsetzungsstand** | **Schritt 1 fertig:** Firestore-Anbindung, Repository, `watch_channels`-CRUD, `POST /watchlist/channels`, `GET /watchlist/channels` (Resolver/RSS für Name, ohne Channel-Check/Jobs). **Schritte 2–6** aus dem Detailplan (**planned**/offen): manueller Check, `processed_videos`, Jobs, Scheduler. |
+| **Umsetzungsstand** | **Schritt 1–2 fertig:** Firestore-Anbindung, Repository, `watch_channels`-CRUD, `processed_videos`-Tracking, `POST /watchlist/channels`, `GET /watchlist/channels`, `POST /watchlist/channels/{channel_id}/check` (RSS/Score wie `POST /youtube/latest-videos`, **keine** Script-Jobs/Auto-Run). **Schritte 3–6** aus dem Detailplan (**planned**/offen): Script-Jobs anlegen, Job-Run, Review-Persistenz optional, Scheduler V1.1+. |
 | **Ziel (Kurz)** | YouTube-Kanäle dauerhaft speichern, regelmäßig oder manuell prüfen, neue Videos erkennen, Kandidaten bewerten, Script-Jobs vorbereiten und Status führen — aufbauend auf bestehender RSS-/Discovery-Logik (`POST /youtube/latest-videos`). |
 | **Relevante Dateien** | `app/youtube/*` (Resolver, RSS für Kanalnamen bei Create), **implementiert:** `app/watchlist/`, `app/routes/watchlist.py`, `tests/test_watchlist_*.py`; `app/models.py` (bestehende Verträge unverändert) |
 | **Bekannte Grenzen** | YouTube-RSS liefert keine Echtzeit-Garantie; `@handle`-Auflösung bleibt fragiler als `/channel/UC…` (wie Phase 2). |
@@ -204,7 +204,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 #### Schrittweise Umsetzung (Empfehlung)
 
 1. ~~Firestore aktivieren — Repository — **Watchlist CRUD**~~ **(Schritt 1 erledigt, siehe Umsetzungsstand)**.
-2. **Manueller Channel Check** — **`processed_videos`** füllen / Duplikatlogik.
+2. ~~**Manueller Channel Check** — **`processed_videos`** füllen / Duplikatlogik~~ **(Schritt 2 erledigt: `POST …/check`, siehe README / Umsetzungsstand).**
 3. **Script-Jobs anlegen** bei neuen Videos (Konfigurationsabhängig).
 4. **Job manuell ausführen** — **`generated_scripts`** persistieren (intern Logik wie `/youtube/generate-script`).
 5. Optional **Review** aus Job heraus — **`review_results`** speichern.
