@@ -52,16 +52,35 @@ def extract_news_text(url: str) -> Tuple[str, List[str]]:
         return "", warnings
 
 def is_homepage(url: str) -> bool:
-    """Check if URL appears to be a homepage."""
-    from urllib.parse import urlparse
+    """Check if URL appears to be a homepage or section/index page."""
     parsed = urlparse(url)
-    path = parsed.path.strip('/')
-    # Common homepage indicators
-    if not path or path in ['index', 'home', 'start']:
+    path = parsed.path.strip('/').lower()
+    if not path:
         return True
-    # For specific sites like tagesschau
-    if 'tagesschau.de' in url and not any(keyword in path for keyword in ['artikel', 'meldung', 'nachrichten']):
+    if path in ['index', 'index.html', 'home', 'start', 'default']:
         return True
+    if path.endswith('index.html'):
+        return True
+
+    # Treat direct article files as article URLs, not homepages.
+    if path.endswith('.html') and '/' in path:
+        return False
+    if '/artikel/' in path or '/meldung/' in path or '/news/' in path:
+        return False
+
+    # Specific site heuristics for tagesschau
+    if 'tagesschau.de' in parsed.netloc:
+        # Section pages like /inland/, /ausland/, /wirtschaft/ are not articles
+        section_roots = {
+            'inland', 'ausland', 'wirtschaft', 'politik', 'finanzen', 'ratgeber',
+            'sport', 'wissen', 'kultur', 'digital', 'gesundheit', 'service', 'wirtschaft'
+        }
+        first_segment = path.split('/')[0]
+        if first_segment in section_roots and len(path.split('/')) == 1:
+            return True
+        if first_segment in section_roots and path.count('/') == 1 and not path.endswith('.html'):
+            return True
+
     return False
 
 def clean_extracted_text(text: str) -> str:
