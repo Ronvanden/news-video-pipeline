@@ -20,6 +20,10 @@ from app.utils import (
     generate_script_from_youtube_video,
 )
 from app.review.service import review_script
+from app.watchlist.scene_plan import (
+    build_scenes_from_generated_script,
+    decide_plan_status,
+)
 from app.watchlist.firestore_repo import (
     GENERATED_SCRIPTS_COLLECTION,
     FirestoreUnavailableError,
@@ -45,6 +49,9 @@ from app.watchlist.models import (
     RunAutomationCycleResponse,
     RunPendingScriptJobsResponse,
     RunScriptJobResponse,
+    ScenePlan,
+    ScenePlanGenerateResponse,
+    ScenePlanGetResponse,
     ScriptJob,
     WatchlistChannel,
     WatchlistChannelCreateRequest,
@@ -1947,3 +1954,98 @@ def retry_production_job(
     except FirestoreUnavailableError:
         raise
     return ProductionJobActionResponse(job=refreshed or job, warnings=ws)
+
+
+_SCENE_PLAN_IDEMP_WARN = (
+    "Szenenplan existierte bereits — keine Neuerstellung (idempotent)."
+)
+
+
+def generate_scene_plan(
+    production_job_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> ScenePlanGenerateResponse:
+    """Erzeugt deterministisch einen ``scene_plan`` oder liefert den bestehenden."""
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return ScenePlanGenerateResponse(
+            scene_plan=None,
+            warnings=["production_job_id is empty."],
+        )
+    try:
+        existing = repo.get_scene_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+    if existing:
+        return ScenePlanGenerateResponse(
+            scene_plan=existing,
+            warnings=[_SCENE_PLAN_IDEMP_WARN],
+        )
+    try:
+        pj = repo.get_production_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    if pj is None:
+        return ScenePlanGenerateResponse(
+            scene_plan=None,
+            warnings=["Production job not found."],
+        )
+    gid = (pj.generated_script_id or "").strip()
+    if not gid:
+        return ScenePlanGenerateResponse(
+            scene_plan=None,
+            warnings=["generated_script_id am Production Job fehlend."],
+        )
+    try:
+        gs = repo.get_generated_script(gid)
+    except FirestoreUnavailableError:
+        raise
+    if gs is None:
+        return ScenePlanGenerateResponse(
+            scene_plan=None,
+            warnings=["Generated script not found."],
+        )
+
+    scenes, fp, lw = build_scenes_from_generated_script(gs)
+    status = decide_plan_status(scenes)
+    now_iso = utc_now_iso()
+    plan = ScenePlan(
+        id=pid,
+        production_job_id=pid,
+        generated_script_id=gs.id,
+        script_job_id=pj.script_job_id,
+        status=status,
+        plan_version=1,
+        source_fingerprint=fp,
+        scenes=scenes,
+        warnings=list(lw),
+        created_at=now_iso,
+        updated_at=now_iso,
+    )
+    try:
+        repo.upsert_scene_plan(plan)
+    except FirestoreUnavailableError:
+        raise
+
+    out_warn = list(lw)
+    return ScenePlanGenerateResponse(scene_plan=plan, warnings=out_warn)
+
+
+def get_scene_plan_for_production_job(
+    production_job_id: str,
+    *,
+    repo: FirestoreWatchlistRepository | None = None,
+) -> ScenePlanGetResponse:
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return ScenePlanGetResponse(scene_plan=None, warnings=["production_job_id is empty."])
+    try:
+        sp = repo.get_scene_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+    if sp is None:
+        return ScenePlanGetResponse(scene_plan=None, warnings=["Scene plan not found."])
+    return ScenePlanGetResponse(scene_plan=sp, warnings=[])

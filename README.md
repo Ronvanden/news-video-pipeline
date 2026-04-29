@@ -34,7 +34,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - **Phase 4 V1:** `POST /review-script` — heuristische Originalitäts- und Nähe-zur-Quelle-Prüfung (keine Rechtsberatung, kein Auto-Publish)
 - **Phase 5 V1 Schritt 1–4:** `POST /watchlist/channels`, `GET /watchlist/channels`, **`POST /watchlist/channels/{channel_id}/check`**, **`GET /watchlist/jobs`**, **`POST /watchlist/jobs/{job_id}/run`** — Kanäle und **`processed_videos`** in Firestore; bei **`auto_generate_script=true`** prüft der Kanal-Check vor **`pending`**-Jobs einen **Transcript-Preflight** (gleiche Abruflogik wie **`POST /youtube/generate-script`**); **`pending`** entstehen nur bei verfügbarem Transkript; Speicherung in **`generated_scripts`**.
 - **Phase 5.5–5.7 (Automation-Layer):** **`POST /watchlist/channels/{channel_id}/recheck-video/{video_id}`** (ein Video erneut prüfen, mit Warnung bei einzelner `processed_videos`-Entfernung), **`POST /watchlist/jobs/run-pending`** (pending Jobs im Batch ausführen, Limit Default 3, Max 10), **`POST /watchlist/automation/run-cycle`** (scheduler-tauglicher Zyklus: aktive Kanäle prüfen, danach pending Jobs; Body `channel_limit` / `job_limit`; schreibt bei Erfolg **`last_run_cycle_at`** in Firestore **`watchlist_meta/automation`**) und optional **`POST /watchlist/jobs/{job_id}/review`** (nutzt dieselbe Heuristik wie **`POST /review-script`**, ohne ScriptJob-Status zu ändern). **Kein** Cloud-Scheduler-Deploy in diesem Schritt — nur HTTP-Schnittstellen. Details: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
-- **Phase 5.8–6.5 (Control Tower & Production Jobs):** wie 5.8–6.2, zusätzlich **`GET /production/jobs`**, **`GET /production/jobs/{id}`**, **`POST /production/jobs/{id}/skip`** (**`queued`**/**`failed`** → **`skipped`**), **`POST /production/jobs/{id}/retry`** (**`failed`**/**`skipped`** → **`queued`**); **keine** Render-Pipeline in diesen Routen; Dashboard-Zähler per Firestore-Aggregation und begrenztem Stream-Fallback; **`POST /watchlist/jobs/{job_id}/review`** persistiert bei **`completed` + `generated_script_id`** unter **`review_results`** und verknüpft **`script_jobs.review_result_id`** (optional **`processed_videos`**). Pending-Liste **Index**: [DEPLOYMENT.md](DEPLOYMENT.md). **`ScriptJob`** optional **`attempt_count`** / **`last_attempt_at`**. Ausführlich: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
+- **Phase 5.8–6.6 (Control Tower & Production Jobs):** wie 5.8–6.2, zusätzlich **`GET /production/jobs`**, **`GET /production/jobs/{id}`**, **`POST /production/jobs/{id}/skip`** (**`queued`**/**`failed`** → **`skipped`**), **`POST /production/jobs/{id}/retry`** (**`failed`**/**`skipped`** → **`queued`**), **`POST /production/jobs/{id}/scene-plan/generate`**, **`GET /production/jobs/{id}/scene-plan`** (**BA 6.6**, deterministischer Szenenplan in **`scene_plans`** ohne LLM-Pflicht, Doc-ID = **`production_job_id`**); **keine** Render-Pipeline in diesen Routen; Dashboard-Zähler per Firestore-Aggregation und begrenztem Stream-Fallback; **`POST /watchlist/jobs/{job_id}/review`** persistiert bei **`completed` + `generated_script_id`** unter **`review_results`** und verknüpft **`script_jobs.review_result_id`** (optional **`processed_videos`**). Pending-Liste **Index**: [DEPLOYMENT.md](DEPLOYMENT.md). **`ScriptJob`** optional **`attempt_count`** / **`last_attempt_at`**. Ausführlich: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
 
 ## 4. Projektstruktur
 
@@ -54,7 +54,7 @@ app/
     ├── youtube.py    # /youtube/generate-script, /youtube/latest-videos
     ├── review.py     # /review-script
     ├── watchlist.py  # Watchlist-CRUD, Kanal-Check, Jobs, POST …/jobs/{id}/run (Phase 5)
-    └── production.py # /production/jobs (Liste, Detail, Skip, Retry; Phase 6.5)
+    └── production.py # /production/jobs (+ BA 6.6 scene-plan Generate/Get)
 
 Dockerfile
 README.md
@@ -299,12 +299,13 @@ Watchlist speichert überwachte YouTube-Kanäle in **Google Firestore** (Collect
 - **`RunScriptJobResponse`:** `job`, optional **`script`**, **`warnings`**. Fehler sind über **`job.error`** und optional **`job.error_code`** standardisiert (z. B. **`transcript_not_available`**, **`script_generation_empty`**, **`script_generation_failed`**, **`firestore_write_failed`**); menschenlesbare Hinweise stehen in **`warnings`**. Selbst bei Preflight kann ein späterer **`run`** noch **`failed`** werden (Transkript zwischenzeitlich nicht mehr verfügbar). Transkript-/Parse-Probleme führen zu **`failed`** am Job und **keinem** Eintrag in **`generated_scripts`** (kein HTTP **500** für diese erwartbaren Fälle).
 - Review für den Job erfolgt erst nach separatem **`POST /watchlist/jobs/{job_id}/review`** (**`review_results`**, wenn **`completed`** und **`generated_script_id`** gesetzt); in Schritt 4 bewusst kein automatisches Review oder Rendering; kein Scheduler.
 
-**Phase 5.8–6.5 — Control Tower & Production Jobs**
+**Phase 5.8–6.6 — Control Tower & Production Jobs**
 
 - **`GET /watchlist/dashboard`**: Zähler (**`processed_videos_total`**, **`script_jobs`** je Status, **`generated_scripts_total`**) und **`health`**; Firestore **`RunAggregationQuery`**, bei Bedarf Fallback **bis 65 535 Docs** Stream-Zählung pro Abfrage. Kein Pipeline-Lauf.
 - **`POST /watchlist/jobs/{job_id}/review`**: **`completed`**, **`generated_script_id`** und Skriptinhalt erforderlich; schreibt **`review_results`**, **`script_jobs.review_result_id`**, optional **`processed_videos.review_result_id`**; Speichern fehlgeschlagen → weiterhin **`200`** mit Warnung (**ScriptJob bleibt unverändert**).
 - **`GET /watchlist/errors/summary`**, Retry/Skip, Pause/Resume, **`POST …/create-production-job`**: wie zuvor in Abschnitten 5.8–6.2 dokumentiert (**`production_jobs`**-Stub ohne Rendering).
 - **`GET /production/jobs`** (`limit` 1–200), **`GET /production/jobs/{production_job_id}`**, **`POST /production/jobs/{production_job_id}/skip`**, **`POST /production/jobs/{production_job_id}/retry`**: nur Status in Firestore (**kein** Video-Render).
+- **`POST /production/jobs/{production_job_id}/scene-plan/generate`**, **`GET /production/jobs/{production_job_id}/scene-plan`**: Szenenplan (**BA 6.6**) in Collection **`scene_plans`** (Doc-ID = **`production_job_id`**); deterministische Aufteilung aus **`generated_scripts`**-Kapiteln bzw. Fallback **`full_script`**; erste Generierung wird persistiert — erneuter Aufruf gibt den bestehenden Plan mit Warnhinweis zurück (idempotent).
 
 Beispiel:
 

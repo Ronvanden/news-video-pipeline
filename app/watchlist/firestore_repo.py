@@ -1,4 +1,4 @@
-"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``, ``review_results``, ``production_jobs``.
+"""Firestore-Zugriffe für Watchlist: ``watch_channels``, ``processed_videos``, ``script_jobs``, ``generated_scripts``, ``review_results``, ``production_jobs``, ``scene_plans``.
 
 Client ist injizierbar (Unit-Tests mit Mock).
 """
@@ -14,6 +14,7 @@ from app.watchlist.models import (
     ProcessedVideo,
     ProductionJob,
     ReviewResultStored,
+    ScenePlan,
     ScriptJob,
     WatchlistChannel,
 )
@@ -26,6 +27,7 @@ SCRIPT_JOBS_COLLECTION = "script_jobs"
 GENERATED_SCRIPTS_COLLECTION = "generated_scripts"
 REVIEW_RESULTS_COLLECTION = "review_results"
 PRODUCTION_JOBS_COLLECTION = "production_jobs"
+SCENE_PLANS_COLLECTION = "scene_plans"
 WATCHLIST_META_COLLECTION = "watchlist_meta"
 WATCHLIST_META_AUTOMATION_DOC = "automation"
 
@@ -815,6 +817,50 @@ class FirestoreWatchlistRepository:
             raise FirestoreUnavailableError(
                 "Firestore is not reachable or rejected the update."
             ) from e
+
+    def _scene_plans_collection_ref(self):
+        return self._ensure_client().collection(SCENE_PLANS_COLLECTION)
+
+    def get_scene_plan(self, production_job_id: str) -> Optional[ScenePlan]:
+        doc_id = (production_job_id or "").strip()
+        if not doc_id:
+            return None
+        try:
+            snap = self._scene_plans_collection_ref().document(doc_id).get()
+        except Exception as e:
+            logger.warning(
+                "Firestore scene_plans get failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        if not snap.exists:
+            return None
+        merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+        try:
+            return ScenePlan.model_validate(merged)
+        except Exception as e:
+            logger.warning(
+                "invalid scene_plans doc: id=%s type=%s", snap.id, type(e).__name__
+            )
+            return None
+
+    def upsert_scene_plan(self, plan: ScenePlan) -> ScenePlan:
+        doc_id = (plan.production_job_id or plan.id or "").strip()
+        if not doc_id:
+            raise FirestoreUnavailableError("scene_plans Document-ID darf nicht leer sein.")
+        try:
+            self._scene_plans_collection_ref().document(doc_id).set(
+                plan.model_dump()
+            )
+        except Exception as e:
+            logger.warning(
+                "Firestore scene_plans set failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable or rejected the write."
+            ) from e
+        return plan
 
     def stream_script_jobs_for_error_summary(
         self, *, max_docs: int

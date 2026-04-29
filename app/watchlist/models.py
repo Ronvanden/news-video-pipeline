@@ -285,6 +285,55 @@ class ProductionJobActionResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+SceneAssetTypeLiteral = Literal["generated", "stock", "b_roll"]
+ScenePlanStatusLiteral = Literal["draft", "ready", "failed", "superseded"]
+SceneMoodLiteral = Literal["neutral", "dramatic", "explainer"]
+
+
+class Scene(BaseModel):
+    """Eine Plan-Szene (BA 6.6), ohne Firestore-Vertragspflicht für Kern-Skript-API."""
+
+    scene_number: int = Field(ge=1)
+    title: str
+    voiceover_text: str = ""
+    visual_summary: str = ""
+    duration_seconds: int = Field(default=1, ge=1)
+    asset_type: SceneAssetTypeLiteral = "generated"
+    mood: SceneMoodLiteral = "neutral"
+    source_chapter_title: str = ""
+    source_chapter_index: int = Field(default=-1, ge=-1)
+
+
+class ScenePlan(BaseModel):
+    """Firestore ``scene_plans`` — Doc-ID = ``production_job_id``."""
+
+    id: str
+    production_job_id: str
+    generated_script_id: str
+    script_job_id: str
+    status: ScenePlanStatusLiteral = "draft"
+    plan_version: int = Field(default=1, ge=1)
+    source_fingerprint: str = ""
+    scenes: List[Scene] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+
+
+class ScenePlanGenerateResponse(BaseModel):
+    """Generate-Endpoint: neuer Plan oder bestehender (idempotent)."""
+
+    scene_plan: Optional[ScenePlan] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ScenePlanGetResponse(BaseModel):
+    """GET einzelner Szenenplan."""
+
+    scene_plan: Optional[ScenePlan] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
 class WatchlistDashboardHealth(BaseModel):
     last_successful_job_at: Optional[str] = None
     last_run_cycle_at: Optional[str] = None

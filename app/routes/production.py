@@ -1,4 +1,4 @@
-"""Production-Jobs — Liste, Detail, Skip/Retry (kein Rendering, Phase 6.5)."""
+"""Production-Jobs — Liste, Detail, Skip/Retry, Szenenplan (BA 6.6); kein Rendering."""
 
 import logging
 
@@ -6,7 +6,12 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 from app.watchlist.firestore_repo import FirestoreUnavailableError
-from app.watchlist.models import ListProductionJobsResponse, ProductionJobActionResponse
+from app.watchlist.models import (
+    ListProductionJobsResponse,
+    ProductionJobActionResponse,
+    ScenePlanGenerateResponse,
+    ScenePlanGetResponse,
+)
 from app.watchlist import service as watchlist_service
 
 logger = logging.getLogger(__name__)
@@ -70,4 +75,39 @@ async def production_retry_job(production_job_id: str):
         raise HTTPException(status_code=503, detail=msg)
     if out.job is None:
         raise HTTPException(status_code=404, detail="Production job not found.")
+    return out
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/scene-plan/generate",
+    response_model=ScenePlanGenerateResponse,
+)
+async def production_generate_scene_plan(production_job_id: str):
+    """Deterministischer Szenenplan (Firestore ``scene_plans``), keine externe KI."""
+    try:
+        out = watchlist_service.generate_scene_plan(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST scene-plan/generate failed: Firestore unavailable")
+        body = ScenePlanGenerateResponse(scene_plan=None, warnings=[msg])
+        return JSONResponse(status_code=503, content=body.model_dump())
+    if out.scene_plan is None:
+        detail = out.warnings[0] if out.warnings else "Not found."
+        raise HTTPException(status_code=404, detail=detail)
+    return out
+
+
+@router.get(
+    "/production/jobs/{production_job_id}/scene-plan",
+    response_model=ScenePlanGetResponse,
+)
+async def production_get_scene_plan(production_job_id: str):
+    try:
+        out = watchlist_service.get_scene_plan_for_production_job(production_job_id)
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)
+    if out.scene_plan is None:
+        detail = out.warnings[0] if out.warnings else "Scene plan not found."
+        raise HTTPException(status_code=404, detail=detail)
     return out
