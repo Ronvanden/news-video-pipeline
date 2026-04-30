@@ -38,7 +38,7 @@ Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
 
 | 2026-04-30 | Story / Template Engine **BA 9.0–9.1** | Kein strukturiertes Video-/Story-Format; Downstream nutzte nur generische Defaults | Produktachse ergänzen ohne **`GenerateScriptResponse`** (6 Felder) zu brechen | Modul **`app/story_engine/`** (Template-IDs, Prompt-Zusätze, Conformance nur in **`warnings`**); optional **`video_template`** auf **`/generate-script`**, **`/youtube/generate-script`**, Watchlist/Jobs, **`generated_scripts`**, **`production_jobs`**, Connector-Export; bei **`scene-assets`**/**`voice-plan`** mit API-Style/Voice-Default **`documentary`** abgeleitete Profile; Zirkularimport conformance↔utils vermieden (Wortzahl lokal); Tests **`tests/test_ba90_story_engine.py`** | umgesetzt | `61c6436` |
 
-| 2026-04-30 | Story / Template Engine **BA 9.1** | Templates technisch, aber ohne Katalog/Blueprint für Ops und LLM | BA 9.1 laut Plan: **`chapter_band_for_template_duration`**, Hook-Schwellen, **`story_template_blueprint_prompt_de`** im OpenAI-Prompt, Clamping **`num_chapters`** im **`ScriptGenerator`**, **`[template_conformance:…]`** in **`warnings`**, **`GET /story-engine/templates`**, **`app/routes/story_engine.py`**, Tests **`tests/test_ba91_story_engine.py`** | umgesetzt | `22eb1cb` |
+| 2026-04-30 | Story / Template Engine **BA 9.1** | Templates technisch, aber ohne Katalog/Blueprint für Ops und LLM; Review/Watchlist-Doku offen | BA 9.1: Blueprints, **`GET /story-engine/templates`**, Conformance-Präfixe, Tests **`test_ba91`**; Ergänzung: **`video_template`** auf **`ReviewScriptRequest`**, Empfehlungen in **`originality.py`**, Watchlist-Test, README/PIPELINE | umgesetzt | pending commit |
 
 ## Hinweise
 

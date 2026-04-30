@@ -67,6 +67,13 @@ class ReviewScriptRequest(BaseModel):
     generated_script: str = ""
     target_language: str = "de"
     prior_warnings: List[str] = Field(default_factory=list)
+    video_template: str = Field(
+        default="generic",
+        description=(
+            "BA 9.1: optional; gleiche Template-IDs wie Generate — "
+            "beeinflusst zusätzliche Review-Hinweise, nicht den Heuristik-Kern."
+        ),
+    )
 
     @model_validator(mode="after")
     def at_least_one_text_field(self):

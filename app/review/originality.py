@@ -15,6 +15,7 @@ from app.models import (
     ReviewScriptResponse,
     SimilarityFlag,
 )
+from app.story_engine.templates import normalize_story_template_id
 
 # Tunable V1 thresholds
 NGRAM_N = 5
@@ -421,6 +422,44 @@ def analyze_originality(request: ReviewScriptRequest) -> ReviewScriptResponse:
                 priority="low",
                 action="Spot-check flagged metrics before voiceover or publishing prep.",
                 rationale="Heuristics can miss nuanced copying; human review remains important.",
+            )
+        )
+
+    tid, tpl_ws = normalize_story_template_id(request.video_template)
+    for twi in tpl_ws:
+        if twi not in warnings:
+            warnings.append(twi)
+    if tid == "true_crime":
+        recommendations.append(
+            ReviewRecommendation(
+                priority="medium",
+                action=(
+                    "True-Crime-Format: Sensibles und Betroffene respektvoll behandeln; "
+                    "auf Sensationsgrad achten; keine Schuldzuweisungen ohne belastbare Fakten."
+                ),
+                rationale="video_template=true_crime — redaktionelle Zusatzprüfung.",
+            )
+        )
+    elif tid == "mystery_explainer":
+        recommendations.append(
+            ReviewRecommendation(
+                priority="low",
+                action=(
+                    "Mystery-/Erklärformat: Ungewissheit kennzeichnen; "
+                    "keine Verschwörungsnarrative als gesicherte Fakten verkaufen."
+                ),
+                rationale="video_template=mystery_explainer.",
+            )
+        )
+    elif tid == "history_deep_dive":
+        recommendations.append(
+            ReviewRecommendation(
+                priority="low",
+                action=(
+                    "Geschichtsformat: zeitliche Einordnung und Quellenlage prüfen; "
+                    "keine modernen Wertungen ohne Kontext als Fakten formulieren."
+                ),
+                rationale="video_template=history_deep_dive.",
             )
         )
 

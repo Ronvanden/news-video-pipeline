@@ -412,13 +412,14 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 | Thema | Vorschlag | Vertrag |
 |--------|-----------|---------|
-| **Template-Katalog lesbar** | Neuer read-only Endpoint, z. B. `GET /story-engine/templates` oder unter bestehendem Router mit klarer Docstring-/OpenAPI-Beschreibung | 200 + Liste: `id`, `label`, `description`, ggf. `chapter_band_for_duration` als Lesetext — **keine** Prompt-Rohlinge mit Secret-ähnlichem Inhalt |
-| **Generate** | unverändert optional `video_template` im Body | Response-Felder unverändert |
+| **Template-Katalog lesbar** | `GET /story-engine/templates` (**umgesetzt**) | 200 + `templates[]` mit `id`, `label`, `description`, `duration_examples`, … — **keine** vollständigen Prompt-Rohlinge |
+| **Generate** | optional `video_template` im Body | Response-Felder unverändert |
+| **Review** | optional `video_template` auf **`ReviewScriptRequest`** (**umgesetzt**) | **`ReviewScriptResponse`** unverändert; template-spezifische **`recommendations`** / Normalisierungs-**`warnings`** |
 | **Firestore** | nur bei Bedarf Zusatzfelder (z. B. `story_engine_version` auf Dokumenten) — erst nach Bedarf MODULE_TEMPLATE | Migration/Defaults dokumentieren |
 
 #### Tests und Akzeptanz (BA 9.1)
 
-- Neue oder erweiterte Tests (z. B. `tests/test_ba91_story_engine.py`): Blueprint-Matrix (pro Template × zwei Dauern), Konformität der Warning-Präfixe, Katalog-Endpoint (Schema, Status).  
+- Neue oder erweiterte Tests (z. B. `tests/test_ba91_story_engine.py`): Blueprint-Matrix (pro Template × zwei Dauern), Konformität der Warning-Präfixe, Katalog-Endpoint (Schema, Status). Watchlist: `tests/test_watchlist_run_job.py` prüft **`video_template`** bis **`generated_scripts`**. Review: `tests/test_review_script.py` (**`video_template`**).  
 - Regression: `tests/test_ba90_story_engine.py` grün; vollständige Suite laut AGENTS.  
 - **Nicht-Ziele 9.1:** Pflicht-JSON neben dem Sechs-Felder-Skript; automatische Eskalation zu HTTP-Fehlern nur wegen Template; LLM-Review-Pflicht.
 

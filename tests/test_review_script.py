@@ -114,6 +114,52 @@ class TestReviewScriptEndpoint(unittest.TestCase):
         w = " ".join(data["warnings"])
         self.assertIn("Source text is short", w)
 
+    def test_f_video_template_true_crime_extra_recommendation(self):
+        src = (
+            "Die Polizei meldet einen Zwischenfall. Ermittlungen laufen. "
+            "Weitere Details wurden zunächst nicht genannt."
+        )
+        gen = (
+            "Einordnung: Wir gehen die bekannten Fakten durch und trennen bestätigte "
+            "Informationen von Spekulation. "
+            "Kontext, was passiert ist, und welche offiziellen Aussagen existieren. "
+            "Offen bleibt, wie sich die Ermittlungen fortsetzen. "
+            "Fazit: Solange keine weiteren Behördenangaben vorliegen, sollten wir "
+            "nur das berichten, was gesichert ist."
+        )
+        r = self.client.post(
+            "/review-script",
+            json={
+                "source_type": "news_article",
+                "source_text": src,
+                "generated_script": gen,
+                "video_template": "true_crime",
+            },
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        data = r.json()
+        actions = " ".join(rec["action"] for rec in data["recommendations"])
+        self.assertIn("True-Crime", actions)
+
+    def test_g_video_template_unknown_warning(self):
+        r = self.client.post(
+            "/review-script",
+            json={
+                "source_type": "news_article",
+                "source_text": "Hinreichend langer Quelltext für die Heuristik hier.",
+                "generated_script": (
+                    "Ein eigenständig formulierter Absatz ohne enge Überschneidung "
+                    "zum Quelltext — wir nutzen neue Satzstrukturen und erklärende "
+                    "Elemente für die Einordnung des Themas."
+                ),
+                "video_template": "not_a_valid_template",
+            },
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        data = r.json()
+        w = " ".join(data["warnings"])
+        self.assertIn("Unbekanntes video_template", w)
+
     def test_both_empty_422(self):
         r = self.client.post(
             "/review-script",

@@ -48,8 +48,9 @@ class TestRunScriptJobService(unittest.TestCase):
 
     def test_b_success_persists_script_and_updates_processed(self):
         repo = MagicMock(spec=FirestoreWatchlistRepository)
-        job = _pending_job()
+        job = _pending_job(video_template="true_crime")
         calls = {"n": 0}
+        captured = {}
 
         def get_side(jid):
             calls["n"] += 1
@@ -76,7 +77,8 @@ class TestRunScriptJobService(unittest.TestCase):
             script_job_id="vid_run",
         )
 
-        def gen(*_a, **_kw):
+        def gen(url, target_language="", duration_minutes=10, video_template="generic"):
+            captured["video_template"] = video_template
             return GenerateScriptResponse(
                 title="Titel",
                 hook="H",
@@ -88,11 +90,14 @@ class TestRunScriptJobService(unittest.TestCase):
 
         out = watchlist_service.run_script_job("vid_run", repo=repo, generate_fn=gen)
 
+        self.assertEqual(captured["video_template"], "true_crime")
+
         repo.mark_script_job_running.assert_called_once_with("vid_run")
         repo.create_generated_script.assert_called_once()
         gs_arg = repo.create_generated_script.call_args[0][0]
         self.assertIsInstance(gs_arg, GeneratedScript)
         self.assertEqual(gs_arg.id, "vid_run")
+        self.assertEqual(gs_arg.video_template, "true_crime")
         self.assertGreater(gs_arg.word_count, 0)
         repo.mark_script_job_completed.assert_called_once_with("vid_run", "vid_run")
         repo.update_processed_video_status.assert_called_once()
