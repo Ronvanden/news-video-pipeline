@@ -143,6 +143,7 @@ from app.watchlist.models import (
     RecoveryAction,
     RecoveryActionKindLiteral,
     ProductionJobActionResponse,
+    ControlPanelSummaryResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -2519,6 +2520,17 @@ def pipeline_monitoring_summary_service(
         recovery_actions_recent=rec,
         warnings=ws,
     )
+
+
+def get_control_panel_summary_service(
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ControlPanelSummaryResponse:
+    """BA 8.4 LIGHT — Founder Control Panel (read-only Aggregate)."""
+    from app.watchlist.control_panel import build_control_panel_summary
+
+    repo = repo or FirestoreWatchlistRepository()
+    return build_control_panel_summary(repo=repo)
 
 
 def run_status_normalization_service(

@@ -34,7 +34,7 @@ Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
 
 | 2026-04-30 | Operations / Hardening **BA 8.0–8.2** | Pipeline-Brüche und Drift nicht strukturiert erkennbar; kein gezieltes Re-Run pro Schritt | Nach Produktionsfeatures Fokus Kontrolle/Stabilität | **`pipeline_audits`**, **`recovery_actions`**, `pipeline_audit_scan.py`; **`POST /production/audit/run`**, **`GET /production/audit`**, **`POST …/recovery/retry`**, **`GET /production/monitoring/summary`** — Recovery getrennt vom Legacy-**`POST …/jobs/{id}/retry`** | umgesetzt (`tests/test_ba80_82_hardening.py`, `unittest discover`) | ohne Commit |
 
-| 2026-04-30 | Operations / Kontrolle **BA 8.3** | Audits allein stabilisieren keine Statusketten automatisch | Eskalationsschicht + Retry-Disziplin pro Schritt nach Max-Retries | Collection **`pipeline_escalations`**, **`status_normalizer.py`**, zusätzliche **`production_jobs`/`script_jobs`-Status (u. a. `stuck`, `retryable`, `partial_failed`) + Endpoints **`POST /production/status/normalize/run`**, **`GET /production/status/escalations`** — **kein** Bruch der Skript-APIs | umgesetzt (`tests/test_ba83_status_normalization.py`, `unittest discover`, `compileall`) | _(siehe Git-Log „BA 8.3…“)_ |
+| 2026-04-30 | Operations / Founder Panel **BA 8.4 LIGHT** | Operative Übersicht über Audits/Eskalationen/Jobs zersplittert in Einzel-Endpoints | Ein read-only Summary für Gründer/Lead ohne neue Business-Logik | **`GET /production/control-panel/summary`**, **`control_panel.py`**, Repo-Stichproben **`production_jobs`** / **`production_costs`**; Tests **`test_ba84_control_panel.py`** | umgesetzt (`unittest discover`, `compileall`) | pending commit |
 
 ---
 

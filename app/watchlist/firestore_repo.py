@@ -1599,52 +1599,53 @@ class FirestoreWatchlistRepository:
         out.sort(key=lambda x: x.created_at or "", reverse=True)
         return out
 
-    def _pipeline_escalations_collection_ref(self):
-        return self._ensure_client().collection(PIPELINE_ESCALATIONS_COLLECTION)
-
-    def upsert_pipeline_escalation(self, row: PipelineEscalation) -> PipelineEscalation:
-        did = (row.escalation_id or "").strip()
-        if not did:
-            raise FirestoreUnavailableError(
-                "pipeline_escalations escalation_id darf nicht leer sein."
-            )
+    def stream_production_jobs_for_summary(self, limit: int = 500) -> List[ProductionJob]:
+        """Read-only Stichprobe ``production_jobs`` für Status-Aggregation (kein Full-Scan-Garant)."""
+        lim = max(1, min(int(limit), 1200))
         try:
-            self._pipeline_escalations_collection_ref().document(did).set(
-                row.model_dump()
-            )
+            snaps = list(self._production_jobs_collection_ref().limit(lim).stream())
         except Exception as e:
             logger.warning(
-                "Firestore pipeline_escalations set failed: type=%s", type(e).__name__
-            )
-            raise FirestoreUnavailableError(
-                "Firestore is not reachable or rejected the write."
-            ) from e
-        return row
-
-    def stream_pipeline_escalations_recent(self, limit: int = 200) -> List[PipelineEscalation]:
-        lim = max(1, min(int(limit), 500))
-        try:
-            snaps = list(self._pipeline_escalations_collection_ref().limit(lim).stream())
-        except Exception as e:
-            logger.warning(
-                "Firestore pipeline_escalations stream failed: type=%s", type(e).__name__
+                "Firestore production_jobs summary stream failed: type=%s",
+                type(e).__name__,
             )
             raise FirestoreUnavailableError(
                 "Firestore is not reachable."
             ) from e
-        out: List[PipelineEscalation] = []
+        out: List[ProductionJob] = []
         for snap in snaps:
             merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
-            if "escalation_id" not in merged and merged.get("id"):
-                merged["escalation_id"] = merged["id"]
             try:
-                if not merged.get("escalation_id"):
-                    merged["escalation_id"] = snap.id
-                out.append(PipelineEscalation.model_validate(merged))
+                out.append(ProductionJob.model_validate(merged))
             except Exception:
                 logger.warning(
-                    "skip invalid pipeline_escalations row: doc_id=%s", snap.id
+                    "skip invalid production_jobs row: doc_id=%s", snap.id
                 )
                 continue
-        out.sort(key=lambda x: x.created_at or "", reverse=True)
+        out.sort(key=lambda j: j.updated_at or j.created_at or "", reverse=True)
+        return out
+
+    def stream_production_costs_recent(self, limit: int = 300) -> List[ProductionCosts]:
+        """Read-only Stichprobe ``production_costs`` für Kostenzusammenfassung."""
+        lim = max(1, min(int(limit), 1500))
+        try:
+            snaps = list(self._production_costs_collection_ref().limit(lim).stream())
+        except Exception as e:
+            logger.warning(
+                "Firestore production_costs stream failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        out: List[ProductionCosts] = []
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(ProductionCosts.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid production_costs row: doc_id=%s", snap.id
+                )
+                continue
+        out.sort(key=lambda c: c.updated_at or c.created_at or "", reverse=True)
         return out

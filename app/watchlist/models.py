@@ -1082,3 +1082,73 @@ class ListPipelineEscalationsResponse(BaseModel):
     escalations: List[PipelineEscalation] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
 
+
+# --- BA 8.4 LIGHT: Founder Control Panel (read-only aggregates) ---
+
+
+class ControlPanelAuditSummary(BaseModel):
+    open_critical: int = 0
+    open_warning: int = 0
+    open_info: int = 0
+
+
+class ControlPanelEscalationSummary(BaseModel):
+    recent_escalations: List[PipelineEscalation] = Field(default_factory=list)
+    count_by_severity: Dict[str, int] = Field(default_factory=dict)
+    count_by_category: Dict[str, int] = Field(default_factory=dict)
+
+
+class ControlPanelRecoverySummary(BaseModel):
+    recent_actions: List[RecoveryAction] = Field(default_factory=list)
+
+
+class ControlPanelJobStatusSummary(BaseModel):
+    production_jobs_by_status: Dict[str, int] = Field(default_factory=dict)
+    script_jobs_by_status: Dict[str, int] = Field(default_factory=dict)
+    production_jobs_sampled: int = 0
+
+
+class ControlPanelProviderSummary(BaseModel):
+    total_configs: int = 0
+    enabled: int = 0
+    disabled: int = 0
+    dry_run_true: int = 0
+    status_error: int = 0
+
+
+class ControlPanelCostSummary(BaseModel):
+    cost_records_count: int = 0
+    estimated_total_eur: float = 0.0
+    cost_anomaly_escalations: int = 0
+    cost_records_with_warnings: int = 0
+
+
+class ControlPanelProblemItem(BaseModel):
+    kind: Literal["production_job", "script_job"]
+    job_id: str
+    status: str = ""
+    detail: str = ""
+
+
+class ControlPanelRecentProblemsSummary(BaseModel):
+    items: List[ControlPanelProblemItem] = Field(default_factory=list)
+
+
+class ControlPanelSummaryResponse(BaseModel):
+    audit: ControlPanelAuditSummary = Field(default_factory=ControlPanelAuditSummary)
+    escalation: ControlPanelEscalationSummary = Field(
+        default_factory=ControlPanelEscalationSummary
+    )
+    recovery: ControlPanelRecoverySummary = Field(
+        default_factory=ControlPanelRecoverySummary
+    )
+    jobs: ControlPanelJobStatusSummary = Field(default_factory=ControlPanelJobStatusSummary)
+    providers: ControlPanelProviderSummary = Field(
+        default_factory=ControlPanelProviderSummary
+    )
+    costs: ControlPanelCostSummary = Field(default_factory=ControlPanelCostSummary)
+    recent_problems: ControlPanelRecentProblemsSummary = Field(
+        default_factory=ControlPanelRecentProblemsSummary
+    )
+    warnings: List[str] = Field(default_factory=list)
+

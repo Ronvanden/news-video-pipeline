@@ -21,6 +21,7 @@ from app.watchlist.models import (
     StatusNormalizeRunRequest,
     StatusNormalizeRunResponse,
     ListPipelineEscalationsResponse,
+    ControlPanelSummaryResponse,
     ProductionCostsCalculateResponse,
     ProductionCostsGetResponse,
     ProductionPipelineRecoveryResponse,
@@ -599,3 +600,18 @@ async def production_status_escalations(limit: int = Query(120, ge=1, le=400)):
     except FirestoreUnavailableError as e:
         msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
         raise HTTPException(status_code=503, detail=msg)
+
+
+@router.get(
+    "/production/control-panel/summary",
+    response_model=ControlPanelSummaryResponse,
+)
+async def production_control_panel_summary():
+    """BA 8.4 LIGHT — Founder Control Panel (Audits, Eskalationen, Jobs, Provider, Kosten)."""
+    try:
+        return watchlist_service.get_control_panel_summary_service()
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("GET /production/control-panel/summary failed: Firestore unavailable")
+        body = ControlPanelSummaryResponse(warnings=[msg])
+        return JSONResponse(status_code=503, content=body.model_dump())
