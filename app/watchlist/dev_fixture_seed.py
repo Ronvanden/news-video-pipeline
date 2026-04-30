@@ -118,6 +118,7 @@ def seed_completed_script_job_fixture(
         sources=["https://example.com/dev_fixture_source"],
         warnings=["Dies ist ein Nur-Test-Artefakt (ENABLE_TEST_FIXTURES)."],
         word_count=wc,
+        video_template="generic",
         created_at=now,
     )
 
@@ -130,6 +131,7 @@ def seed_completed_script_job_fixture(
         source_type="youtube_transcript",
         target_language="de",
         duration_minutes=10,
+        video_template="generic",
         created_at=now,
         started_at=now,
         completed_at=now,
@@ -162,6 +164,7 @@ def seed_completed_script_job_fixture(
                 visual_style="",
                 narrator_style="",
                 thumbnail_prompt="",
+                video_template="generic",
                 created_at=now,
                 updated_at=now,
             )

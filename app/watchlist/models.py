@@ -22,6 +22,10 @@ class WatchlistChannelCreateRequest(BaseModel):
     min_score: int = Field(default=40, ge=0, le=100)
     ignore_shorts: bool = True
     notes: str = ""
+    video_template: str = Field(
+        default="generic",
+        description="BA 9: Template für spätere Script-Jobs (generic, true_crime, …).",
+    )
 
     @field_validator("channel_url")
     @classmethod
@@ -50,6 +54,7 @@ class WatchlistChannel(BaseModel):
     last_success_at: Optional[str] = None
     last_error: str = ""
     notes: str = ""
+    video_template: str = "generic"
 
 
 class CreateWatchlistChannelResponse(BaseModel):
@@ -118,6 +123,7 @@ class ScriptJob(BaseModel):
     source_type: SourceTypeYoutubeTranscript = "youtube_transcript"
     target_language: str = "de"
     duration_minutes: int = Field(default=10, ge=1, le=60)
+    video_template: str = "generic"
     created_at: str
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
@@ -171,6 +177,7 @@ class GeneratedScript(BaseModel):
     sources: List[str] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
     word_count: int = 0
+    video_template: str = "generic"
     created_at: str
 
 
@@ -282,6 +289,7 @@ class ProductionJob(BaseModel):
     updated_at: str
     error: str = ""
     error_code: str = ""
+    video_template: str = "generic"
     pipeline_step_retry_counts: Dict[str, int] = Field(default_factory=dict)
 
 
@@ -511,6 +519,7 @@ class ConnectorExportMetadata(BaseModel):
     title: str = ""
     description_draft: str = ""
     tags: List[str] = Field(default_factory=list)
+    video_template: str = ""
     warnings: List[str] = Field(default_factory=list)
 
 

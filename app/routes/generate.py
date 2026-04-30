@@ -24,6 +24,7 @@ async def generate_script(request: GenerateScriptRequest):
                 target_language=request.target_language,
                 duration_minutes=request.duration_minutes,
                 extraction_warnings=extraction_warnings,
+                video_template=getattr(request, "video_template", None) or "generic",
             )
         )
 

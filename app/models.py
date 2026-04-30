@@ -5,12 +5,20 @@ class GenerateScriptRequest(BaseModel):
     url: str
     target_language: str = "de"
     duration_minutes: int = 10
+    video_template: str = Field(
+        default="generic",
+        description="BA 9: generic | true_crime | mystery_explainer | history_deep_dive",
+    )
 
 
 class YouTubeGenerateScriptRequest(BaseModel):
     video_url: str = Field(..., min_length=1)
     target_language: str = "de"
     duration_minutes: int = 10
+    video_template: str = Field(
+        default="generic",
+        description="BA 9: generic | true_crime | mystery_explainer | history_deep_dive",
+    )
 
 class Chapter(BaseModel):
     title: str

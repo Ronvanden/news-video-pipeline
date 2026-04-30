@@ -10,6 +10,11 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 from app.config import settings
+from app.story_engine.conformance import conformance_warnings_for_template
+from app.story_engine.templates import (
+    normalize_story_template_id,
+    story_template_prompt_addon_de,
+)
 import httpx
 try:
     import openai
@@ -548,6 +553,7 @@ def build_script_response_from_extracted_text(
     duration_minutes: int,
     extraction_warnings: Optional[List[str]] = None,
     extra_warnings: Optional[List[str]] = None,
+    video_template: str = "generic",
 ) -> Tuple[str, str, List[dict], str, List[str], List[str]]:
     """
     Shared pipeline: summarized/structured script from plain text (article or transcript).
@@ -556,6 +562,9 @@ def build_script_response_from_extracted_text(
     warnings: List[str] = list(extraction_warnings or [])
     if extra_warnings:
         warnings.extend(extra_warnings)
+
+    tpl_id, tpl_ws = normalize_story_template_id(video_template)
+    warnings.extend(tpl_ws)
 
     summary = summarize_text(extracted_text, sentences_count=20)
 
@@ -574,6 +583,7 @@ def build_script_response_from_extracted_text(
         key_points,
         duration_minutes,
         source_word_count,
+        video_template=tpl_id,
     )
 
     sources = [source_url]
@@ -601,6 +611,16 @@ def build_script_response_from_extracted_text(
     else:
         warnings.append(fallback_note)
 
+    warnings.extend(
+        conformance_warnings_for_template(
+            template_id=tpl_id,
+            hook=hook,
+            chapters=chapters,
+            full_script=full_script,
+            duration_minutes=duration_minutes,
+        )
+    )
+
     return title, hook, chapters, full_script, sources, warnings
 
 
@@ -608,6 +628,7 @@ def generate_script_from_youtube_video(
     video_url: str,
     target_language: str = "de",
     duration_minutes: int = 10,
+    video_template: str = "generic",
 ):
     """
     Gleiche fachliche Pipeline wie ``POST /youtube/generate-script``, ohne HTTP.
@@ -653,6 +674,7 @@ def generate_script_from_youtube_video(
                 duration_minutes=duration_minutes,
                 extraction_warnings=[],
                 extra_warnings=[transcript_warning],
+                video_template=video_template,
             )
         )
 
@@ -718,8 +740,17 @@ def extract_key_points(text: str) -> List[str]:
 class ScriptGenerator:
     """Generator for video scripts with fallback options."""
     
-    def generate_script(self, title: str, key_points: List[str], duration_minutes: int, source_word_count: int = 0) -> Tuple[str, str, List[dict], str, str, str]:
+    def generate_script(
+        self,
+        title: str,
+        key_points: List[str],
+        duration_minutes: int,
+        source_word_count: int = 0,
+        *,
+        video_template: str = "generic",
+    ) -> Tuple[str, str, List[dict], str, str, str]:
         """Generate script structure based on duration. Returns title, hook, chapters, full_script, mode, reason."""
+        tid, _ = normalize_story_template_id(video_template)
         target_word_count = duration_minutes * 140
         min_word_count = max(int(target_word_count * 0.85), 200)
         max_word_count = int(target_word_count * 1.15)
@@ -742,8 +773,19 @@ class ScriptGenerator:
                 min_word_count,
                 max_word_count,
                 source_word_count,
+                video_template=tid,
             )
-        return self._generate_fallback(title, key_points, duration_minutes, target_word_count, num_chapters, min_word_count, max_word_count, source_word_count)
+        return self._generate_fallback(
+            title,
+            key_points,
+            duration_minutes,
+            target_word_count,
+            num_chapters,
+            min_word_count,
+            max_word_count,
+            source_word_count,
+            video_template=tid,
+        )
     
     def _generate_with_openai(
         self,
@@ -755,11 +797,15 @@ class ScriptGenerator:
         min_word_count: int,
         max_word_count: int,
         source_word_count: int,
+        *,
+        video_template: str = "generic",
     ) -> Tuple[str, str, List[dict], str, str, str]:
         """Generate script using OpenAI."""
         try:
             source_note = "" if source_word_count >= target_word_count else (
                 "Die Quelle enthält weniger Text als die gewünschte Dauer. Bitte ergänze das Skript mit zusätzlicher Kontext-Einordnung und Analyse, ohne neue Fakten zu erfinden.")
+            addon = story_template_prompt_addon_de(video_template)
+            addon_block = f"\n\nFormat-Vorgaben (zusätzlich):\n{addon}\n" if addon else ""
             prompt = f"""
 Erstelle ein YouTube-Video-Skript auf Deutsch aus den bereitgestellten Informationen.
 
@@ -774,7 +820,7 @@ Ziel:
 - Kapitel: {num_chapters}
 
 {source_note}
-
+{addon_block}
 Baue folgende Struktur ein:
 1. Ein starker Hook
 2. Ein kurzes Intro
@@ -905,6 +951,7 @@ Gib die Antwort exakt als Objekt zurück:
             min_word_count,
             max_word_count,
             source_word_count,
+            video_template=video_template,
         )
         return title, hook, chapters, full_script, "fallback", sanitized_reason
 
@@ -1044,13 +1091,29 @@ Wenn du unbedingt das komplette Objekt liefern willst, darfst du alternativ dies
         min_word_count: int,
         max_word_count: int,
         source_word_count: int,
+        *,
+        video_template: str = "generic",
     ) -> Tuple[str, str, List[dict], str, str, str]:
         """Fallback script generation."""
+        addon = story_template_prompt_addon_de(video_template)
         hook = f"Entdecken Sie die neuesten Entwicklungen in diesem spannenden Thema: {title}"
-        
+        if video_template and video_template != "generic" and addon:
+            hook = f"Heute mit Blick auf die Faktenlage: {title}"
+
         chapters = []
         full_script_parts = [hook]
-        intro = "Hallo und herzlich willkommen! In diesem Video analysieren wir die wichtigsten Aspekte des Themas und ordnen sie ein."
+        intro = (
+            "Hallo und herzlich willkommen! In diesem Video ordnen wir das Thema ein — "
+            "nachvollziehbar und ohne Spekulation über unbekannte Details."
+        )
+        if addon:
+            first_line = addon.split("\n")[0].strip()
+            if first_line:
+                intro = (
+                    "Hallo und herzlich willkommen! "
+                    + first_line
+                    + " Wir gehen die bekannten Punkte Schritt für Schritt durch."
+                )
         full_script_parts.append(intro)
         
         if not key_points:

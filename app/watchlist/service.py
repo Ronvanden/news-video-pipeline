@@ -31,6 +31,10 @@ from app.watchlist.provider_discipline import (
     seed_default_provider_configs,
     validate_provider_runtime_health,
 )
+from app.story_engine.templates import (
+    style_profile_for_template,
+    voice_profile_for_template,
+)
 from app.watchlist.pipeline_audit_scan import (
     pipeline_audit_document_id_from_draft,
     scan_production_job_for_issues,
@@ -285,6 +289,7 @@ def create_channel(
         last_success_at=last_success_at,
         last_error=last_error,
         notes=request.notes,
+        video_template=getattr(request, "video_template", None) or "generic",
     )
 
     try:
@@ -399,6 +404,7 @@ def run_script_job(
         job_running.video_url,
         target_language=job_running.target_language,
         duration_minutes=job_running.duration_minutes,
+        video_template=getattr(job_running, "video_template", None) or "generic",
     )
 
     full = (gs.full_script or "").strip()
@@ -439,6 +445,7 @@ def run_script_job(
         sources=list(gs.sources or []),
         warnings=list(gs.warnings or []),
         word_count=wc,
+        video_template=getattr(job_running, "video_template", None) or "generic",
         created_at=created_iso,
     )
 
@@ -538,6 +545,7 @@ def _try_create_script_job_for_seen_video(
         source_type="youtube_transcript",
         target_language=channel.target_language,
         duration_minutes=channel.duration_minutes,
+        video_template=getattr(channel, "video_template", None) or "generic",
         created_at=now_iso,
         started_at=None,
         completed_at=None,
@@ -3239,6 +3247,7 @@ def create_production_job_from_script_job(
         visual_style=body.visual_style,
         narrator_style=body.narrator_style,
         thumbnail_prompt=body.thumbnail_prompt,
+        video_template=getattr(job, "video_template", None) or "generic",
         created_at=now_iso,
         updated_at=now_iso,
     )
@@ -3818,8 +3827,15 @@ def generate_scene_assets(
         )
 
     style = body.style_profile
+    tpl_pj = (getattr(pj, "video_template", None) or "generic").strip() or "generic"
+    extra_style_ws: List[str] = []
+    if style == "documentary" and tpl_pj != "generic":
+        style = style_profile_for_template(tpl_pj)
+        extra_style_ws.append(
+            f"scene_assets: style_profile aus video_template '{tpl_pj}' abgeleitet ({style})."
+        )
     items, eng_warns = build_scene_asset_items(scenes_src, style_profile=style)
-    merged_warns = list(plan.warnings or []) + list(eng_warns)
+    merged_warns = extra_style_ws + list(plan.warnings or []) + list(eng_warns)
     st = "ready" if items else "failed"
     now_iso = utc_now_iso()
     doc = SceneAssets(
@@ -3923,8 +3939,15 @@ def generate_voice_plan(
             warnings=["Scene assets not found; generate scene assets first."],
         )
     merged_warns = list(assets.warnings or [])
+    voice_pf = body.voice_profile
+    tpl_pj = (getattr(pj, "video_template", None) or "generic").strip() or "generic"
+    if voice_pf == "documentary" and tpl_pj != "generic":
+        voice_pf = voice_profile_for_template(tpl_pj)
+        merged_warns.append(
+            f"voice_plan: voice_profile aus video_template '{tpl_pj}' abgeleitet ({voice_pf})."
+        )
     blocks, bw = build_voice_blocks(
-        pj, assets, voice_profile=body.voice_profile
+        pj, assets, voice_profile=voice_pf
     )
     merged_warns.extend(bw)
     st = decide_voice_plan_status(blocks, assets)
@@ -3936,7 +3959,7 @@ def generate_voice_plan(
         scene_assets_id=pid,
         generated_script_id=(assets.generated_script_id or pj.generated_script_id or "").strip(),
         script_job_id=(assets.script_job_id or pj.script_job_id or "").strip(),
-        voice_profile=body.voice_profile,
+        voice_profile=voice_pf,
         status=st if st in ("ready", "failed") else "failed",
         voice_version=1,
         blocks=blocks,

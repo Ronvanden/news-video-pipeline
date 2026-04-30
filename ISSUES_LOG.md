@@ -36,6 +36,8 @@ Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
 
 | 2026-04-30 | Operations / Reife BA 8.5–8.9 | Transkript-/Budget-/Provider-Observability für Founder-Betrieb noch nicht zusammengeführt | Increment auf bestehenden Collections (kein neues Haupt-Backend) | **`input_quality_guard.py`**, **`provider_discipline.py`**, **`/providers/configs/seed-defaults`**, erweiterte **`production_costs`**, Doku Runbook + Gold-Standard, Tests `test_ba85`–`test_ba89` | umgesetzt | `8cad2bc` |
 
+| 2026-04-30 | Story / Template Engine **BA 9.0–9.1** | Kein strukturiertes Video-/Story-Format; Downstream nutzte nur generische Defaults | Produktachse ergänzen ohne **`GenerateScriptResponse`** (6 Felder) zu brechen | Modul **`app/story_engine/`** (Template-IDs, Prompt-Zusätze, Conformance nur in **`warnings`**); optional **`video_template`** auf **`/generate-script`**, **`/youtube/generate-script`**, Watchlist/Jobs, **`generated_scripts`**, **`production_jobs`**, Connector-Export; bei **`scene-assets`**/**`voice-plan`** mit API-Style/Voice-Default **`documentary`** abgeleitete Profile; Zirkularimport conformance↔utils vermieden (Wortzahl lokal); Tests **`tests/test_ba90_story_engine.py`** | umgesetzt | pending commit |
+
 ## Hinweise
 
 - **Datum**: Bei älteren Fixes kann das exakte Datum unbekannt sein — dann `*n/a*` oder ungefähre Iteration notieren.  

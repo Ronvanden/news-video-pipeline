@@ -41,7 +41,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - **BA 8.0–8.2 (Hardening — Audit, Recovery, Monitoring):** Collections **`pipeline_audits`**, **`recovery_actions`**; Endpoints **`POST /production/audit/run`**, **`GET /production/audit`**, **`POST /production/jobs/{id}/recovery/retry`** (Body `step`), **`GET /production/monitoring/summary`** — `app/watchlist/pipeline_audit_scan.py`, Tests **`tests/test_ba80_82_hardening.py`**.
 - **BA 8.3 (Status-Normalisierung & Auto-Escalation):** Collection **`pipeline_escalations`**; Modul **`app/watchlist/status_normalizer.py`**; Endpoints **`POST /production/status/normalize/run`**, **`GET /production/status/escalations`** — Heuristiken für Orphan-/Stuck-/Queued-Gaps, **`retry_reason`**, exponentieller Backoff, harter Abbruch über Schwellen; Tests **`tests/test_ba83_status_normalization.py`**.
 - **BA 8.4 LIGHT (Founder Control Panel):** **`GET /production/control-panel/summary`** — read-only Aggregation (Audits, Eskalationen, Recovery, Job-Status-Stichprobe, Provider-Konfigs, Kostensätze, kürzliche Problemfälle); **`app/watchlist/control_panel.py`**, Tests **`tests/test_ba84_control_panel.py`**.
-- **BA 8.5–8.9 (Operations Maturity):** Transkript-/Eingangsqualität **`app/watchlist/input_quality_guard.py`** (`input_quality_status` auf Jobs/`processed_videos`); Provider-Disziplin **`provider_discipline.py`**, **`POST /providers/configs/seed-defaults`**, erweiterte **`provider_configs`**-Namen; **`production_costs`** mit Baseline/Varianz/Profit-Hinweis (BA 8.7); Referenz **`GOLD_PRODUCTION_STANDARD.md`**; Betrieb **`OPERATOR_RUNBOOK.md`**; Tests **`tests/test_ba85_input_quality_guard.py`** … **`tests/test_ba89_operator_runbook.py`**.
+- **BA 9.0–9.1 (Template Engine):** optionaler JSON-Body **`video_template`** auf **`POST /generate-script`** und **`POST /youtube/generate-script`** (`generic` \| `true_crime` \| `mystery_explainer` \| `history_deep_dive`); dieselbe Kennung auf Watchlist-Kanälen/Jobs und in **`generated_scripts`** / **`production_jobs`**; modul **`app/story_engine/`** (Prompt-Zusätze, Conformance-**`warnings`**); bei **`scene-assets`** / **`voice-plan`**-Generate mit API-Default **`documentary`** werden Style/Voice aus dem Template abgeleitet; Export-Metadaten **`video_template`**. Der feste Sechs-Felder-**`GenerateScriptResponse`**-Vertrag bleibt unverändert. Tests **`tests/test_ba90_story_engine.py`**.
 - **BA 6.6.1 (nur lokale/integration Tests):** `POST /dev/fixtures/completed-script-job` — optional mit `ENABLE_TEST_FIXTURES=true` in `.env`; legt ohne YouTube-Anruf einen **completed** `script_jobs`-Eintrag, **`generated_scripts`** mit Kapiteln und optional **`production_jobs`** an (IDs immer Präfix `dev_fixture_`). **In Produktion deaktiviert lassen.**
 
 ## 4. Projektstruktur
@@ -55,6 +55,7 @@ app/
 ├── utils.py          # Extraktion, Generierung, LLM und Fallback
 ├── review/           # Phase 4: Originalitäts-Heuristiken + Review-Service
 ├── watchlist/        # Phase 5: Watchlist (Firestore, Jobs, generated_scripts)
+├── story_engine/   # BA 9: Video-Templates / Story Engine (video_template)
 ├── youtube/          # Kanal-Auflösung, RSS, Scoring (ohne Data API)
 └── routes/
     ├── __init__.py

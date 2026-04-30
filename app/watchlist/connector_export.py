@@ -116,6 +116,12 @@ def build_connector_export_payload(
 
     thumb = thumbnail_prompt_resolve(production_job, scene_assets)
 
+    vt = ""
+    if generated_script is not None and getattr(generated_script, "video_template", ""):
+        vt = (generated_script.video_template or "").strip()
+    elif production_job is not None and getattr(production_job, "video_template", ""):
+        vt = (production_job.video_template or "").strip()
+
     return ConnectorExportPayload(
         generic_manifest=gm,
         elevenlabs_blocks=elevenlabs_blocks,
@@ -127,6 +133,7 @@ def build_connector_export_payload(
             title=title,
             description_draft=description_draft,
             tags=tags,
+            video_template=vt,
             warnings=warns,
         ),
     )
