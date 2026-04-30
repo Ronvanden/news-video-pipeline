@@ -164,7 +164,7 @@ class ListWatchlistScriptJobsResponse(BaseModel):
 
 
 class GeneratedScript(BaseModel):
-    """Persistiertes Skript (Firestore ``generated_scripts``, Vertrag analog ``GenerateScriptResponse``)."""
+    """Persistiertes Skript (Firestore ``generated_scripts``; Kern wie ``GenerateScriptResponse`` + Meta)."""
 
     id: str
     script_job_id: str
@@ -178,6 +178,9 @@ class GeneratedScript(BaseModel):
     warnings: List[str] = Field(default_factory=list)
     word_count: int = 0
     video_template: str = "generic"
+    hook_type: str = ""
+    hook_score: float = Field(default=0.0, ge=0.0, le=10.0)
+    opening_style: str = ""
     created_at: str
 
 

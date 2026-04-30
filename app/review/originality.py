@@ -15,6 +15,8 @@ from app.models import (
     ReviewScriptResponse,
     SimilarityFlag,
 )
+from app.story_engine.hook_engine import infer_hook_type_from_blob
+from app.story_engine.hook_library import ALLOWED_HOOK_TYPES
 from app.story_engine.templates import normalize_story_template_id
 
 # Tunable V1 thresholds
@@ -462,6 +464,34 @@ def analyze_originality(request: ReviewScriptRequest) -> ReviewScriptResponse:
                 rationale="video_template=history_deep_dive.",
             )
         )
+
+    hook_line = (request.hook_text or "").strip()
+    if not hook_line and gen_raw.strip():
+        first_lines = [ln.strip() for ln in gen_raw.splitlines() if ln.strip()]
+        hook_line = first_lines[0] if first_lines else ""
+    if hook_line or (request.hook_type or "").strip():
+        inferred_ht = infer_hook_type_from_blob(request.video_template, hook_line)
+        allowed_ht = ALLOWED_HOOK_TYPES.get(tid, ALLOWED_HOOK_TYPES["generic"])
+        decl = (request.hook_type or "").strip()
+        if decl and decl not in allowed_ht:
+            issues.append(
+                ReviewIssue(
+                    severity="info",
+                    code="hook_type_not_allowed_for_template",
+                    message=(
+                        f"hook_type '{decl}' ist für video_template '{tid}' "
+                        f"nicht in der V1-Hook-Library vorgesehen."
+                    ),
+                    evidence_hint=None,
+                )
+            )
+        if decl and inferred_ht != decl:
+            wtxt = (
+                f"[hook_review] Deklarierter hook_type '{decl}' weicht von "
+                f"Opening-Heuristik '{inferred_ht}' ab."
+            )
+            if wtxt not in warnings:
+                warnings.append(wtxt)
 
     return ReviewScriptResponse(
         risk_level=risk_level,

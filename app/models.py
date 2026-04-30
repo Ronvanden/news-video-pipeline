@@ -33,6 +33,27 @@ class GenerateScriptResponse(BaseModel):
     warnings: List[str]
 
 
+class GenerateHookRequest(BaseModel):
+    """BA 9.2 Nebenkanal — kein Teil von GenerateScriptResponse."""
+
+    video_template: str = Field(
+        default="generic",
+        description="generic | true_crime | mystery_explainer | history_deep_dive",
+    )
+    topic: str = ""
+    title: str = ""
+    source_summary: str = ""
+
+
+class GenerateHookResponse(BaseModel):
+    hook_text: str
+    hook_type: str
+    hook_score: float = Field(ge=0.0, le=10.0)
+    rationale: str
+    template_match: str
+    warnings: List[str] = Field(default_factory=list)
+
+
 class LatestVideosRequest(BaseModel):
     channel_url: str = Field(..., min_length=1)
     max_results: int = Field(5, ge=1, le=50)
@@ -73,6 +94,14 @@ class ReviewScriptRequest(BaseModel):
             "BA 9.1: optional; gleiche Template-IDs wie Generate — "
             "beeinflusst zusätzliche Review-Hinweise, nicht den Heuristik-Kern."
         ),
+    )
+    hook_text: str = Field(
+        default="",
+        description="BA 9.2: optional; Opening-Zeile zur Template-Passung (sonst erste Zeile des Skripts).",
+    )
+    hook_type: str = Field(
+        default="",
+        description="BA 9.2: optional; z. B. shock_reveal — Abgleich mit Heuristik.",
     )
 
     @model_validator(mode="after")

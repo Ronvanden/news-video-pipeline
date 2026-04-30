@@ -31,6 +31,7 @@ from app.watchlist.provider_discipline import (
     seed_default_provider_configs,
     validate_provider_runtime_health,
 )
+from app.story_engine.hook_engine import generate_hook_v1, hook_meta_for_persist
 from app.story_engine.templates import (
     style_profile_for_template,
     voice_profile_for_template,
@@ -433,6 +434,14 @@ def run_script_job(
 
     wc = count_words(gs.full_script)
     created_iso = utc_now_iso()
+    tpl_run = getattr(job_running, "video_template", None) or "generic"
+    hr = generate_hook_v1(
+        video_template=tpl_run,
+        topic=gs.title,
+        title=gs.title,
+        source_summary=(gs.full_script or "")[:1200],
+    )
+    hk_type, hk_score, open_st = hook_meta_for_persist(hr)
     gs_doc = GeneratedScript(
         id=jid,
         script_job_id=jid,
@@ -445,7 +454,10 @@ def run_script_job(
         sources=list(gs.sources or []),
         warnings=list(gs.warnings or []),
         word_count=wc,
-        video_template=getattr(job_running, "video_template", None) or "generic",
+        video_template=tpl_run,
+        hook_type=hk_type,
+        hook_score=hk_score,
+        opening_style=open_st,
         created_at=created_iso,
     )
 

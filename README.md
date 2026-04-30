@@ -41,7 +41,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - **BA 8.0–8.2 (Hardening — Audit, Recovery, Monitoring):** Collections **`pipeline_audits`**, **`recovery_actions`**; Endpoints **`POST /production/audit/run`**, **`GET /production/audit`**, **`POST /production/jobs/{id}/recovery/retry`** (Body `step`), **`GET /production/monitoring/summary`** — `app/watchlist/pipeline_audit_scan.py`, Tests **`tests/test_ba80_82_hardening.py`**.
 - **BA 8.3 (Status-Normalisierung & Auto-Escalation):** Collection **`pipeline_escalations`**; Modul **`app/watchlist/status_normalizer.py`**; Endpoints **`POST /production/status/normalize/run`**, **`GET /production/status/escalations`** — Heuristiken für Orphan-/Stuck-/Queued-Gaps, **`retry_reason`**, exponentieller Backoff, harter Abbruch über Schwellen; Tests **`tests/test_ba83_status_normalization.py`**.
 - **BA 8.4 LIGHT (Founder Control Panel):** **`GET /production/control-panel/summary`** — read-only Aggregation (Audits, Eskalationen, Recovery, Job-Status-Stichprobe, Provider-Konfigs, Kostensätze, kürzliche Problemfälle); **`app/watchlist/control_panel.py`**, Tests **`tests/test_ba84_control_panel.py`**.
-- **BA 9.x (Template Engine):** **9.0–9.1** umgesetzt — optionaler JSON-Body **`video_template`** (`generic` \| `true_crime` \| `mystery_explainer` \| `history_deep_dive`) auf **`POST /generate-script`**, **`POST /youtube/generate-script`** und optional **`POST /review-script`** (zusätzliche redaktionelle Empfehlungen, Heuristik unverändert); dieselbe Kennung auf Watchlist-Kanälen/Jobs und in **`generated_scripts`** / **`production_jobs`**; Modul **`app/story_engine/`** (Prompt-Zusätze, strukturierte **Blueprints** für LLM, **`[template_conformance:…]`** in **`warnings`**); read-only **`GET /story-engine/templates`** (Meta + Kapitel-Bands je Beispiel-Dauer); bei **`scene-assets`** / **`voice-plan`**-Generate mit API-Default **`documentary`** werden Style/Voice aus dem Template abgeleitet; Export-Metadaten **`video_template`**. Der feste Sechs-Felder-**`GenerateScriptResponse`**-Vertrag bleibt unverändert. Tests **`tests/test_ba90_story_engine.py`**, **`tests/test_ba91_story_engine.py`**. **9.2** (Strict/Hooks/Nebenkanal): [PIPELINE_PLAN.md](PIPELINE_PLAN.md) (**planned**).
+- **BA 9.x (Template Engine):** **9.0–9.2** umgesetzt — optional **`video_template`** (`generic` \| `true_crime` \| `mystery_explainer` \| `history_deep_dive`) auf **`POST /generate-script`**, **`POST /youtube/generate-script`**, optional **`POST /review-script`**; **`GET /story-engine/templates`**; **BA 9.2** zusätzlich **`POST /story-engine/generate-hook`** (regelbasierte Opening-Line, eigener JSON-Vertrag — **`GenerateScriptResponse`** bleibt 6 Felder); persistierte Meta **`hook_type`**, **`hook_score`**, **`opening_style`** auf **`generated_scripts`** (Watchlist-Job-Run). **9.3** (Strict/Workflow, früher „9.2“) und **9.4** (Scene Rhythm): [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
 - **BA 6.6.1 (nur lokale/integration Tests):** `POST /dev/fixtures/completed-script-job` — optional mit `ENABLE_TEST_FIXTURES=true` in `.env`; legt ohne YouTube-Anruf einen **completed** `script_jobs`-Eintrag, **`generated_scripts`** mit Kapiteln und optional **`production_jobs`** an (IDs immer Präfix `dev_fixture_`). **In Produktion deaktiviert lassen.**
 
 ## 4. Projektstruktur
@@ -229,11 +229,14 @@ Die API ist dann unter `http://127.0.0.1:8000` erreichbar.
   "source_text": "",
   "generated_script": "",
   "target_language": "de",
-  "prior_warnings": []
+  "prior_warnings": [],
+  "video_template": "generic",
+  "hook_text": "",
+  "hook_type": ""
 }
 ```
 
-- `source_type`: `youtube_transcript` | `news_article` | `unknown` — bei YouTube wird **strenger** bewertet und eine zusätzliche `warning` gesetzt.
+- Optional **BA 9.x:** `video_template` (wie Generate), **`hook_text`** (Opening-Zeile; sonst erste nicht-leere Zeile von `generated_script`), **`hook_type`** (z. B. `shock_reveal`) — Abgleich liefert ggf. **`warnings`** / **`issues`** (`[hook_review]`, `hook_type_not_allowed_for_template`).
 - `generated_script` entspricht inhaltlich dem `full_script` aus `POST /generate-script` bzw. `/youtube/generate-script`.
 - Mindestens eines von `source_text` und `generated_script` muss nicht leer sein; sind **beide** leer, antwortet die API mit **422**.
 - Ist `generated_script` leer, liefert der Service **200** mit `risk_level: high` und klarer `warning` (kein harter Fehler).
