@@ -358,7 +358,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 ## BA 9 — Template Engine / Story Engine (Produktachse)
 
 Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitellogik, Tonfall-Hinweise) über ein optionales Feld **`video_template`**, **ohne** den festen Sechs-Felder-JSON-Vertrag von **`POST /generate-script`** und **`POST /youtube/generate-script`** zu brechen (`title`, `hook`, `chapters`, `full_script`, `sources`, `warnings`).  
-**Abgrenzung:** „**Phase 9**“ im Phasenplan oben meint **technisches Video-Packaging** (Schnitt, Export, MP4). **BA 9.x** meint **Story- und Formatsteuerung** — bewusst getrennt benannt, um Planungskonflikte zu vermeiden.
+**Abgrenzung:** „**Phase 9**“ im Phasenplan oben meint **technisches Video-Packaging** (Schnitt, Export, MP4); „**Phase 10**“ meint **Veröffentlichungsvorbereitung**. **BA 9.x** meint ausschließlich **Story Engine / Template / Hook / Review / Optimierung** — **BA** = modulare Bauphase im Modul; **Phase** = Makro-Roadmap (**BA 9.x** ist **nicht** Phase 9 oder 10). **BA 9.9** schließt das Story-Kernmodul **innerhalb der BA-9.x-Linie** ab; es gibt **kein „BA 10“** für Story Engine, solange diese Achse nicht bewusst neu nummeriert wird.
 
 ### Übersicht Release-Stufen
 
@@ -367,8 +367,47 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 9.0** | **done** | Modul `app/story_engine/`: Template-IDs, Normalisierung, Prompt-Zusätze (LLM + Fallback), `style_profile`/`voice_profile`-Hilfen, leichte Heuristiken → **`warnings`**; **`video_template`** durchgängig bis Watchlist/Production/Connector wo sinnvoll; Tests `tests/test_ba90_story_engine.py`. |
 | **BA 9.1** | **done** | **Operable Templates:** Kapitel-Bands + Hook-Schwellen pro Template/Dauer; **Struktur-Blueprint** im LLM-Prompt; Kapitelanzahl-Clamping im `ScriptGenerator`; einheitliche **`[template_conformance:…]`**-Präfixe; **`GET /story-engine/templates`** (read-only Katalog); Tests **`tests/test_ba91_story_engine.py`**. |
 | **BA 9.2** | **done** | **Hook Engine V1 (Opening-Line):** regelbasierte **`hook_type`** / **`hook_text`** / **`hook_score`** / **`rationale`** — **`POST /story-engine/generate-hook`** (Nebenkanal, `GenerateScriptResponse` unverändert); optionale Meta-Felder auf **`generated_scripts`**; Review-Heuristik Hook↔Template; Tests **`tests/test_ba92_hook_engine.py`**. |
-| **BA 9.3** | **planned** | **Strikte / workflowgebundene** Nutzung (früher „9.2“): optionaler Strict-Modus, **Review-Automatisierung** (nach Script-Job), **Nebenkanal-Artefakte**, **Template-Versionierung**. **Hinweis:** „**Review-Hooks**“ hier = Workflow, nicht Hook-Line-Engine. |
-| **BA 9.4** | **planned** | **Scene Rhythm Engine** (optional; nach Hook-Achse). |
+| **BA 9.3** | **planned** | **Strikte / workflowgebundene** Nutzung: optionaler Strict-Modus, **Review-Automatisierung** (nach Script-Job), **Nebenkanal-Artefakte**, **Template-Versionierung**. **Hinweis:** „**Review-Hooks**“ hier = Workflow, nicht Hook-Line-Engine. |
+| **BA 9.4** | **planned** | **Scene Rhythm Engine:** Taktführung / Pacing-Hinweise aus Dauer, `video_template` und Kapitelinhalt — **Meta/Nebenkanal** (z. B. `rhythm_engine.py`, optional `POST /story-engine/rhythm-hint`); kein Pflichtfeld im Generate-JSON. |
+| **BA 9.5a** | **planned** | **Observability (zuerst):** Story-Modul im Betrieb sichtbar — Aggregation zu Template-Nutzung, Hook-Meta (`hook_type`/`hook_score`), Rhythm-Hints (nach 9.4), Strict-/Gate-Signalen; Erweiterung **read-only** ([`control_panel.py`](app/watchlist/control_panel.py) o. ä.); Anknüpfung **Audit** wo sinnvoll. |
+| **BA 9.5b** | **planned** | **Story-Pack / Beat-Sheet (danach):** gebündeltes Export-Artefakt (`video_template`, Hook-Meta, Rhythm, Verweise auf `scene_plans`/Kapitel) — nur **Connector/Export/`production_jobs`**, nicht `GenerateScriptResponse`. |
+| **BA 9.6** | **planned** | **Experimentation Layer:** A/B Hook Testing; **Hook Variant Registry**; Experiment-Metadaten; optionale **LLM-Refinement-Vorbereitung**; Hook-Performance-Vergleich — **Nebenkanal/Persistenz/Metadaten**, **kein** Pflichtfeld in Live-Generate. |
+| **BA 9.7** | **planned** | **Adaptive Template Optimization:** Template-Drift-Erkennung; Auto-Refinement-Inputs; **Template Health Evolution**; performance-basiertes Template-Scoring. |
+| **BA 9.8** | **planned** | **Story Intelligence Layer:** Feedback-Schleifen aus Hook / Review / Story-Metriken; **Self-Learning Readiness** (Governance-first, kein blindes Auto-Lernen); Template-Empfehlungslogik; Cross-template Performance-Analyse. |
+| **BA 9.9** | **planned** | **Story Engine Operations Maturity:** vollständige Story-Governance; **Canonical Story OS** als Zielbild/Dokumentationsbegriff; Reifegrad **Story Control Panel**; Story-System als **abgeschlossenes Kernmodul** innerhalb **BA 9.x** — nicht identisch mit Phase 9/10. |
+
+---
+
+### BA 9.3–9.9 Story Engine Maturity Track (Reihenfolge)
+
+Nach abgeschlossener **Hook Engine (9.2)** folgt die Story-Achse in dieser Reihenfolge — jeweils **ohne** Bruch des Sechs-Felder-Vertrags von **`POST /generate-script`** / **`POST /youtube/generate-script`**. Die Stufen **9.6–9.9** setzen auf **9.5b** (und den Vorläufern **9.5a Observability**, **9.4 Rhythm**, **9.3 Workflow**) auf und vertiefen Reifegrad und Optimierung **innerhalb derselben BA-9.x-Linie**.
+
+```mermaid
+flowchart LR
+  done92[BA_9_2_HookEngine]
+  b93[BA_9_3_WorkflowStrict]
+  b94[BA_9_4_SceneRhythm]
+  b95c[BA_9_5a_Observability]
+  b95b[BA_9_5b_StoryPack]
+  b96[BA_9_6_Experimentation]
+  b97[BA_9_7_AdaptiveTemplate]
+  b98[BA_9_8_StoryIntelligence]
+  b99[BA_9_9_OpsMaturity]
+  done92 --> b93 --> b94 --> b95c --> b95b --> b96 --> b97 --> b98 --> b99
+```
+
+| Stufe | Schwerpunkt |
+|-------|-------------|
+| **9.3** | Betrieb und Qualitätsschienen: Strict optional, Review-**Automatisierung**, Nebenkanal, Versionierung. |
+| **9.4** | Inhaltlicher Rhythmus / Pacing auf Basis Blueprints und optional Hook-Meta. |
+| **9.5a** | Observability: Metriken, Kurzüberblick, Audit-Anbindung — **nur Aggregation**, keine Secrets. |
+| **9.5b** | Story-Pack: ein exportierbares Bündel für Downstream — **nach** 9.5a und idealerweise mit 9.4-Kontext. |
+| **9.6** | Experimentation: A/B und Registry, Metadaten, Vorbereitung Refinement, Performance-Vergleich. |
+| **9.7** | Adaptive Templates: Drift, Refinement-Inputs, Health, Scoring. |
+| **9.8** | Intelligence: Feedback, Empfehlung, Cross-Template-Analyse unter Governance. |
+| **9.9** | Operations Maturity: Governance, Story-OS-Zielbild, Control-Panel-Reife, Kernmodul „fertig“ in BA 9.x. |
+
+Detailspezifikation **9.3** siehe unten; **9.4**, **9.5a**, **9.5b**, **9.6–9.9** jeweils eigene Unterabschnitte vor „Abhängigkeiten und Risiken“.
 
 ---
 
@@ -473,11 +512,137 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 ---
 
+### BA 9.4 — Scene Rhythm Engine (**planned**)
+
+**Ziel:** Aus **`duration_minutes`**, **`video_template`** und dem **Kapitel-/Skriptinhalt** empfohlene **Taktführung** ableiten (Beat-Längen-Hinweise, Übergänge, CTA-Platzierung als **Text/Meta**) — **nicht** als Pflichtfeld in der Live-**`GenerateScriptResponse`**.
+
+#### Inhalt und Technik (Skizze)
+
+- Neues Modul z. B. [`app/story_engine/rhythm_engine.py`](app/story_engine/rhythm_engine.py) (deterministisch in V1).
+- Optionaler öffentlicher Nebenkanal z. B. **`POST /story-engine/rhythm-hint`** oder ausschließlich intern über Production/Export — siehe [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md) vor größerem Scope.
+- **Persistenz:** bevorzugt **`production_jobs`**, **`render_manifests`**, Connector-JSON — nicht die sechs Generate-Felder.
+
+#### Nicht-Ziele (9.4 V1)
+
+- Keine Pflicht-JSON-Erweiterung von `/generate-script`.
+- Kein Ersatz für [`scene_plans`](app/watchlist/scene_plan.py); Rhythmus-Hinweise **ergänzen** die bestehende Produktionskette.
+
+#### Tests und Akzeptanz (9.4)
+
+- Matrix: Template × Dauer × minimaler Kapitel-Input; stabile Strings oder strukturierte Meta-Blöcke.
+- Regenerate-/Export-Snapshots nur bei vereinbartem Schema.
+
+---
+
+### BA 9.5a — Observability für Story-Modul (**planned**, Welle 1)
+
+**Ziel:** **Story-Relevantes** (Templates, Hook-Meta, später Rhythm-Hinweise, Strict-/Gate-Signale) im **Founder-Betrieb** auf einen Blick — **read-only**, ohne neue Secrets.
+
+- Erweiterung z. B. [`app/watchlist/control_panel.py`](app/watchlist/control_panel.py) und/oder schlanker Endpoint unter **`/production/control-panel`** oder **`/story-engine`** (nur Aggregation).
+- Anknüpfung an bestehende **Audits** [`pipeline_audit_scan.py`](app/watchlist/pipeline_audit_scan.py), soweit Story-Meta ohne Overengineering abbildbar.
+
+#### Tests (9.5a)
+
+- Smoke mit Mocks / leeren Collections; keine Live-Firestore-Pflicht in CI.
+
+---
+
+### BA 9.5b — Story-Pack / Beat-Sheet (**planned**, Welle 2)
+
+**Ziel:** Ein **gebündeltes Nebenkanal-Artefakt** für Downstream: u. a. **`video_template`**, Hook-Engine-Meta (wo vorhanden), **Rhythm-Metadaten** (nach 9.4), Verweise auf **`scene_plans`**/Kapitel — **ein** Block im Connector bzw. Export-Download.
+
+- **Vertrag:** `GenerateScriptResponse` unverändert; Pack nur in Export / Manifest / `production_jobs`.
+- Optional: Anbindung an Gold-Pfad [`tests/test_ba88_full_production_run.py`](tests/test_ba88_full_production_run.py), wenn Schema stabil ist.
+
+#### Tests (9.5b)
+
+- Feldpräsenz / JSON-Schema-Snapshot; Regression Generate-Keys.
+
+---
+
+### BA 9.6 — Experimentation Layer (**planned**)
+
+**Ziel:** Systematisches **Ausprobieren und Vergleichen** von Hook-Varianten und Experimenten — ohne den Live-**`/generate-script`**-Vertrag zu erweitern.
+
+- **A/B Hook Testing** (Zuordnung zu Jobs/Kontext; Auswertung über Metriken, nicht über Pflichtfelder in Generate).
+- **Hook Variant Registry** (Versionierte/namhafte Varianten, referenzierbar aus Persistenz/Export).
+- **Experiment Metadata** (Experiment-ID, Hypothese, Zeitraum — nur dort, wo MODULE_TEMPLATE/Schema es festlegt).
+- **Optional: LLM Refinement Preparation** (Schnittstellen/Flags/Pipeline-Hooks für spätere LLM-Nachbearbeitung von Hooks — **ohne** Pflicht-LLM in V1).
+- **Hook Performance Comparison** (Aggregation aus Observability 9.5a + eigenen Experiment-Telemetrien).
+
+#### Nicht-Ziele (9.6)
+
+- Kein neues Pflichtfeld in **`GenerateScriptResponse`**; kein automatisches Überschreiben produktiver Hooks ohne redaktionellen/policy Rahmen.
+- Keine Vermischung mit **Phase 9/10** (Packaging/Publishing bleiben getrennt).
+
+#### Tests (9.6)
+
+- Deterministische Zuordnung von Varianten/Experiment-IDs; Smoke auf leeren Fixtures; Schema-/Snapshot-Tests für Nebenkanal-JSON.
+
+---
+
+### BA 9.7 — Adaptive Template Optimization (**planned**)
+
+**Ziel:** Templates **gesund und aktuell** halten: Drift sichtbar machen und Inputs für gezielte Nachschärfung liefern.
+
+- **Template Drift Detection** (Abweichung Istvorlagen vs. Blueprint/Conformance-Historie).
+- **Auto-Refinement Inputs** (Vorschläge/Signale für Redaktion oder spätere Automatisierung — **kein** stilles Rewrite produktiver Blueprints ohne Freigabe).
+- **Template Health Evolution** (Zeitreihen oder Status je Template-ID).
+- **Performance-based Template Scoring** (Kopplung an Metriken aus 9.5a/9.6/9.8-Kontext).
+
+#### Nicht-Ziele (9.7)
+
+- Kein Bruch des Sechs-Felder-Skript-Vertrags; keine Umbenennung bestehender **Phase**-Nummern.
+
+#### Tests (9.7)
+
+- Deterministische Drift-/Score-Fixtures; Regression Generate-Keys.
+
+---
+
+### BA 9.8 — Story Intelligence Layer (**planned**)
+
+**Ziel:** **Auswertung und Empfehlung** über Hook-, Review- und Story-Metriken hinweg — unter klarer **Governance** („Self-Learning Readiness“, nicht blindes Selbstlernen).
+
+- **Feedback Loop** aus Hook / Review / Story Metrics (read-only Aggregation + dokumentierte Empfehlungsregeln).
+- **Self-Learning Readiness** (Voraussetzungen, Audits, Feature-Flags — before any closed-loop automation).
+- **Template Recommendation Logic** (z. B. „für Kontext X eher Template Y“ als Hinweis/Nebenkanal).
+- **Cross-template Performance Analysis** (Vergleiche nur mit Datenschutz-/Quota-Grenzen wie heute).
+
+#### Nicht-Ziele (9.8)
+
+- Keine stillen Produktionsänderungen ohne Logging/Audit; kein **BA 10** als Ersatznummer — alles bleibt **BA 9.x** bis 9.9.
+
+#### Tests (9.8)
+
+- Smoke/Fixtures für Empfehlungs- und Aggregationspfade; keine Live-Firestore-Pflicht in CI.
+
+---
+
+### BA 9.9 — Story Engine Operations Maturity (**planned**)
+
+**Ziel:** Das Story-Modul ist **betrieblich und dokumentarisch** als **Kernfähigkeit abgeschlossen** — weiterhin innerhalb **BA 9.x**, ohne **Phase 9** (Packaging) oder **Phase 10** (Publishing) zu ersetzen oder zu verschmelzen.
+
+- **Vollständige Story Governance** (Rollen, Freigaben, documented runbooks im Sinne von AGENTS/PIPELINE).
+- **Canonical Story OS** als **Zielbild** / Begriff für das integrierte Zusammenspiel: Templates, Hooks, Rhythm, Packs, Experimentation, Intelligence.
+- **Story Control Panel Reifegrad** (Ausbau von Observability 9.5a zu operativ nutzbarer „Einzelanlaufstelle“ für Story-relevante KPIs).
+- **Story System als abgeschlossenes Kernmodul** in der **BA-9.x**-Roadmap — nächste große Produktlinien **nicht** durch Hochzählen zu „BA 10 Story“ ohne separates Planungs-Deliverable.
+
+#### Nicht-Ziele (9.9)
+
+- Kein Ersatz für Video-Schnitt (**Phase 9**) oder Upload-Workflow (**Phase 10**); kein neues Pflichtfeld in **`GenerateScriptResponse`**.
+
+#### Tests (9.9)
+
+- Smoke auf Control-Panel-/Aggregations-Verträgen; Dokumentations-Regression (Verweise BA vs. Phase konsistent).
+
+---
+
 ### Abhängigkeiten und Risiken (gesamt BA 9.x)
 
 | Risiko | Mitigation |
 |--------|------------|
-| Verwechslung BA 9 vs. Phase 9 | Plan und README konsequent; dieser Abschnitt verlinken. |
+| Verwechslung BA 9.x vs. Phase 9 / Phase 10 | Plan, README, AGENTS und ISSUES_LOG: **BA** = modulare Bauphase; **Phase** = Makro-Roadmap; **BA 9.x ≠ Phase 9/10**. |
 | Zu viele Felder in Generate-Body | Neue Ideen zuerst Export/Production; MODULE_TEMPLATE vor neuen Collections. |
 | LLM ignoriert Blueprints | Striktere Prompts + Fallback + Conformance; kein „erfundenes“ Kapitel zum Auffüllen. |
 | Review-**Automatisierung** erhöhen Latenz/Kosten | Triggern nur async/Job-Flag; Dry-Run in Runbook dokumentieren. |
@@ -491,4 +656,4 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 3. **Nach Incidents oder wiederkehrenden Bugs**: [ISSUES_LOG.md](ISSUES_LOG.md) aktualisieren (Datum, Ursache, Fix, Commit-Referenz).  
 4. **Commits**: nur mit Tests/Checks laut [AGENTS.md](AGENTS.md) und Statusabgleich hier.
 
-Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-30** — **BA 9.2** Hook Engine V1; früheres **9.2** (Strict/Workflow) → **BA 9.3**.
+Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-30** — **BA 9.6–9.9** ergänzt (Experimentation → Adaptive Optimization → Intelligence → Operations Maturity); **BA 9.3–9.9** Maturity Track; Governance **BA vs. Phase 9/10** geschärft (**kein BA 10** für Story Engine).

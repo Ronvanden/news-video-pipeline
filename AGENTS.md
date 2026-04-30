@@ -92,6 +92,7 @@
 - Stelle sicher, dass LLM-Komponenten optional bleiben.
 - Pflege eine klare Fehler- und Warnlogik.
 - Priorisiere Erweiterbarkeit für zusätzliche Quellen, Regeln und Ausgabeformate.
+- **Planungsbegriffe:** **BA** (Bauphase) = modulare Ausbaustufe je Feature, dokumentiert in [PIPELINE_PLAN.md](PIPELINE_PLAN.md) (z. B. **BA 9.x** Story Engine). **Phase** (0–10) = übergeordnete System-/Produktions-Roadmap im selben Dokument. **BA 9.x** ist **nicht** dieselbe Sache wie **Phase 9** (Video-Packaging) oder **Phase 10** (Publishing).
 
 ## 15. Projektplanung und Änderungsdisziplin
 - Vor **größeren Änderungen** `PIPELINE_PLAN.md` prüfen und betroffene Phase sowie Status (`done` / `next` / `planned`) bewusst setzen oder aktualisieren.
