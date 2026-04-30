@@ -1,6 +1,6 @@
 """BA 9.x — Story-Engine (Katalog, Hook-Line Nebenkanal)."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.models import (
     GenerateHookRequest,
@@ -12,6 +12,9 @@ from app.story_engine.hook_engine import generate_hook_v1
 from app.story_engine.experiment_registry import public_experiment_registry
 from app.story_engine.rhythm_engine import rhythm_hints_v1
 from app.story_engine.templates import public_story_template_catalog
+from app.watchlist import service as watchlist_service
+from app.watchlist.firestore_repo import FirestoreUnavailableError
+from app.watchlist.models import StoryEngineTemplateHealthHttpResponse
 
 router = APIRouter(tags=["story-engine"])
 
@@ -59,3 +62,19 @@ async def rhythm_hint(req: RhythmHintRequest) -> RhythmHintResponse:
 async def hook_experiment_registry():
     """BA 9.6 — öffentlicher Katalog lokaler Experiment-/Variant-Meta."""
     return public_experiment_registry()
+
+
+@router.get(
+    "/story-engine/template-health",
+    response_model=StoryEngineTemplateHealthHttpResponse,
+)
+async def template_health_story_engine():
+    """
+    BA 9.7 (Optimization) und BA 9.8 (Intelligence) aus ``generated_scripts``-Stichprobe.
+    Ändert nicht ``GenerateScriptResponse``.
+    """
+    try:
+        return watchlist_service.get_story_engine_template_health_service()
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        raise HTTPException(status_code=503, detail=msg)

@@ -8,7 +8,14 @@ Kurzleitfaden für Founder/Betrieb — **ohne Secrets**, **ohne `.env`-Inhalt**.
 
 - `GET /health` — Dienst lebt.
 - `GET /watchlist/dashboard` — Kanäle/Jobs/Skripte-Zähler und letzte Metazeitstempel.
-- `GET /production/control-panel/summary` — Audits, Eskalationen, Recovery-Stichprobe, Kostensätze.
+- `GET /production/control-panel/summary` — Audits, Eskalationen, Recovery-Stichprobe, Kostensätze; **Story Engine:** `story_engine.template_optimization`, `story_engine.story_intelligence` (**BA 9.7–9.8**).
+
+## Story Engine (Daily — BA 9.7–9.9)
+
+- `GET /story-engine/templates` — Katalog `video_template` (ohne vollständige Prompts).
+- `GET /story-engine/experiment-registry` — lokale Experiment-/Variant-Meta (**BA 9.6**).
+- `GET /story-engine/template-health` — Optimierung (**9.7**) + Intelligence (**9.8**) aus `generated_scripts`-Stichprobe; **ändert nicht** `/generate-script` JSON.
+- Begriffe und Kerngraph: **`docs/STORY_ENGINE_OS.md`**. Deploy-/Smoke-Anker: **`docs/runbooks/cloud_run_deploy_runbook.md`**.
 
 ## Dry Run
 

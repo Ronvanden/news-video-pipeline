@@ -1197,6 +1197,59 @@ class ControlPanelRecentProblemsSummary(BaseModel):
     items: List[ControlPanelProblemItem] = Field(default_factory=list)
 
 
+class StoryEngineDriftTemplateRow(BaseModel):
+    """BA 9.7 — Drift-Signal pro kanonisiertem ``video_template`` (Stichprobe)."""
+
+    template_id: str = ""
+    script_count: int = 0
+    distinct_template_definition_versions: int = 0
+    distinct_nonempty_template_definition_versions: int = 0
+    dominant_template_definition_version: str = ""
+    definition_version_dispersion_ratio: float = Field(0.0, ge=0.0, le=1.0)
+    scripts_with_any_template_conformance_warning: int = 0
+    scripts_template_gate_failed: int = 0
+    avg_hook_score: float = Field(0.0, ge=0.0, le=10.0)
+
+
+class StoryEngineTemplateScoresRow(BaseModel):
+    """BA 9.7 — Health/Performance-Schätzung ohne externe KPIs."""
+
+    template_id: str = ""
+    health_score_0_to_100: float = Field(0.0, ge=0.0, le=100.0)
+    internal_performance_score_0_to_100: float = Field(0.0, ge=0.0, le=100.0)
+
+
+class StoryEngineTemplateOptimizationSummary(BaseModel):
+    """BA 9.7 Adaptive Template Optimization (read-only Aggregation)."""
+
+    sample_scripts: int = 0
+    min_statistics_sample_met: bool = False
+    drift_rows: List[StoryEngineDriftTemplateRow] = Field(default_factory=list)
+    scores: List[StoryEngineTemplateScoresRow] = Field(default_factory=list)
+    refinement_suggestions: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class StoryEngineIntelligenceSummary(BaseModel):
+    """BA 9.8 — Empfehlungstexte, kein automatischer Produktions-Umschalter."""
+
+    narrative_recommendations: List[str] = Field(default_factory=list)
+    cross_template_summary: List[str] = Field(default_factory=list)
+    self_learning_readiness_notes: List[str] = Field(default_factory=list)
+
+
+class StoryEngineTemplateHealthHttpResponse(BaseModel):
+    """BA 9.7/9.8 — READ-Only Antwort für ``GET /story-engine/template-health``."""
+
+    template_optimization: StoryEngineTemplateOptimizationSummary = Field(
+        default_factory=StoryEngineTemplateOptimizationSummary,
+    )
+    story_intelligence: StoryEngineIntelligenceSummary = Field(
+        default_factory=StoryEngineIntelligenceSummary,
+    )
+    warnings: List[str] = Field(default_factory=list)
+
+
 class ControlPanelStoryEngineSummary(BaseModel):
     sampled_scripts: int = 0
     by_hook_type: Dict[str, int] = Field(default_factory=dict)
@@ -1204,6 +1257,14 @@ class ControlPanelStoryEngineSummary(BaseModel):
     template_gate_failed_scripts: int = 0
     experiments_by_id: Dict[str, int] = Field(default_factory=dict)
     variants_by_id: Dict[str, int] = Field(default_factory=dict)
+    template_optimization: StoryEngineTemplateOptimizationSummary = Field(
+        default_factory=StoryEngineTemplateOptimizationSummary,
+        description="BA 9.7 — Adaptive Template Optimization (Stichprobe).",
+    )
+    story_intelligence: StoryEngineIntelligenceSummary = Field(
+        default_factory=StoryEngineIntelligenceSummary,
+        description="BA 9.8 — Story Intelligence Layer (Hinweise).",
+    )
 
 
 class ControlPanelSummaryResponse(BaseModel):

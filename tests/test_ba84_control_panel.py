@@ -166,6 +166,8 @@ class Ba84ControlPanelAggregate(unittest.TestCase):
         self.assertEqual(out.story_engine.sampled_scripts, 1)
         self.assertEqual(out.story_engine.template_gate_failed_scripts, 1)
         self.assertIn("true_crime", out.story_engine.by_video_template)
+        self.assertEqual(out.story_engine.template_optimization.sample_scripts, 1)
+        self.assertGreaterEqual(len(out.story_engine.template_optimization.scores), 1)
 
     def test_empty_collections_returns_stable_shape(self):
         repo = MagicMock()

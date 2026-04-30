@@ -160,6 +160,9 @@ from app.watchlist.models import (
     RecoveryActionKindLiteral,
     ProductionJobActionResponse,
     ControlPanelSummaryResponse,
+    StoryEngineIntelligenceSummary,
+    StoryEngineTemplateHealthHttpResponse,
+    StoryEngineTemplateOptimizationSummary,
 )
 
 logger = logging.getLogger(__name__)
@@ -2686,6 +2689,49 @@ def get_control_panel_summary_service(
 
     repo = repo or FirestoreWatchlistRepository()
     return build_control_panel_summary(repo=repo)
+
+
+def get_story_engine_template_health_service(
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> StoryEngineTemplateHealthHttpResponse:
+    """BA 9.7 / 9.8 — Stichprobengestützte Story-Optimization + Intelligence ohne Generate-Vertrag."""
+    from app.story_engine.story_intelligence_layer import (
+        build_story_engine_intelligence_summary,
+    )
+    from app.story_engine.template_optimization_aggregate import (
+        build_story_engine_template_optimization_summary,
+    )
+
+    repo = repo or FirestoreWatchlistRepository()
+    extra: List[str] = []
+    try:
+        gs_sample = repo.stream_generated_scripts_sample(180)
+    except Exception as exc:
+        opt = StoryEngineTemplateOptimizationSummary(
+            sample_scripts=0,
+            min_statistics_sample_met=False,
+            warnings=[f"generated_scripts_sampling_failed:{type(exc).__name__}"],
+        )
+        intel = StoryEngineIntelligenceSummary(
+            self_learning_readiness_notes=[
+                "[story_intelligence:readiness_sampling] Keine Daten — Sampling fehlgeschlagen.",
+            ],
+        )
+        return StoryEngineTemplateHealthHttpResponse(
+            template_optimization=opt,
+            story_intelligence=intel,
+            warnings=extra + opt.warnings,
+        )
+
+    opt = build_story_engine_template_optimization_summary(gs_sample)
+    intel = build_story_engine_intelligence_summary(gs_sample, opt)
+    merged = extra + list(opt.warnings)
+    return StoryEngineTemplateHealthHttpResponse(
+        template_optimization=opt,
+        story_intelligence=intel,
+        warnings=list(dict.fromkeys(merged)),
+    )
 
 
 def run_status_normalization_service(

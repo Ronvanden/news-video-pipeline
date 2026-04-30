@@ -5,6 +5,12 @@ from __future__ import annotations
 from collections import Counter
 from typing import List, Optional
 
+from app.story_engine.story_intelligence_layer import (
+    build_story_engine_intelligence_summary,
+)
+from app.story_engine.template_optimization_aggregate import (
+    build_story_engine_template_optimization_summary,
+)
 from app.watchlist.firestore_repo import FirestoreWatchlistRepository
 from app.watchlist.models import (
     ControlPanelAuditSummary,
@@ -268,6 +274,17 @@ def build_control_panel_summary(
             f"{type(exc).__name__}."
         )
     story_sum = story_engine_dashboard_slice(gs_sample)
+    try:
+        opt = build_story_engine_template_optimization_summary(gs_sample)
+        intel = build_story_engine_intelligence_summary(gs_sample, opt)
+        story_sum = story_sum.model_copy(
+            update={"template_optimization": opt, "story_intelligence": intel},
+        )
+    except Exception as exc:
+        warnings.append(
+            "Story Engine Optimization/Intelligence konnte nicht berechnet werden: "
+            f"{type(exc).__name__}."
+        )
 
     return ControlPanelSummaryResponse(
         audit=audit_summary,
