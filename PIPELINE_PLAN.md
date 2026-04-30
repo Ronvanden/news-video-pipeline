@@ -409,6 +409,59 @@ flowchart LR
 
 Detailspezifikation **9.3** siehe unten; **9.4**, **9.5a**, **9.5b**, **9.6–9.9** jeweils eigene Unterabschnitte vor „Abhängigkeiten und Risiken“.
 
+#### Erweiterte kanonische Übersicht (Unterstufen)
+
+Die folgende Grafik verdichtet dieselbe **Reihenfolge** wie die Tabelle und das kompakte Diagramm oben (inkl. **9.5a vor 9.5b**). **Nebenkanal-Artefakte** umfassen **u. a.** die im Diagramm genannten Collections **`review_results`** / **`script_jobs`** sowie weitere Export- und Produktionspfade (siehe **BA 9.3.3**).
+
+```mermaid
+flowchart LR
+
+A[BA 9.2<br>Hook Engine V1] --> B[BA 9.3<br>Strict + Review-Automatisierung]
+B --> C[BA 9.4<br>Scene Rhythm]
+C --> D[BA 9.5a<br>Story Observability]
+D --> E[BA 9.5b<br>Story-Pack / Beat-Sheet]
+E --> F[BA 9.6<br>Experimentation Layer]
+F --> G[BA 9.7<br>Adaptive Template Optimization]
+G --> H[BA 9.8<br>Story Intelligence Layer]
+H --> I[BA 9.9<br>Story Engine Operations Maturity]
+
+B --> B1[Strict Template Mode]
+B --> B2[Review-Automatisierung]
+B --> B3[Nebenkanal-Artefakte<br>review_results / script_jobs]
+B --> B4[Template-Versionierung]
+
+C --> C1[Pacing / Rhythmus-Meta]
+C --> C2[Beat-Dichte prüfen]
+C --> C3[Reveal-/Twist-Timing]
+C --> C4[Rhythm Validation]
+
+D --> D1[Hook Metrics]
+D --> D2[Review Metrics]
+D --> D3[Template Health Sichtbarkeit]
+D --> D4[Founder Control Panel Story Health]
+
+E --> E1[Standardisierte Beat-Sheets]
+E --> E2[Template-spezifische Story Packs]
+E --> E3[Wiederverwendbare Story-Strukturen]
+
+F --> F1[A/B Hook Registry]
+F --> F2[Experiment Metadata]
+F --> F3[Variant Comparison]
+F --> F4[Refinement Readiness]
+
+G --> G1[Template Drift Detection]
+G --> G2[Performance-based Template Scoring]
+G --> G3[Adaptive Refinement Inputs]
+
+H --> H1[Feedback Loop]
+H --> H2[Template Recommendation Logic]
+H --> H3[Cross-template Analysis]
+
+I --> I1[Canonical Story OS]
+I --> I2[Governance abgeschlossen]
+I --> I3[Story Engine operativ reif]
+```
+
 ---
 
 ### BA 9.0 — Basismotor (Referenz: umgesetzt)
@@ -656,4 +709,4 @@ Detailspezifikation **9.3** siehe unten; **9.4**, **9.5a**, **9.5b**, **9.6–9.
 3. **Nach Incidents oder wiederkehrenden Bugs**: [ISSUES_LOG.md](ISSUES_LOG.md) aktualisieren (Datum, Ursache, Fix, Commit-Referenz).  
 4. **Commits**: nur mit Tests/Checks laut [AGENTS.md](AGENTS.md) und Statusabgleich hier.
 
-Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-30** — **BA 9.6–9.9** ergänzt (Experimentation → Adaptive Optimization → Intelligence → Operations Maturity); **BA 9.3–9.9** Maturity Track; Governance **BA vs. Phase 9/10** geschärft (**kein BA 10** für Story Engine).
+Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-30** — **erweiterte kanonische Mermaid-Übersicht** (BA 9.2–9.9 mit Unterstufen, Repo-Sprache **`review_results`** / **`script_jobs`**) im Abschnitt **Story Engine Maturity Track**; zuvor: **BA 9.6–9.9**, Governance **BA vs. Phase 9/10** (**kein BA 10** für Story Engine).
