@@ -447,6 +447,8 @@ curl -X POST http://127.0.0.1:8000/youtube/latest-videos \
 
 **Cloud MVP v1 (URL, Deploy, Secret Manager, Online-Tests):** [DEPLOYMENT.md](DEPLOYMENT.md)
 
+Für wiederholbare Deploys inkl. Pre-Checks, Smoke-Tests und Fehlerfällen siehe `docs/runbooks/cloud_run_deploy_runbook.md`.
+
 ### Lokales Image
 
 ```bash

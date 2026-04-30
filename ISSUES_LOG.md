@@ -44,6 +44,8 @@ Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
 
 | 2026-04-30 | Story / Hook Engine **BA 9.2** | BA-9.2-Nummer kollidierte mit Strict/Workflow-Plan; Hook als nächste Produktlogik nach 9.1 | **9.2** = Hook Engine V1 (`hook_library`, `hook_engine`, **`POST /story-engine/generate-hook`**); **`generated_scripts`**: `hook_type`, `hook_score`, `opening_style`; Run-Job bereichert persistiertes Skript; Review: optional `hook_text`/`hook_type`; ehem. Strict/Workflow → **BA 9.3**, Scene Rhythm → **BA 9.4**; Tests **`test_ba92_hook_engine.py`** | umgesetzt | `78ddac5` |
 
+| 2026-04-30 | Deploy / Dokumentation | Deploy Runbook ergänzt — Cloud Run Deploy Ablauf dauerhaft dokumentiert. | Operativ fehlte eine zentrale Schrittfolge neben [DEPLOYMENT.md](DEPLOYMENT.md) | Runbook [docs/runbooks/cloud_run_deploy_runbook.md](docs/runbooks/cloud_run_deploy_runbook.md); Verweis in [README.md](README.md) § Docker / Cloud Run | dokumentiert | pending commit |
+
 ## Hinweise
 
 - **Datum**: Bei älteren Fixes kann das exakte Datum unbekannt sein — dann `*n/a*` oder ungefähre Iteration notieren.  
