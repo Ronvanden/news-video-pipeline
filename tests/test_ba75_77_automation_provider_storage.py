@@ -312,7 +312,7 @@ class Ba76Providers(unittest.TestCase):
             self.assertEqual(u.provider_name, "openai")
             self.assertTrue(u.enabled)
             st = watchlist_service.get_provider_status_service(repo=repo)
-            self.assertEqual(len(st.providers), 7)
+            self.assertEqual(len(st.providers), 10)
 
     def test_provider_upsert_extra_field_rejected(self):
         with self.assertRaises(Exception):

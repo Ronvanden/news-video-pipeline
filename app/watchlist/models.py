@@ -89,6 +89,7 @@ class ProcessedVideo(BaseModel):
     reason: str = ""
     is_short: bool = False
     skip_reason: str = ""
+    input_quality_status: str = ""
     script_job_id: Optional[str] = None
     generated_script_id: Optional[str] = None
     review_result_id: Optional[str] = None
@@ -105,6 +106,7 @@ class ChannelCheckVideoItem(BaseModel):
     is_short: bool = False
     status: ChannelCheckItemStatusLiteral = "new"
     skip_reason: str = ""
+    input_quality_status: str = ""
 
 
 class ScriptJob(BaseModel):
@@ -121,6 +123,7 @@ class ScriptJob(BaseModel):
     completed_at: Optional[str] = None
     error: str = ""
     error_code: str = ""
+    input_quality_status: str = ""
     generated_script_id: Optional[str] = None
     review_result_id: Optional[str] = None
     attempt_count: int = Field(default=0, ge=0)
@@ -715,6 +718,9 @@ ProviderNameLiteral = Literal[
     "kling",
     "runway",
     "generic",
+    "voice_default",
+    "image_default",
+    "render_default",
 ]
 ProviderConfigStatusLiteral = Literal["ready", "disabled", "error"]
 
@@ -759,6 +765,15 @@ class ProviderStatusItem(BaseModel):
 
 class ProviderStatusResponse(BaseModel):
     providers: List[ProviderStatusItem] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ProviderSeedDefaultsResponse(BaseModel):
+    """Antwort nach ``POST /providers/configs/seed-defaults`` (BA 8.6)."""
+
+    created: int = 0
+    skipped_existing: int = 0
+    seeds: List[ProviderConfig] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
 
 
@@ -874,6 +889,11 @@ class ProductionCosts(BaseModel):
     video_cost_estimate: float = Field(default=0.0, ge=0.0)
     thumbnail_cost_estimate: float = Field(default=0.0, ge=0.0)
     buffer_cost_estimate: float = Field(default=0.0, ge=0.0)
+    cost_baseline_expected: float = Field(default=0.0, ge=0.0)
+    cost_variance: float = Field(default=0.0)
+    over_budget_flag: bool = False
+    step_cost_breakdown: Dict[str, float] = Field(default_factory=dict)
+    estimated_profitability_hint: str = ""
     warnings: List[str] = Field(default_factory=list)
     created_at: str = ""
     updated_at: str = ""

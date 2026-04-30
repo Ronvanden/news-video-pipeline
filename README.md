@@ -4,7 +4,7 @@
 
 Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL oder einem YouTube-Link ein strukturiertes YouTube-Skript erzeugt. Fokus liegt auf einer sicheren, modularen Pipeline mit optionaler LLM-Unterstützung und stabiler Fallback-Logik.
 
-**Planung:** Phasen, Status und Akzeptanzkriterien für die gesamte Pipeline stehen in [PIPELINE_PLAN.md](PIPELINE_PLAN.md). Gelöste und dokumentierte Vorfälle: [ISSUES_LOG.md](ISSUES_LOG.md). Vorlage für neue Module: [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md).
+**Planung:** Phasen, Status und Akzeptanzkriterien für die gesamte Pipeline stehen in [PIPELINE_PLAN.md](PIPELINE_PLAN.md). **Betrieb:** [OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md). **Gold-Referenzpfad (Produktion):** [GOLD_PRODUCTION_STANDARD.md](GOLD_PRODUCTION_STANDARD.md). Gelöste und dokumentierte Vorfälle: [ISSUES_LOG.md](ISSUES_LOG.md). Vorlage für neue Module: [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md).
 
 ## 2. Aktueller MVP-Status
 
@@ -41,6 +41,7 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - **BA 8.0–8.2 (Hardening — Audit, Recovery, Monitoring):** Collections **`pipeline_audits`**, **`recovery_actions`**; Endpoints **`POST /production/audit/run`**, **`GET /production/audit`**, **`POST /production/jobs/{id}/recovery/retry`** (Body `step`), **`GET /production/monitoring/summary`** — `app/watchlist/pipeline_audit_scan.py`, Tests **`tests/test_ba80_82_hardening.py`**.
 - **BA 8.3 (Status-Normalisierung & Auto-Escalation):** Collection **`pipeline_escalations`**; Modul **`app/watchlist/status_normalizer.py`**; Endpoints **`POST /production/status/normalize/run`**, **`GET /production/status/escalations`** — Heuristiken für Orphan-/Stuck-/Queued-Gaps, **`retry_reason`**, exponentieller Backoff, harter Abbruch über Schwellen; Tests **`tests/test_ba83_status_normalization.py`**.
 - **BA 8.4 LIGHT (Founder Control Panel):** **`GET /production/control-panel/summary`** — read-only Aggregation (Audits, Eskalationen, Recovery, Job-Status-Stichprobe, Provider-Konfigs, Kostensätze, kürzliche Problemfälle); **`app/watchlist/control_panel.py`**, Tests **`tests/test_ba84_control_panel.py`**.
+- **BA 8.5–8.9 (Operations Maturity):** Transkript-/Eingangsqualität **`app/watchlist/input_quality_guard.py`** (`input_quality_status` auf Jobs/`processed_videos`); Provider-Disziplin **`provider_discipline.py`**, **`POST /providers/configs/seed-defaults`**, erweiterte **`provider_configs`**-Namen; **`production_costs`** mit Baseline/Varianz/Profit-Hinweis (BA 8.7); Referenz **`GOLD_PRODUCTION_STANDARD.md`**; Betrieb **`OPERATOR_RUNBOOK.md`**; Tests **`tests/test_ba85_input_quality_guard.py`** … **`tests/test_ba89_operator_runbook.py`**.
 - **BA 6.6.1 (nur lokale/integration Tests):** `POST /dev/fixtures/completed-script-job` — optional mit `ENABLE_TEST_FIXTURES=true` in `.env`; legt ohne YouTube-Anruf einen **completed** `script_jobs`-Eintrag, **`generated_scripts`** mit Kapiteln und optional **`production_jobs`** an (IDs immer Präfix `dev_fixture_`). **In Produktion deaktiviert lassen.**
 
 ## 4. Projektstruktur

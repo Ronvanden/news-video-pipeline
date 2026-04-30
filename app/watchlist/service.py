@@ -26,6 +26,11 @@ from app.watchlist.cost_calculator import (
     count_production_files_by_file_type,
 )
 from app.watchlist.execution_queue import build_execution_job_stub
+from app.watchlist.input_quality_guard import build_input_quality_decision
+from app.watchlist.provider_discipline import (
+    seed_default_provider_configs,
+    validate_provider_runtime_health,
+)
 from app.watchlist.pipeline_audit_scan import (
     pipeline_audit_document_id_from_draft,
     scan_production_job_for_issues,
@@ -87,6 +92,7 @@ from app.watchlist.models import (
     ProviderConfig,
     ProviderConfigUpsertRequest,
     ProviderNameLiteral,
+    ProviderSeedDefaultsResponse,
     ProviderStatusItem,
     ProviderStatusResponse,
     RenderManifest,
@@ -398,8 +404,18 @@ def run_script_job(
     full = (gs.full_script or "").strip()
     if not full:
         code, tw = _classify_empty_generate_response(gs)
+        iq_d = build_input_quality_decision(error_code=code, warnings=tw)
+        tw.extend(list(iq_d.get("warnings_append") or []))
+        iq_st = str(iq_d.get("input_quality_status") or "")
         try:
-            repo.mark_script_job_failed(jid, code, error_code=code)
+            repo.mark_script_job_failed(
+                jid,
+                code,
+                error_code=code,
+                input_quality_status=(
+                    iq_st if iq_st and iq_st != "unknown" else None
+                ),
+            )
         except FirestoreUnavailableError:
             raise
         try:
@@ -557,6 +573,7 @@ def _check_item_from_raw(
     is_short: bool,
     status: Literal["new", "known", "skipped"],
     skip_reason: str = "",
+    input_quality_status: str = "",
 ) -> ChannelCheckVideoItem:
     score_val = raw.get("score")
     try:
@@ -573,6 +590,7 @@ def _check_item_from_raw(
         is_short=is_short,
         status=status,
         skip_reason=skip_reason,
+        input_quality_status=(input_quality_status or "")[:120],
     )
 
 
@@ -700,6 +718,11 @@ def _consume_watchlist_feed_video_row(
             else:
                 skip_tr = "transcript_check_failed"
                 transcript_warn_flags["check_failed"] = True
+            iq_dec = build_input_quality_decision(
+                skip_reason=skip_tr,
+                warnings=_preflight_ws,
+            )
+            iq_label = str(iq_dec.get("input_quality_status") or "")[:120]
             pv_tr = ProcessedVideo(
                 id=vid,
                 channel_id=channel.channel_id,
@@ -713,6 +736,7 @@ def _consume_watchlist_feed_video_row(
                 reason=reason_s,
                 is_short=is_short,
                 skip_reason=skip_tr,
+                input_quality_status=iq_label,
                 script_job_id=None,
                 generated_script_id=None,
                 review_result_id=None,
@@ -725,6 +749,7 @@ def _consume_watchlist_feed_video_row(
                     is_short=is_short,
                     status="skipped",
                     skip_reason=skip_tr,
+                    input_quality_status=iq_label,
                 )
             )
             return
@@ -1368,6 +1393,9 @@ ALL_PROVIDER_NAMES: Tuple[ProviderNameLiteral, ...] = (
     "kling",
     "runway",
     "generic",
+    "voice_default",
+    "image_default",
+    "render_default",
 )
 
 
@@ -1688,6 +1716,51 @@ def upsert_provider_config_service(
     return merged
 
 
+def seed_default_provider_configs_service(
+    *,
+    apply_writes: bool = False,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+) -> ProviderSeedDefaultsResponse:
+    """BA 8.6: Standard-Seed auf ``provider_configs`` — idempotent (überspringt vorhandene IDs)."""
+    repo = repo or FirestoreWatchlistRepository()
+    now = utc_now_iso()
+    seeds = seed_default_provider_configs(now_iso=now)
+    ws: List[str] = []
+    if not apply_writes:
+        ws.append(
+            "seed_defaults: apply_writes=false — keine Firestore-Schreibvorgänge (Vorschau)."
+        )
+        return ProviderSeedDefaultsResponse(
+            created=0,
+            skipped_existing=0,
+            seeds=seeds,
+            warnings=ws,
+        )
+    created = 0
+    skipped = 0
+    for doc in seeds:
+        try:
+            existing = repo.get_provider_config(doc.provider_name)
+        except FirestoreUnavailableError:
+            raise
+        if existing is not None:
+            skipped += 1
+            continue
+        try:
+            repo.upsert_provider_config(doc)
+        except FirestoreUnavailableError:
+            raise
+        created += 1
+    if created == 0 and skipped == len(seeds):
+        ws.append("Alle Seed-Provider existieren bereits — nichts geschrieben.")
+    return ProviderSeedDefaultsResponse(
+        created=created,
+        skipped_existing=skipped,
+        seeds=seeds,
+        warnings=ws,
+    )
+
+
 def get_provider_status_service(
     *,
     repo: Optional[FirestoreWatchlistRepository] = None,
@@ -1719,7 +1792,11 @@ def get_provider_status_service(
                     status=row.status,
                 )
             )
-    return ProviderStatusResponse(providers=items, warnings=[])
+    healthy, health_issues = validate_provider_runtime_health(stored_list)
+    ws_tail: List[str] = []
+    if not healthy:
+        ws_tail.extend(health_issues)
+    return ProviderStatusResponse(providers=items, warnings=ws_tail)
 
 
 def plan_production_files_service(

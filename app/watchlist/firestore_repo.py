@@ -267,19 +267,22 @@ class FirestoreWatchlistRepository:
         error: str,
         *,
         error_code: Optional[str] = None,
+        input_quality_status: Optional[str] = None,
     ) -> None:
         err_short = (error or "")[:2000]
         ec = error_code if error_code is not None else error
         ec_short = (ec or "")[:200]
+        update_payload: Dict[str, Any] = {
+            "status": "failed",
+            "completed_at": _utc_now_iso(),
+            "error": err_short,
+            "error_code": ec_short,
+        }
+        iq = (input_quality_status or "").strip()
+        if iq:
+            update_payload["input_quality_status"] = iq[:120]
         try:
-            self._script_jobs_collection_ref().document(job_id).update(
-                {
-                    "status": "failed",
-                    "completed_at": _utc_now_iso(),
-                    "error": err_short,
-                    "error_code": ec_short,
-                }
-            )
+            self._script_jobs_collection_ref().document(job_id).update(update_payload)
         except Exception as e:
             logger.warning(
                 "Firestore script_jobs mark failed failed: type=%s", type(e).__name__

@@ -14,6 +14,40 @@ EUR_PER_VIDEO_CLIP = 0.25
 EUR_THUMBNAIL_FIXED = 0.05
 BUFFER_RATIO_OF_SUBTOTAL = 0.08
 
+# BA 8.7 — konservativere Referenzbandbreite (Baseline), nicht identisch mit Schätz-Koeffizienten.
+EUR_BASELINE_VOICE_PER_1K = 0.22
+EUR_BASELINE_IMAGE = 0.032
+EUR_BASELINE_VIDEO_CLIP = 0.20
+EUR_BASELINE_THUMBNAIL = 0.04
+
+
+def _compute_cost_baseline_v1(*, word_count: int, scene_count: int) -> float:
+    wc = max(1, int(word_count))
+    sc = max(1, int(scene_count))
+    voice = round((wc / 1000.0) * EUR_BASELINE_VOICE_PER_1K, 4)
+    image = round(sc * EUR_BASELINE_IMAGE, 4)
+    video = round(sc * EUR_BASELINE_VIDEO_CLIP, 4)
+    thumb = EUR_BASELINE_THUMBNAIL
+    sub = voice + image + video + thumb
+    buf = round(sub * BUFFER_RATIO_OF_SUBTOTAL, 4)
+    return round(sub + buf, 4)
+
+
+def _profitability_hint(*, estimated: float, baseline: float, over_budget: bool) -> str:
+    if baseline <= 0.0 and estimated <= 0.0:
+        return "unknown"
+    base = max(baseline, 0.01)
+    ratio = (estimated - baseline) / base
+    if over_budget:
+        return "likely_loss"
+    if ratio <= -0.06:
+        return "comfortable"
+    if ratio <= 0.06:
+        return "neutral"
+    if ratio <= 0.14:
+        return "tight"
+    return "likely_loss"
+
 
 class CategoryMoneyV1(NamedTuple):
     """Aggregierte Kostenschätzung und Hilfszeilen."""
@@ -126,6 +160,34 @@ def build_production_costs_document(
 
     merged_warns = list(cat.warnings)
 
+    baseline_total = _compute_cost_baseline_v1(
+        word_count=cat.word_count, scene_count=cat.scene_count
+    )
+    variance = round(cat.estimated_total - baseline_total, 4)
+    over_budget = baseline_total > 0.0 and variance > max(
+        0.02, round(baseline_total * 0.12, 4)
+    )
+    if over_budget:
+        merged_warns.append(
+            "Kosten-Baseline überschritten (heuristisch): Schätzung deutlich über Referenzband."
+        )
+    step_breakdown = {
+        "voice": cat.voice,
+        "image": cat.image,
+        "video": cat.video,
+        "thumbnail": cat.thumbnail,
+        "buffer": cat.buffer,
+        "subtotal_before_buffer": cat.subtotal_before_buffer,
+    }
+    profit_hint = _profitability_hint(
+        estimated=cat.estimated_total,
+        baseline=baseline_total,
+        over_budget=over_budget,
+    )
+    merged_warns.append(
+        "estimated_profitability_hint ist grob und ersetzt keine Buchhaltung oder Yield-Ermittlung."
+    )
+
     cid = existing_created_at or now_iso
     pc = ProductionCosts(
         id=pid,
@@ -138,6 +200,11 @@ def build_production_costs_document(
         video_cost_estimate=cat.video,
         thumbnail_cost_estimate=cat.thumbnail,
         buffer_cost_estimate=cat.buffer,
+        cost_baseline_expected=baseline_total,
+        cost_variance=variance,
+        over_budget_flag=over_budget,
+        step_cost_breakdown=step_breakdown,
+        estimated_profitability_hint=profit_hint,
         warnings=merged_warns,
         created_at=cid,
         updated_at=now_iso,

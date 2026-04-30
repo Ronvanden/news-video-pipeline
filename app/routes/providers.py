@@ -11,6 +11,7 @@ from app.watchlist.models import (
     ListProviderConfigsResponse,
     ProviderConfig,
     ProviderConfigUpsertRequest,
+    ProviderSeedDefaultsResponse,
     ProviderStatusResponse,
 )
 
@@ -48,6 +49,27 @@ async def providers_upsert_config(
         raise HTTPException(status_code=503, detail=msg)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
+
+
+@router.post(
+    "/providers/configs/seed-defaults",
+    response_model=ProviderSeedDefaultsResponse,
+)
+async def providers_seed_default_configs(apply_writes: bool = False):
+    """BA 8.6: Vier Standard-Slots (openai, voice_default, image_default, render_default).
+
+    Ohne ``apply_writes=true`` nur Vorschau (keine Firestore-Writes).
+    """
+    try:
+        return watchlist_service.seed_default_provider_configs_service(
+            apply_writes=apply_writes,
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning(
+            "POST /providers/configs/seed-defaults failed: Firestore unavailable"
+        )
+        raise HTTPException(status_code=503, detail=msg)
 
 
 @router.get(
