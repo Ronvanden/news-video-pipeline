@@ -40,7 +40,7 @@ Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
 
 | 2026-04-30 | Story / Template Engine **BA 9.1** | Templates technisch, aber ohne Katalog/Blueprint für Ops und LLM; Review/Watchlist-Doku offen | BA 9.1: Blueprints, **`GET /story-engine/templates`**, Conformance-Präfixe, Tests **`test_ba91`**; Ergänzung: **`video_template`** auf **`ReviewScriptRequest`**, Empfehlungen in **`originality.py`**, Watchlist-Test, README/PIPELINE | umgesetzt | `d1643e1` |
 
-| 2026-04-30 | Story / Hook Engine **BA 9.2** | BA-9.2-Nummer kollidierte mit Strict/Workflow-Plan; Hook als nächste Produktlogik nach 9.1 | **9.2** = Hook Engine V1 (`hook_library`, `hook_engine`, **`POST /story-engine/generate-hook`**); **`generated_scripts`**: `hook_type`, `hook_score`, `opening_style`; Run-Job bereichert persistiertes Skript; Review: optional `hook_text`/`hook_type`; ehem. Strict/Workflow → **BA 9.3**, Scene Rhythm → **BA 9.4**; Tests **`test_ba92_hook_engine.py`** | umgesetzt | pending commit |
+| 2026-04-30 | Story / Hook Engine **BA 9.2** | BA-9.2-Nummer kollidierte mit Strict/Workflow-Plan; Hook als nächste Produktlogik nach 9.1 | **9.2** = Hook Engine V1 (`hook_library`, `hook_engine`, **`POST /story-engine/generate-hook`**); **`generated_scripts`**: `hook_type`, `hook_score`, `opening_style`; Run-Job bereichert persistiertes Skript; Review: optional `hook_text`/`hook_type`; ehem. Strict/Workflow → **BA 9.3**, Scene Rhythm → **BA 9.4**; Tests **`test_ba92_hook_engine.py`** | umgesetzt | `78ddac5` |
 
 ## Hinweise
 
