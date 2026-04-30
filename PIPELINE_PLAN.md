@@ -367,11 +367,11 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 9.0** | **done** | Modul `app/story_engine/`: Template-IDs, Normalisierung, Prompt-Zusätze (LLM + Fallback), `style_profile`/`voice_profile`-Hilfen, leichte Heuristiken → **`warnings`**; **`video_template`** durchgängig bis Watchlist/Production/Connector wo sinnvoll; Tests `tests/test_ba90_story_engine.py`. |
 | **BA 9.1** | **done** | **Operable Templates:** Kapitel-Bands + Hook-Schwellen pro Template/Dauer; **Struktur-Blueprint** im LLM-Prompt; Kapitelanzahl-Clamping im `ScriptGenerator`; einheitliche **`[template_conformance:…]`**-Präfixe; **`GET /story-engine/templates`** (read-only Katalog); Tests **`tests/test_ba91_story_engine.py`**. |
 | **BA 9.2** | **done** | **Hook Engine V1 (Opening-Line):** regelbasierte **`hook_type`** / **`hook_text`** / **`hook_score`** / **`rationale`** — **`POST /story-engine/generate-hook`** (Nebenkanal, `GenerateScriptResponse` unverändert); optionale Meta-Felder auf **`generated_scripts`**; Review-Heuristik Hook↔Template; Tests **`tests/test_ba92_hook_engine.py`**. |
-| **BA 9.3** | **planned** | **Strikte / workflowgebundene** Nutzung: optionaler Strict-Modus, **Review-Automatisierung** (nach Script-Job), **Nebenkanal-Artefakte**, **Template-Versionierung**. **Hinweis:** „**Review-Hooks**“ hier = Workflow, nicht Hook-Line-Engine. |
-| **BA 9.4** | **planned** | **Scene Rhythm Engine:** Taktführung / Pacing-Hinweise aus Dauer, `video_template` und Kapitelinhalt — **Meta/Nebenkanal** (z. B. `rhythm_engine.py`, optional `POST /story-engine/rhythm-hint`); kein Pflichtfeld im Generate-JSON. |
-| **BA 9.5a** | **planned** | **Observability (zuerst):** Story-Modul im Betrieb sichtbar — Aggregation zu Template-Nutzung, Hook-Meta (`hook_type`/`hook_score`), Rhythm-Hints (nach 9.4), Strict-/Gate-Signalen; Erweiterung **read-only** ([`control_panel.py`](app/watchlist/control_panel.py) o. ä.); Anknüpfung **Audit** wo sinnvoll. |
-| **BA 9.5b** | **planned** | **Story-Pack / Beat-Sheet (danach):** gebündeltes Export-Artefakt (`video_template`, Hook-Meta, Rhythm, Verweise auf `scene_plans`/Kapitel) — nur **Connector/Export/`production_jobs`**, nicht `GenerateScriptResponse`. |
-| **BA 9.6** | **planned** | **Experimentation Layer:** A/B Hook Testing; **Hook Variant Registry**; Experiment-Metadaten; optionale **LLM-Refinement-Vorbereitung**; Hook-Performance-Vergleich — **Nebenkanal/Persistenz/Metadaten**, **kein** Pflichtfeld in Live-Generate. |
+| **BA 9.3** | **done** | **Conformance-Level** (`off`/`warn`/`strict`), **Gate** auf `generated_scripts`, **`template_definition_version`**, automatischer **Review nach Job** (Kanal `auto_review_script`), **`story_structure`**-Nebenkanal (`build_story_structure_v1`); Doku **`docs/modules/story_structure_sidechannel.md`**; Tests **`tests/test_ba9396_story_maturity.py`**. |
+| **BA 9.4** | **done** | **`app/story_engine/rhythm_engine.py`** + **`POST /story-engine/rhythm-hint`**; Persistenz `generated_scripts.rhythm_hints`; keine Generate-Pflichtfelder. |
+| **BA 9.5a** | **done** | **`ControlPanelSummaryResponse.story_engine`** (Hook-/Template-/Gate-/Experiment-Aggregate aus `generated_scripts`-Stichprobe). |
+| **BA 9.5b** | **done** | **`ConnectorExportPayload.story_pack`** und **`provider_templates[\"story_pack\"]`** im Download-Export. |
+| **BA 9.6** | **done** | **`GET /story-engine/experiment-registry`**, **`experiment_id`/`hook_variant_id`** auf `generated_scripts` (Zuordnung `experiment_registry`), Control-Panel-Zähler. |
 | **BA 9.7** | **planned** | **Adaptive Template Optimization:** Template-Drift-Erkennung; Auto-Refinement-Inputs; **Template Health Evolution**; performance-basiertes Template-Scoring. |
 | **BA 9.8** | **planned** | **Story Intelligence Layer:** Feedback-Schleifen aus Hook / Review / Story-Metriken; **Self-Learning Readiness** (Governance-first, kein blindes Auto-Lernen); Template-Empfehlungslogik; Cross-template Performance-Analyse. |
 | **BA 9.9** | **planned** | **Story Engine Operations Maturity:** vollständige Story-Governance; **Canonical Story OS** als Zielbild/Dokumentationsbegriff; Reifegrad **Story Control Panel**; Story-System als **abgeschlossenes Kernmodul** innerhalb **BA 9.x** — nicht identisch mit Phase 9/10. |
@@ -534,7 +534,7 @@ I --> I3[Story Engine operativ reif]
 
 ---
 
-### BA 9.3 — Strenge Conformance, Nebenkanal, Review-Automatisierung, Versionierung (**planned**)
+### BA 9.3 — Strenge Conformance, Nebenkanal, Review-Automatisierung, Versionierung (**done**)
 
 **Ziel:** Template-Engine wird **workflowfähig**: Teams können „mit Template X nur veröffentlichen, wenn …“ abbilden — **ohne** den öffentlichen Generate-Vertrag zu sprengen. Schwere oder strukturierte Daten landen in **Nebenkanälen** (Production, Export, Connector, optionale Collections).
 
@@ -565,7 +565,7 @@ I --> I3[Story Engine operativ reif]
 
 ---
 
-### BA 9.4 — Scene Rhythm Engine (**planned**)
+### BA 9.4 — Scene Rhythm Engine (**done**)
 
 **Ziel:** Aus **`duration_minutes`**, **`video_template`** und dem **Kapitel-/Skriptinhalt** empfohlene **Taktführung** ableiten (Beat-Längen-Hinweise, Übergänge, CTA-Platzierung als **Text/Meta**) — **nicht** als Pflichtfeld in der Live-**`GenerateScriptResponse`**.
 
@@ -587,7 +587,7 @@ I --> I3[Story Engine operativ reif]
 
 ---
 
-### BA 9.5a — Observability für Story-Modul (**planned**, Welle 1)
+### BA 9.5a — Observability für Story-Modul (**done**, Control Panel Slice)
 
 **Ziel:** **Story-Relevantes** (Templates, Hook-Meta, später Rhythm-Hinweise, Strict-/Gate-Signale) im **Founder-Betrieb** auf einen Blick — **read-only**, ohne neue Secrets.
 
@@ -600,7 +600,7 @@ I --> I3[Story Engine operativ reif]
 
 ---
 
-### BA 9.5b — Story-Pack / Beat-Sheet (**planned**, Welle 2)
+### BA 9.5b — Story-Pack / Beat-Sheet (**done**, Connector + Download-Paket)
 
 **Ziel:** Ein **gebündeltes Nebenkanal-Artefakt** für Downstream: u. a. **`video_template`**, Hook-Engine-Meta (wo vorhanden), **Rhythm-Metadaten** (nach 9.4), Verweise auf **`scene_plans`**/Kapitel — **ein** Block im Connector bzw. Export-Download.
 
@@ -613,7 +613,7 @@ I --> I3[Story Engine operativ reif]
 
 ---
 
-### BA 9.6 — Experimentation Layer (**planned**)
+### BA 9.6 — Experimentation Layer (**done**, Registry + Persistenzfelder)
 
 **Ziel:** Systematisches **Ausprobieren und Vergleichen** von Hook-Varianten und Experimenten — ohne den Live-**`/generate-script`**-Vertrag zu erweitern.
 

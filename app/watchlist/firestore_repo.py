@@ -330,6 +330,30 @@ class FirestoreWatchlistRepository:
             )
             return None
 
+    def stream_generated_scripts_sample(self, limit: int = 160) -> List[GeneratedScript]:
+        """Lesestichprobe ohne Index-Pflicht (cap begrenzt Kosten)."""
+        cap = max(1, min(int(limit), 500))
+        out: List[GeneratedScript] = []
+        try:
+            snaps = self._generated_scripts_collection_ref().limit(cap).stream()
+        except Exception as e:
+            logger.warning(
+                "Firestore generated_scripts stream failed: type=%s", type(e).__name__
+            )
+            raise FirestoreUnavailableError(
+                "Firestore is not reachable."
+            ) from e
+        for snap in snaps:
+            merged = self._doc_to_dict(snap.to_dict() or {}, snap.id)
+            try:
+                out.append(GeneratedScript.model_validate(merged))
+            except Exception:
+                logger.warning(
+                    "skip invalid generated_scripts row: doc_id=%s", snap.id
+                )
+                continue
+        return out
+
     def update_processed_video_status(
         self,
         video_id: str,

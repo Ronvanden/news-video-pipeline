@@ -25,6 +25,9 @@ async def generate_script(request: GenerateScriptRequest):
                 duration_minutes=request.duration_minutes,
                 extraction_warnings=extraction_warnings,
                 video_template=getattr(request, "video_template", None) or "generic",
+                template_conformance_level=(
+                    getattr(request, "template_conformance_level", None) or "warn"
+                ),
             )
         )
 

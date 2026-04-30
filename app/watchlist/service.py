@@ -35,7 +35,12 @@ from app.story_engine.hook_engine import generate_hook_v1, hook_meta_for_persist
 from app.story_engine.templates import (
     style_profile_for_template,
     voice_profile_for_template,
+    definition_version_for_template,
 )
+from app.story_engine.conformance import conformance_persistence_gate
+from app.story_engine.story_structure import build_story_structure_v1
+from app.story_engine.rhythm_engine import rhythm_hints_v1
+from app.story_engine.experiment_registry import assign_hook_variant_and_experiment
 from app.watchlist.pipeline_audit_scan import (
     pipeline_audit_document_id_from_draft,
     scan_production_job_for_issues,
@@ -291,6 +296,7 @@ def create_channel(
         last_error=last_error,
         notes=request.notes,
         video_template=getattr(request, "video_template", None) or "generic",
+        template_conformance_level=request.template_conformance_level,
     )
 
     try:
@@ -401,11 +407,14 @@ def run_script_job(
 
     job_running = job_after_run if job_after_run is not None else job
 
+    tpl_lvl = getattr(job_running, "template_conformance_level", None) or "warn"
+
     gs = gen(
         job_running.video_url,
         target_language=job_running.target_language,
         duration_minutes=job_running.duration_minutes,
         video_template=getattr(job_running, "video_template", None) or "generic",
+        template_conformance_level=tpl_lvl,
     )
 
     full = (gs.full_script or "").strip()
@@ -442,6 +451,40 @@ def run_script_job(
         source_summary=(gs.full_script or "")[:1200],
     )
     hk_type, hk_score, open_st = hook_meta_for_persist(hr)
+
+    rhythm_block, rhythm_ws = rhythm_hints_v1(
+        video_template=tpl_run,
+        duration_minutes=job_running.duration_minutes,
+        chapters=list(gs.chapters),
+        hook=gs.hook or "",
+    )
+    experiment_id, variant_id = assign_hook_variant_and_experiment(
+        video_template=tpl_run,
+        hook_type=(hk_type or ""),
+    )
+
+    merged_gen_warnings = list(gs.warnings or [])
+    merged_gen_warnings.extend(rhythm_ws)
+
+    tdv = definition_version_for_template(tpl_run)
+    gate_s = conformance_persistence_gate(
+        template_conformance_level=tpl_lvl,
+        template_id=tpl_run,
+        hook=gs.hook or "",
+        chapters=list(gs.chapters),
+        full_script=gs.full_script or "",
+        duration_minutes=job_running.duration_minutes,
+    )
+    ss = build_story_structure_v1(
+        video_template=tpl_run,
+        duration_minutes=job_running.duration_minutes,
+        chapters=list(gs.chapters),
+        hook=gs.hook or "",
+        word_count=wc,
+        template_definition_version=tdv,
+        template_conformance_gate=gate_s or "",
+        rhythm_hints=rhythm_block,
+    )
     gs_doc = GeneratedScript(
         id=jid,
         script_job_id=jid,
@@ -452,13 +495,19 @@ def run_script_job(
         chapters=list(gs.chapters),
         full_script=gs.full_script,
         sources=list(gs.sources or []),
-        warnings=list(gs.warnings or []),
+        warnings=merged_gen_warnings,
         word_count=wc,
         video_template=tpl_run,
         hook_type=hk_type,
         hook_score=hk_score,
         opening_style=open_st,
         created_at=created_iso,
+        template_definition_version=tdv,
+        template_conformance_gate=(gate_s or ""),
+        story_structure=ss,
+        rhythm_hints=rhythm_block,
+        experiment_id=experiment_id,
+        hook_variant_id=variant_id,
     )
 
     try:
@@ -514,6 +563,14 @@ def run_script_job(
             "processed_videos entry not found; video status was not updated."
         )
 
+    try:
+        ch_rev = repo.get_watch_channel(job_running.channel_id)
+    except FirestoreUnavailableError:
+        ch_rev = None
+    if isinstance(ch_rev, WatchlistChannel) and ch_rev.auto_review_script:
+        rresp = review_generated_script_for_job(jid, repo=repo)
+        out_warnings.extend(list(rresp.warnings or []))
+
     return RunScriptJobResponse(
         job=final_job,
         script=gs_doc,
@@ -558,6 +615,7 @@ def _try_create_script_job_for_seen_video(
         target_language=channel.target_language,
         duration_minutes=channel.duration_minutes,
         video_template=getattr(channel, "video_template", None) or "generic",
+        template_conformance_level=channel.template_conformance_level,
         created_at=now_iso,
         started_at=None,
         completed_at=None,
@@ -2722,6 +2780,10 @@ def review_generated_script_for_job(
         generated_script=text,
         target_language=job.target_language,
         prior_warnings=list(gs.warnings or []),
+        video_template=(job.video_template or gs.video_template or "generic").strip()
+        or "generic",
+        hook_text=(gs.hook or "")[:4000],
+        hook_type=(gs.hook_type or "").strip(),
     )
     try:
         resp = review_script(req)
@@ -3249,6 +3311,18 @@ def create_production_job_from_script_job(
         return CreateProductionJobResponse(
             job=existing, created=False, warnings=ws
         )
+    try:
+        gs_src = repo.get_generated_script(gid)
+    except FirestoreUnavailableError:
+        raise
+    tv_fallback = definition_version_for_template(
+        getattr(job, "video_template", None) or "generic",
+    )
+    tdv_piece = ""
+    if gs_src is not None:
+        raw = getattr(gs_src, "template_definition_version", "") or ""
+        tdv_piece = raw.strip() if isinstance(raw, str) else ""
+    pj_tdv = tdv_piece or tv_fallback
     now_iso = utc_now_iso()
     pj = ProductionJob(
         id=gid,
@@ -3260,6 +3334,7 @@ def create_production_job_from_script_job(
         narrator_style=body.narrator_style,
         thumbnail_prompt=body.thumbnail_prompt,
         video_template=getattr(job, "video_template", None) or "generic",
+        template_definition_version=pj_tdv,
         created_at=now_iso,
         updated_at=now_iso,
     )

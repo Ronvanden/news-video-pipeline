@@ -11,6 +11,7 @@ from app.main import app
 from app.watchlist import service as watchlist_service
 from app.watchlist.control_panel import build_control_panel_summary
 from app.watchlist.models import (
+    GeneratedScript,
     PipelineAudit,
     PipelineEscalation,
     ProductionCosts,
@@ -124,6 +125,22 @@ class Ba84ControlPanelAggregate(unittest.TestCase):
                 updated_at="",
             )
         ]
+        repo.stream_generated_scripts_sample.return_value = [
+            GeneratedScript(
+                id="gs1",
+                script_job_id="sj1",
+                source_url="https://youtu.be/x",
+                title="Sample",
+                hook="Hook text here for fixture",
+                full_script="body " * 50,
+                created_at="2026-04-30T12:00:00Z",
+                hook_type="cold_open_news",
+                video_template="true_crime",
+                template_conformance_gate="failed",
+                experiment_id="exp_hook_ab_v1",
+                hook_variant_id="hv_tension_arc_v1",
+            )
+        ]
 
         out = watchlist_service.get_control_panel_summary_service(repo=repo)
 
@@ -146,6 +163,9 @@ class Ba84ControlPanelAggregate(unittest.TestCase):
         kinds = {p.kind for p in out.recent_problems.items}
         self.assertIn("production_job", kinds)
         self.assertIn("script_job", kinds)
+        self.assertEqual(out.story_engine.sampled_scripts, 1)
+        self.assertEqual(out.story_engine.template_gate_failed_scripts, 1)
+        self.assertIn("true_crime", out.story_engine.by_video_template)
 
     def test_empty_collections_returns_stable_shape(self):
         repo = MagicMock()
@@ -158,6 +178,8 @@ class Ba84ControlPanelAggregate(unittest.TestCase):
         repo.list_provider_configs.return_value = []
         repo.stream_production_costs_recent.return_value = []
 
+        repo.stream_generated_scripts_sample.return_value = []
+
         out = build_control_panel_summary(repo=repo)
         self.assertEqual(out.audit.open_critical, 0)
         self.assertEqual(out.escalation.count_by_severity, {})
@@ -165,6 +187,7 @@ class Ba84ControlPanelAggregate(unittest.TestCase):
         self.assertEqual(out.providers.total_configs, 0)
         self.assertEqual(out.costs.cost_records_count, 0)
         self.assertEqual(out.recent_problems.items, [])
+        self.assertEqual(out.story_engine.sampled_scripts, 0)
 
     def test_health_endpoint_still_ok(self):
         client = TestClient(app)

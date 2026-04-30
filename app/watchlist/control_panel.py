@@ -15,7 +15,9 @@ from app.watchlist.models import (
     ControlPanelProviderSummary,
     ControlPanelRecentProblemsSummary,
     ControlPanelRecoverySummary,
+    ControlPanelStoryEngineSummary,
     ControlPanelSummaryResponse,
+    GeneratedScript,
     PipelineAudit,
     PipelineEscalation,
     ProductionJob,
@@ -35,6 +37,35 @@ _PRODUCTION_PROBLEM_STATUSES = frozenset(
     {"failed", "stuck", "retryable", "partial_failed"}
 )
 _SCRIPT_PROBLEM_STATUSES = frozenset({"failed", "stuck"})
+
+
+def story_engine_dashboard_slice(rows: List[GeneratedScript]) -> ControlPanelStoryEngineSummary:
+    by_ht: Counter[str] = Counter()
+    by_tpl: Counter[str] = Counter()
+    gate_failed = 0
+    by_exp: Counter[str] = Counter()
+    by_var: Counter[str] = Counter()
+    for r in rows or []:
+        ht = ((r.hook_type or "").strip() or "unset")
+        by_ht[ht] += 1
+        tpl = ((r.video_template or "").strip() or "unset")
+        by_tpl[tpl] += 1
+        if (r.template_conformance_gate or "").lower() == "failed":
+            gate_failed += 1
+        ex = (r.experiment_id or "").strip()
+        if ex:
+            by_exp[ex] += 1
+        vr = (r.hook_variant_id or "").strip()
+        if vr:
+            by_var[vr] += 1
+    return ControlPanelStoryEngineSummary(
+        sampled_scripts=len(rows or []),
+        by_hook_type=dict(by_ht),
+        by_video_template=dict(by_tpl),
+        template_gate_failed_scripts=gate_failed,
+        experiments_by_id=dict(by_exp),
+        variants_by_id=dict(by_var),
+    )
 
 
 def get_pipeline_health_summary(
@@ -228,6 +259,16 @@ def build_control_panel_summary(
 
     recent = get_recent_failure_summary(p_jobs_sample, sj_sample)
 
+    gs_sample: List[GeneratedScript] = []
+    try:
+        gs_sample = repo.stream_generated_scripts_sample(180)
+    except Exception as exc:
+        warnings.append(
+            "Story Engine aggregiert nicht vollständig (generated_scripts Stichprobe): "
+            f"{type(exc).__name__}."
+        )
+    story_sum = story_engine_dashboard_slice(gs_sample)
+
     return ControlPanelSummaryResponse(
         audit=audit_summary,
         escalation=esc_summary,
@@ -236,5 +277,6 @@ def build_control_panel_summary(
         providers=provider_summary,
         costs=cost_summary,
         recent_problems=recent,
+        story_engine=story_sum,
         warnings=list(warnings),
     )

@@ -1,5 +1,8 @@
 from pydantic import BaseModel, Field, model_validator
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
+
+TemplateConformanceLevelLiteral = Literal["off", "warn", "strict"]
+
 
 class GenerateScriptRequest(BaseModel):
     url: str
@@ -8,6 +11,13 @@ class GenerateScriptRequest(BaseModel):
     video_template: str = Field(
         default="generic",
         description="BA 9: generic | true_crime | mystery_explainer | history_deep_dive",
+    )
+    template_conformance_level: TemplateConformanceLevelLiteral = Field(
+        default="warn",
+        description=(
+            "BA 9.3: off — keine Template-Conformance-Strings in warnings; warn — Hinweise "
+            "(Default); strict — gleiche Hinweise plus Gate für Persistenz/Export ([template_strict:…])."
+        ),
     )
 
 
@@ -18,6 +28,10 @@ class YouTubeGenerateScriptRequest(BaseModel):
     video_template: str = Field(
         default="generic",
         description="BA 9: generic | true_crime | mystery_explainer | history_deep_dive",
+    )
+    template_conformance_level: TemplateConformanceLevelLiteral = Field(
+        default="warn",
+        description="BA 9.3 — wie bei /generate-script.",
     )
 
 class Chapter(BaseModel):
@@ -51,6 +65,20 @@ class GenerateHookResponse(BaseModel):
     hook_score: float = Field(ge=0.0, le=10.0)
     rationale: str
     template_match: str
+    warnings: List[str] = Field(default_factory=list)
+
+
+class RhythmHintRequest(BaseModel):
+    """BA 9.4 — Nebenkanal; kein Teil von GenerateScriptResponse."""
+
+    video_template: str = Field(default="generic")
+    duration_minutes: int = Field(default=10, ge=1, le=180)
+    hook: str = ""
+    chapters: List[Chapter] = Field(default_factory=list)
+
+
+class RhythmHintResponse(BaseModel):
+    rhythm: Dict[str, Any] = Field(default_factory=dict)
     warnings: List[str] = Field(default_factory=list)
 
 

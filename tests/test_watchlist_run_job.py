@@ -77,7 +77,14 @@ class TestRunScriptJobService(unittest.TestCase):
             script_job_id="vid_run",
         )
 
-        def gen(url, target_language="", duration_minutes=10, video_template="generic"):
+        def gen(
+            url,
+            target_language="",
+            duration_minutes=10,
+            video_template="generic",
+            template_conformance_level="warn",
+            **_,
+        ):
             captured["video_template"] = video_template
             return GenerateScriptResponse(
                 title="Titel",

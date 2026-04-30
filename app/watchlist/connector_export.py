@@ -29,6 +29,42 @@ def thumbnail_prompt_resolve(
     return ""
 
 
+def build_story_pack_dict(
+    *,
+    generated_script: Optional[GeneratedScript],
+) -> Dict[str, Any]:
+    """BA 9.5b — konsolidiertes Artefakt für Connector/Exports (Six-Field-Skript unverändert)."""
+    if generated_script is None:
+        return {"schema_version": "1", "empty": True}
+
+    gs = generated_script
+    previews: List[str] = []
+    for c in gs.chapters or []:
+        t = (c.title or "").strip()
+        if t:
+            previews.append(t[:240])
+            if len(previews) >= 48:
+                break
+
+    return {
+        "schema_version": "1",
+        "generated_script_id": gs.id,
+        "video_template": gs.video_template,
+        "template_definition_version": gs.template_definition_version or None,
+        "template_conformance_gate": gs.template_conformance_gate or None,
+        "hook_engine": {
+            "hook_type": gs.hook_type,
+            "hook_score": gs.hook_score,
+            "opening_style": gs.opening_style,
+        },
+        "experiment_id": gs.experiment_id or None,
+        "hook_variant_id": gs.hook_variant_id or None,
+        "story_structure": gs.story_structure or {},
+        "rhythm_hints": gs.rhythm_hints or {},
+        "chapter_title_preview_list": previews,
+    }
+
+
 def build_capcut_timeline_hint(manifest: Optional[RenderManifest]) -> Dict[str, Any]:
     if manifest is None or not manifest.timeline:
         return {
@@ -136,4 +172,5 @@ def build_connector_export_payload(
             video_template=vt,
             warnings=warns,
         ),
+        story_pack=build_story_pack_dict(generated_script=generated_script),
     )

@@ -5,7 +5,14 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Any, Dict, List, Literal, Optional
 
-from app.models import Chapter, ReviewIssue, ReviewRecommendation, ReviewScriptResponse, SimilarityFlag
+from app.models import (
+    Chapter,
+    ReviewIssue,
+    ReviewRecommendation,
+    ReviewScriptResponse,
+    SimilarityFlag,
+    TemplateConformanceLevelLiteral,
+)
 
 ChannelStatusLiteral = Literal["active", "paused", "error"]
 CheckIntervalLiteral = Literal["manual", "hourly", "daily", "weekly"]
@@ -26,6 +33,11 @@ class WatchlistChannelCreateRequest(BaseModel):
         default="generic",
         description="BA 9: Template für spätere Script-Jobs (generic, true_crime, …).",
     )
+    template_conformance_level: TemplateConformanceLevelLiteral = Field(
+        default="warn",
+        description="BA 9.3: Template-Conformance auf Script-Jobs dieses Kanals.",
+    )
+
 
     @field_validator("channel_url")
     @classmethod
@@ -55,6 +67,7 @@ class WatchlistChannel(BaseModel):
     last_error: str = ""
     notes: str = ""
     video_template: str = "generic"
+    template_conformance_level: TemplateConformanceLevelLiteral = "warn"
 
 
 class CreateWatchlistChannelResponse(BaseModel):
@@ -124,6 +137,7 @@ class ScriptJob(BaseModel):
     target_language: str = "de"
     duration_minutes: int = Field(default=10, ge=1, le=60)
     video_template: str = "generic"
+    template_conformance_level: TemplateConformanceLevelLiteral = "warn"
     created_at: str
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
@@ -182,6 +196,18 @@ class GeneratedScript(BaseModel):
     hook_score: float = Field(default=0.0, ge=0.0, le=10.0)
     opening_style: str = ""
     created_at: str
+    template_definition_version: str = ""
+    template_conformance_gate: str = ""
+    story_structure: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="BA 9.3.3 Nebenkanal — deterministische Story-Metadaten, nicht Teil des Six-Field-Vertrags.",
+    )
+    rhythm_hints: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="BA 9.4 Nebenkanal — Pacing/Rhythm-Hinweise.",
+    )
+    experiment_id: str = ""
+    hook_variant_id: str = ""
 
 
 class RunScriptJobResponse(BaseModel):
@@ -293,6 +319,7 @@ class ProductionJob(BaseModel):
     error: str = ""
     error_code: str = ""
     video_template: str = "generic"
+    template_definition_version: str = ""
     pipeline_step_retry_counts: Dict[str, int] = Field(default_factory=dict)
 
 
@@ -536,6 +563,10 @@ class ConnectorExportPayload(BaseModel):
     thumbnail_prompt: str = ""
     capcut_timeline_hint: dict = Field(default_factory=dict)
     metadata: ConnectorExportMetadata = Field(default_factory=ConnectorExportMetadata)
+    story_pack: dict = Field(
+        default_factory=dict,
+        description="BA 9.5b — gebündelter Story-Nebenkanal (Hooks, Rhythm, strukturelle Meta).",
+    )
 
 
 class ProductionConnectorExportResponse(BaseModel):
@@ -1166,6 +1197,15 @@ class ControlPanelRecentProblemsSummary(BaseModel):
     items: List[ControlPanelProblemItem] = Field(default_factory=list)
 
 
+class ControlPanelStoryEngineSummary(BaseModel):
+    sampled_scripts: int = 0
+    by_hook_type: Dict[str, int] = Field(default_factory=dict)
+    by_video_template: Dict[str, int] = Field(default_factory=dict)
+    template_gate_failed_scripts: int = 0
+    experiments_by_id: Dict[str, int] = Field(default_factory=dict)
+    variants_by_id: Dict[str, int] = Field(default_factory=dict)
+
+
 class ControlPanelSummaryResponse(BaseModel):
     audit: ControlPanelAuditSummary = Field(default_factory=ControlPanelAuditSummary)
     escalation: ControlPanelEscalationSummary = Field(
@@ -1181,6 +1221,9 @@ class ControlPanelSummaryResponse(BaseModel):
     costs: ControlPanelCostSummary = Field(default_factory=ControlPanelCostSummary)
     recent_problems: ControlPanelRecentProblemsSummary = Field(
         default_factory=ControlPanelRecentProblemsSummary
+    )
+    story_engine: ControlPanelStoryEngineSummary = Field(
+        default_factory=ControlPanelStoryEngineSummary
     )
     warnings: List[str] = Field(default_factory=list)
 

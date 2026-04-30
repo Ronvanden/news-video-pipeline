@@ -26,6 +26,9 @@ async def youtube_generate_script(request: YouTubeGenerateScriptRequest):
         target_language=request.target_language,
         duration_minutes=request.duration_minutes,
         video_template=getattr(request, "video_template", None) or "generic",
+        template_conformance_level=(
+            getattr(request, "template_conformance_level", None) or "warn"
+        ),
     )
 
 

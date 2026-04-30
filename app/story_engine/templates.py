@@ -224,3 +224,17 @@ def voice_profile_for_template(template_id: str) -> VoiceProfileLiteral:
     if tid == "history_deep_dive":
         return "documentary"
     return "documentary"
+
+
+# BA 9.3.4 — Blueprint-/Conformance-Stände je Template (bump bei inhaltlicher Änderung).
+TEMPLATE_DEFINITION_VERSION: Dict[str, str] = {
+    "generic": "1",
+    "true_crime": "1",
+    "mystery_explainer": "1",
+    "history_deep_dive": "1",
+}
+
+
+def definition_version_for_template(template_id: str) -> str:
+    tid, _ = normalize_story_template_id(template_id)
+    return TEMPLATE_DEFINITION_VERSION.get(tid, "1")

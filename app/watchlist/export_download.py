@@ -8,6 +8,7 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.watchlist.models import GeneratedScript, ProductionJob, RenderManifest, VoicePlan
+from app.watchlist.connector_export import build_story_pack_dict
 
 
 def build_provider_templates(
@@ -81,6 +82,7 @@ def build_provider_templates(
         "leonardo_ready": leonardo_ready,
         "capcut_ready": capcut_ready,
         "youtube_upload_ready": youtube_upload_ready,
+        "story_pack": build_story_pack_dict(generated_script=generated_script),
     }
 
 

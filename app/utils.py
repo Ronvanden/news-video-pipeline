@@ -10,7 +10,7 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.lsa import LsaSummarizer
 from app.config import settings
-from app.story_engine.conformance import conformance_warnings_for_template
+from app.story_engine.conformance import apply_template_conformance
 from app.story_engine.templates import (
     chapter_band_for_template_duration,
     normalize_story_template_id,
@@ -556,6 +556,7 @@ def build_script_response_from_extracted_text(
     extraction_warnings: Optional[List[str]] = None,
     extra_warnings: Optional[List[str]] = None,
     video_template: str = "generic",
+    template_conformance_level: str = "warn",
 ) -> Tuple[str, str, List[dict], str, List[str], List[str]]:
     """
     Shared pipeline: summarized/structured script from plain text (article or transcript).
@@ -613,15 +614,15 @@ def build_script_response_from_extracted_text(
     else:
         warnings.append(fallback_note)
 
-    warnings.extend(
-        conformance_warnings_for_template(
-            template_id=tpl_id,
-            hook=hook,
-            chapters=chapters,
-            full_script=full_script,
-            duration_minutes=duration_minutes,
-        )
+    cw, _ = apply_template_conformance(
+        template_conformance_level=template_conformance_level,
+        template_id=tpl_id,
+        hook=hook,
+        chapters=chapters,
+        full_script=full_script,
+        duration_minutes=duration_minutes,
     )
+    warnings.extend(cw)
 
     return title, hook, chapters, full_script, sources, warnings
 
@@ -631,6 +632,7 @@ def generate_script_from_youtube_video(
     target_language: str = "de",
     duration_minutes: int = 10,
     video_template: str = "generic",
+    template_conformance_level: str = "warn",
 ):
     """
     Gleiche fachliche Pipeline wie ``POST /youtube/generate-script``, ohne HTTP.
@@ -677,6 +679,7 @@ def generate_script_from_youtube_video(
                 extraction_warnings=[],
                 extra_warnings=[transcript_warning],
                 video_template=video_template,
+                template_conformance_level=template_conformance_level,
             )
         )
 
