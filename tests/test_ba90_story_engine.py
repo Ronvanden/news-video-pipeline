@@ -50,7 +50,10 @@ class Ba90Conformance(unittest.TestCase):
             full_script="a " * 200,
             duration_minutes=10,
         )
-        self.assertTrue(any("Hook" in x for x in w))
+        self.assertTrue(
+            any("[template_conformance:hook_length]" in x for x in w),
+            w,
+        )
 
 
 class Ba90FallbackGenerator(unittest.TestCase):

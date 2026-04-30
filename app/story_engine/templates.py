@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from app.watchlist.models import SceneAssetStyleProfileLiteral, VoiceProfileLiteral
 
@@ -29,6 +29,147 @@ def normalize_story_template_id(raw: str | None) -> Tuple[str, List[str]]:
         f"Erlaubt: {', '.join(sorted(STORY_TEMPLATE_IDS))}."
     )
     return "generic", ws
+
+
+def chapter_band_for_template_duration(
+    template_id: str, duration_minutes: int
+) -> Tuple[int, int]:
+    """Erlaubtes Zielband Kapitelanzahl (min, max) für Template und Dauer."""
+    tid, _ = normalize_story_template_id(template_id)
+    d = max(1, int(duration_minutes))
+    if tid == "generic":
+        if d <= 6:
+            return (2, 6)
+        if d <= 10:
+            return (3, 8)
+        return (4, 10)
+    if tid == "true_crime":
+        if d <= 6:
+            return (3, 5)
+        if d <= 10:
+            return (4, 7)
+        return (5, 9)
+    if tid == "mystery_explainer":
+        if d <= 6:
+            return (3, 5)
+        if d <= 10:
+            return (4, 6)
+        return (5, 8)
+    if tid == "history_deep_dive":
+        if d <= 6:
+            return (3, 5)
+        if d <= 10:
+            return (4, 7)
+        return (6, 10)
+    return (3, 8)
+
+
+def min_hook_words_for_template(template_id: str) -> int:
+    tid, _ = normalize_story_template_id(template_id)
+    if tid == "generic":
+        return 8
+    return 18
+
+
+def chapter_title_style_hint_de(template_id: str) -> str:
+    tid, _ = normalize_story_template_id(template_id)
+    if tid == "true_crime":
+        return (
+            "präzise, sachlich; Zeitmarker oder Orte möglich; keine reißerischen "
+            "ungeprüften Behauptungen in der Überschrift."
+        )
+    if tid == "mystery_explainer":
+        return (
+            "häufig Fragestellung oder klare These; keine Grusel-Klischees in jedem Titel."
+        )
+    if tid == "history_deep_dive":
+        return (
+            "Epoche/Kontext oder Wendepunkt im Titel; kein reißerischer "
+            "Anachronismus."
+        )
+    return "klar und informativ; kein abgeschnittener Titel."
+
+
+def story_template_blueprint_prompt_de(
+    template_id: str, duration_minutes: int
+) -> str:
+    """Strukturhinweise für LLM/Fallback-Prompt (kein Secret-Inhalt)."""
+    tid, _ = normalize_story_template_id(template_id)
+    if tid == "generic":
+        return ""
+    lo, hi = chapter_band_for_template_duration(tid, duration_minutes)
+    mw = min_hook_words_for_template(tid)
+    style = chapter_title_style_hint_de(tid)
+    return (
+        f"- Ziel: etwa {lo}–{hi} inhaltliche Kapitel (materialabhängig flexibel).\n"
+        f"- Hook: mindestens ca. {mw} Wörter; klar, einordnend, ohne Übertreibung.\n"
+        f"- Kapiteltitel: {style}"
+    ).strip()
+
+
+def public_story_template_catalog() -> List[Dict[str, Any]]:
+    """Lesbare Meta-Infos für GET /story-engine/templates (ohne Prompt-Rohlinge)."""
+    examples = [5, 10, 15]
+
+    def bands_for(tid: str) -> List[Dict[str, int]]:
+        out: List[Dict[str, int]] = []
+        for dm in examples:
+            lo, hi = chapter_band_for_template_duration(tid, dm)
+            out.append(
+                {
+                    "duration_minutes": dm,
+                    "chapters_min": lo,
+                    "chapters_max": hi,
+                }
+            )
+        return out
+
+    return [
+        {
+            "id": "generic",
+            "label": "Allgemein",
+            "description": (
+                "Standard-Erzählstruktur für Nachrichten und Erklärer; "
+                "keine feste Format-Fessel."
+            ),
+            "duration_examples": bands_for("generic"),
+            "min_hook_words": min_hook_words_for_template("generic"),
+            "chapter_title_style": chapter_title_style_hint_de("generic"),
+        },
+        {
+            "id": "true_crime",
+            "label": "True Crime",
+            "description": (
+                "Sachlich-respektvolle True-Crime-Erzählung mit Zeitlinie "
+                "und Einordnung; keine erfundenen Details."
+            ),
+            "duration_examples": bands_for("true_crime"),
+            "min_hook_words": min_hook_words_for_template("true_crime"),
+            "chapter_title_style": chapter_title_style_hint_de("true_crime"),
+        },
+        {
+            "id": "mystery_explainer",
+            "label": "Mystery / Rätsel-Erklärer",
+            "description": (
+                "Spannung über Fragen und dokumentierte Lücken; "
+                "keine Verschwörungsverkäufe als Fakten."
+            ),
+            "duration_examples": bands_for("mystery_explainer"),
+            "min_hook_words": min_hook_words_for_template("mystery_explainer"),
+            "chapter_title_style": chapter_title_style_hint_de("mystery_explainer"),
+        },
+        {
+            "id": "history_deep_dive",
+            "label": "History Deep Dive",
+            "description": (
+                "Historischer Kontext, Wendepunkte, Folgen; "
+                "reflektierte Sprache ohne neue Fakten zu erfinden."
+            ),
+            "duration_examples": bands_for("history_deep_dive"),
+            "min_hook_words": min_hook_words_for_template("history_deep_dive"),
+            "chapter_title_style": chapter_title_style_hint_de("history_deep_dive"),
+        },
+    ]
 
 
 def story_template_prompt_addon_de(template_id: str) -> str:

@@ -8,6 +8,7 @@ from app.routes.watchlist import router as watchlist_router
 from app.routes.production import router as production_router
 from app.routes.providers import router as providers_router
 from app.routes.dev_fixtures import router as dev_fixtures_router
+from app.routes.story_engine import router as story_engine_router
 import logging
 import json
 
@@ -39,6 +40,7 @@ app.include_router(watchlist_router)
 app.include_router(production_router)
 app.include_router(providers_router)
 app.include_router(dev_fixtures_router)
+app.include_router(story_engine_router)
 
 @app.get("/health")
 async def health():

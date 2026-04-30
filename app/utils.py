@@ -12,7 +12,9 @@ from sumy.summarizers.lsa import LsaSummarizer
 from app.config import settings
 from app.story_engine.conformance import conformance_warnings_for_template
 from app.story_engine.templates import (
+    chapter_band_for_template_duration,
     normalize_story_template_id,
+    story_template_blueprint_prompt_de,
     story_template_prompt_addon_de,
 )
 import httpx
@@ -755,14 +757,15 @@ class ScriptGenerator:
         min_word_count = max(int(target_word_count * 0.85), 200)
         max_word_count = int(target_word_count * 1.15)
         
-        # Determine number of chapters based on duration
+        # Determine number of chapters based on duration; clamp to template blueprint band (BA 9.1)
         if duration_minutes <= 6:
             num_chapters = 4
         elif duration_minutes <= 10:
             num_chapters = 6
         else:
             num_chapters = 8
-        
+        low, high = chapter_band_for_template_duration(tid, duration_minutes)
+        num_chapters = max(low, min(high, num_chapters))
         if openai and _effective_openai_api_key():
             return self._generate_with_openai(
                 title,
@@ -806,6 +809,9 @@ class ScriptGenerator:
                 "Die Quelle enthält weniger Text als die gewünschte Dauer. Bitte ergänze das Skript mit zusätzlicher Kontext-Einordnung und Analyse, ohne neue Fakten zu erfinden.")
             addon = story_template_prompt_addon_de(video_template)
             addon_block = f"\n\nFormat-Vorgaben (zusätzlich):\n{addon}\n" if addon else ""
+            bp = story_template_blueprint_prompt_de(video_template, duration_minutes)
+            if bp:
+                addon_block += f"\nStruktur-Blueprint (Orientierung):\n{bp}\n"
             prompt = f"""
 Erstelle ein YouTube-Video-Skript auf Deutsch aus den bereitgestellten Informationen.
 
