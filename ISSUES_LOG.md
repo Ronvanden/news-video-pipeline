@@ -34,7 +34,7 @@ Neue Einträge bei wiederkehrenden Fehlern oder nach Post-Mortems ergänzen.
 
 | 2026-04-30 | Operations / Hardening **BA 8.0–8.2** | Pipeline-Brüche und Drift nicht strukturiert erkennbar; kein gezieltes Re-Run pro Schritt | Nach Produktionsfeatures Fokus Kontrolle/Stabilität | **`pipeline_audits`**, **`recovery_actions`**, `pipeline_audit_scan.py`; **`POST /production/audit/run`**, **`GET /production/audit`**, **`POST …/recovery/retry`**, **`GET /production/monitoring/summary`** — Recovery getrennt vom Legacy-**`POST …/jobs/{id}/retry`** | umgesetzt (`tests/test_ba80_82_hardening.py`, `unittest discover`) | ohne Commit |
 
-| 2026-04-30 | Operations / Reife BA 8.5–8.9 | Transkript-/Budget-/Provider-Observability für Founder-Betrieb noch nicht zusammengeführt | Increment auf bestehenden Collections (kein neues Haupt-Backend) | **`input_quality_guard.py`**, **`provider_discipline.py`**, **`/providers/configs/seed-defaults`**, erweiterte **`production_costs`**, Doku Runbook + Gold-Standard, Tests `test_ba85`–`test_ba89` | umgesetzt | `2fb2bba` |
+| 2026-04-30 | Operations / Reife BA 8.5–8.9 | Transkript-/Budget-/Provider-Observability für Founder-Betrieb noch nicht zusammengeführt | Increment auf bestehenden Collections (kein neues Haupt-Backend) | **`input_quality_guard.py`**, **`provider_discipline.py`**, **`/providers/configs/seed-defaults`**, erweiterte **`production_costs`**, Doku Runbook + Gold-Standard, Tests `test_ba85`–`test_ba89` | umgesetzt | `8cad2bc` |
 
 ## Hinweise
 
