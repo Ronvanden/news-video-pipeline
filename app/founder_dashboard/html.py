@@ -50,6 +50,10 @@ main { padding: 1rem 1.25rem 2rem; max-width: 1200px; margin: 0 auto; }
   word-break: break-word;
 }
 #error-bar.visible { display: block; }
+.intake-status { min-height: 1.2rem; margin: 0.45rem 0 0; font-size: 0.82rem; }
+.intake-status.intake-status-success { color: var(--ok); font-weight: 600; }
+.intake-status.intake-status-err { color: #fecaca; font-weight: 600; }
+.intake-status.intake-status-info { color: var(--muted); }
 .grid { display: grid; gap: 1rem; }
 @media (min-width: 900px) {
   .grid-2 { grid-template-columns: 1fr 1fr; }
@@ -520,7 +524,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       <select id="intake-source-type">
         <option value="youtube">YouTube URL</option>
         <option value="news">News / Artikel URL</option>
-        <option value="raw">Rohtext</option>
+        <option value="raw_text">Rohtext</option>
       </select>
     </div>
     <label for="intake-youtube-url">YouTube URL</label>
@@ -529,11 +533,13 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     <input type="text" id="intake-news-url" placeholder="https://…"/>
     <label for="intake-raw-text">Rohtext</label>
     <textarea id="intake-raw-text" placeholder="Freitext einfügen…" style="min-height:100px"></textarea>
-    <label for="intake-topic">Topic (optional, überschreibt Topic-Feld)</label>
-    <input type="text" id="intake-topic" placeholder="z. B. Schwerpunkt für Hook/Export"/>
+    <label for="intake-topic">Topic (optional, Kategorie/Thema)</label>
+    <input type="text" id="intake-topic" placeholder="z. B. Politik, True Crime, Wirtschaft"/>
+    <p class="muted" id="intake-raw-headline-hint" style="font-size:0.76rem;margin:-0.25rem 0 0.6rem">Rohtext: Titel automatisch aus Rohtext erzeugt — oder aus dem Topic-Feld als Headline, falls gesetzt. Rohtext ≠ Titel.</p>
     <div class="actions" style="margin-top:0.5rem">
       <button type="button" class="primary" id="btn-intake-body" data-label="Auto Body aus Quelle">Auto Body aus Quelle</button>
     </div>
+    <p id="intake-status" class="intake-status muted" role="status" aria-live="polite"></p>
   </section>
 
   <section class="panel" id="coll-full-pipeline" style="margin-top:1rem">
@@ -557,11 +563,11 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   <div class="grid grid-2">
     <section class="panel" id="coll-input-panel">
       <h2>Input Panel</h2>
-      <label for="fd-title">Titel / Thema (title)</label>
-      <input type="text" id="fd-title" placeholder="Titel"/>
-      <label for="fd-topic">Topic</label>
-      <input type="text" id="fd-topic" placeholder="Kurzes Topic"/>
-      <label for="fd-summary">Source summary</label>
+      <label for="fd-title">Title (Headline)</label>
+      <input type="text" id="fd-title" placeholder="Headline / Videotitel"/>
+      <label for="fd-topic">Topic (optional Kategorie/Thema)</label>
+      <input type="text" id="fd-topic" placeholder="Kategorie oder Themenschwerpunkt"/>
+      <label for="fd-summary">Source summary (Kurzfassung)</label>
       <textarea id="fd-summary" placeholder="Quell-Zusammenfassung"></textarea>
       <label for="fd-template">Template (video_template)</label>
       <select id="fd-template"></select>
@@ -871,6 +877,17 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   function showError(msg) {
     err.textContent = msg || "";
     err.classList.toggle("visible", !!msg);
+  }
+
+  function setIntakeStatus(msg, kind) {
+    var el = $("intake-status");
+    if (!el) return;
+    el.textContent = msg || "";
+    var base = "intake-status muted";
+    if (kind === "success") el.className = base + " intake-status-success";
+    else if (kind === "err") el.className = base + " intake-status-err";
+    else if (kind === "info") el.className = base + " intake-status-info";
+    else el.className = base;
   }
   function parseChapters() {
     const raw = $("fd-chapters").value.trim();
@@ -1708,6 +1725,40 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     if (m) m.textContent = msg || "";
   }
 
+  function buildRawHeadline(raw, topicOpt) {
+    var tOpt = String(topicOpt || "").trim();
+    if (tOpt) return tOpt.length > 72 ? (tOpt.slice(0, 69).trim() + "…") : tOpt;
+    var t = String(raw || "").replace(/^[\\s\\-–—•*#]+/, "");
+    t = t.replace(/\\s+/g, " ").trim();
+    if (!t) return "Rohtext";
+    var chunks = t.match(/[^.!?]{6,}?[.!?]+|[^.!?]{12,}$/g);
+    var first = (chunks && chunks[0]) ? chunks[0].trim() : t;
+    if (first.length < 10 && chunks && chunks.length > 1) first = (chunks[0] + " " + chunks[1]).trim().replace(/\\s+/g, " ");
+    if (first.length > 60) {
+      first = first.slice(0, 57);
+      var sp = first.lastIndexOf(" ");
+      if (sp > 15) first = first.slice(0, sp);
+      first = first.trim() + "…";
+    }
+    var c = first.charAt(0).toUpperCase() + first.slice(1);
+    return c.trim() || "Rohtext";
+  }
+
+  function buildRawSourceSummary(raw) {
+    var t = String(raw || "").trim().replace(/\\s+/g, " ");
+    if (!t) return "";
+    var chunks = t.match(/[^.!?]{8,}?[.!?]+|[^.!?]{14,}$/g);
+    if (!chunks || !chunks.length) chunks = [t];
+    var take = chunks.slice(0, 3).join(" ").trim();
+    if (take.length > 480) {
+      take = take.slice(0, 440);
+      var sp = take.lastIndexOf(" ");
+      if (sp > 80) take = take.slice(0, sp);
+      take = take.trim() + " …";
+    }
+    return take;
+  }
+
   function rawTextToChapters(raw) {
     var t = String(raw || "").trim();
     if (!t) return [{ title: "Kapitel 1", content: "" }];
@@ -1729,17 +1780,19 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
 
   function buildPseudoScriptResponseFromRaw(raw) {
     var ch = rawTextToChapters(raw);
-    var titleLine = String(raw || "").trim().replace(/\\s+/g, " ");
-    if (titleLine.length > 90) titleLine = titleLine.slice(0, 90) + "…";
-    if (!titleLine) titleLine = "Rohtext";
+    var topicIntake = $("intake-topic") ? $("intake-topic").value.trim() : "";
+    var headline = buildRawHeadline(raw, topicIntake);
+    var sumShort = buildRawSourceSummary(raw);
+    var full = String(raw || "");
     return {
-      title: titleLine,
+      title: headline,
       hook: "",
       chapters: ch,
-      full_script: String(raw || ""),
+      full_script: full,
+      client_summary: sumShort,
       sources: [],
       warnings: [
-        "[Dashboard BA 11.0] Rohtext ohne URL: Kapitel nur clientseitig segmentiert; für Extraktion News- oder YouTube-URL nutzen."
+        "[Dashboard BA 11.0] raw_text_client_segmented: Rohtext ohne URL — Kapitel nur clientseitig segmentiert; für Extraktion News- oder YouTube-URL nutzen."
       ]
     };
   }
@@ -1749,7 +1802,12 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     $("fd-title").value = String(gen.title || "");
     var topicIn = $("intake-topic").value.trim();
     if (topicIn) $("fd-topic").value = topicIn;
-    var sum = String(gen.full_script || "").trim();
+    var sum = "";
+    if (gen.client_summary != null && String(gen.client_summary).trim()) {
+      sum = String(gen.client_summary).trim();
+    } else {
+      sum = String(gen.full_script || "").trim();
+    }
     if (!sum && gen.chapters && gen.chapters.length) {
       sum = gen.chapters.map(function(c) {
         return (c.title || "") + "\\n" + (c.content || "");
@@ -1760,51 +1818,114 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     $("fd-chapters").value = JSON.stringify(chs, null, 2);
   }
 
-  async function runGenerateFromIntake() {
+  function validateScriptResponseForIntake(gen, typ) {
+    if (!gen || typeof gen !== "object") throw new Error("Ungültige Skript-Antwort vom Server.");
+    if (typ === "raw" || typ === "raw_text") return;
+    var hasCh = gen.chapters && Array.isArray(gen.chapters) && gen.chapters.length > 0;
+    var t = gen.title != null ? String(gen.title).trim() : "";
+    var fs = gen.full_script != null ? String(gen.full_script).trim() : "";
+    var hook = gen.hook != null ? String(gen.hook).trim() : "";
+    if (!hasCh && fs.length < 12 && t.length < 3 && hook.length < 3) {
+      mergeWarnings(gen.warnings || []);
+      throw new Error("Skript-Response ohne nutzbaren Inhalt (leere Kapitel/Text) — Transkript/URL prüfen oder Fehlermeldung in der Error-Bar.");
+    }
+  }
+
+  function validateIntakeBeforeFullPipeline() {
+    var typ = $("intake-source-type").value;
+    if (typ === "youtube") {
+      if (!$("intake-youtube-url").value.trim()) throw new Error("Full Pipeline: YouTube-URL im Intake ausfüllen oder Quelle wechseln.");
+    } else if (typ === "news") {
+      if (!$("intake-news-url").value.trim()) throw new Error("Full Pipeline: News-URL im Intake ausfüllen.");
+    } else if (typ === "raw" || typ === "raw_text") {
+      if ($("intake-raw-text").value.trim().length < 12) throw new Error("Full Pipeline: Rohtext mindestens ca. 12 Zeichen.");
+    } else {
+      throw new Error("Full Pipeline: Unbekannte Intake-Quelle.");
+    }
+  }
+
+  function resetPipelineStoryOutputs() {
+    lastExport = null;
+    lastPreview = null;
+    lastReadiness = null;
+    lastOptimize = null;
+    lastCtrPayload = null;
+    lastNumericPq = null;
+    setOut("out-export-full", null);
+    setOut("out-hook", null);
+    setOut("out-pq-score", null);
+    setOut("out-pq-detail", null);
+    setOut("out-readiness", null);
+    setOut("out-leo", null);
+    setOut("out-openai", null);
+    setOut("out-kling", null);
+    setOut("out-capcut", null);
+    setOut("out-csv", null);
+    setOut("out-ctr", null);
+    setOut("out-ctr-raw", null);
+    setOut("out-thumb-var", null);
+    updatePqBadge();
+    renderPromptLab();
+    renderProviderPromptCards();
+  }
+
+  async function runBuildBodyFromIntake() {
+    setIntakeStatus("Body aus Quelle wird geladen…", "info");
     var typ = $("intake-source-type").value;
     var tmpl = $("fd-template").value || "generic";
     var dur = Math.min(180, Math.max(1, parseInt($("fd-duration").value, 10) || 10));
     var conf = "warn";
     var gen;
-    if (typ === "youtube") {
-      var yu = $("intake-youtube-url").value.trim();
-      if (!yu) throw new Error("YouTube URL fehlt.");
-      gen = await fetchJson("/youtube/generate-script", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          video_url: yu,
-          target_language: "de",
-          duration_minutes: dur,
-          video_template: tmpl,
-          template_conformance_level: conf
-        })
-      });
-    } else if (typ === "news") {
-      var nu = $("intake-news-url").value.trim();
-      if (!nu) throw new Error("News-URL fehlt.");
-      gen = await fetchJson("/generate-script", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: nu,
-          target_language: "de",
-          duration_minutes: dur,
-          video_template: tmpl,
-          template_conformance_level: conf
-        })
-      });
-    } else if (typ === "raw") {
-      var rt = $("intake-raw-text").value.trim();
-      if (rt.length < 12) throw new Error("Rohtext zu kurz (min. ca. 12 Zeichen).");
-      gen = buildPseudoScriptResponseFromRaw(rt);
-    } else {
-      throw new Error("Unbekannter Quelltyp.");
+    try {
+      if (typ === "youtube") {
+        var yu = $("intake-youtube-url").value.trim();
+        if (!yu) throw new Error("YouTube URL fehlt — Feld „YouTube URL“ ausfüllen.");
+        gen = await fetchJson("/youtube/generate-script", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            video_url: yu,
+            target_language: "de",
+            duration_minutes: dur,
+            video_template: tmpl,
+            template_conformance_level: conf
+          })
+        });
+        validateScriptResponseForIntake(gen, typ);
+      } else if (typ === "news") {
+        var nu = $("intake-news-url").value.trim();
+        if (!nu) throw new Error("News-URL fehlt — Feld „News URL“ ausfüllen.");
+        gen = await fetchJson("/generate-script", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: nu,
+            target_language: "de",
+            duration_minutes: dur,
+            video_template: tmpl,
+            template_conformance_level: conf
+          })
+        });
+        validateScriptResponseForIntake(gen, typ);
+      } else if (typ === "raw" || typ === "raw_text") {
+        var rt = $("intake-raw-text").value.trim();
+        if (rt.length < 12) throw new Error("Rohtext zu kurz (min. ca. 12 Zeichen).");
+        gen = buildPseudoScriptResponseFromRaw(rt);
+      } else {
+        throw new Error("Unbekannter Quelltyp: " + typ);
+      }
+      applyIntakeToForm(gen);
+      mergeWarnings(gen.warnings || []);
+      refreshFounderInterpretation();
+      setIntakeStatus("Body aus Quelle erstellt — Eingabepanel wurde aktualisiert.", "success");
+      showError("");
+      openPanelAndScroll(null, "coll-input-panel");
+      return gen;
+    } catch (e) {
+      var msg = String(e.message || e);
+      setIntakeStatus("Fehler: " + msg, "err");
+      throw e;
     }
-    applyIntakeToForm(gen);
-    mergeWarnings(gen.warnings || []);
-    refreshFounderInterpretation();
-    return gen;
   }
 
   async function runExportOnlyInternal() {
@@ -1918,11 +2039,14 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
 
   async function runFullPipelineOrchestrator() {
     var stepIdx = 0;
+    validateIntakeBeforeFullPipeline();
+    setIntakeStatus("", "");
+    resetPipelineStoryOutputs();
     resetPipelineTimeline();
     try {
       stepIdx = 0;
       setPipelineStep(stepIdx, "active", "");
-      await runGenerateFromIntake();
+      await runBuildBodyFromIntake();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 1;
@@ -2338,13 +2462,16 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
 
   $("fd-chapters").value = JSON.stringify(DEFAULT_CHAPTERS, null, 2);
 
-  $("btn-intake-body").onclick = async function() {
-    var btn = this;
-    clearWarnings();
-    await withActionButton(btn, "coll-source-intake", "coll-source-intake", async function() {
-      await runGenerateFromIntake();
+  var intakeBodyBtn = $("btn-intake-body");
+  if (intakeBodyBtn) {
+    intakeBodyBtn.addEventListener("click", async function() {
+      var btn = this;
+      clearWarnings();
+      await withActionButton(btn, "coll-source-intake", "coll-input-panel", async function() {
+        await runBuildBodyFromIntake();
+      });
     });
-  };
+  }
 
   $("btn-full-pipeline").onclick = async function() {
     var btn = this;
