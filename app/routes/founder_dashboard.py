@@ -1,4 +1,4 @@
-"""BA 10.6 — Founder Dashboard (HTML + optionale JSON-Config)."""
+"""BA 10.6/10.7 — Founder Dashboard (HTML + optionale JSON-Config)."""
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
@@ -18,7 +18,7 @@ async def founder_dashboard_page() -> HTMLResponse:
 async def founder_dashboard_config() -> dict:
     """Statische Meta-Infos für Ops/Integrationstests (keine Secrets)."""
     return {
-        "dashboard_version": "10.6-v1",
+        "dashboard_version": "10.7-v1",
         "auth": False,
         "story_engine_relative": {
             "export_package": {"method": "POST", "path": "/story-engine/export-package"},

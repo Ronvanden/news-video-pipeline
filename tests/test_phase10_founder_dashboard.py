@@ -1,4 +1,4 @@
-"""BA 10.6 — Founder Dashboard Routen."""
+"""BA 10.6/10.7 — Founder Dashboard Routen."""
 
 from __future__ import annotations
 
@@ -18,6 +18,10 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Founder Dashboard", text)
         self.assertIn("Template", text)
         self.assertIn("Provider Readiness", text)
+        self.assertIn("Prompt Lab", text)
+        self.assertIn("Batch Template Compare", text)
+        self.assertIn("pq-badge", text)
+        self.assertIn("tb-copy", text)
 
     def test_dashboard_config_200(self):
         client = TestClient(app)
