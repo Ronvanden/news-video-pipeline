@@ -3,18 +3,25 @@
 from fastapi import APIRouter, HTTPException
 
 from app.models import (
+    ExportPackagePreviewResponse,
     ExportPackageRequest,
     ExportPackageResponse,
     GenerateHookRequest,
     GenerateHookResponse,
+    ProviderReadinessRequest,
+    ProviderReadinessResponse,
     RhythmHintRequest,
     RhythmHintResponse,
     SceneBlueprintPlanResponse,
     ScenePromptsRequest,
     ScenePromptsResponse,
     StorySceneBlueprintRequest,
+    TemplateSelectorResponse,
 )
 from app.story_engine.export_package import build_export_package_v1
+from app.story_engine.founder_preview import build_export_preview
+from app.story_engine.provider_readiness import analyze_provider_readiness
+from app.story_engine.template_registry import list_templates
 from app.story_engine.hook_engine import generate_hook_v1
 from app.story_engine.experiment_registry import public_experiment_registry
 from app.story_engine.rhythm_engine import rhythm_hints_v1
@@ -107,6 +114,47 @@ async def story_engine_export_package(req: ExportPackageRequest) -> ExportPackag
     Thumbnail-Platzhalter-Prompt, `prompt_quality` und gemergte Warnings.
     """
     return build_export_package_v1(req)
+
+
+@router.post(
+    "/story-engine/export-package/preview",
+    response_model=ExportPackagePreviewResponse,
+)
+async def story_engine_export_package_preview(
+    req: ExportPackageRequest,
+) -> ExportPackagePreviewResponse:
+    """
+    BA 10.4 — Kompakte Founder-Ansicht (Hook, Qualität, Provider-Flags, Readiness).
+
+    Nutzt dieselbe Eingabe wie `/story-engine/export-package`; **keine** externen Provider-Calls,
+    **keine** Persistenz.
+    """
+    return build_export_preview(req)
+
+
+@router.get(
+    "/story-engine/template-selector",
+    response_model=TemplateSelectorResponse,
+)
+async def story_engine_template_selector() -> TemplateSelectorResponse:
+    """BA 10.4 — Öffentliche Template-Übersicht für Format- und Hook-Vergleiche."""
+    return TemplateSelectorResponse(templates=list_templates())
+
+
+@router.post(
+    "/story-engine/provider-readiness",
+    response_model=ProviderReadinessResponse,
+)
+async def story_engine_provider_readiness(
+    req: ProviderReadinessRequest,
+) -> ProviderReadinessResponse:
+    """
+    BA 10.4 — Heuristische Produktions-Readiness je Stub-Profil (Leonardo, Kling, OpenAI).
+
+    Baut intern das Export-Paket wie BA 10.3; **keine** Bild-/Video-APIs.
+    """
+    pkg = build_export_package_v1(req)
+    return analyze_provider_readiness(pkg)
 
 
 @router.get("/story-engine/experiment-registry")

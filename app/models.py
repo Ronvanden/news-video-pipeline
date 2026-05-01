@@ -239,6 +239,67 @@ class ExportPackageResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+ReadinessStatusLiteral = Literal["ready", "partial_ready", "not_ready"]
+ThumbnailStrengthLiteral = Literal["low", "medium", "high"]
+
+
+class ProviderProfileFlags(BaseModel):
+    """BA 10.4 — grobe Nutzbarkeit je Stub-Profil (Schwellwert-heuristisch)."""
+
+    openai: bool = False
+    leonardo: bool = False
+    kling: bool = False
+
+
+class ExportPackagePreviewResponse(BaseModel):
+    """BA 10.4 — kompakte Founder-Ansicht aus lokalem Export-Paket."""
+
+    template_id: str
+    hook_score: float = Field(ge=0.0, le=10.0)
+    hook_type: str
+    thumbnail_strength: ThumbnailStrengthLiteral
+    prompt_quality_score: int = Field(ge=0, le=100)
+    scene_count: int = Field(ge=0)
+    provider_profiles: ProviderProfileFlags
+    provider_stub_warnings: int = Field(ge=0, description="Aggregierte Qualitätshinweise (Scene-Checks).")
+    readiness_status: ReadinessStatusLiteral
+    top_warnings: List[str] = Field(default_factory=list)
+    export_ready: bool
+
+
+class TemplateRegistryItem(BaseModel):
+    """BA 10.4 — öffentliche Template-Zeile für Template-Selector."""
+
+    template_id: str
+    label: str
+    style: str
+    ideal_use_case: str
+    hook_bias: str
+    pacing_bias: str
+
+
+class TemplateSelectorResponse(BaseModel):
+    templates: List[TemplateRegistryItem] = Field(default_factory=list)
+
+
+class ProviderReadinessRequest(ExportPackageRequest):
+    """BA 10.4 — gleicher Eingabekörper wie Export-Paket."""
+
+
+class ProviderReadinessScores(BaseModel):
+    leonardo: int = Field(ge=0, le=100)
+    kling: int = Field(ge=0, le=100)
+    openai: int = Field(ge=0, le=100)
+
+
+class ProviderReadinessResponse(BaseModel):
+    overall_status: ReadinessStatusLiteral
+    scores: ProviderReadinessScores
+    blocking_issues: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    recommended_next_step: str = ""
+
+
 class LatestVideosRequest(BaseModel):
     channel_url: str = Field(..., min_length=1)
     max_results: int = Field(5, ge=1, le=50)
