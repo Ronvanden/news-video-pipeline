@@ -7,6 +7,8 @@ from app.models import (
     GenerateHookResponse,
     RhythmHintRequest,
     RhythmHintResponse,
+    SceneBlueprintPlanResponse,
+    StorySceneBlueprintRequest,
 )
 from app.story_engine.hook_engine import generate_hook_v1
 from app.story_engine.experiment_registry import public_experiment_registry
@@ -15,6 +17,7 @@ from app.story_engine.templates import public_story_template_catalog
 from app.watchlist import service as watchlist_service
 from app.watchlist.firestore_repo import FirestoreUnavailableError
 from app.watchlist.models import StoryEngineTemplateHealthHttpResponse
+from app.visual_plan.builder import build_scene_blueprint_plan
 
 router = APIRouter(tags=["story-engine"])
 
@@ -56,6 +59,20 @@ async def rhythm_hint(req: RhythmHintRequest) -> RhythmHintResponse:
         hook=req.hook or "",
     )
     return RhythmHintResponse(rhythm=blocks, warnings=warns)
+
+
+@router.post(
+    "/story-engine/scene-plan",
+    response_model=SceneBlueprintPlanResponse,
+)
+async def story_engine_scene_blueprint(req: StorySceneBlueprintRequest):
+    """
+    Makro‑Phase 8.1 — Scene Blueprint Contract (deterministisch).
+
+    Nur lesend aus übergebenem Skript-/Kapitelteil; **kein** Bildgenerator, **keine**
+    Persistenz. Verändert **`GenerateScriptResponse`** nicht.
+    """
+    return build_scene_blueprint_plan(req)
 
 
 @router.get("/story-engine/experiment-registry")

@@ -1,0 +1,10 @@
+"""Phase 8.1 — einheitliche Visual‑Blueprint‑Warn‑Präfixe (keine Logik)."""
+
+W_NO_CHAPTERS = "[visual_plan:no_chapters]"
+W_POLICY_DISCLAIMER = "[visual_plan:policy_disclaimer]"
+W_NO_LEGAL_CLAIM = "[visual_plan:no_legal_claim]"
+W_TRUNCATED = "[visual_plan:truncated]"
+W_SPARSE_CHAPTER = "[visual_plan:sparse_chapter]"
+W_FULLSCRIPT_DRIFT = "[visual_plan:full_script_drift]"
+W_STORY_META_READ = "[visual_story_meta:read_only_present]"
+W_RHYTHM_META_READ = "[visual_rhythm_meta:read_only_present]"
