@@ -8,6 +8,8 @@ from app.models import (
     RhythmHintRequest,
     RhythmHintResponse,
     SceneBlueprintPlanResponse,
+    ScenePromptsRequest,
+    ScenePromptsResponse,
     StorySceneBlueprintRequest,
 )
 from app.story_engine.hook_engine import generate_hook_v1
@@ -18,6 +20,7 @@ from app.watchlist import service as watchlist_service
 from app.watchlist.firestore_repo import FirestoreUnavailableError
 from app.watchlist.models import StoryEngineTemplateHealthHttpResponse
 from app.visual_plan.builder import build_scene_blueprint_plan
+from app.visual_plan.prompt_engine import build_scene_prompts_v1
 
 router = APIRouter(tags=["story-engine"])
 
@@ -73,6 +76,20 @@ async def story_engine_scene_blueprint(req: StorySceneBlueprintRequest):
     Persistenz. Verändert **`GenerateScriptResponse`** nicht.
     """
     return build_scene_blueprint_plan(req)
+
+
+@router.post(
+    "/story-engine/scene-prompts",
+    response_model=ScenePromptsResponse,
+)
+async def story_engine_scene_prompts(req: ScenePromptsRequest):
+    """
+    Makro‑Phase 8.2 — Prompt Engine V1 (Expansion, Provider-Stubs, Continuity).
+
+    Baut auf **`/story-engine/scene-plan`** (8.1) auf; **keine** Bildgenerierung, **keine** Persistenz.
+    **`GenerateScriptResponse`** unverändert.
+    """
+    return build_scene_prompts_v1(req)
 
 
 @router.get("/story-engine/experiment-registry")
