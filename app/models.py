@@ -300,6 +300,124 @@ class ProviderReadinessResponse(BaseModel):
     recommended_next_step: str = ""
 
 
+ThumbnailCTREmotionLiteral = Literal[
+    "curiosity",
+    "shock",
+    "urgency",
+    "mystery",
+    "authority",
+    "neutral",
+]
+
+
+class OptimizedProviderScenePrompt(BaseModel):
+    """BA 10.5 — Leonardo- / OpenAI-optimierte Bildprompt-Zeile (lokal, deterministisch)."""
+
+    scene_number: int = Field(ge=1)
+    positive_optimized: str = ""
+    negative_prompt: str = ""
+    continuity_token: str = ""
+
+
+class KlingMotionScenePrompt(BaseModel):
+    """BA 10.5 — Kling: Keyframe + Bewegungs-/Kamera-Metadaten pro Szene."""
+
+    scene_number: int = Field(ge=1)
+    motion_prompt: str = ""
+    camera_path: str = ""
+    transition_hint: str = ""
+    keyframe_positive: str = ""
+
+
+class ProviderOptimizedPromptsBundle(BaseModel):
+    """BA 10.5 — Aggregat aller Provider-Optimierungen (ohne Bruch zu BA 10.2 Stub-Listen)."""
+
+    leonardo: List[OptimizedProviderScenePrompt] = Field(default_factory=list)
+    kling: List[KlingMotionScenePrompt] = Field(default_factory=list)
+    openai: List[OptimizedProviderScenePrompt] = Field(default_factory=list)
+
+
+class ThumbnailVariantSpec(BaseModel):
+    """BA 10.5 — Thumbnail-Textvariante für CTR-/Packaging-Pfade."""
+
+    headline: str = ""
+    overlay_text: str = ""
+    emotion_type: ThumbnailCTREmotionLiteral = "neutral"
+
+
+class CapCutShotlistRow(BaseModel):
+    """BA 10.5 — Shotlist-Zeile (CapCut-orientiert, reines JSON)."""
+
+    scene_number: int = Field(ge=1)
+    scene_label: str = ""
+    visual_prompt_excerpt: str = ""
+    motion_summary: str = ""
+    editor_note: str = ""
+
+
+class CSVShotlistRow(BaseModel):
+    """BA 10.5 — CSV-taugliche Shotlist (gleiche Logik wie CapCut, separates Feld für Export-Pfade)."""
+
+    scene_number: int = Field(ge=1)
+    scene_label: str = ""
+    visual_prompt_excerpt: str = ""
+    motion_summary: str = ""
+    editor_note: str = ""
+
+
+class ProviderPromptOptimizeResponse(BaseModel):
+    """BA 10.5 — Produktionsnahe Provider-Artefakte aus Export-Paket + Optimierern."""
+
+    provider_profile: str = ""
+    optimized_prompts: ProviderOptimizedPromptsBundle = Field(
+        default_factory=ProviderOptimizedPromptsBundle
+    )
+    thumbnail_variants: List[ThumbnailVariantSpec] = Field(default_factory=list)
+    capcut_shotlist: List[CapCutShotlistRow] = Field(default_factory=list)
+    csv_shotlist: List[CSVShotlistRow] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ThumbnailCTRRequest(BaseModel):
+    """BA 10.5 — Heuristische CTR-Schätzung ohne Bildanalyse."""
+
+    title: str = ""
+    hook: str = ""
+    video_template: str = Field(default="generic")
+    thumbnail_prompt: str = ""
+    chapters: List[Chapter] = Field(default_factory=list)
+
+
+class ThumbnailCTRResponse(BaseModel):
+    ctr_score: int = Field(ge=0, le=100, default=0)
+    thumbnail_variants: List[ThumbnailVariantSpec] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ExportFormatDescriptor(BaseModel):
+    """BA 10.5 — Eintrag im Export-Format-Registry."""
+
+    id: str
+    label: str = ""
+    description: str = ""
+    content_type: str = Field(default="application/json", description="MIME oder text/csv")
+    source_endpoint: str = Field(
+        default="",
+        description="Hinweis z. B. POST /story-engine/export-package — nur Dokumentation.",
+    )
+
+
+class ExportFormatsResponse(BaseModel):
+    """BA 10.5 — Registry der unterstützten Export-/Produktionspfade (read-only)."""
+
+    json_export: ExportFormatDescriptor
+    capcut_shotlist: ExportFormatDescriptor
+    csv_shotlist: ExportFormatDescriptor
+    thumbnail_variants: ExportFormatDescriptor
+    provider_prompt_bundle: ExportFormatDescriptor
+    warnings: List[str] = Field(default_factory=list)
+
+
 class LatestVideosRequest(BaseModel):
     channel_url: str = Field(..., min_length=1)
     max_results: int = Field(5, ge=1, le=50)

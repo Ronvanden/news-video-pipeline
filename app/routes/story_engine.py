@@ -3,11 +3,13 @@
 from fastapi import APIRouter, HTTPException
 
 from app.models import (
+    ExportFormatsResponse,
     ExportPackagePreviewResponse,
     ExportPackageRequest,
     ExportPackageResponse,
     GenerateHookRequest,
     GenerateHookResponse,
+    ProviderPromptOptimizeResponse,
     ProviderReadinessRequest,
     ProviderReadinessResponse,
     RhythmHintRequest,
@@ -17,10 +19,15 @@ from app.models import (
     ScenePromptsResponse,
     StorySceneBlueprintRequest,
     TemplateSelectorResponse,
+    ThumbnailCTRRequest,
+    ThumbnailCTRResponse,
 )
 from app.story_engine.export_package import build_export_package_v1
+from app.story_engine.export_formats import list_export_formats
 from app.story_engine.founder_preview import build_export_preview
+from app.story_engine.provider_optimizer import optimize_provider_prompts
 from app.story_engine.provider_readiness import analyze_provider_readiness
+from app.story_engine.thumbnail_ctr import build_thumbnail_ctr_report
 from app.story_engine.template_registry import list_templates
 from app.story_engine.hook_engine import generate_hook_v1
 from app.story_engine.experiment_registry import public_experiment_registry
@@ -155,6 +162,39 @@ async def story_engine_provider_readiness(
     """
     pkg = build_export_package_v1(req)
     return analyze_provider_readiness(pkg)
+
+
+@router.post(
+    "/story-engine/provider-prompts/optimize",
+    response_model=ProviderPromptOptimizeResponse,
+)
+async def story_engine_provider_prompts_optimize(
+    req: ExportPackageRequest,
+) -> ProviderPromptOptimizeResponse:
+    """
+    BA 10.5 — Leonardo-/Kling-/OpenAI-optimierte Prompts, Shotlists und Thumbnail-Varianten.
+
+    Eingabe wie Export-Paket; **keine** externen Provider-Calls, **keine** Persistenz.
+    """
+    return optimize_provider_prompts(req)
+
+
+@router.post(
+    "/story-engine/thumbnail-ctr",
+    response_model=ThumbnailCTRResponse,
+)
+async def story_engine_thumbnail_ctr(req: ThumbnailCTRRequest) -> ThumbnailCTRResponse:
+    """BA 10.5 — Heuristischer CTR-Score und Thumbnail-Textvarianten (ohne Bildanalyse)."""
+    return build_thumbnail_ctr_report(req)
+
+
+@router.get(
+    "/story-engine/export-formats",
+    response_model=ExportFormatsResponse,
+)
+async def story_engine_export_formats() -> ExportFormatsResponse:
+    """BA 10.5 — Read-only Registry der Export- und Produktionsartefakte."""
+    return list_export_formats()
 
 
 @router.get("/story-engine/experiment-registry")
