@@ -134,6 +134,45 @@ class SceneBlueprintPlanResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+ImageProviderProfileLiteral = Literal["leonardo", "openai", "kling"]
+
+
+class ScenePromptsRequest(StorySceneBlueprintRequest):
+    """Phase 8.2 — gleicher Eingabekern wie Scene-Plan plus Provider/Continuity (Nebenkanal)."""
+
+    provider_profile: ImageProviderProfileLiteral = Field(
+        default="openai",
+        description="Platzhalter-Profile ohne echten Provider-Dispatch.",
+    )
+    continuity_lock: bool = Field(
+        default=True,
+        description="Wenn true: Szenen 2+ erhalten denselben Kurz-Anker wie Szene 1 im Positivprompt.",
+    )
+
+
+class SceneExpandedPrompt(BaseModel):
+    scene_number: int = Field(ge=1)
+    positive_expanded: str = ""
+    negative_prompt: str = ""
+    continuity_token: str = Field(
+        default="",
+        description="Kurz-Anker aus Szene 1 bei continuity_lock; sonst leer.",
+    )
+
+
+class ScenePromptsResponse(BaseModel):
+    """Phase 8.2 — expandierte Prompts, keine Binär- oder Provider-URLs."""
+
+    policy_profile: str
+    prompt_engine_version: int = Field(default=1, ge=1)
+    provider_profile: str
+    continuity_lock_enabled: bool
+    continuity_anchor: str = ""
+    blueprint_status: Literal["draft", "ready", "failed"] = "ready"
+    scenes: List[SceneExpandedPrompt] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
 class LatestVideosRequest(BaseModel):
     channel_url: str = Field(..., min_length=1)
     max_results: int = Field(5, ge=1, le=50)
