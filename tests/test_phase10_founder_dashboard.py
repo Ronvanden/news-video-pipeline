@@ -28,6 +28,16 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Noch kein Ergebnis", text)
         self.assertIn("scrollIntoView", text)
         self.assertIn("openPanelAndScroll", text)
+        self.assertIn("Download Production Bundle", text)
+        self.assertIn("Copy All Prompts", text)
+        self.assertIn("Save Session Snapshot", text)
+        self.assertIn("Production Ready Checklist", text)
+        self.assertIn("Warning Center", text)
+        self.assertIn("buildMarkdownBriefing", text)
+        self.assertIn("localStorage", text)
+        self.assertIn("provider-prompt-cards", text)
+        self.assertIn("Load Last Snapshot", text)
+        self.assertIn("Clear Snapshot", text)
 
     def test_dashboard_config_200(self):
         client = TestClient(app)

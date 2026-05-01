@@ -1,4 +1,4 @@
-"""BA 10.6/10.7 — eingebettetes HTML/CSS/JS für GET /founder/dashboard."""
+"""BA 10.6–10.8 — eingebettetes HTML/CSS/JS für GET /founder/dashboard."""
 
 
 def get_founder_dashboard_html() -> str:
@@ -217,12 +217,53 @@ table.data th { background: var(--bg); color: var(--muted); }
   font-size: 0.72rem;
 }
 .pl-scene:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.checklist-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.checklist-badge.ready { background: rgba(74,222,128,0.25); color: var(--ok); border: 1px solid var(--ok); }
+.checklist-badge.partial { background: rgba(251,191,36,0.2); color: var(--warn); border: 1px solid var(--warn); }
+.checklist-badge.blocked { background: rgba(248,113,113,0.2); color: #fecaca; border: 1px solid var(--danger); }
+#prod-checklist-items { list-style: none; padding: 0; margin: 0.5rem 0 0; font-size: 0.82rem; }
+#prod-checklist-items li { padding: 0.2rem 0; border-bottom: 1px solid var(--border); }
+#prod-checklist-items li.ok { color: var(--ok); }
+#prod-checklist-items li.no { color: var(--muted); }
+.warn-grouped { margin-top: 0.5rem; }
+.warn-group { margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; background: var(--bg); }
+.warn-group h4 { margin: 0 0 0.35rem; font-size: 0.78rem; color: var(--muted); }
+.warn-group ul { margin: 0; padding-left: 1.1rem; font-size: 0.8rem; color: #fde68a; }
+.prompt-cards-wrap { margin-top: 1rem; }
+.prompt-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--bg);
+}
+.prompt-card h3 { margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--text); }
+.pc-block { margin-bottom: 0.65rem; }
+.pc-block label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.15rem; }
+.pc-block pre {
+  margin: 0.25rem 0 0;
+  padding: 0.45rem;
+  font-size: 0.7rem;
+  background: var(--surface);
+  border-radius: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 140px;
+  overflow-y: auto;
+}
 </style>
 </head>
 <body>
 <header>
   <h1>Founder Dashboard</h1>
-  <p>Read-only Cockpit · Story-Engine per fetch · BA 10.7 (ohne Auth / Firestore / externe Provider)</p>
+  <p>Read-only Cockpit · Story-Engine per fetch · BA 10.8 Export Ops (ohne Auth / Firestore / externe Provider)</p>
 </header>
 <main>
   <div id="error-bar" role="alert"></div>
@@ -271,6 +312,21 @@ table.data th { background: var(--bg); color: var(--muted); }
       </div>
     </section>
   </div>
+
+  <section class="panel" id="coll-ops" style="margin-top:1rem">
+    <h2>Production Ready Checklist</h2>
+    <div id="prod-checklist-badge" class="checklist-badge blocked">BLOCKED</div>
+    <ul id="prod-checklist-items"></ul>
+    <h2 class="subh">Export Ops (lokal)</h2>
+    <p class="muted">Download Production Bundle: mehrere Dateien nacheinander (kein ZIP). Session Snapshot: localStorage Key <code>fd_session_snapshot_v1</code>.</p>
+    <div class="actions">
+      <button type="button" class="primary" id="btn-prod-bundle" data-label="Download Production Bundle">Download Production Bundle</button>
+      <button type="button" id="btn-copy-all-prompts" data-label="Copy All Prompts">Copy All Prompts</button>
+      <button type="button" id="btn-snapshot-save" data-label="Save Session Snapshot">Save Session Snapshot</button>
+      <button type="button" id="btn-snapshot-load" data-label="Load Last Snapshot">Load Last Snapshot</button>
+      <button type="button" id="btn-snapshot-clear" data-label="Clear Snapshot">Clear Snapshot</button>
+    </div>
+  </section>
 
   <details class="fd-coll" open id="coll-export">
     <summary>Export Package (roh)</summary>
@@ -369,6 +425,9 @@ table.data th { background: var(--bg); color: var(--muted); }
         </div>
         <pre class="out out-empty" id="out-csv">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
+      <h2 class="subh">Provider Prompt Cards</h2>
+      <p class="muted">Nach „Optimize Provider Prompts“ — je Szene Leonardo / Kling / OpenAI mit Copy.</p>
+      <div id="provider-prompt-cards" class="prompt-cards-wrap"></div>
     </div>
   </details>
 
@@ -463,7 +522,8 @@ table.data th { background: var(--bg); color: var(--muted); }
 
   <section class="panel" style="margin-top:1rem">
     <h2>Warning Center</h2>
-    <ul class="warn-list" id="out-warnings"></ul>
+    <div id="warn-center-grouped" class="warn-grouped muted">Noch keine Warnungen aggregiert.</div>
+    <ul class="warn-list" id="out-warnings" style="display:none" aria-hidden="true"></ul>
   </section>
 </main>
 <script>
@@ -476,6 +536,8 @@ table.data th { background: var(--bg); color: var(--muted); }
   const err = $("error-bar");
   let lastExport = null;
   let lastOptimize = null;
+  let lastPreview = null;
+  let lastReadiness = null;
   let lastCtrPayload = null;
   let lastNumericPq = null;
   let templateIds = [];
@@ -546,18 +608,448 @@ table.data th { background: var(--bg); color: var(--muted); }
     arr.forEach(function(w){
       if (w && warningsAcc.indexOf(w) < 0) warningsAcc.push(w);
     });
-    renderWarnings();
+    refreshWarningCenter();
+    updateProductionChecklist();
   }
   function renderWarnings() {
-    const ul = $("out-warnings");
-    ul.innerHTML = "";
-    warningsAcc.forEach(function(w){
-      const li = document.createElement("li");
-      li.textContent = w;
-      ul.appendChild(li);
+    refreshWarningCenter();
+    updateProductionChecklist();
+  }
+  function clearWarnings() {
+    warningsAcc = [];
+    refreshWarningCenter();
+    updateProductionChecklist();
+  }
+
+  const LS_SNAPSHOT_KEY = "fd_session_snapshot_v1";
+
+  function sleep(ms) {
+    return new Promise(function(res) { setTimeout(res, ms); });
+  }
+
+  function getSceneCount() {
+    if (!lastExport) return 0;
+    if (lastExport.scene_plan && Array.isArray(lastExport.scene_plan.scenes)) return lastExport.scene_plan.scenes.length;
+    if (lastExport.scene_prompts && Array.isArray(lastExport.scene_prompts.scenes)) return lastExport.scene_prompts.scenes.length;
+    return 0;
+  }
+
+  function collectAllWarningsStrings() {
+    var seen = {};
+    function addList(arr) {
+      (arr || []).forEach(function(w) {
+        if (w && typeof w === "string" && !seen[w]) seen[w] = 1;
+      });
+    }
+    addList(warningsAcc);
+    if (lastExport) {
+      addList(lastExport.warnings);
+      if (lastExport.hook && lastExport.hook.warnings) addList(lastExport.hook.warnings);
+      if (lastExport.scene_prompts && lastExport.scene_prompts.warnings) addList(lastExport.scene_prompts.warnings);
+    }
+    if (lastPreview && lastPreview.top_warnings) addList(lastPreview.top_warnings);
+    if (lastReadiness) {
+      addList(lastReadiness.warnings);
+      addList(lastReadiness.blocking_issues);
+    }
+    if (lastOptimize && lastOptimize.warnings) addList(lastOptimize.warnings);
+    if (lastCtrPayload && lastCtrPayload.warnings) addList(lastCtrPayload.warnings);
+    return Object.keys(seen);
+  }
+
+  function classifyWarningBucket(w) {
+    var s = String(w).toLowerCase();
+    if (/quality|prompt_quality|conformance|check|evidence|template|refine|policy/.test(s)) return "prompt_quality";
+    if (/provider|leonardo|kling|openai|stub|continuity|negative|image/.test(s)) return "provider";
+    if (/chapter|kapitel|hook|title|empty|duration|input|szene|scene/.test(s)) return "input";
+    if (/source|url|article|extract|summary|quelle/.test(s)) return "source";
+    return "other";
+  }
+
+  function refreshWarningCenter() {
+    var root = $("warn-center-grouped");
+    if (!root) return;
+    var all = collectAllWarningsStrings();
+    if (!all.length) {
+      root.innerHTML = "<p class=\\"muted\\">Keine Warnungen aus Export / Preview / Readiness / Optimize / CTR.</p>";
+      return;
+    }
+    var buckets = { prompt_quality: [], provider: [], input: [], source: [], other: [] };
+    all.forEach(function(w) {
+      buckets[classifyWarningBucket(w)].push(w);
+    });
+    var order = ["prompt_quality", "provider", "input", "source", "other"];
+    var labels = {
+      prompt_quality: "prompt_quality",
+      provider: "provider",
+      input: "input",
+      source: "source",
+      other: "other"
+    };
+    root.innerHTML = "";
+    order.forEach(function(key) {
+      var list = buckets[key];
+      var div = document.createElement("div");
+      div.className = "warn-group";
+      var h = document.createElement("h4");
+      h.textContent = labels[key] + " (" + list.length + ")";
+      div.appendChild(h);
+      if (!list.length) {
+        var p = document.createElement("p");
+        p.className = "muted";
+        p.style.margin = "0";
+        p.textContent = "—";
+        div.appendChild(p);
+      } else {
+        var ul = document.createElement("ul");
+        list.forEach(function(t) {
+          var li = document.createElement("li");
+          li.textContent = t;
+          ul.appendChild(li);
+        });
+        div.appendChild(ul);
+      }
+      root.appendChild(div);
     });
   }
-  function clearWarnings() { warningsAcc = []; renderWarnings(); }
+
+  function updateProductionChecklist() {
+    var badge = $("prod-checklist-badge");
+    var ul = $("prod-checklist-items");
+    if (!badge || !ul) return;
+    var sc = getSceneCount();
+    var hasEx = !!lastExport;
+    var hasPr = !!lastPreview;
+    var hasRe = !!lastReadiness;
+    var hasOpt = !!lastOptimize;
+    var hasCtr = !!lastCtrPayload;
+    var wCount = collectAllWarningsStrings().length;
+    var blocked = !hasEx || sc === 0;
+    var allData = hasEx && sc > 0 && hasPr && hasRe && hasOpt && hasCtr;
+    var status, cls;
+    if (blocked) {
+      status = "BLOCKED";
+      cls = "blocked";
+    } else if (allData && wCount === 0) {
+      status = "READY";
+      cls = "ready";
+    } else {
+      status = "PARTIAL";
+      cls = "partial";
+    }
+    badge.textContent = status;
+    badge.className = "checklist-badge " + cls;
+    ul.innerHTML = "";
+    function addRow(ok, label) {
+      var li = document.createElement("li");
+      li.className = ok ? "ok" : "no";
+      li.textContent = label;
+      ul.appendChild(li);
+    }
+    addRow(hasEx, "Export Package vorhanden: " + (hasEx ? "ja" : "nein"));
+    addRow(sc > 0, "scene_count > 0: " + sc);
+    addRow(hasPr, "Preview vorhanden: " + (hasPr ? "ja" : "nein"));
+    addRow(hasRe, "Readiness vorhanden: " + (hasRe ? "ja" : "nein"));
+    addRow(hasOpt, "Optimize vorhanden: " + (hasOpt ? "ja" : "nein"));
+    addRow(hasCtr, "CTR vorhanden: " + (hasCtr ? "ja" : "nein"));
+    addRow(wCount === 0, "Warnings (gesamt): " + wCount);
+  }
+
+  function buildMarkdownBriefing() {
+    var lines = [];
+    lines.push("# Production Briefing");
+    lines.push("");
+    lines.push("## Meta");
+    lines.push("- generated: " + new Date().toISOString());
+    lines.push("");
+    lines.push("## Title");
+    lines.push(String((buildExportBody().title || $("fd-title").value || "(kein Titel)")));
+    lines.push("");
+    lines.push("## Template");
+    lines.push(String(buildExportBody().video_template || "generic"));
+    lines.push("");
+    lines.push("## Hook");
+    lines.push("```json");
+    lines.push(JSON.stringify(lastExport && lastExport.hook ? lastExport.hook : {}, null, 2));
+    lines.push("```");
+    lines.push("");
+    lines.push("## Thumbnail Prompt");
+    lines.push(String((lastExport && lastExport.thumbnail_prompt) || ""));
+    lines.push("");
+    lines.push("## Prompt Quality");
+    lines.push("```json");
+    lines.push(JSON.stringify((lastExport && (lastExport.prompt_quality || (lastExport.scene_prompts && lastExport.scene_prompts.prompt_quality))) || (lastPreview ? { prompt_quality_score: lastPreview.prompt_quality_score } : {}), null, 2));
+    lines.push("```");
+    lines.push("");
+    lines.push("## Provider Readiness");
+    lines.push("```json");
+    lines.push(JSON.stringify(lastReadiness || {}, null, 2));
+    lines.push("```");
+    lines.push("");
+    lines.push("## Thumbnail CTR");
+    lines.push("```json");
+    lines.push(JSON.stringify(lastCtrPayload || {}, null, 2));
+    lines.push("```");
+    lines.push("");
+    lines.push("## Scenes & Provider Prompts");
+    if (lastOptimize && lastOptimize.optimized_prompts) {
+      var op = lastOptimize.optimized_prompts;
+      var max = Math.max((op.leonardo || []).length, (op.openai || []).length, (op.kling || []).length);
+      for (var i = 0; i < max; i++) {
+        lines.push("### Szene " + (i + 1));
+        lines.push("#### Leonardo");
+        lines.push("```");
+        lines.push((op.leonardo && op.leonardo[i]) ? String((op.leonardo[i].positive_optimized || "")) : "");
+        lines.push("```");
+        lines.push("#### OpenAI");
+        lines.push("```");
+        lines.push((op.openai && op.openai[i]) ? String((op.openai[i].positive_optimized || "")) : "");
+        lines.push("```");
+        lines.push("#### Kling");
+        lines.push("```");
+        if (op.kling && op.kling[i]) {
+          var k = op.kling[i];
+          lines.push("motion: " + (k.motion_prompt || ""));
+          lines.push("camera: " + (k.camera_path || ""));
+          lines.push("transition: " + (k.transition_hint || ""));
+          lines.push("keyframe: " + (k.keyframe_positive || ""));
+        }
+        lines.push("```");
+      }
+    } else {
+      lines.push("_Optimize-Daten fehlen._");
+    }
+    lines.push("");
+    lines.push("## Warnings");
+    collectAllWarningsStrings().forEach(function(w) { lines.push("- " + w); });
+    return lines.join("\\n");
+  }
+
+  function formatProviderTxt(rows, kind) {
+    if (!rows || !rows.length) return "";
+    var parts = [];
+    rows.forEach(function(row, idx) {
+      parts.push("=== Szene " + (idx + 1) + " ===");
+      if (kind === "kling") {
+        parts.push("motion_prompt: " + (row.motion_prompt || ""));
+        parts.push("camera_path: " + (row.camera_path || ""));
+        parts.push("transition_hint: " + (row.transition_hint || ""));
+        parts.push("keyframe_positive: " + (row.keyframe_positive || ""));
+      } else {
+        parts.push("positive: " + (row.positive_optimized || row.positive_expanded || ""));
+        parts.push("negative: " + (row.negative_prompt || ""));
+        parts.push("continuity: " + (row.continuity_token || ""));
+      }
+      parts.push("");
+    });
+    return parts.join("\\n");
+  }
+
+  function formatThumbnailVariantsTxt() {
+    var v = (lastOptimize && lastOptimize.thumbnail_variants) || (lastCtrPayload && lastCtrPayload.thumbnail_variants) || [];
+    if (!v.length) return "";
+    return JSON.stringify(v, null, 2);
+  }
+
+  function buildProductionPackageJson() {
+    return JSON.stringify({
+      version: "10.8-v1",
+      timestamp: new Date().toISOString(),
+      export_request: buildExportBody(),
+      lastExport: lastExport,
+      lastPreview: lastPreview,
+      lastReadiness: lastReadiness,
+      lastOptimize: lastOptimize,
+      lastCtr: lastCtrPayload
+    }, null, 2);
+  }
+
+  function formatAllPromptsForClipboard() {
+    var op = lastOptimize.optimized_prompts;
+    var blocks = [];
+    blocks.push("=== LEONARDO ===");
+    blocks.push(formatProviderTxt(op.leonardo, "leo"));
+    blocks.push("=== OPENAI (Bild) ===");
+    blocks.push(formatProviderTxt(op.openai, "leo"));
+    blocks.push("=== KLING ===");
+    blocks.push(formatProviderTxt(op.kling, "kling"));
+    return blocks.join("\\n\\n");
+  }
+
+  var promptCardCopyData = [];
+
+  function renderProviderPromptCards() {
+    var host = $("provider-prompt-cards");
+    if (!host) return;
+    host.innerHTML = "";
+    promptCardCopyData = [];
+    if (!lastOptimize || !lastOptimize.optimized_prompts) {
+      host.innerHTML = "<p class=\\"muted\\">Noch keine Optimize-Daten — zuerst „Optimize Provider Prompts“ ausführen.</p>";
+      return;
+    }
+    var op = lastOptimize.optimized_prompts;
+    var max = Math.max((op.leonardo || []).length, (op.openai || []).length, (op.kling || []).length);
+    for (var i = 0; i < max; i++) {
+      var leo = op.leonardo && op.leonardo[i];
+      var oai = op.openai && op.openai[i];
+      var kli = op.kling && op.kling[i];
+      var leoT = leo ? String(leo.positive_optimized || "") : "";
+      var oaiT = oai ? String(oai.positive_optimized || "") : "";
+      var kT = "";
+      if (kli) {
+        kT = ["motion: " + (kli.motion_prompt || ""), "camera: " + (kli.camera_path || ""), "transition: " + (kli.transition_hint || ""), "keyframe: " + (kli.keyframe_positive || "")].join("\\n");
+      }
+      promptCardCopyData.push({ leo: leoT, openai: oaiT, kling: kT });
+      var card = document.createElement("div");
+      card.className = "prompt-card";
+      card.innerHTML =
+        "<h3>Szene " + (i + 1) + "</h3>" +
+        "<div class=\\"pc-block\\"><label>Leonardo</label><pre class=\\"pc-pre\\">" + escapeHtml(leoT || "—") + "</pre>" +
+        "<button type=\\"button\\" class=\\"sm pc-copy-btn\\" data-pc-idx=\\"" + i + "\\" data-pc-kind=\\"leo\\">Copy</button></div>" +
+        "<div class=\\"pc-block\\"><label>Kling Motion / Kamera / Keyframe</label><pre class=\\"pc-pre\\">" + escapeHtml(kT || "—") + "</pre>" +
+        "<button type=\\"button\\" class=\\"sm pc-copy-btn\\" data-pc-idx=\\"" + i + "\\" data-pc-kind=\\"kling\\">Copy</button></div>" +
+        "<div class=\\"pc-block\\"><label>OpenAI</label><pre class=\\"pc-pre\\">" + escapeHtml(oaiT || "—") + "</pre>" +
+        "<button type=\\"button\\" class=\\"sm pc-copy-btn\\" data-pc-idx=\\"" + i + "\\" data-pc-kind=\\"openai\\">Copy</button></div>";
+      host.appendChild(card);
+    }
+  }
+
+  function getInputSnapshot() {
+    return {
+      title: $("fd-title").value,
+      topic: $("fd-topic").value,
+      summary: $("fd-summary").value,
+      template: $("fd-template").value,
+      duration: $("fd-duration").value,
+      provider: $("fd-provider").value,
+      continuity_lock: $("fd-lock").checked,
+      chapters_json: $("fd-chapters").value
+    };
+  }
+
+  function applyInputSnapshot(inp) {
+    if (!inp) return;
+    $("fd-title").value = inp.title || "";
+    $("fd-topic").value = inp.topic || "";
+    $("fd-summary").value = inp.summary || "";
+    if (inp.duration) $("fd-duration").value = inp.duration;
+    if (inp.provider) $("fd-provider").value = inp.provider;
+    $("fd-lock").checked = !!inp.continuity_lock;
+    if (inp.chapters_json) $("fd-chapters").value = inp.chapters_json;
+    if (inp.template) {
+      var sel = $("fd-template");
+      var found = false;
+      for (var oi = 0; oi < sel.options.length; oi++) {
+        if (sel.options[oi].value === inp.template) { sel.selectedIndex = oi; found = true; break; }
+      }
+      if (!found) {
+        var opt = document.createElement("option");
+        opt.value = inp.template;
+        opt.textContent = inp.template;
+        sel.appendChild(opt);
+        sel.value = inp.template;
+      }
+    }
+  }
+
+  function repaintPanelsFromState() {
+    clearWarnings();
+    if (lastExport) {
+      setOut("out-export-full", lastExport);
+      mergeWarnings(lastExport.warnings || []);
+      var pq = lastExport.prompt_quality || (lastExport.scene_prompts && lastExport.scene_prompts.prompt_quality);
+      if (!lastPreview) {
+        setOut("out-hook", lastExport.hook || null);
+        if (pq) {
+          setOut("out-pq-score", "(Report)");
+          setOut("out-pq-detail", pq);
+        } else {
+          setOut("out-pq-score", null);
+          setOut("out-pq-detail", null);
+        }
+        lastNumericPq = null;
+        updatePqBadge();
+      }
+    } else {
+      setOut("out-export-full", null);
+      if (!lastPreview) {
+        setOut("out-hook", null);
+        setOut("out-pq-score", null);
+        setOut("out-pq-detail", null);
+        lastNumericPq = null;
+        updatePqBadge();
+      }
+    }
+    if (lastPreview) {
+      lastNumericPq = lastPreview.prompt_quality_score;
+      updatePqBadge();
+      setOut("out-hook", {
+        hook_type: lastPreview.hook_type,
+        hook_score: lastPreview.hook_score,
+        template_id: lastPreview.template_id,
+        export_ready: lastPreview.export_ready,
+        readiness_status: lastPreview.readiness_status,
+        top_warnings: lastPreview.top_warnings
+      });
+      setOut("out-pq-score", lastPreview.prompt_quality_score);
+      setOut("out-pq-detail", { prompt_quality_score: lastPreview.prompt_quality_score, scene_count: lastPreview.scene_count });
+      mergeWarnings(lastPreview.top_warnings || []);
+    }
+    if (lastReadiness) setOut("out-readiness", lastReadiness);
+    else setOut("out-readiness", null);
+    if (lastOptimize) {
+      var op = lastOptimize.optimized_prompts || {};
+      setOut("out-leo", op.leonardo || []);
+      setOut("out-openai", op.openai || []);
+      setOut("out-kling", op.kling || []);
+      setOut("out-capcut", lastOptimize.capcut_shotlist || []);
+      setOut("out-csv", lastOptimize.csv_shotlist || []);
+      setOut("out-thumb-var", lastOptimize.thumbnail_variants || []);
+      mergeWarnings(lastOptimize.warnings || []);
+    } else {
+      setOut("out-leo", null);
+      setOut("out-openai", null);
+      setOut("out-kling", null);
+      setOut("out-capcut", null);
+      setOut("out-csv", null);
+      if (!lastCtrPayload) setOut("out-thumb-var", null);
+    }
+    if (lastCtrPayload) {
+      setOut("out-ctr", lastCtrPayload.ctr_score);
+      setOut("out-ctr-raw", lastCtrPayload);
+      if (!lastOptimize) setOut("out-thumb-var", lastCtrPayload.thumbnail_variants || []);
+      mergeWarnings(lastCtrPayload.warnings || []);
+    } else {
+      setOut("out-ctr", null);
+      setOut("out-ctr-raw", null);
+    }
+    renderPromptLab();
+    renderProviderPromptCards();
+    refreshWarningCenter();
+    updateProductionChecklist();
+  }
+
+  async function runDownloadProductionBundle() {
+    if (!lastExport || !lastOptimize) {
+      throw new Error("Bitte zuerst Export Package und Optimize Provider Prompts ausführen.");
+    }
+    var op = lastOptimize.optimized_prompts || {};
+    var jobs = [
+      ["production_package.json", "application/json", buildProductionPackageJson()],
+      ["briefing.md", "text/markdown", buildMarkdownBriefing()],
+      ["leonardo_prompts.txt", "text/plain", formatProviderTxt(op.leonardo, "leo")],
+      ["kling_motion_prompts.txt", "text/plain", formatProviderTxt(op.kling, "kling")],
+      ["openai_image_prompts.txt", "text/plain", formatProviderTxt(op.openai, "leo")],
+      ["thumbnail_variants.txt", "text/plain", formatThumbnailVariantsTxt()],
+      ["capcut_shotlist.csv", "text/csv", arrayToCsv(lastOptimize.capcut_shotlist || [])],
+      ["csv_shotlist.csv", "text/csv", arrayToCsv(lastOptimize.csv_shotlist || [])],
+      ["warnings.txt", "text/plain", collectAllWarningsStrings().join("\\n")]
+    ];
+    for (var j = 0; j < jobs.length; j++) {
+      downloadText(jobs[j][0], jobs[j][1], jobs[j][2]);
+      await sleep(140);
+    }
+  }
 
   async function fetchJson(url, opts) {
     showError("");
@@ -720,7 +1212,20 @@ table.data th { background: var(--bg); color: var(--muted); }
 
   document.querySelector("main").addEventListener("click", function(ev) {
     var t = ev.target;
-    if (!t || !t.getAttribute) return;
+    if (!t || !t.classList) return;
+    if (t.classList.contains("pc-copy-btn")) {
+      var idx = parseInt(t.getAttribute("data-pc-idx"), 10);
+      var kind = t.getAttribute("data-pc-kind");
+      var row = promptCardCopyData[idx];
+      if (!row) return;
+      var txt = kind === "leo" ? row.leo : kind === "openai" ? row.openai : row.kling;
+      navigator.clipboard.writeText(txt || "").then(function() {
+        t.textContent = "OK";
+        setTimeout(function() { t.textContent = "Copy"; }, 900);
+      }).catch(function() { showError("Clipboard nicht verfügbar"); });
+      return;
+    }
+    if (!t.getAttribute) return;
     var preId = t.getAttribute("data-pre");
     if (!preId) return;
     var txt = getPreText(preId);
@@ -817,6 +1322,7 @@ table.data th { background: var(--bg); color: var(--muted); }
       }
       mergeWarnings(data.warnings || []);
       renderPromptLab();
+      renderProviderPromptCards();
     });
   };
 
@@ -829,6 +1335,7 @@ table.data th { background: var(--bg); color: var(--muted); }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildExportBody())
       });
+      lastPreview = data;
       lastNumericPq = data.prompt_quality_score;
       updatePqBadge();
       setOut("out-hook", {
@@ -854,6 +1361,7 @@ table.data th { background: var(--bg); color: var(--muted); }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildExportBody())
       });
+      lastReadiness = data;
       setOut("out-readiness", data);
       mergeWarnings(data.warnings || []);
       mergeWarnings(data.blocking_issues || []);
@@ -879,6 +1387,7 @@ table.data th { background: var(--bg); color: var(--muted); }
       setOut("out-thumb-var", data.thumbnail_variants || []);
       mergeWarnings(data.warnings || []);
       renderPromptLab();
+      renderProviderPromptCards();
     });
   };
 
@@ -963,7 +1472,71 @@ table.data th { background: var(--bg); color: var(--muted); }
     });
   };
 
-  loadTemplates().then(function() { renderPromptLab(); });
+  $("btn-prod-bundle").onclick = async function() {
+    var btn = this;
+    await withActionButton(btn, "coll-ops", "coll-ops", runDownloadProductionBundle);
+  };
+
+  $("btn-copy-all-prompts").onclick = async function() {
+    var btn = this;
+    await withActionButton(btn, "coll-optimize", "coll-optimize", async function() {
+      if (!lastOptimize || !lastOptimize.optimized_prompts) {
+        throw new Error("Bitte zuerst Optimize Provider Prompts ausführen.");
+      }
+      var t = formatAllPromptsForClipboard();
+      await navigator.clipboard.writeText(t);
+    });
+  };
+
+  $("btn-snapshot-save").onclick = function() {
+    var btn = this;
+    try {
+      var pack = {
+        timestamp: new Date().toISOString(),
+        input: getInputSnapshot(),
+        lastExport: lastExport,
+        lastPreview: lastPreview,
+        lastReadiness: lastReadiness,
+        lastOptimize: lastOptimize,
+        lastCtr: lastCtrPayload
+      };
+      localStorage.setItem(LS_SNAPSHOT_KEY, JSON.stringify(pack));
+      btn.classList.add("is-success");
+      setTimeout(function() { btn.classList.remove("is-success"); }, 1600);
+      showError("");
+    } catch (e) {
+      showError("Snapshot speichern fehlgeschlagen: " + String(e.message || e));
+    }
+  };
+
+  $("btn-snapshot-load").onclick = async function() {
+    var btn = this;
+    await withActionButton(btn, "coll-ops", "coll-ops", async function() {
+      var raw = localStorage.getItem(LS_SNAPSHOT_KEY);
+      if (!raw) throw new Error("Kein Snapshot in localStorage (fd_session_snapshot_v1).");
+      var pack = JSON.parse(raw);
+      applyInputSnapshot(pack.input);
+      lastExport = pack.lastExport || null;
+      lastPreview = pack.lastPreview || null;
+      lastReadiness = pack.lastReadiness || null;
+      lastOptimize = pack.lastOptimize || null;
+      lastCtrPayload = pack.lastCtr != null ? pack.lastCtr : (pack.lastCtrPayload || null);
+      repaintPanelsFromState();
+    });
+  };
+
+  $("btn-snapshot-clear").onclick = function() {
+    localStorage.removeItem(LS_SNAPSHOT_KEY);
+    var btn = this;
+    btn.classList.add("is-success");
+    setTimeout(function() { btn.classList.remove("is-success"); }, 1200);
+  };
+
+  loadTemplates().then(function() {
+    renderPromptLab();
+    refreshWarningCenter();
+    updateProductionChecklist();
+  });
   updatePqBadge();
 })();
 </script>
