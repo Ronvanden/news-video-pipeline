@@ -110,6 +110,61 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("export_package", paths)
         self.assertEqual(paths["export_formats"]["path"], "/story-engine/export-formats")
 
+    def test_dashboard_contains_story_engine_request_builder_and_validation(self):
+        client = TestClient(app)
+        r = client.get("/founder/dashboard")
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        text = r.text
+        self.assertIn("buildCurrentExportRequestFromForm", text)
+        self.assertIn("validateExportFormForStoryEngine", text)
+        self.assertIn("assertCompleteStoryResponse", text)
+        self.assertIn('id="story-engine-request-debug"', text)
+        self.assertIn("Export Request gebaut:", text)
+        self.assertIn("normalizeStoryTemplateId", text)
+        self.assertIn("Endpoint antwortet leer oder unvollständig:", text)
+        self.assertIn("runExportOnlyInternal", text)
+
+    def test_story_engine_post_endpoints_return_fields_expected_by_dashboard(self):
+        client = TestClient(app)
+        base = {
+            "video_template": "generic",
+            "duration_minutes": 10,
+            "title": "Dashboard Contract Test",
+            "topic": "test",
+            "source_summary": "Kurzfassung für den Export.",
+            "provider_profile": "openai",
+            "continuity_lock": True,
+            "chapters": [
+                {"title": "Teil 1", "content": "Inhalt mit genug Zeichen für eine Szene. " * 3},
+            ],
+        }
+        r = client.post("/story-engine/export-package", json=base)
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        data = r.json()
+        self.assertIsInstance(data.get("hook"), dict)
+        self.assertIsInstance(data.get("scene_plan"), dict)
+        self.assertIsInstance(data.get("scene_prompts"), dict)
+        rp = client.post("/story-engine/export-package/preview", json=base)
+        self.assertEqual(rp.status_code, 200, msg=rp.text)
+        pj = rp.json()
+        self.assertIsInstance(pj.get("prompt_quality_score"), int)
+        rr = client.post("/story-engine/provider-readiness", json=base)
+        self.assertEqual(rr.status_code, 200, msg=rr.text)
+        self.assertIsInstance(rr.json().get("scores"), dict)
+        op = client.post("/story-engine/provider-prompts/optimize", json=base)
+        self.assertEqual(op.status_code, 200, msg=op.text)
+        self.assertIsInstance(op.json().get("optimized_prompts"), dict)
+        ctr_body = {
+            "title": base["title"],
+            "hook": data["hook"]["hook_text"],
+            "video_template": "generic",
+            "thumbnail_prompt": data.get("thumbnail_prompt") or "",
+            "chapters": base["chapters"],
+        }
+        ctr = client.post("/story-engine/thumbnail-ctr", json=ctr_body)
+        self.assertEqual(ctr.status_code, 200, msg=ctr.text)
+        self.assertIsInstance(ctr.json().get("ctr_score"), int)
+
 
 if __name__ == "__main__":
     unittest.main()

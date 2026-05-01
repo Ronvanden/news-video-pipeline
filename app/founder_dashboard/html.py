@@ -592,6 +592,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     <section class="panel">
       <h2>Actions</h2>
       <p class="muted">POST-Body = ExportPackageRequest (BA 10.3–10.5).</p>
+      <p id="story-engine-request-debug" class="muted" style="font-size:0.78rem;min-height:1.1rem;margin:0.35rem 0 0.25rem" aria-live="polite"></p>
       <div class="actions">
         <button type="button" class="primary" id="btn-export" data-label="Build Export Package">Build Export Package</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
@@ -863,6 +864,10 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     var d = detailsId ? document.getElementById(detailsId) : null;
     if (d && d.tagName === "DETAILS") d.open = true;
     var el = scrollTargetId ? $(scrollTargetId) : d;
+    if (el && el.closest) {
+      var det = el.closest("details");
+      if (det) det.open = true;
+    }
     if (el && typeof el.scrollIntoView === "function") {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -911,6 +916,101 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     else if (kind === "info") el.className = base + " intake-status-info";
     else el.className = base;
   }
+  function normalizeStoryTemplateId(v) {
+    var s = String(v == null ? "" : v).trim().toLowerCase();
+    return s || "generic";
+  }
+
+  function setStoryEngineRequestDebug(msg) {
+    var el = $("story-engine-request-debug");
+    if (el) el.textContent = msg || "";
+  }
+
+  function validateExportFormForStoryEngine() {
+    if (!$("fd-title")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-title");
+    if (!$("fd-topic")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-topic");
+    if (!$("fd-summary")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-summary");
+    if (!$("fd-chapters")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-chapters");
+    var title = ($("fd-title").value || "").trim();
+    if (!title) throw new Error("Story-Engine: Titel (fd-title) darf nicht leer sein.");
+    var tmplEl = $("fd-template");
+    if (!tmplEl) throw new Error("Story-Engine: Template-Select fd-template nicht gefunden.");
+    if (!tmplEl.options || tmplEl.options.length === 0) {
+      throw new Error("Story-Engine: Keine Template-Optionen — bitte Seite neu laden (GET /story-engine/template-selector).");
+    }
+    var vt = normalizeStoryTemplateId(tmplEl.value);
+    if (!vt) throw new Error("Story-Engine: Template nicht gesetzt.");
+    var pe = $("fd-provider");
+    if (!pe) throw new Error("Story-Engine: Provider fd-provider nicht gefunden.");
+    var pv = (pe.value || "").trim().toLowerCase();
+    if (!pv || !/^(openai|leonardo|kling)$/.test(pv)) {
+      throw new Error("Story-Engine: Provider nicht gesetzt oder ungültig (openai | leonardo | kling).");
+    }
+    var raw = ($("fd-chapters").value || "").trim();
+    if (!raw) throw new Error("Story-Engine: Kapitel-JSON (fd-chapters) ist leer.");
+    var arr;
+    try { arr = JSON.parse(raw); } catch (eC) {
+      throw new Error("Story-Engine: Kapitel-JSON nicht parsebar: " + eC.message);
+    }
+    if (!Array.isArray(arr) || arr.length === 0) {
+      throw new Error("Story-Engine: Mindestens ein Kapitel mit Inhalt erforderlich.");
+    }
+    for (var i = 0; i < arr.length; i++) {
+      var c = arr[i];
+      var body = c && c.content != null ? String(c.content).trim() : "";
+      if (!body) throw new Error("Story-Engine: Kapitel #" + (i + 1) + " hat leeren content.");
+    }
+  }
+
+  function buildCurrentExportRequestFromForm() {
+    validateExportFormForStoryEngine();
+    var raw = $("fd-chapters").value.trim();
+    var chapters = JSON.parse(raw);
+    return {
+      video_template: normalizeStoryTemplateId($("fd-template").value),
+      duration_minutes: Math.min(180, Math.max(1, parseInt($("fd-duration").value, 10) || 10)),
+      title: ($("fd-title").value || "").trim(),
+      topic: ($("fd-topic").value || "").trim(),
+      source_summary: ($("fd-summary").value || "").trim(),
+      provider_profile: ($("fd-provider").value || "openai").trim().toLowerCase(),
+      continuity_lock: $("fd-lock").checked,
+      chapters: chapters
+    };
+  }
+
+  function assertCompleteStoryResponse(endpoint, data, kind) {
+    if (data === null || typeof data !== "object") {
+      throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint);
+    }
+    if (kind === "export") {
+      if (!data.hook || typeof data.hook !== "object") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (hook)");
+      }
+      if (!data.scene_plan || typeof data.scene_plan !== "object") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (scene_plan)");
+      }
+      if (!data.scene_prompts || typeof data.scene_prompts !== "object") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (scene_prompts)");
+      }
+    } else if (kind === "preview") {
+      if (typeof data.prompt_quality_score !== "number") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (prompt_quality_score)");
+      }
+    } else if (kind === "readiness") {
+      if (!data.scores || typeof data.scores !== "object") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (scores)");
+      }
+    } else if (kind === "optimize") {
+      if (!data.optimized_prompts || typeof data.optimized_prompts !== "object") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (optimized_prompts)");
+      }
+    } else if (kind === "ctr") {
+      if (typeof data.ctr_score !== "number") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (ctr_score)");
+      }
+    }
+  }
+
   function parseChapters() {
     const raw = $("fd-chapters").value.trim();
     if (!raw) return DEFAULT_CHAPTERS;
@@ -920,12 +1020,12 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
   function buildExportBody() {
     return {
-      video_template: $("fd-template").value || "generic",
+      video_template: normalizeStoryTemplateId($("fd-template").value),
       duration_minutes: Math.min(180, Math.max(1, parseInt($("fd-duration").value, 10) || 10)),
       title: $("fd-title").value || "",
       topic: $("fd-topic").value || "",
       source_summary: $("fd-summary").value || "",
-      provider_profile: $("fd-provider").value || "openai",
+      provider_profile: ($("fd-provider").value || "openai").trim().toLowerCase(),
       continuity_lock: $("fd-lock").checked,
       chapters: parseChapters()
     };
@@ -2100,12 +2200,15 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
 
   async function runExportOnlyInternal() {
-    const body = buildExportBody();
+    const body = buildCurrentExportRequestFromForm();
+    var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
+    setStoryEngineRequestDebug("Export Request gebaut: Template=" + body.video_template + " | Provider=" + body.provider_profile + " | Kapitel=" + nc);
     const data = await fetchJson("/story-engine/export-package", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
+    assertCompleteStoryResponse("/story-engine/export-package", data, "export");
     lastExport = data;
     lastNumericPq = null;
     updatePqBadge();
@@ -2122,15 +2225,20 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     mergeWarnings(data.warnings || []);
     renderPromptLab();
     renderProviderPromptCards();
+    openPanelAndScroll("coll-export", "out-export-full");
     return data;
   }
 
   async function runPreviewOnlyInternal() {
+    const body = buildCurrentExportRequestFromForm();
+    var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
+    setStoryEngineRequestDebug("Export Request gebaut: Template=" + body.video_template + " | Provider=" + body.provider_profile + " | Kapitel=" + nc);
     const data = await fetchJson("/story-engine/export-package/preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildExportBody())
+      body: JSON.stringify(body)
     });
+    assertCompleteStoryResponse("/story-engine/export-package/preview", data, "preview");
     lastPreview = data;
     lastNumericPq = data.prompt_quality_score;
     updatePqBadge();
@@ -2145,28 +2253,38 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     setOut("out-pq-score", data.prompt_quality_score);
     setOut("out-pq-detail", { prompt_quality_score: data.prompt_quality_score, scene_count: data.scene_count });
     mergeWarnings(data.top_warnings || []);
+    openPanelAndScroll("coll-preview", "out-pq-score");
     return data;
   }
 
   async function runReadinessOnlyInternal() {
+    const body = buildCurrentExportRequestFromForm();
+    var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
+    setStoryEngineRequestDebug("Export Request gebaut: Template=" + body.video_template + " | Provider=" + body.provider_profile + " | Kapitel=" + nc);
     const data = await fetchJson("/story-engine/provider-readiness", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildExportBody())
+      body: JSON.stringify(body)
     });
+    assertCompleteStoryResponse("/story-engine/provider-readiness", data, "readiness");
     lastReadiness = data;
     setOut("out-readiness", data);
     mergeWarnings(data.warnings || []);
     mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-readiness", "out-readiness");
     return data;
   }
 
   async function runOptimizeOnlyInternal() {
+    const body = buildCurrentExportRequestFromForm();
+    var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
+    setStoryEngineRequestDebug("Export Request gebaut: Template=" + body.video_template + " | Provider=" + body.provider_profile + " | Kapitel=" + nc);
     const data = await fetchJson("/story-engine/provider-prompts/optimize", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildExportBody())
+      body: JSON.stringify(body)
     });
+    assertCompleteStoryResponse("/story-engine/provider-prompts/optimize", data, "optimize");
     lastOptimize = data;
     const op = data.optimized_prompts || {};
     setOut("out-leo", op.leonardo || []);
@@ -2178,33 +2296,37 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     mergeWarnings(data.warnings || []);
     renderPromptLab();
     renderProviderPromptCards();
+    openPanelAndScroll("coll-optimize", "out-leo");
     return data;
   }
 
   async function runCtrOnlyInternal() {
+    const req = buildCurrentExportRequestFromForm();
     var hook = "";
     var thumb = "";
-    const title = $("fd-title").value || "";
-    const vt = $("fd-template").value || "generic";
     if (lastExport && lastExport.hook) hook = lastExport.hook.hook_text || "";
     if (lastExport && lastExport.thumbnail_prompt) thumb = lastExport.thumbnail_prompt;
+    var nc = req.chapters && req.chapters.length ? req.chapters.length : 0;
+    setStoryEngineRequestDebug("CTR Request gebaut: Template=" + req.video_template + " | Kapitel=" + nc + " | Hook aus Export=" + (hook ? "ja" : "nein"));
     const body = {
-      title: title,
+      title: req.title,
       hook: hook,
-      video_template: vt,
+      video_template: req.video_template,
       thumbnail_prompt: thumb,
-      chapters: parseChapters()
+      chapters: req.chapters
     };
     const data = await fetchJson("/story-engine/thumbnail-ctr", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
+    assertCompleteStoryResponse("/story-engine/thumbnail-ctr", data, "ctr");
     lastCtrPayload = data;
     setOut("out-ctr", data.ctr_score);
     setOut("out-ctr-raw", data);
     setOut("out-thumb-var", data.thumbnail_variants || []);
     mergeWarnings(data.warnings || []);
+    openPanelAndScroll("coll-ctr", "out-ctr");
     return data;
   }
 
@@ -2403,6 +2525,9 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     if (!r.ok) {
       const detail = data && (data.detail || data.message) ? JSON.stringify(data.detail || data.message) : text;
       throw new Error(r.status + " " + r.statusText + ": " + detail);
+    }
+    if (data === null || data === undefined) {
+      throw new Error("Endpoint antwortet leer oder unvollständig: " + url);
     }
     return data;
   }
@@ -2620,6 +2745,10 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
           o.value = id; o.textContent = id; sel.appendChild(o);
         });
       }
+      if (sel.options.length && (!sel.value || sel.selectedIndex < 0)) {
+        sel.selectedIndex = 0;
+      }
+      setStoryEngineRequestDebug("Templates geladen: " + sel.options.length + " — aktiv: " + normalizeStoryTemplateId(sel.value));
     } catch (e) {
       showError(String(e.message || e));
       templateIds = ["generic","true_crime"];
@@ -2629,6 +2758,8 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
         const o = document.createElement("option");
         o.value = id; o.textContent = id; sel.appendChild(o);
       });
+      sel.selectedIndex = 0;
+      setStoryEngineRequestDebug("Template-Fallback aktiv (generic / true_crime). API template-selector fehlgeschlagen.");
     }
   }
 
@@ -2658,124 +2789,40 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   $("btn-export").onclick = async function(){
     var btn = this;
     clearWarnings();
-    await withActionButton(btn, "coll-export", "coll-export", async function() {
-      const body = buildExportBody();
-      const data = await fetchJson("/story-engine/export-package", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      lastExport = data;
-      lastNumericPq = null;
-      updatePqBadge();
-      setOut("out-export-full", data);
-      setOut("out-hook", data.hook || null);
-      const pq = data.prompt_quality || (data.scene_prompts && data.scene_prompts.prompt_quality);
-      if (pq) {
-        setOut("out-pq-score", "(Report)");
-        setOut("out-pq-detail", pq);
-      } else {
-        setOut("out-pq-score", null);
-        setOut("out-pq-detail", null);
-      }
-      mergeWarnings(data.warnings || []);
-      renderPromptLab();
-      renderProviderPromptCards();
+    await withActionButton(btn, "coll-export", "out-export-full", async function() {
+      await runExportOnlyInternal();
     });
   };
 
   $("btn-preview").onclick = async function(){
     var btn = this;
     clearWarnings();
-    await withActionButton(btn, "coll-preview", "coll-preview", async function() {
-      const data = await fetchJson("/story-engine/export-package/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildExportBody())
-      });
-      lastPreview = data;
-      lastNumericPq = data.prompt_quality_score;
-      updatePqBadge();
-      setOut("out-hook", {
-        hook_type: data.hook_type,
-        hook_score: data.hook_score,
-        template_id: data.template_id,
-        export_ready: data.export_ready,
-        readiness_status: data.readiness_status,
-        top_warnings: data.top_warnings
-      });
-      setOut("out-pq-score", data.prompt_quality_score);
-      setOut("out-pq-detail", { prompt_quality_score: data.prompt_quality_score, scene_count: data.scene_count });
-      mergeWarnings(data.top_warnings || []);
+    await withActionButton(btn, "coll-preview", "out-pq-score", async function() {
+      await runPreviewOnlyInternal();
     });
   };
 
   $("btn-readiness").onclick = async function(){
     var btn = this;
     clearWarnings();
-    await withActionButton(btn, "coll-readiness", "coll-readiness", async function() {
-      const data = await fetchJson("/story-engine/provider-readiness", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildExportBody())
-      });
-      lastReadiness = data;
-      setOut("out-readiness", data);
-      mergeWarnings(data.warnings || []);
-      mergeWarnings(data.blocking_issues || []);
+    await withActionButton(btn, "coll-readiness", "out-readiness", async function() {
+      await runReadinessOnlyInternal();
     });
   };
 
   $("btn-optimize").onclick = async function(){
     var btn = this;
     clearWarnings();
-    await withActionButton(btn, "coll-optimize", "coll-optimize", async function() {
-      const data = await fetchJson("/story-engine/provider-prompts/optimize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildExportBody())
-      });
-      lastOptimize = data;
-      const op = data.optimized_prompts || {};
-      setOut("out-leo", op.leonardo || []);
-      setOut("out-openai", op.openai || []);
-      setOut("out-kling", op.kling || []);
-      setOut("out-capcut", data.capcut_shotlist || []);
-      setOut("out-csv", data.csv_shotlist || []);
-      setOut("out-thumb-var", data.thumbnail_variants || []);
-      mergeWarnings(data.warnings || []);
-      renderPromptLab();
-      renderProviderPromptCards();
+    await withActionButton(btn, "coll-optimize", "out-leo", async function() {
+      await runOptimizeOnlyInternal();
     });
   };
 
   $("btn-ctr").onclick = async function(){
     var btn = this;
     clearWarnings();
-    await withActionButton(btn, "coll-ctr", "coll-ctr", async function() {
-      let hook = "";
-      let thumb = "";
-      const title = $("fd-title").value || "";
-      const vt = $("fd-template").value || "generic";
-      if (lastExport && lastExport.hook) hook = lastExport.hook.hook_text || "";
-      if (lastExport && lastExport.thumbnail_prompt) thumb = lastExport.thumbnail_prompt;
-      const body = {
-        title: title,
-        hook: hook,
-        video_template: vt,
-        thumbnail_prompt: thumb,
-        chapters: parseChapters()
-      };
-      const data = await fetchJson("/story-engine/thumbnail-ctr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      lastCtrPayload = data;
-      setOut("out-ctr", data.ctr_score);
-      setOut("out-ctr-raw", data);
-      setOut("out-thumb-var", data.thumbnail_variants || []);
-      mergeWarnings(data.warnings || []);
+    await withActionButton(btn, "coll-ctr", "out-ctr", async function() {
+      await runCtrOnlyInternal();
     });
   };
 
@@ -2795,8 +2842,8 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     var tbody = $("batch-tbody");
     tbody.innerHTML = "";
     clearWarnings();
-    if (!templateIds.length) {
-      showError("Keine Template-IDs geladen.");
+    if (!templateIds || !templateIds.length) {
+      showError("Batch Compare: keine Template-IDs — Template-Selector prüfen oder Seite neu laden.");
       btn.classList.add("is-error");
       setTimeout(function() { btn.classList.remove("is-error"); }, 1600);
       openPanelAndScroll("coll-batch", "batch-scroll-anchor");
@@ -2805,7 +2852,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     await withActionButton(btn, "coll-batch", "batch-scroll-anchor", async function() {
       var batchRoot = $("coll-batch");
       if (batchRoot) batchRoot.open = true;
-      var base = buildExportBody();
+      var base = buildCurrentExportRequestFromForm();
       for (var i = 0; i < templateIds.length; i++) {
         var tid = templateIds[i];
         st.textContent = "Teste Template " + (i + 1) + " von " + templateIds.length + "…";
@@ -2815,11 +2862,13 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body)
         });
+        assertCompleteStoryResponse("/story-engine/export-package/preview", prev, "preview");
         var ready = await fetchJson("/story-engine/provider-readiness", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body)
         });
+        assertCompleteStoryResponse("/story-engine/provider-readiness", ready, "readiness");
         var rs = readinessAggregate(ready.scores);
         var tr = document.createElement("tr");
         tr.innerHTML = "<td>" + escapeHtml(tid) + "</td><td>" + String(prev.prompt_quality_score) +
@@ -2914,6 +2963,12 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     refreshWarningCenter();
     updateProductionChecklist();
   });
+  var fdTpl = $("fd-template");
+  if (fdTpl) {
+    fdTpl.addEventListener("change", function() {
+      setStoryEngineRequestDebug("Template aktiv: " + normalizeStoryTemplateId(this.value));
+    });
+  }
   updatePqBadge();
   refreshOperatorClarity();
 })();
