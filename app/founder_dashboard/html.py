@@ -1,4 +1,4 @@
-"""BA 10.6–11.1 — eingebettetes HTML/CSS/JS für GET /founder/dashboard."""
+"""BA 10.6–11.2 — eingebettetes HTML/CSS/JS für GET /founder/dashboard."""
 
 
 def get_founder_dashboard_html() -> str:
@@ -260,7 +260,76 @@ table.data th { background: var(--bg); color: var(--muted); }
 }
 .mode-toggle { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
 .mode-toggle button.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-body.raw-view #founder-human-layer { display: none !important; }
+body.raw-view #founder-human-layer,
+body.dashboard-mode-operator #founder-human-layer { display: none !important; }
+body.dashboard-mode-operator pre.out { max-height: 220px; }
+.ba112-panel { margin-top: 1rem; }
+.exec-scorecard {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--bg);
+}
+.exec-scorecard .esc-overall {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--border);
+}
+.exec-scorecard .esc-l { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.exec-scorecard .esc-val { font-size: 1.15rem; font-weight: 800; }
+.exec-scorecard .esc-val.grade-go { color: var(--ok); }
+.exec-scorecard .esc-val.grade-hold { color: var(--warn); }
+.exec-scorecard .esc-val.grade-stop { color: var(--danger); }
+.esc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 0.4rem;
+}
+.esc-cell {
+  text-align: center;
+  padding: 0.35rem 0.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+.esc-grade { font-size: 1rem; font-weight: 800; color: var(--text); display: block; margin-top: 0.15rem; }
+.opp-radar { margin: 0.5rem 0 0.75rem; }
+.ba112-radar-title { margin: 0 0 0.45rem !important; }
+.radar-bars { display: flex; flex-direction: column; gap: 0.38rem; }
+.radar-row { display: flex; align-items: center; gap: 0.45rem; font-size: 0.72rem; }
+.radar-row .radar-label { width: 6.75rem; flex-shrink: 0; color: var(--muted); }
+.radar-track { flex: 1; height: 9px; background: var(--border); border-radius: 5px; overflow: hidden; min-width: 0; }
+.radar-fill { height: 100%; width: 0%; border-radius: 5px; transition: width 0.2s ease; }
+.radar-pct { width: 2.5rem; text-align: right; font-size: 0.68rem; color: var(--muted); flex-shrink: 0; }
+.rewrite-rec-block { margin: 0.5rem 0 0.65rem; }
+.rewrite-rec-block h3 { margin: 0 0 0.35rem; }
+#rewrite-rec-list { margin: 0; padding-left: 1.1rem; font-size: 0.82rem; }
+#rewrite-rec-list li { margin-bottom: 0.4rem; }
+.repair-actions-row { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.35rem; align-items: center; }
+.kill-switch-row {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+.kill-switch-row label { display: flex; align-items: flex-start; gap: 0.45rem; cursor: pointer; font-size: 0.82rem; margin: 0; }
+#fd-kill-switch-banner {
+  display: none;
+  margin-bottom: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  background: rgba(248,113,113,0.12);
+  border: 1px solid var(--danger);
+  font-size: 0.78rem;
+  color: #fecaca;
+}
+#fd-kill-switch-banner.visible { display: block; }
 .founder-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -351,7 +420,7 @@ body.raw-view #founder-human-layer { display: none !important; }
 <body>
 <header>
   <h1>Founder Dashboard</h1>
-  <p>Read-only Cockpit · Story-Engine per fetch · BA 11.0/11.1 Source + Pipeline (ohne Auth / Firestore / externe Provider)</p>
+  <p>Read-only Cockpit · Story-Engine per fetch · BA 11.0–11.2 Operator Clarity (ohne Auth / Firestore / externe Provider)</p>
 </header>
 <main>
   <div id="error-bar" role="alert"></div>
@@ -360,6 +429,7 @@ body.raw-view #founder-human-layer { display: none !important; }
     <h2>Founder Strategic Summary</h2>
     <div class="mode-toggle">
       <button type="button" id="btn-founder-mode" class="active" data-label="Founder Mode">Founder Mode</button>
+      <button type="button" id="btn-operator-mode" data-label="Operator Mode">Operator Mode</button>
       <button type="button" id="btn-raw-mode" data-label="Raw Mode">Raw Mode</button>
     </div>
     <div class="founder-kpi-grid">
@@ -387,6 +457,58 @@ body.raw-view #founder-human-layer { display: none !important; }
       <div class="human-block"><h4>Prompt Quality</h4><p id="hum-pq">—</p></div>
       <div class="human-block"><h4>Provider Readiness</h4><p id="hum-readiness">—</p></div>
       <div class="human-block"><h4>Thumbnail CTR</h4><p id="hum-ctr">—</p></div>
+    </div>
+  </section>
+
+  <section class="panel ba112-panel" id="coll-ba112-clarity">
+    <h2>Operator Clarity (BA 11.2)</h2>
+    <p class="muted ba112-founder-hint">Executive Scorecard, Rewrite-Hinweise, Schnell-Reparaturen und Opportunity Radar — alles aus bestehenden Dashboard-Daten abgeleitet (keine neuen API-Verträge).</p>
+    <div id="fd-kill-switch-banner" role="status">Kill Switch aktiv — keine neuen Story-Engine-Requests bis zur Deaktivierung.</div>
+    <div id="exec-scorecard" class="exec-scorecard" aria-label="Executive Scorecard">
+      <div class="esc-overall">
+        <span class="esc-l">Entscheidung (Go / Hold / Stop)</span>
+        <span id="esc-overall" class="esc-val">—</span>
+      </div>
+      <div class="esc-grid">
+        <div class="esc-cell"><span class="esc-l">Hook</span><span id="esc-hook" class="esc-grade">—</span></div>
+        <div class="esc-cell"><span class="esc-l">Prompt Q.</span><span id="esc-pq" class="esc-grade">—</span></div>
+        <div class="esc-cell"><span class="esc-l">CTR</span><span id="esc-ctr" class="esc-grade">—</span></div>
+        <div class="esc-cell"><span class="esc-l">Readiness</span><span id="esc-read" class="esc-grade">—</span></div>
+        <div class="esc-cell"><span class="esc-l">Szenen</span><span id="esc-scenes" class="esc-grade">—</span></div>
+        <div class="esc-cell"><span class="esc-l">Warnungen</span><span id="esc-warn" class="esc-grade">—</span></div>
+      </div>
+    </div>
+    <div class="opp-radar" id="opp-radar" aria-label="Opportunity Radar">
+      <h3 class="subh ba112-radar-title">Opportunity Radar</h3>
+      <p class="muted" style="margin:0 0 0.4rem;font-size:0.75rem">Relative Stärke der Signale (0–100 %, heuristisch).</p>
+      <div class="radar-bars">
+        <div class="radar-row"><span class="radar-label">Hook</span><div class="radar-track"><div class="radar-fill" id="radar-fill-hook"></div></div><span class="radar-pct" id="radar-pct-hook">—</span></div>
+        <div class="radar-row"><span class="radar-label">Prompt Quality</span><div class="radar-track"><div class="radar-fill" id="radar-fill-pq"></div></div><span class="radar-pct" id="radar-pct-pq">—</span></div>
+        <div class="radar-row"><span class="radar-label">Thumbnail CTR</span><div class="radar-track"><div class="radar-fill" id="radar-fill-ctr"></div></div><span class="radar-pct" id="radar-pct-ctr">—</span></div>
+        <div class="radar-row"><span class="radar-label">Readiness</span><div class="radar-track"><div class="radar-fill" id="radar-fill-read"></div></div><span class="radar-pct" id="radar-pct-read">—</span></div>
+        <div class="radar-row"><span class="radar-label">Szenenbasis</span><div class="radar-track"><div class="radar-fill" id="radar-fill-scenes"></div></div><span class="radar-pct" id="radar-pct-scenes">—</span></div>
+      </div>
+    </div>
+    <div class="rewrite-rec-block">
+      <h3 class="subh">Rewrite Recommendation Engine</h3>
+      <ul id="rewrite-rec-list"><li class="muted">Noch keine Ableitung — Export oder Intake ausführen.</li></ul>
+    </div>
+    <div>
+      <span class="esc-l" style="display:block;margin-bottom:0.35rem">One-Click Repair</span>
+      <div class="repair-actions-row" id="repair-actions-row">
+        <button type="button" class="sm" id="btn-repair-export" data-repair="export">Export</button>
+        <button type="button" class="sm" id="btn-repair-preview" data-repair="preview">Preview</button>
+        <button type="button" class="sm" id="btn-repair-readiness" data-repair="readiness">Readiness</button>
+        <button type="button" class="sm" id="btn-repair-optimize" data-repair="optimize">Optimize</button>
+        <button type="button" class="sm" id="btn-repair-ctr" data-repair="ctr">CTR</button>
+        <button type="button" class="sm" id="btn-repair-input" data-repair="input">Eingabe</button>
+        <button type="button" class="sm" id="btn-repair-warnings" data-repair="warnings">Warning Center</button>
+        <button type="button" class="sm" id="btn-repair-clear-warnings" data-repair="clearwarnings">Warnungen leeren</button>
+        <button type="button" class="sm" id="btn-repair-batch" data-repair="batch">Batch Compare</button>
+      </div>
+    </div>
+    <div class="kill-switch-row">
+      <label for="fd-kill-switch"><input type="checkbox" id="fd-kill-switch" autocomplete="off"/> <strong>Kill Switch</strong> — blockiert alle neuen <code>fetch</code>-Calls zu Story-Engine / Generate (lokaler Schutz, kein Server-State).</label>
     </div>
   </section>
 
@@ -433,7 +555,7 @@ body.raw-view #founder-human-layer { display: none !important; }
   </section>
 
   <div class="grid grid-2">
-    <section class="panel">
+    <section class="panel" id="coll-input-panel">
       <h2>Input Panel</h2>
       <label for="fd-title">Titel / Thema (title)</label>
       <input type="text" id="fd-title" placeholder="Titel"/>
@@ -685,7 +807,7 @@ body.raw-view #founder-human-layer { display: none !important; }
     </div>
   </details>
 
-  <section class="panel" style="margin-top:1rem">
+  <section class="panel" style="margin-top:1rem" id="coll-warning-center">
     <h2>Warning Center</h2>
     <div id="warn-center-grouped" class="warn-grouped muted">Noch keine Warnungen aggregiert.</div>
     <ul class="warn-list" id="out-warnings" style="display:none" aria-hidden="true"></ul>
@@ -727,6 +849,7 @@ body.raw-view #founder-human-layer { display: none !important; }
     btn.classList.remove("is-success", "is-error");
     btn.textContent = "Loading...";
     try {
+      if (isKillSwitchActive()) throw new Error("Kill Switch aktiv — Aktion blockiert.");
       await task();
       btn.textContent = label;
       btn.disabled = false;
@@ -923,6 +1046,16 @@ body.raw-view #founder-human-layer { display: none !important; }
 
   const VIEW_MODE_KEY = "fd_view_mode_v1";
 
+  function isKillSwitchActive() {
+    var sw = $("fd-kill-switch");
+    return !!(sw && sw.checked);
+  }
+
+  function syncKillSwitchBanner() {
+    var b = $("fd-kill-switch-banner");
+    if (b) b.classList.toggle("visible", isKillSwitchActive());
+  }
+
   function getHookScoreVal() {
     if (lastPreview != null && lastPreview.hook_score != null) return Number(lastPreview.hook_score);
     if (lastExport && lastExport.hook && lastExport.hook.hook_score != null) return Number(lastExport.hook.hook_score);
@@ -1073,6 +1206,196 @@ body.raw-view #founder-human-layer { display: none !important; }
     return ws;
   }
 
+  function letterGradeFrom100(x) {
+    if (x == null || isNaN(x)) return "—";
+    if (x >= 76) return "A";
+    if (x >= 58) return "B";
+    if (x >= 42) return "C";
+    return "D";
+  }
+
+  function letterGradeFromHook10(h) {
+    if (h == null || isNaN(h)) return "—";
+    return letterGradeFrom100(Math.min(100, Number(h) * 10));
+  }
+
+  function warnLetterGrade(wc) {
+    if (wc <= 0) return "A";
+    if (wc <= 2) return "B";
+    if (wc <= 5) return "C";
+    return "D";
+  }
+
+  function computeExecOverallLabel() {
+    var nba = computeNextBestAction();
+    if (nba.code === "PRODUZIEREN") return { text: "GO", cls: "grade-go" };
+    if (nba.code === "VERWERFEN") return { text: "STOP", cls: "grade-stop" };
+    return { text: "HOLD", cls: "grade-hold" };
+  }
+
+  function setRadarBar(fillId, pctId, v) {
+    var f = $(fillId);
+    var p = $(pctId);
+    var n = Math.max(0, Math.min(100, Math.round(v == null || isNaN(v) ? 0 : Number(v))));
+    if (f) {
+      f.style.width = n + "%";
+      f.style.background = n >= 62 ? "rgba(74,222,128,0.88)" : n >= 38 ? "rgba(251,191,36,0.88)" : "rgba(248,113,113,0.88)";
+    }
+    if (p) p.textContent = n + "%";
+  }
+
+  function refreshOperatorClarity() {
+    var ov = computeExecOverallLabel();
+    var oel = $("esc-overall");
+    if (oel) {
+      oel.textContent = ov.text;
+      oel.className = "esc-val " + ov.cls;
+    }
+    var h = getHookScoreVal();
+    var pq = getPqScoreVal();
+    var ctr = getCtrVal();
+    var ra = lastReadiness && lastReadiness.scores ? readinessAggregate(lastReadiness.scores) : null;
+    if (ra == null || isNaN(ra)) ra = null;
+    var sc = getSceneCount();
+    var wc = collectAllWarningsStrings().length;
+    var egH = $("esc-hook");
+    if (egH) egH.textContent = letterGradeFromHook10(h);
+    var egPq = $("esc-pq");
+    if (egPq) egPq.textContent = letterGradeFrom100(pq);
+    var egCtr = $("esc-ctr");
+    if (egCtr) egCtr.textContent = letterGradeFrom100(ctr);
+    var egR = $("esc-read");
+    if (egR) egR.textContent = letterGradeFrom100(ra);
+    var egSc = $("esc-scenes");
+    if (egSc) egSc.textContent = sc <= 0 ? "—" : (sc >= 5 ? "A" : sc >= 3 ? "B" : "C");
+    var egW = $("esc-warn");
+    if (egW) egW.textContent = warnLetterGrade(wc);
+    var h100 = h == null || isNaN(h) ? 0 : Math.min(100, Number(h) * 10);
+    var pqN = pq == null || isNaN(pq) ? 0 : Number(pq);
+    var ctrN = ctr == null || isNaN(ctr) ? 0 : Number(ctr);
+    var readN = ra == null || isNaN(ra) ? 0 : Number(ra);
+    var scN = Math.min(100, sc * 14);
+    setRadarBar("radar-fill-hook", "radar-pct-hook", h100);
+    setRadarBar("radar-fill-pq", "radar-pct-pq", pqN);
+    setRadarBar("radar-fill-ctr", "radar-pct-ctr", ctrN);
+    setRadarBar("radar-fill-read", "radar-pct-read", readN);
+    setRadarBar("radar-fill-scenes", "radar-pct-scenes", scN);
+    renderRewriteRecommendations();
+  }
+
+  function buildRewriteRecommendations() {
+    var nba = computeNextBestAction();
+    var arr = [{ title: nba.de, detail: nba.hint, code: nba.code }];
+    var seen = {};
+    seen[String(nba.hint)] = 1;
+    collectAllWarningsStrings().slice(0, 4).forEach(function(w) {
+      if (!w || seen[w]) return;
+      seen[w] = 1;
+      arr.push({ title: "Qualität / Quelle prüfen", detail: w, code: "PROVIDER" });
+    });
+    return arr.slice(0, 5);
+  }
+
+  function renderRewriteRecommendations() {
+    var ul = $("rewrite-rec-list");
+    if (!ul) return;
+    ul.innerHTML = "";
+    buildRewriteRecommendations().forEach(function(r) {
+      var li = document.createElement("li");
+      var sp = document.createElement("span");
+      sp.textContent = r.title + " — " + r.detail + " ";
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "sm";
+      btn.textContent = repairActionLabel(r.code);
+      btn.onclick = function() { runRepairFromReco(r.code); };
+      li.appendChild(sp);
+      li.appendChild(btn);
+      ul.appendChild(li);
+    });
+  }
+
+  function repairActionLabel(code) {
+    if (code === "VERWERFEN") return "Zur Eingabe";
+    if (code === "HOOK") return "Preview";
+    if (code === "PROVIDER") return "Readiness";
+    if (code === "THUMBNAIL") return "CTR";
+    if (code === "PRODUZIEREN") return "Ops / Bundle";
+    return "Preview";
+  }
+
+  function runRepairFromReco(code) {
+    if (code === "VERWERFEN") return runRepair("input");
+    if (code === "HOOK") return runRepair("preview");
+    if (code === "PROVIDER") return runRepair("readiness");
+    if (code === "THUMBNAIL") return runRepair("ctr");
+    if (code === "PRODUZIEREN") return runRepair("ops");
+    runRepair("preview");
+  }
+
+  function runRepair(kind) {
+    if (isKillSwitchActive()) {
+      showError("Kill Switch aktiv — Repair blockiert.");
+      syncKillSwitchBanner();
+      return;
+    }
+    showError("");
+    if (kind === "export") {
+      openPanelAndScroll("coll-export", "coll-export");
+      var bx = $("btn-export");
+      if (bx) bx.click();
+      return;
+    }
+    if (kind === "preview") {
+      openPanelAndScroll("coll-preview", "coll-preview");
+      var bp = $("btn-preview");
+      if (bp) bp.click();
+      return;
+    }
+    if (kind === "readiness") {
+      openPanelAndScroll("coll-readiness", "coll-readiness");
+      var br = $("btn-readiness");
+      if (br) br.click();
+      return;
+    }
+    if (kind === "optimize") {
+      openPanelAndScroll("coll-optimize", "coll-optimize");
+      var bo = $("btn-optimize");
+      if (bo) bo.click();
+      return;
+    }
+    if (kind === "ctr") {
+      openPanelAndScroll("coll-ctr", "coll-ctr");
+      var bc = $("btn-ctr");
+      if (bc) bc.click();
+      return;
+    }
+    if (kind === "input") {
+      openPanelAndScroll(null, "coll-input-panel");
+      try { $("fd-title").focus(); } catch (e0) {}
+      return;
+    }
+    if (kind === "warnings") {
+      openPanelAndScroll(null, "coll-warning-center");
+      return;
+    }
+    if (kind === "clearwarnings") {
+      clearWarnings();
+      refreshWarningCenter();
+      updateProductionChecklist();
+      return;
+    }
+    if (kind === "batch") {
+      openPanelAndScroll("coll-batch", "batch-scroll-anchor");
+      var bb = $("btn-batch-compare");
+      if (bb) bb.click();
+      return;
+    }
+    if (kind === "ops") {
+      openPanelAndScroll("coll-ops", "coll-ops");
+    }
+  }
+
   function renderStrategicBadges() {
     var host = $("strategic-badges-row");
     if (!host) return;
@@ -1149,20 +1472,26 @@ body.raw-view #founder-human-layer { display: none !important; }
       });
     }
     renderStrategicBadges();
+    refreshOperatorClarity();
   }
 
   function applyViewMode(mode) {
+    document.body.classList.remove("dashboard-mode-founder", "dashboard-mode-operator", "dashboard-mode-raw", "raw-view");
     var f = $("btn-founder-mode");
+    var o = $("btn-operator-mode");
     var r = $("btn-raw-mode");
-    if (!f || !r) return;
+    if (f) f.classList.remove("active");
+    if (o) o.classList.remove("active");
+    if (r) r.classList.remove("active");
     if (mode === "raw") {
-      document.body.classList.add("raw-view");
-      f.classList.remove("active");
-      r.classList.add("active");
+      document.body.classList.add("dashboard-mode-raw", "raw-view");
+      if (r) r.classList.add("active");
+    } else if (mode === "operator") {
+      document.body.classList.add("dashboard-mode-operator");
+      if (o) o.classList.add("active");
     } else {
-      document.body.classList.remove("raw-view");
-      f.classList.add("active");
-      r.classList.remove("active");
+      document.body.classList.add("dashboard-mode-founder");
+      if (f) f.classList.add("active");
     }
     try { sessionStorage.setItem(VIEW_MODE_KEY, mode); } catch (e1) {}
   }
@@ -1765,6 +2094,9 @@ body.raw-view #founder-human-layer { display: none !important; }
   }
 
   async function fetchJson(url, opts) {
+    if (isKillSwitchActive()) {
+      throw new Error("Kill Switch aktiv — Anfrage blockiert.");
+    }
     showError("");
     const r = await fetch(url, opts);
     const text = await r.text();
@@ -2250,10 +2582,30 @@ body.raw-view #founder-human-layer { display: none !important; }
   };
 
   $("btn-founder-mode").onclick = function() { applyViewMode("founder"); };
+  $("btn-operator-mode").onclick = function() { applyViewMode("operator"); };
   $("btn-raw-mode").onclick = function() { applyViewMode("raw"); };
+  var ks = $("fd-kill-switch");
+  if (ks) {
+    ks.addEventListener("change", function() {
+      syncKillSwitchBanner();
+      if (isKillSwitchActive()) showError("Kill Switch aktiv — neue Requests blockiert.");
+      else showError("");
+    });
+  }
+  syncKillSwitchBanner();
+  var rar = $("repair-actions-row");
+  if (rar) {
+    rar.addEventListener("click", function(ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest("button[data-repair]") : null;
+      if (!btn) return;
+      runRepair(btn.getAttribute("data-repair") || "");
+    });
+  }
   try {
     var vm0 = sessionStorage.getItem(VIEW_MODE_KEY);
-    applyViewMode(vm0 === "raw" ? "raw" : "founder");
+    if (vm0 === "raw") applyViewMode("raw");
+    else if (vm0 === "operator") applyViewMode("operator");
+    else applyViewMode("founder");
   } catch (eView) {
     applyViewMode("founder");
   }
@@ -2264,6 +2616,7 @@ body.raw-view #founder-human-layer { display: none !important; }
     updateProductionChecklist();
   });
   updatePqBadge();
+  refreshOperatorClarity();
 })();
 </script>
 </body>

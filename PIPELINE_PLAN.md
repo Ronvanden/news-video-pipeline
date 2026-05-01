@@ -421,6 +421,8 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **BA 11.1 — Run Full Pipeline** (**implemented / dashboard-first V1**): **One-Click-Orchestrierung** ausschließlich über bestehende Endpunkte (**`fetch`** im Browser): Intake-Generate → **`POST /story-engine/export-package`** → Preview → Readiness → Optimize → Thumbnail-CTR → **Founder Summary** (Client-Refresh der Interpretations-Widgets) → **Production Bundle** (mehrere Downloads wie bisher); **Timeline** mit Zuständen pro Schritt (inkl. Fehlerstufe); bei Fehler **Abbruch** und markierter Schritt; nach erfolgreichem Lauf **Session Snapshot** in **`localStorage`** (gleiche Struktur wie manuelles „Save Session Snapshot“). **Tests:** wie bei 11.0.
 
+**BA 11.2 — Operator Clarity Layer** (**implemented / dashboard-first V1**): **`GET /founder/dashboard`** — **Executive Scorecard** (Go/Hold/Stop + Buchstabennoten aus bestehenden Heuristiken), **Rewrite Recommendation Engine** (NBA + Top-Warnungen mit Repair-Shortcut), **One-Click Repair** (scrollt und triggert bestehende Action-Buttons), **Founder / Operator / Raw**-Ansicht (Operator: Human Layer aus, kompaktere JSON-Panels), **Opportunity Radar** (Balken 0–100 %), **Kill Switch** (Checkbox blockiert **`fetchJson`** / **`withActionButton`**-Tasks — rein clientseitig, kein Server-State). **Keine** Änderung an **`GenerateScriptResponse`** oder Story-Engine-Verträgen. **Tests:** **`tests/test_phase10_founder_dashboard.py`**.
+
 ---
 
 ### BA 9.3–9.9 Story Engine Maturity Track (Reihenfolge)
