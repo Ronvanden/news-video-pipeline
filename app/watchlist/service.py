@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import logging
 import uuid
 from collections import Counter
@@ -59,6 +60,9 @@ from app.watchlist.scene_plan import (
     build_scenes_from_generated_script,
     decide_plan_status,
 )
+from app.config import settings as app_settings
+from app.voice.contracts import VoiceSynthProvider, VoiceSynthRequest
+from app.voice.openai_tts import OpenAiTtsProvider
 from app.watchlist.scene_asset_prompts import build_scene_asset_items
 from app.watchlist.render_manifest import (
     EXPORT_VERSION as RENDER_MANIFEST_EXPORT_VERSION,
@@ -126,6 +130,9 @@ from app.watchlist.models import (
     VoicePlanGenerateRequest,
     VoicePlanGenerateResponse,
     VoicePlanGetResponse,
+    VoiceSynthPreviewChunk,
+    VoiceSynthPreviewRequest,
+    VoiceSynthPreviewResponse,
     WatchlistChannel,
     WatchlistChannelCreateRequest,
     WatchlistChannelStatusResponse,
@@ -4142,6 +4149,124 @@ def get_voice_plan_for_production_job(
             warnings=["Voice plan not found."],
         )
     return VoicePlanGetResponse(voice_plan=vp, warnings=[])
+
+
+def synthesize_voice_plan_preview(
+    production_job_id: str,
+    req: VoiceSynthPreviewRequest,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+    provider: Optional[VoiceSynthProvider] = None,
+) -> Tuple[VoiceSynthPreviewResponse, int]:
+    """Phase 7.2 — TTS-Preview aus bestehendem ``voice_plans`` ohne Audio-Persistenz."""
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return (
+            VoiceSynthPreviewResponse(
+                chunks=[],
+                warnings=["[voice_synth:invalid_id] production_job_id ist leer."],
+            ),
+            404,
+        )
+    try:
+        vp = repo.get_voice_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+    if vp is None:
+        return (
+            VoiceSynthPreviewResponse(
+                chunks=[],
+                warnings=[
+                    "[voice_synth:voice_plan_missing] Kein VoicePlan in Firestore für diesen Production Job."
+                ],
+            ),
+            404,
+        )
+    blocks = sorted(list(vp.blocks or []), key=lambda b: b.scene_number)
+    if not blocks:
+        return (
+            VoiceSynthPreviewResponse(
+                chunks=[],
+                warnings=["[voice_synth:no_blocks] VoicePlan enthält keine Voice-Blöcke."],
+            ),
+            404,
+        )
+
+    warns_acc: List[str] = []
+    if req.dry_run:
+        warns_acc.append("[voice_synth:dry_run] Kein externes TTS (dry_run=true).")
+
+    gst = vp.status or ""
+    if gst == "failed":
+        warns_acc.append(
+            "[voice_synth:voice_plan_status_failed] VoicePlan‑Status „failed“ — Preview dennoch ausgeführt."
+        )
+
+    dd_voice = (app_settings.openai_tts_voice or "alloy").strip() or "alloy"
+    if req.voice and str(req.voice).strip():
+        dd_voice = str(req.voice).strip()
+
+    prov = provider or OpenAiTtsProvider(
+        app_settings.openai_api_key,
+        default_voice=dd_voice,
+        default_model=(app_settings.openai_tts_model or "tts-1").strip() or "tts-1",
+    )
+    voice_for_blocks: Optional[str] = None
+    if req.voice and str(req.voice).strip():
+        voice_for_blocks = str(req.voice).strip()
+
+    selected = blocks[: int(req.max_blocks)]
+    chunks_out: List[VoiceSynthPreviewChunk] = []
+
+    for block in selected:
+        h = getattr(block, "tts_provider_hint", None) or "generic"
+        if h not in ("openai", "generic"):
+            warns_acc.append(
+                "[voice_synth:provider_hint_ignored] "
+                f"tts_provider_hint={h!r} — MVP nutzt nur OpenAI Speech."
+            )
+        if req.dry_run:
+            chunks_out.append(
+                VoiceSynthPreviewChunk(
+                    scene_number=int(block.scene_number),
+                    byte_length=0,
+                    content_type="audio/mpeg",
+                    audio_base64=None,
+                )
+            )
+            continue
+        synth_req = VoiceSynthRequest(
+            text=str(block.voice_text or ""),
+            voice=voice_for_blocks,
+            model=(app_settings.openai_tts_model or "tts-1").strip() or "tts-1",
+        )
+        synth = prov.synthesize(synth_req)
+        warns_acc.extend(list(synth.warnings or []))
+        raw_audio = synth.audio_bytes or b""
+        b64_part: Optional[str] = None
+        if app_settings.enable_voice_synth_preview_body and raw_audio:
+            cap = int(app_settings.voice_synth_preview_max_bytes or 262144)
+            if len(raw_audio) <= cap:
+                b64_part = base64.standard_b64encode(raw_audio).decode("ascii")
+            else:
+                warns_acc.append(
+                    "[voice_synth:preview_audio_omitted] "
+                    "Audioblock übersteigt voice_synth_preview_max_bytes — Base64 unterdrückt."
+                )
+
+        ctype = synth.mime_type or "audio/mpeg"
+        chunks_out.append(
+            VoiceSynthPreviewChunk(
+                scene_number=int(block.scene_number),
+                byte_length=len(raw_audio),
+                content_type=str(ctype),
+                audio_base64=b64_part,
+            )
+        )
+
+    merged = _dedupe_preserve_order(warns_acc)
+    return VoiceSynthPreviewResponse(chunks=chunks_out, warnings=list(merged)), 200
 
 
 def generate_render_manifest(

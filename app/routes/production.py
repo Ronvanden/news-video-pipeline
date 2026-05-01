@@ -2,7 +2,8 @@
 Voice-Plan (BA 6.8), Render-Manifest (BA 6.9), Connector-Export (BA 7.0),
 Production OS: Export-Download & Provider-Templates (BA 7.1–7.2), Checkliste (BA 7.3),
 Status-Workflow (BA 7.4), Execution Queue & Budget (BA 7.8–7.9); Audit / Recovery / Monitoring (BA 8.0–8.2);
-Status-Normalisierung & Eskalationen (BA 8.3); kein echtes Rendering/TTS."""
+Status-Normalisierung & Eskalationen (BA 8.3); Phase 7.2: TTS‑Preview ohne Audio-Persistenz
+(``POST …/voice/synthesize-preview``); kein FFmpeg/Voll‑Rendering hier."""
 
 import logging
 from typing import Optional
@@ -45,6 +46,8 @@ from app.watchlist.models import (
     VoicePlanGenerateRequest,
     VoicePlanGenerateResponse,
     VoicePlanGetResponse,
+    VoiceSynthPreviewRequest,
+    VoiceSynthPreviewResponse,
 )
 from app.watchlist import service as watchlist_service
 
@@ -208,6 +211,32 @@ async def production_get_voice_plan(production_job_id: str):
     if out.voice_plan is None:
         detail = out.warnings[0] if out.warnings else "Voice plan not found."
         raise HTTPException(status_code=404, detail=detail)
+    return out
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/voice/synthesize-preview",
+    response_model=VoiceSynthPreviewResponse,
+)
+async def production_voice_synthesize_preview(
+    production_job_id: str,
+    body: Optional[VoiceSynthPreviewRequest] = None,
+):
+    """Phase 7.2 — OpenAI Speech Preview aus ``voice_plans`` (optional ``dry_run``); keine Persistenz."""
+    req = body or VoiceSynthPreviewRequest()
+    try:
+        out, status_code = watchlist_service.synthesize_voice_plan_preview(
+            production_job_id, req, repo=None, provider=None
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST voice/synthesize-preview failed: Firestore unavailable")
+        body503 = VoiceSynthPreviewResponse(chunks=[], warnings=[msg])
+        return JSONResponse(status_code=503, content=body503.model_dump(mode="json"))
+    if status_code != 200:
+        return JSONResponse(
+            status_code=status_code, content=out.model_dump(mode="json")
+        )
     return out
 
 

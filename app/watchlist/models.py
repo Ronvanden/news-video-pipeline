@@ -504,6 +504,26 @@ class VoicePlanGetResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+class VoiceSynthPreviewRequest(BaseModel):
+    """Phase 7.2 Preview — keine Secrets im Body."""
+
+    dry_run: bool = False
+    max_blocks: int = Field(default=1, ge=1, le=5)
+    voice: Optional[str] = None
+
+
+class VoiceSynthPreviewChunk(BaseModel):
+    scene_number: int = Field(ge=1)
+    byte_length: int = Field(ge=0)
+    content_type: str = "audio/mpeg"
+    audio_base64: Optional[str] = None
+
+
+class VoiceSynthPreviewResponse(BaseModel):
+    chunks: List[VoiceSynthPreviewChunk] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
 class TimelineItem(BaseModel):
     """Zeile in der Produktions-Timeline (BA 6.9)."""
 

@@ -30,7 +30,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | Strang | Rolle | Kurzhinweis |
 |--------|--------|-------------|
 | **BA 9.x Story Engine Kern** (**9.7–9.9**) | **abgeschlossen** | Umsetzung: **`GET /story-engine/template-health`**, Control-Panel **`template_optimization`** / **`story_intelligence`**; Canonical **„Story OS“:** [docs/STORY_ENGINE_OS.md](docs/STORY_ENGINE_OS.md). **`GenerateScriptResponse`** weiterhin **6 Felder**. |
-| **Phase 7** — Voiceover (TTS) | **primär Makro-Produkt nach Story-Kern** | Echte Sprachausgabe/Anbieter nach Auswahl und Secret-Setup; siehe Phase-7-Abschnitt unten. |
+| **Phase 7** — Voiceover (TTS) | **primär Makro-Produkt nach Story-Kern** | Ausführungsplan **Baustein 7.1–7.8:** [docs/phases/phase7_voice_bauplan.md](docs/phases/phase7_voice_bauplan.md); erste Provider-Wahl + Secret-Setup ohne Repo-Secrets ([DEPLOYMENT.md](DEPLOYMENT.md)). |
 | **Betrieb** — Cloud Scheduler (+ optional IAP/OAuth) | **alternativ Betrieb** | HTTP-Endpunkte **`POST /watchlist/automation/run-cycle`** und **`POST /production/automation/run-daily-cycle`** existieren; zeitgesteuerte oder abgesicherte Aufrufe sind **Deploymentsache**, kein eigener Pipeline-Baustein in diesem Repo ohne separates Deliverable. |
 
 *Reihenfolge-Hinweis:* Die **Story-Engine-Maturity-Linie bis 9.9** ist dokumentarisch/im Code **geschlossen**; neue Priorität liegt typischerweise bei **Phase 7 (Voice)** oder bei **GCP-Scheduling** entscheidbar (siehe Tabelle).
@@ -47,7 +47,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | 4 | Script Review / Originality Check | **done** |
 | 5 | Watchlist / Channel Monitoring | **next** |
 | 6 | Script Job Speicherung | **planned** |
-| 7 | Voiceover | **planned** |
+| 7 | Voiceover | **in progress** |
 | 8 | Bild- / Szenenplan | **planned** |
 | 9 | Video Packaging | **planned** |
 | 10 | Veröffentlichungsvorbereitung | **planned** |
@@ -189,6 +189,7 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 | `GET` | `/production/jobs/{production_job_id}/scene-assets` | Scene-Assets lesen (**404**, wenn nicht vorhanden). |
 | `POST` | `/production/jobs/{production_job_id}/voice-plan/generate` | Voice-Plan aus **`scene_assets`** erzeugen (**idempotent** wenn vorhanden); optionaler Body **`voice_profile`** (`documentary` \| `news` \| `dramatic` \| `soft`); persistiert **`voice_plans`**. |
 | `GET` | `/production/jobs/{production_job_id}/voice-plan` | Voice-Plan lesen (**404**, wenn nicht vorhanden). |
+| `POST` | `/production/jobs/{production_job_id}/voice/synthesize-preview` | Phase 7.2: TTS‑Preview (**OpenAI Speech**) aus bestehendem **`voice_plan`**, keine Audio‑Persistenz; Body **`dry_run`**, **`max_blocks`** (1–5), optional **`voice`**; Default **Metadata only** (optional **`audio_base64`** nur mit **`ENABLE_VOICE_SYNTH_PREVIEW_BODY`** und Byte‑Limit); ohne API‑Key weiterhin HTTP **200** mit **`warnings`**, kein blindes HTTP 500. |
 | `POST` | `/production/jobs/{production_job_id}/render-manifest/generate` | Render-Manifest (**`render_manifests`**) aus Bausteinen zusammenstellen (**404** ohne **`scene_assets`**). |
 | `GET` | `/production/jobs/{production_job_id}/render-manifest` | Render-Manifest lesen (**404**, wenn nicht vorhanden). |
 | `GET` | `/production/jobs/{production_job_id}/export` | BA 7.0: connector-ready JSON (**`generic_manifest`**, Provider-Stubs, **`metadata`**) — **ohne** echte Provider-Aufrufe. |
@@ -310,15 +311,32 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 
 ### Phase 7 — Voiceover
 
+**Strukturierte Abarbeitung:** Bauplan mit **Baustein 7.1–7.8**, Qualitäts-Gates (`compileall`, `pytest`, keine blinden HTTP-500), Testnamenskonvention und Abgrenzung zu **BA 9.x** / **Phase 10** siehe **[docs/phases/phase7_voice_bauplan.md](docs/phases/phase7_voice_bauplan.md)**.  
+*(**Baustein 7.x** = Ausführungsinkremente **unter** dieser Makrophase — **nicht** verwechseln mit **BA 9.x Story Engine** oder **Phase 10 Publishing**.)*
+
 | | |
 |--|--|
-| **Status** | **planned** |
-| **Ziel** | Aus `full_script` oder Kapiteln Audio erzeugen (TTS-Anbieter oder lokal), Dateiformate und Qualitätsparameter festlegen. |
-| **Endpoints** | *geplant* |
-| **Relevante Dateien** | *neu* |
-| **Akzeptanzkriterien** | API-Keys nur über Secret Manager / `.env` (nicht dokumentiert); Kosten und Laufzeitbudget beachten. |
-| **Bekannte Grenzen** | Stimme, Aussprache, Markenrechte Drittanbieter. |
-| **Nächster Schritt** | Anbieter evaluieren; Pilot mit kurzem Skript. |
+| **Status** | **in progress** (Baustein **7.2** implementiert: [`POST …/voice/synthesize-preview`](docs/modules/phase7_72_voice_provider_minimal_slice.md); Persistenz Artefakte = **7.3**) |
+| **Ziel** | Aus **`voice_plans`** bzw. Skript-/Kapiteltext **wahres TTS** erzeugen; Artefakte versionieren und **Metadaten** abbilden (v. a. **`production_files`**; Blob-Storage je Architekturentscheid im Bauplan); Provider über **`provider_configs`** / **`voice_default`** — **ohne Bruch von `GenerateScriptResponse`** (Voice über eigene Routen/Ketten; neue Endpoints in der Phase-5-Endpunktliste pflegen sobald vergeben — Anker **[Phase 5](#phase-5--watchlist--channel-monitoring)**). |
+| **Voraussetzungen im Repo** | Strukturen **ohne echten Voice-Call**: **`voice_plans`**, **`POST …/voice-plan/generate`**, **`GET …/voice-plan`**, **`provider_configs`**, **`production_files`**, **`execution_jobs`**, Kostenschätzung — siehe Phase-5-Block oben und [docs/phases/phase7_voice_bauplan.md](docs/phases/phase7_voice_bauplan.md). |
+| **Endpoints** | **`POST /production/jobs/{production_job_id}/voice/synthesize-preview`** live (siehe [Phase‑5‑Tabelle](#watchlist-endpunkte-phase-5--stand-code)); Steckbrief [docs/modules/phase7_72_voice_provider_minimal_slice.md](docs/modules/phase7_72_voice_provider_minimal_slice.md). **7.3+** ggf. weitere Synthese-/Persistenz‑Routen. |
+| **Relevante Dateien** | Neu: Voice/TTS-Modul (Pfad im ersten PR festlegen); bestehend: `app/watchlist/voice_plan.py`, `app/routes/production.py`, `app/routes/providers.py`, `cost_calculator.py`, `connector_export.py` / Render-Manifest. |
+| **Akzeptanzkriterien (global Phase 7 V1)** | Gates laut Bauplan (**`compileall`**, **`pytest`**, `GET /health` + geänderte Routen); Secrets nur Secret Manager / `.env`; **`GenerateScriptResponse`** unverändert, sofern nicht separat beschlossen. |
+| **Bekannte Grenzen** | Stimmenlizenzen Drittanbieter; keine Rechts-/Marken-Garantie durch die Pipeline; Binärdaten nicht dauerhaft in Firestore-Feldern vorhalten. |
+| **Nächster Schritt** | **Baustein 7.3** (Audio‑Metadaten/Persistenz **`production_files`** o. Ä.) laut [docs/phases/phase7_voice_bauplan.md](docs/phases/phase7_voice_bauplan.md); Referenz‑Steckbrief weiter [docs/modules/phase7_72_voice_provider_minimal_slice.md](docs/modules/phase7_72_voice_provider_minimal_slice.md). |
+
+**Baustein-Übersicht (Ausführung Phase 7)**
+
+| Baustein | Inhalt |
+|----------|--------|
+| **7.1** | Scope, Secrets-/Config-Namen (`voice_default`, ENV) |
+| **7.2** | TTS-Adapter + erster Provider + **Preview-Vertical-Slice** — Steckbrief [docs/modules/phase7_72_voice_provider_minimal_slice.md](docs/modules/phase7_72_voice_provider_minimal_slice.md) |
+| **7.3** | `voice_plan` → Synthese + Persistenz-Metadaten |
+| **7.4** | Fehlerpfade / `warnings` / kein unkontrolliertes HTTP 500 |
+| **7.5** | Kostenschätzung Voice-Anteil (`production_costs`) |
+| **7.6** | *(optional)* zweiter Provider |
+| **7.7** | Render-Manifest / Export-Anbindung |
+| **7.8** | Runbook, Deploy-Hinweise, Smoke |
 
 ---
 
@@ -727,5 +745,5 @@ I --> I3[Story Engine operativ reif]
 3. **Nach Incidents oder wiederkehrenden Bugs**: [ISSUES_LOG.md](ISSUES_LOG.md) aktualisieren (Datum, Ursache, Fix, Commit-Referenz).  
 4. **Commits**: nur mit Tests/Checks laut [AGENTS.md](AGENTS.md) und Statusabgleich hier.
 
-Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-05-02** — **BA 9.7–9.9** umgesetzt (Template-Optimization, Intelligence, Ops-Maturity, [docs/STORY_ENGINE_OS.md](docs/STORY_ENGINE_OS.md)); § **Nächste Priorität**: Story-Kern geschlossen, Fokussierung nun **Phase 7 / Scheduling**; neue Story-Felder in Control Panel + **`GET /story-engine/template-health`**.  
+Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-05-04** — **Phase 7.2** implementiert (`POST …/voice/synthesize-preview`, Paket `app/voice/`, Service `synthesize_voice_plan_preview`, Tests `tests/test_phase7_72_voice_provider_contract.py`); Makro **Voiceover** in Phasentabelle **in progress**. Zuvor **2026-05-03**: Phase‑7.2‑MODULE‑Steckbrief `docs/modules/phase7_72_voice_provider_minimal_slice.md`; Phase‑7‑Bauplan; **2026-05-02** — BA 9.7–9.9 Story Engine.  
 Zuvor (2026-05-01): § Nächste Priorität; Steckbrief ba97; Phase-5-Fließtext BA 9.3–9.6; (2026-04-30) Mermaid BA 9.2–9.9, Governance BA vs Phase.
