@@ -82,6 +82,58 @@ class RhythmHintResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+SceneBlueprintSourceClassLiteral = Literal["synthetic_placeholder", "stock_placeholder"]
+
+
+class StorySceneBlueprintRequest(BaseModel):
+    """Phase 8.1 — read-only Ableitung eines visuellen Szenenplans (Nebenkanal)."""
+
+    video_template: str = Field(default="generic")
+    duration_minutes: int = Field(default=10, ge=1, le=180)
+    title: str = ""
+    hook: str = ""
+    chapters: List[Chapter] = Field(default_factory=list)
+    full_script: str = Field(
+        default="",
+        description="Optional Nur-Check Wortzahl vs. chapters; keine inhaltliche Neuerfindung.",
+    )
+    story_structure: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="BA 9 Nebenkanal — nur registriert, nicht expandiert.",
+    )
+    rhythm_hints: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="BA 9.4 Rhythm-Output — nur lesende pacing_hints je Szene wenn beats vorliegen.",
+    )
+
+
+class SceneBlueprintPromptPack(BaseModel):
+    """Strukturierte Prompt-Hülle ohne Anbieter-Call."""
+
+    image_primary: str = ""
+    negative_hints: str = ""
+
+
+class SceneBlueprintContract(BaseModel):
+    scene_number: int = Field(ge=1)
+    intent: str = ""
+    subjects_safe: str = ""
+    style_tags: List[str] = Field(default_factory=list)
+    source_class: SceneBlueprintSourceClassLiteral = "synthetic_placeholder"
+    risk_flags: List[str] = Field(default_factory=list)
+    prompt_pack: SceneBlueprintPromptPack = Field(default_factory=SceneBlueprintPromptPack)
+    licensing_notes: str = ""
+    redaction_warnings: List[str] = Field(default_factory=list)
+
+
+class SceneBlueprintPlanResponse(BaseModel):
+    policy_profile: str
+    plan_version: int = Field(default=1, ge=1)
+    status: Literal["draft", "ready", "failed"] = "ready"
+    scenes: List[SceneBlueprintContract] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
 class LatestVideosRequest(BaseModel):
     channel_url: str = Field(..., min_length=1)
     max_results: int = Field(5, ge=1, le=50)
