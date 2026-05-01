@@ -39,7 +39,9 @@ async def generate_script(request: GenerateScriptRequest):
             sources=sources,
             warnings=warnings
         )
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error generating script: {type(e).__name__} message={str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
