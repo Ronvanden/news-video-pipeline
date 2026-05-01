@@ -540,11 +540,13 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     <label for="intake-topic">Topic (optional, Kategorie/Thema)</label>
     <input type="text" id="intake-topic" placeholder="z. B. Politik, True Crime, Wirtschaft"/>
     <p class="muted" id="intake-raw-headline-hint" style="font-size:0.76rem;margin:-0.25rem 0 0.6rem">Rohtext: Titel automatisch aus Rohtext erzeugt — oder aus dem Topic-Feld als Headline, falls gesetzt. Rohtext ≠ Titel.</p>
-    <div class="actions" style="margin-top:0.5rem">
+    <div class="actions" style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
       <button type="button" class="primary" id="btn-intake-body" data-label="Auto Body aus Quelle">Auto Body aus Quelle</button>
+      <button type="button" id="btn-fill-test-body" title="Schreibt feste Testwerte ins Input Panel (DOM/IDs prüfen, kein Intake)">Fill Test Body</button>
     </div>
     <p id="intake-status" class="intake-status muted" role="status" aria-live="polite"></p>
     <p id="intake-source-debug" class="muted" style="font-size:0.78rem;margin:0.15rem 0 0" aria-live="polite"></p>
+    <p id="intake-field-debug" class="muted" style="font-size:0.74rem;margin:0.2rem 0 0;font-family:ui-monospace,monospace;white-space:pre-wrap;word-break:break-word" aria-live="polite"></p>
   </section>
 
   <section class="panel" id="coll-full-pipeline" style="margin-top:1rem">
@@ -853,6 +855,81 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   function setIntakeSourceDebug(msg) {
     var d = $("intake-source-debug");
     if (d) d.textContent = msg || "";
+  }
+
+  function dispatchElInputEvents(el) {
+    if (!el || typeof Event === "undefined") return;
+    try { el.dispatchEvent(new Event("input", { bubbles: true })); } catch (e1) {}
+    try { el.dispatchEvent(new Event("change", { bubbles: true })); } catch (e2) {}
+  }
+
+  function setIntakeFieldDebug(contextLabel) {
+    var dbg = $("intake-field-debug");
+    if (!dbg) return;
+    var tEl = $("fd-title");
+    var tpEl = $("fd-topic");
+    var smEl = $("fd-summary");
+    var chEl = $("fd-chapters");
+    var titleV = tEl ? String(tEl.value || "") : "(kein Element fd-title)";
+    var topicV = tpEl ? String(tpEl.value || "") : "(kein Element fd-topic)";
+    var sumV = smEl ? String(smEl.value || "") : "";
+    var chRaw = chEl ? String(chEl.value || "").trim() : "";
+    var chCount = -1;
+    try {
+      var parsed = chRaw ? JSON.parse(chRaw) : null;
+      chCount = Array.isArray(parsed) ? parsed.length : -1;
+    } catch (eP) {
+      chCount = -1;
+    }
+    var prefix = contextLabel ? String(contextLabel) + "\\n" : "";
+    dbg.textContent = prefix +
+      "Debug fd-* nach applyIntake:\\n" +
+      "  title=\"" + titleV.slice(0, 120) + (titleV.length > 120 ? "…" : "") + "\"\\n" +
+      "  topic=\"" + topicV.slice(0, 80) + (topicV.length > 80 ? "…" : "") + "\"\\n" +
+      "  summary_len=" + sumV.length + "\\n" +
+      "  chapters_json_chars=" + chRaw.length + " | chapters_count=" + chCount;
+  }
+
+  function fillTestBodyIntoInputPanel() {
+    var testCh = [{ title: "Kapitel 1", content: "Test Kapitel Inhalt lang genug." }];
+    var payload = {
+      title: "Test Titel",
+      topic: "Test Topic",
+      source_summary: "Test Summary",
+      chapters: testCh,
+      full_script: "",
+      warnings: []
+    };
+    commitIntakePayloadToInputPanel(payload);
+    setIntakeFieldDebug("Fill Test Body — direkt ohne Quelle.");
+    setIntakeStatus("Fill Test Body: Input Panel gesetzt (fd-title, fd-topic, fd-summary, fd-chapters).", "success");
+    showError("");
+    openPanelAndScroll(null, "coll-input-panel");
+  }
+
+  function commitIntakePayloadToInputPanel(payload) {
+    applyIntakeToForm(payload);
+    var ti = $("fd-title");
+    var tp = $("fd-topic");
+    var su = $("fd-summary");
+    var ch = $("fd-chapters");
+    if (ti) {
+      ti.value = String(payload.title || "");
+      dispatchElInputEvents(ti);
+    }
+    if (tp) {
+      tp.value = String(payload.topic || "");
+      dispatchElInputEvents(tp);
+    }
+    if (su) {
+      su.value = String(payload.source_summary || "");
+      dispatchElInputEvents(su);
+    }
+    if (ch) {
+      var chs = payload.chapters && payload.chapters.length ? payload.chapters : [];
+      ch.value = JSON.stringify(chs, null, 2);
+      dispatchElInputEvents(ch);
+    }
   }
   function setFdIntakeApplyBadge(msg) {
     var b = $("fd-intake-apply-badge");
@@ -2194,20 +2271,23 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
 
   async function runBuildBodyFromIntake() {
+    setIntakeStatus("Auto Body geklickt", "info");
     var typ = getIntakeSourceTypeNormalized();
     setFdIntakeApplyBadge("");
     var labelCanon = isIntakeRawMode(typ) ? "raw_text" : (typ === "news" ? "news" : (typ === "youtube" ? "youtube" : typ || "?"));
     setIntakeSourceDebug("Quelle erkannt: " + labelCanon);
-    setIntakeStatus("Body aus Quelle wird geladen…", "info");
+    setIntakeStatus("Auto Body geklickt · Quelle erkannt: " + labelCanon, "info");
     var tmpl = $("fd-template").value || "generic";
     var dur = Math.min(180, Math.max(1, parseInt($("fd-duration").value, 10) || 10));
     var conf = "warn";
     var gen;
     var fromRaw = false;
     try {
+      setIntakeStatus("Auto Body geklickt · Quelle erkannt: " + labelCanon + " — lade…", "info");
       if (isIntakeRawMode(typ)) {
         var rt = $("intake-raw-text").value.trim();
         if (rt.length < 20) throw new Error("Rohtext fehlt oder zu kurz — mindestens 20 Zeichen erforderlich.");
+        setIntakeStatus("Rohtext-Pfad: keine YouTube/News-Validierung — segmentiere…", "info");
         gen = buildPseudoScriptResponseFromRaw(rt);
         fromRaw = true;
       } else if (typ === "youtube") {
@@ -2247,7 +2327,8 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       if (!normalized.chapters || normalized.chapters.length === 0) {
         throw new Error("Keine Kapitel mit Inhalt aus der Quelle — Eingabe oder Server-Antwort prüfen (response.chapters).");
       }
-      applyIntakeToForm(normalized);
+      commitIntakePayloadToInputPanel(normalized);
+      setIntakeFieldDebug("Nach commitIntakePayloadToInputPanel (applyIntakeToForm + DOM refresh).");
       var nCh = validateFormAfterIntake("intake");
       mergeWarnings(normalized.warnings || []);
       refreshFounderInterpretation();
@@ -2845,6 +2926,18 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       await withActionButton(btn, "coll-source-intake", "coll-input-panel", async function() {
         await runBuildBodyFromIntake();
       });
+    });
+  }
+  var fillTestBodyBtn = $("btn-fill-test-body");
+  if (fillTestBodyBtn) {
+    fillTestBodyBtn.addEventListener("click", function() {
+      clearWarnings();
+      try {
+        fillTestBodyIntoInputPanel();
+      } catch (eFill) {
+        showError(String(eFill.message || eFill));
+        setIntakeStatus("Fill Test Body fehlgeschlagen.", "err");
+      }
     });
   }
 

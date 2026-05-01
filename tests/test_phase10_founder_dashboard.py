@@ -99,6 +99,26 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="coll-input-panel"', text)
         self.assertIn('id="coll-warning-center"', text)
 
+    def test_intake_hard_debug_fill_test_body_and_field_debug(self):
+        client = TestClient(app)
+        r = client.get("/founder/dashboard")
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        text = r.text
+        self.assertIn("Fill Test Body", text)
+        self.assertIn('id="btn-fill-test-body"', text)
+        self.assertIn("Auto Body geklickt", text)
+        self.assertIn("Quelle erkannt:", text)
+        self.assertIn('id="intake-field-debug"', text)
+        self.assertIn("summary_len=", text)
+        self.assertIn("chapters_count=", text)
+        self.assertIn("commitIntakePayloadToInputPanel", text)
+        self.assertIn("fillTestBodyIntoInputPanel", text)
+        self.assertIn("applyIntakeToForm", text)
+        self.assertIn("getRequiredInputEl(\"fd-title\")", text)
+        self.assertIn("getRequiredInputEl(\"fd-topic\")", text)
+        self.assertIn("getRequiredInputEl(\"fd-summary\")", text)
+        self.assertIn("getRequiredInputEl(\"fd-chapters\")", text)
+
     def test_dashboard_config_200(self):
         client = TestClient(app)
         r = client.get("/founder/dashboard/config")
