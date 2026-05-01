@@ -543,6 +543,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     <div class="actions" style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
       <button type="button" class="primary" id="btn-intake-body" data-label="Auto Body aus Quelle">Auto Body aus Quelle</button>
       <button type="button" id="btn-fill-test-body" title="Schreibt feste Testwerte ins Input Panel (DOM/IDs prüfen, kein Intake)">Fill Test Body</button>
+      <button type="button" id="btn-dom-test" title="Prüft Error-Bar / JS ohne Intake">DOM TEST</button>
     </div>
     <p id="intake-status" class="intake-status muted" role="status" aria-live="polite"></p>
     <p id="intake-source-debug" class="muted" style="font-size:0.78rem;margin:0.15rem 0 0" aria-live="polite"></p>
@@ -834,6 +835,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   </section>
 </main>
 <script>
+try {
 (function(){
   const DEFAULT_CHAPTERS = [
     {"title":"Kapitel 1","content":"Inhalt genug für eine Szene. ".repeat(8)},
@@ -2916,18 +2918,39 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     }
   }
 
-  $("fd-chapters").value = JSON.stringify(DEFAULT_CHAPTERS, null, 2);
-
-  var intakeBodyBtn = $("btn-intake-body");
-  if (intakeBodyBtn) {
-    intakeBodyBtn.addEventListener("click", async function() {
-      var btn = this;
-      clearWarnings();
-      await withActionButton(btn, "coll-source-intake", "coll-input-panel", async function() {
-        await runBuildBodyFromIntake();
+  function fdBootstrapDashboard() {
+    try {
+      console.log("FD_BOOTSTRAP_START");
+      showError("FD_BOOTSTRAP_START");
+    } catch (eBootLog) {}
+    var autoBtn = document.getElementById("btn-intake-body");
+    if (!autoBtn) {
+      try {
+        showError("BTN_MISSING: btn-intake-body");
+      } catch (eMiss) {}
+    }
+    var domTestBtn = document.getElementById("btn-dom-test");
+    if (domTestBtn) {
+      domTestBtn.addEventListener("click", function() {
+        showError("DOM_TEST_OK");
       });
-    });
-  }
+    }
+
+    $("fd-chapters").value = JSON.stringify(DEFAULT_CHAPTERS, null, 2);
+
+    if (autoBtn) {
+      autoBtn.onclick = function() {
+        showError("BTN_CLICK_RAW");
+        alert("BTN_CLICK_RAW");
+      };
+      autoBtn.addEventListener("click", async function() {
+        var btn = autoBtn;
+        clearWarnings();
+        await withActionButton(btn, "coll-source-intake", "coll-input-panel", async function() {
+          await runBuildBodyFromIntake();
+        });
+      });
+    }
   var fillTestBodyBtn = $("btn-fill-test-body");
   if (fillTestBodyBtn) {
     fillTestBodyBtn.addEventListener("click", function() {
@@ -2971,15 +2994,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     });
   }
 
-  function fdBootstrapStoryActions() {
-    bindBuildExportPackageButton();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", fdBootstrapStoryActions);
-  } else {
-    fdBootstrapStoryActions();
-  }
+  bindBuildExportPackageButton();
 
   $("btn-preview").onclick = async function(){
     var btn = this;
@@ -3158,7 +3173,22 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
   updatePqBadge();
   refreshOperatorClarity();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fdBootstrapDashboard);
+  } else {
+    fdBootstrapDashboard();
+  }
 })();
+} catch (globalErr) {
+  console.error(globalErr);
+  var _eb = document.getElementById("error-bar");
+  if (_eb) {
+    _eb.textContent = "GLOBAL_JS_FAIL: " + (globalErr && globalErr.message ? globalErr.message : String(globalErr));
+    _eb.classList.add("visible");
+  }
+}
 </script>
 </body>
 </html>"""

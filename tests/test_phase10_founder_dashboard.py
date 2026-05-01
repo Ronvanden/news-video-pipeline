@@ -99,6 +99,19 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="coll-input-panel"', text)
         self.assertIn('id="coll-warning-center"', text)
 
+    def test_emergency_dom_bootstrap_and_dom_test_button(self):
+        client = TestClient(app)
+        r = client.get("/founder/dashboard")
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        text = r.text
+        self.assertIn("FD_BOOTSTRAP_START", text)
+        self.assertIn("BTN_MISSING: btn-intake-body", text)
+        self.assertIn("BTN_CLICK_RAW", text)
+        self.assertIn("GLOBAL_JS_FAIL:", text)
+        self.assertIn('id="btn-dom-test"', text)
+        self.assertIn("DOM_TEST_OK", text)
+        self.assertIn("fdBootstrapDashboard", text)
+
     def test_intake_hard_debug_fill_test_body_and_field_debug(self):
         client = TestClient(app)
         r = client.get("/founder/dashboard")
@@ -152,7 +165,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="btn-export-package"', text)
         self.assertIn("DEBUG: Build Export Button ausgelöst", text)
         self.assertIn("bindBuildExportPackageButton", text)
-        self.assertIn("fdBootstrapStoryActions", text)
+        self.assertIn("fdBootstrapDashboard", text)
         self.assertIn("onBuildExportPackageClick", text)
         self.assertIn('addEventListener("click"', text)
         self.assertIn("renderExportScenePlanSummary", text)
