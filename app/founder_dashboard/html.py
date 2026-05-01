@@ -98,7 +98,32 @@ button.primary {
   color: #fff;
 }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.is-loading {
+  opacity: 1 !important;
+  cursor: wait !important;
+  border-color: var(--accent) !important;
+  box-shadow: inset 0 0 0 1px rgba(61, 139, 253, 0.35);
+}
+button.is-success {
+  background: rgba(74, 222, 128, 0.22) !important;
+  border-color: var(--ok) !important;
+  color: #bbf7d0 !important;
+}
+button.primary.is-success {
+  background: rgba(74, 222, 128, 0.45) !important;
+  color: #052e16 !important;
+}
+button.is-error {
+  background: rgba(248, 113, 113, 0.22) !important;
+  border-color: var(--danger) !important;
+  color: #fecaca !important;
+}
 button.sm { padding: 0.3rem 0.5rem; font-size: 0.72rem; }
+pre.out-empty, .score.out-empty, .lab-empty {
+  color: var(--muted);
+  font-style: italic;
+  font-weight: normal;
+}
 pre.out {
   margin: 0;
   padding: 0.65rem;
@@ -232,22 +257,22 @@ table.data th { background: var(--bg); color: var(--muted); }
       <h2>Actions</h2>
       <p class="muted">POST-Body = ExportPackageRequest (BA 10.3–10.5).</p>
       <div class="actions">
-        <button type="button" class="primary" id="btn-export">Build Export Package</button>
-        <button type="button" id="btn-preview">Preview Founder Metrics</button>
-        <button type="button" id="btn-readiness">Provider Readiness</button>
-        <button type="button" id="btn-optimize">Optimize Provider Prompts</button>
-        <button type="button" id="btn-ctr">Thumbnail CTR</button>
-        <button type="button" id="btn-formats">Export Formats</button>
+        <button type="button" class="primary" id="btn-export" data-label="Build Export Package">Build Export Package</button>
+        <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
+        <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
+        <button type="button" id="btn-optimize" data-label="Optimize Provider Prompts">Optimize Provider Prompts</button>
+        <button type="button" id="btn-ctr" data-label="Thumbnail CTR">Thumbnail CTR</button>
+        <button type="button" id="btn-formats" data-label="Export Formats">Export Formats</button>
       </div>
       <p class="muted" style="margin-top:0.75rem">Batch Template Compare lädt alle IDs aus dem Template-Selector und ruft nacheinander Preview + Readiness auf.</p>
       <div class="actions">
-        <button type="button" id="btn-batch-compare">Batch Template Compare</button>
+        <button type="button" id="btn-batch-compare" data-label="Batch Template Compare">Batch Template Compare</button>
         <span class="muted" id="batch-status"></span>
       </div>
     </section>
   </div>
 
-  <details class="fd-coll" open>
+  <details class="fd-coll" open id="coll-export">
     <summary>Export Package (roh)</summary>
     <div class="coll-body">
       <div class="out-toolbar">
@@ -255,11 +280,11 @@ table.data th { background: var(--bg); color: var(--muted); }
         <button type="button" class="sm tb-json" data-pre="out-export-full" data-dlname="export-package.json">JSON</button>
         <button type="button" class="sm tb-txt" data-pre="out-export-full" data-dlname="export-package.txt">TXT</button>
       </div>
-      <pre class="out" id="out-export-full">—</pre>
+      <pre class="out out-empty" id="out-export-full">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
-  <details class="fd-coll" open>
+  <details class="fd-coll" open id="coll-preview">
     <summary>Preview (Hook + Prompt Quality)</summary>
     <div class="coll-body grid grid-2">
       <div class="panel" style="margin:0">
@@ -269,22 +294,22 @@ table.data th { background: var(--bg); color: var(--muted); }
           <button type="button" class="sm tb-json" data-pre="out-hook" data-dlname="hook-preview.json">JSON</button>
           <button type="button" class="sm tb-txt" data-pre="out-hook" data-dlname="hook-preview.txt">TXT</button>
         </div>
-        <pre class="out" id="out-hook">—</pre>
+        <pre class="out out-empty" id="out-hook">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
       <div class="panel" style="margin:0">
         <h2>Prompt Quality Score <span id="pq-badge" class="pq-badge neutral" title="Farbe aus numerischem Preview-Score (≥70 grün, 40–69 gelb, &lt;40 rot); Export = Report.">—</span></h2>
-        <div class="score" id="out-pq-score">—</div>
+        <div class="score out-empty" id="out-pq-score">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</div>
         <div class="out-toolbar" style="margin-top:0.5rem">
           <button type="button" class="sm tb-copy" data-pre="out-pq-detail">Copy</button>
           <button type="button" class="sm tb-json" data-pre="out-pq-detail" data-dlname="prompt-quality.json">JSON</button>
           <button type="button" class="sm tb-txt" data-pre="out-pq-detail" data-dlname="prompt-quality.txt">TXT</button>
         </div>
-        <pre class="out" id="out-pq-detail" style="max-height:160px">—</pre>
+        <pre class="out out-empty" id="out-pq-detail" style="max-height:160px">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
     </div>
   </details>
 
-  <details class="fd-coll" open>
+  <details class="fd-coll" open id="coll-readiness">
     <summary>Provider Readiness</summary>
     <div class="coll-body">
       <div class="out-toolbar">
@@ -292,11 +317,11 @@ table.data th { background: var(--bg); color: var(--muted); }
         <button type="button" class="sm tb-json" data-pre="out-readiness" data-dlname="provider-readiness.json">JSON</button>
         <button type="button" class="sm tb-txt" data-pre="out-readiness" data-dlname="provider-readiness.txt">TXT</button>
       </div>
-      <pre class="out" id="out-readiness">—</pre>
+      <pre class="out out-empty" id="out-readiness">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
-  <details class="fd-coll" open>
+  <details class="fd-coll" open id="coll-optimize">
     <summary>Provider Optimize (Leonardo / OpenAI / Kling + Shotlists)</summary>
     <div class="coll-body grid grid-2">
       <div class="panel" style="margin:0">
@@ -306,7 +331,7 @@ table.data th { background: var(--bg); color: var(--muted); }
           <button type="button" class="sm tb-json" data-pre="out-leo" data-dlname="leonardo-prompts.json">JSON</button>
           <button type="button" class="sm tb-txt" data-pre="out-leo" data-dlname="leonardo-prompts.txt">TXT</button>
         </div>
-        <pre class="out" id="out-leo">—</pre>
+        <pre class="out out-empty" id="out-leo">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
       <div class="panel" style="margin:0">
         <h2>OpenAI Prompts</h2>
@@ -315,7 +340,7 @@ table.data th { background: var(--bg); color: var(--muted); }
           <button type="button" class="sm tb-json" data-pre="out-openai" data-dlname="openai-prompts.json">JSON</button>
           <button type="button" class="sm tb-txt" data-pre="out-openai" data-dlname="openai-prompts.txt">TXT</button>
         </div>
-        <pre class="out" id="out-openai">—</pre>
+        <pre class="out out-empty" id="out-openai">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
       <div class="panel" style="margin:0">
         <h2>Kling Motion Prompts</h2>
@@ -324,7 +349,7 @@ table.data th { background: var(--bg); color: var(--muted); }
           <button type="button" class="sm tb-json" data-pre="out-kling" data-dlname="kling-prompts.json">JSON</button>
           <button type="button" class="sm tb-txt" data-pre="out-kling" data-dlname="kling-prompts.txt">TXT</button>
         </div>
-        <pre class="out" id="out-kling">—</pre>
+        <pre class="out out-empty" id="out-kling">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
       <div class="panel" style="margin:0">
         <h2>CapCut Shotlist</h2>
@@ -333,7 +358,7 @@ table.data th { background: var(--bg); color: var(--muted); }
           <button type="button" class="sm tb-json" data-pre="out-capcut" data-dlname="capcut-shotlist.json">JSON</button>
           <button type="button" class="sm tb-csv" data-pre="out-capcut" data-dlname="capcut-shotlist.csv">CSV</button>
         </div>
-        <pre class="out" id="out-capcut">—</pre>
+        <pre class="out out-empty" id="out-capcut">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
       <div class="panel" style="margin:0">
         <h2>CSV Shotlist</h2>
@@ -342,12 +367,12 @@ table.data th { background: var(--bg); color: var(--muted); }
           <button type="button" class="sm tb-json" data-pre="out-csv" data-dlname="csv-shotlist.json">JSON</button>
           <button type="button" class="sm tb-csv" data-pre="out-csv" data-dlname="csv-shotlist.csv">CSV</button>
         </div>
-        <pre class="out" id="out-csv">—</pre>
+        <pre class="out out-empty" id="out-csv">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
     </div>
   </details>
 
-  <details class="fd-coll" open>
+  <details class="fd-coll" open id="coll-ctr">
     <summary>Thumbnail CTR</summary>
     <div class="coll-body grid grid-2">
       <div class="panel" style="margin:0">
@@ -356,8 +381,8 @@ table.data th { background: var(--bg); color: var(--muted); }
           <button type="button" class="sm tb-copy" data-pre="out-ctr-raw">Copy</button>
           <button type="button" class="sm tb-json" data-pre="out-ctr-raw" data-dlname="thumbnail-ctr.json">JSON</button>
         </div>
-        <div class="score" id="out-ctr">—</div>
-        <pre class="out" id="out-ctr-raw" style="display:none">—</pre>
+        <div class="score out-empty" id="out-ctr">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</div>
+        <pre class="out out-empty" id="out-ctr-raw" style="display:none">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
       <div class="panel" style="margin:0">
         <h2>Thumbnail Variants</h2>
@@ -366,16 +391,16 @@ table.data th { background: var(--bg); color: var(--muted); }
           <button type="button" class="sm tb-json" data-pre="out-thumb-var" data-dlname="thumbnail-variants.json">JSON</button>
           <button type="button" class="sm tb-txt" data-pre="out-thumb-var" data-dlname="thumbnail-variants.txt">TXT</button>
         </div>
-        <pre class="out" id="out-thumb-var">—</pre>
+        <pre class="out out-empty" id="out-thumb-var">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
       </div>
     </div>
   </details>
 
-  <details class="fd-coll" open>
+  <details class="fd-coll" open id="coll-batch">
     <summary>Batch Template Compare</summary>
     <div class="coll-body">
       <p class="muted">readiness_score = Mittelwert aus scores.leonardo, scores.kling, scores.openai (Provider Readiness).</p>
-      <div style="overflow-x:auto">
+      <div id="batch-scroll-anchor" style="overflow-x:auto">
         <table class="data" id="batch-table">
           <thead>
             <tr>
@@ -391,7 +416,7 @@ table.data th { background: var(--bg); color: var(--muted); }
     </div>
   </details>
 
-  <details class="fd-coll" open>
+  <details class="fd-coll" open id="coll-prompt-lab">
     <summary>Prompt Lab (Side-by-side)</summary>
     <div class="coll-body">
       <p class="muted">Quelle: zuletzt „Optimize Provider Prompts“, sonst Stub-Prompts aus Export-Paket.</p>
@@ -424,7 +449,7 @@ table.data th { background: var(--bg); color: var(--muted); }
     </div>
   </details>
 
-  <details class="fd-coll">
+  <details class="fd-coll" id="coll-formats">
     <summary>Export Formats Registry</summary>
     <div class="coll-body">
       <div class="out-toolbar">
@@ -432,7 +457,7 @@ table.data th { background: var(--bg); color: var(--muted); }
         <button type="button" class="sm tb-json" data-pre="out-formats" data-dlname="export-formats.json">JSON</button>
         <button type="button" class="sm tb-txt" data-pre="out-formats" data-dlname="export-formats.txt">TXT</button>
       </div>
-      <pre class="out" id="out-formats" style="max-height:200px">—</pre>
+      <pre class="out out-empty" id="out-formats" style="max-height:200px">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
@@ -455,6 +480,43 @@ table.data th { background: var(--bg); color: var(--muted); }
   let lastNumericPq = null;
   let templateIds = [];
   let warningsAcc = [];
+
+  const OUTPUT_EMPTY = "Noch kein Ergebnis. Klicke auf den passenden Action-Button.";
+
+  function openPanelAndScroll(detailsId, scrollTargetId) {
+    var d = detailsId ? document.getElementById(detailsId) : null;
+    if (d && d.tagName === "DETAILS") d.open = true;
+    var el = scrollTargetId ? $(scrollTargetId) : d;
+    if (el && typeof el.scrollIntoView === "function") {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  async function withActionButton(btn, detailsId, scrollTargetId, task) {
+    var label = btn.getAttribute("data-label") || btn.textContent;
+    btn.setAttribute("data-label", label);
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    btn.classList.remove("is-success", "is-error");
+    btn.textContent = "Loading...";
+    try {
+      await task();
+      btn.textContent = label;
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+      btn.classList.add("is-success");
+      setTimeout(function() { btn.classList.remove("is-success"); }, 1600);
+      openPanelAndScroll(detailsId, scrollTargetId || detailsId);
+    } catch (e) {
+      btn.textContent = label;
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+      btn.classList.add("is-error");
+      setTimeout(function() { btn.classList.remove("is-error"); }, 1600);
+      showError(String(e.message || e));
+      openPanelAndScroll(detailsId, scrollTargetId || detailsId);
+    }
+  }
 
   function showError(msg) {
     err.textContent = msg || "";
@@ -513,7 +575,23 @@ table.data th { background: var(--bg); color: var(--muted); }
   }
 
   function setOut(id, obj) {
-    $(id).textContent = obj == null ? "—" : (typeof obj === "string" ? obj : JSON.stringify(obj, null, 2));
+    var el = $(id);
+    if (!el) return;
+    if (id === "out-pq-score" || id === "out-ctr") {
+      var emptyScore = obj === null || obj === undefined || (typeof obj === "string" && !String(obj).trim());
+      if (typeof obj === "number") emptyScore = false;
+      var t = emptyScore ? OUTPUT_EMPTY : String(obj);
+      el.textContent = t;
+      el.classList.toggle("out-empty", t === OUTPUT_EMPTY);
+      return;
+    }
+    var text;
+    if (obj === null || obj === undefined || (typeof obj === "string" && !String(obj).trim()))
+      text = OUTPUT_EMPTY;
+    else
+      text = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+    el.textContent = text;
+    el.classList.toggle("out-empty", text === OUTPUT_EMPTY);
   }
 
   function getPreText(preId) {
@@ -532,7 +610,7 @@ table.data th { background: var(--bg); color: var(--muted); }
 
   function jsonArrayFromPre(preId) {
     const t = getPreText(preId).trim();
-    if (!t || t === "—") return null;
+    if (!t || t === OUTPUT_EMPTY) return null;
     try { return JSON.parse(t); } catch (e) { return null; }
   }
 
@@ -609,10 +687,14 @@ table.data th { background: var(--bg); color: var(--muted); }
     leftBody.innerHTML = "";
     rightBody.innerHTML = "";
     if (!bundle) {
-      leftBody.textContent = "—";
-      rightBody.textContent = "—";
+      leftBody.textContent = OUTPUT_EMPTY;
+      rightBody.textContent = OUTPUT_EMPTY;
+      leftBody.className = "lab-empty";
+      rightBody.className = "lab-empty";
       return;
     }
+    leftBody.className = "";
+    rightBody.className = "";
     var L = rowsForProvider(bundle, lk);
     var R = rowsForProvider(bundle, rk);
     var n = Math.max(L.length, R.length, 1);
@@ -642,8 +724,10 @@ table.data th { background: var(--bg); color: var(--muted); }
     var preId = t.getAttribute("data-pre");
     if (!preId) return;
     var txt = getPreText(preId);
+    var preEl = $(preId);
+    if (preEl && preEl.classList.contains("out-empty")) return;
     if (t.classList.contains("tb-copy")) {
-      if (!txt || txt === "—") return;
+      if (!txt || txt === OUTPUT_EMPTY) return;
       navigator.clipboard.writeText(txt).then(function() {
         t.textContent = "OK";
         setTimeout(function() { t.textContent = "Copy"; }, 1200);
@@ -709,8 +793,9 @@ table.data th { background: var(--bg); color: var(--muted); }
   $("lab-refresh").addEventListener("click", renderPromptLab);
 
   $("btn-export").onclick = async function(){
+    var btn = this;
     clearWarnings();
-    try {
+    await withActionButton(btn, "coll-export", "coll-export", async function() {
       const body = buildExportBody();
       const data = await fetchJson("/story-engine/export-package", {
         method: "POST",
@@ -724,17 +809,21 @@ table.data th { background: var(--bg); color: var(--muted); }
       setOut("out-hook", data.hook || null);
       const pq = data.prompt_quality || (data.scene_prompts && data.scene_prompts.prompt_quality);
       if (pq) {
-        $("out-pq-score").textContent = "(Report)";
+        setOut("out-pq-score", "(Report)");
         setOut("out-pq-detail", pq);
-      } else { $("out-pq-score").textContent = "—"; setOut("out-pq-detail", null); }
+      } else {
+        setOut("out-pq-score", null);
+        setOut("out-pq-detail", null);
+      }
       mergeWarnings(data.warnings || []);
       renderPromptLab();
-    } catch (e) { showError(String(e.message || e)); }
+    });
   };
 
   $("btn-preview").onclick = async function(){
+    var btn = this;
     clearWarnings();
-    try {
+    await withActionButton(btn, "coll-preview", "coll-preview", async function() {
       const data = await fetchJson("/story-engine/export-package/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -750,15 +839,16 @@ table.data th { background: var(--bg); color: var(--muted); }
         readiness_status: data.readiness_status,
         top_warnings: data.top_warnings
       });
-      $("out-pq-score").textContent = String(data.prompt_quality_score);
+      setOut("out-pq-score", data.prompt_quality_score);
       setOut("out-pq-detail", { prompt_quality_score: data.prompt_quality_score, scene_count: data.scene_count });
       mergeWarnings(data.top_warnings || []);
-    } catch (e) { showError(String(e.message || e)); }
+    });
   };
 
   $("btn-readiness").onclick = async function(){
+    var btn = this;
     clearWarnings();
-    try {
+    await withActionButton(btn, "coll-readiness", "coll-readiness", async function() {
       const data = await fetchJson("/story-engine/provider-readiness", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -767,12 +857,13 @@ table.data th { background: var(--bg); color: var(--muted); }
       setOut("out-readiness", data);
       mergeWarnings(data.warnings || []);
       mergeWarnings(data.blocking_issues || []);
-    } catch (e) { showError(String(e.message || e)); }
+    });
   };
 
   $("btn-optimize").onclick = async function(){
+    var btn = this;
     clearWarnings();
-    try {
+    await withActionButton(btn, "coll-optimize", "coll-optimize", async function() {
       const data = await fetchJson("/story-engine/provider-prompts/optimize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -788,12 +879,13 @@ table.data th { background: var(--bg); color: var(--muted); }
       setOut("out-thumb-var", data.thumbnail_variants || []);
       mergeWarnings(data.warnings || []);
       renderPromptLab();
-    } catch (e) { showError(String(e.message || e)); }
+    });
   };
 
   $("btn-ctr").onclick = async function(){
+    var btn = this;
     clearWarnings();
-    try {
+    await withActionButton(btn, "coll-ctr", "coll-ctr", async function() {
       let hook = "";
       let thumb = "";
       const title = $("fd-title").value || "";
@@ -813,39 +905,43 @@ table.data th { background: var(--bg); color: var(--muted); }
         body: JSON.stringify(body)
       });
       lastCtrPayload = data;
-      $("out-ctr").textContent = String(data.ctr_score);
+      setOut("out-ctr", data.ctr_score);
       setOut("out-ctr-raw", data);
       setOut("out-thumb-var", data.thumbnail_variants || []);
       mergeWarnings(data.warnings || []);
-    } catch (e) { showError(String(e.message || e)); }
+    });
   };
 
   $("btn-formats").onclick = async function(){
+    var btn = this;
     clearWarnings();
-    try {
+    await withActionButton(btn, "coll-formats", "coll-formats", async function() {
       const data = await fetchJson("/story-engine/export-formats", { method: "GET" });
       setOut("out-formats", data);
       mergeWarnings(data.warnings || []);
-    } catch (e) { showError(String(e.message || e)); }
+    });
   };
 
   $("btn-batch-compare").onclick = async function(){
-    var btn = $("btn-batch-compare");
+    var btn = this;
     var st = $("batch-status");
     var tbody = $("batch-tbody");
     tbody.innerHTML = "";
     clearWarnings();
     if (!templateIds.length) {
       showError("Keine Template-IDs geladen.");
+      btn.classList.add("is-error");
+      setTimeout(function() { btn.classList.remove("is-error"); }, 1600);
+      openPanelAndScroll("coll-batch", "batch-scroll-anchor");
       return;
     }
-    btn.disabled = true;
-    st.textContent = "Läuft…";
-    try {
+    await withActionButton(btn, "coll-batch", "batch-scroll-anchor", async function() {
+      var batchRoot = $("coll-batch");
+      if (batchRoot) batchRoot.open = true;
       var base = buildExportBody();
       for (var i = 0; i < templateIds.length; i++) {
         var tid = templateIds[i];
-        st.textContent = "Template " + (i + 1) + "/" + templateIds.length + ": " + tid;
+        st.textContent = "Teste Template " + (i + 1) + " von " + templateIds.length + "…";
         var body = Object.assign({}, base, { video_template: tid });
         var prev = await fetchJson("/story-engine/export-package/preview", {
           method: "POST",
@@ -864,12 +960,7 @@ table.data th { background: var(--bg); color: var(--muted); }
         tbody.appendChild(tr);
       }
       st.textContent = "Fertig (" + templateIds.length + " Zeilen).";
-    } catch (e) {
-      st.textContent = "";
-      showError(String(e.message || e));
-    } finally {
-      btn.disabled = false;
-    }
+    });
   };
 
   loadTemplates().then(function() { renderPromptLab(); });

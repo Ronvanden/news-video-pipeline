@@ -22,6 +22,12 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Batch Template Compare", text)
         self.assertIn("pq-badge", text)
         self.assertIn("tb-copy", text)
+        self.assertIn("is-loading", text)
+        self.assertIn("is-success", text)
+        self.assertIn("is-error", text)
+        self.assertIn("Noch kein Ergebnis", text)
+        self.assertIn("scrollIntoView", text)
+        self.assertIn("openPanelAndScroll", text)
 
     def test_dashboard_config_200(self):
         client = TestClient(app)

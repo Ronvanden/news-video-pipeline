@@ -411,6 +411,8 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **BA 10.6 — Founder Dashboard UI V1** (**implemented / ready for deploy**): **`GET /founder/dashboard`** — read-only internes Cockpit als **`HTMLResponse`** (eingebettetes CSS/JS); **`GET /founder/dashboard/config`** — JSON-Konfig/Meta zu den angebundenen Pfaden. V1: **keine Auth**, **keine Firestore-Writes**, **keine externen Provider-Calls**; ruft bestehende Story-Engine-Endpunkte **nur clientseitig** per **`fetch`** auf. Tests: **`tests/test_phase10_founder_dashboard.py`**.
 
+**BA 10.7 — Founder Dashboard Upgrade** (**implemented / ready for deploy**): **additive** Erweiterung derselben **`GET /founder/dashboard`**-Seite (`app/founder_dashboard/html.py`): Copy-to-Clipboard und Downloads (JSON/CSV/TXT) pro Panel, **`<details>`**-Sektionen (Export, Preview, Readiness, Optimize, CTR, Batch Compare, Prompt Lab, Formats), **Prompt-Quality-Farbbadge** (Preview-Score), **Batch Template Compare** (alle IDs aus **`GET /story-engine/template-selector`**, nacheinander Preview + Readiness, Vergleichstabelle inkl. aggregiertem Readiness-Score), **Prompt Lab** (Side-by-side Leonardo/OpenAI/Kling). Weiterhin **kein** Build-Tool, **keine** Auth/Firestore/externe Provider; **keine** neuen Story-Engine-Verträge. Config-Version **`10.7-v1`**; Tests weiterhin **`tests/test_phase10_founder_dashboard.py`**.
+
 ---
 
 ### BA 9.3–9.9 Story Engine Maturity Track (Reihenfolge)
