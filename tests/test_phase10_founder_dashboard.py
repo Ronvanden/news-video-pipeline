@@ -124,6 +124,23 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Endpoint antwortet leer oder unvollständig:", text)
         self.assertIn("runExportOnlyInternal", text)
 
+    def test_build_export_package_button_binding_and_export_summary_ui(self):
+        client = TestClient(app)
+        r = client.get("/founder/dashboard")
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        text = r.text
+        self.assertIn('id="btn-export-package"', text)
+        self.assertIn("DEBUG: Build Export Button ausgelöst", text)
+        self.assertIn("bindBuildExportPackageButton", text)
+        self.assertIn("fdBootstrapStoryActions", text)
+        self.assertIn("onBuildExportPackageClick", text)
+        self.assertIn('addEventListener("click"', text)
+        self.assertIn("renderExportScenePlanSummary", text)
+        self.assertIn('id="export-scene-plan-summary"', text)
+        self.assertIn('id="export-action-status"', text)
+        self.assertIn("Export Request ungültig:", text)
+        self.assertIn("coll-export", text)
+
     def test_story_engine_post_endpoints_return_fields_expected_by_dashboard(self):
         client = TestClient(app)
         base = {

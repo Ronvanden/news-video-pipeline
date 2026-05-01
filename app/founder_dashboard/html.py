@@ -54,6 +54,10 @@ main { padding: 1rem 1.25rem 2rem; max-width: 1200px; margin: 0 auto; }
 .intake-status.intake-status-success { color: var(--ok); font-weight: 600; }
 .intake-status.intake-status-err { color: #fecaca; font-weight: 600; }
 .intake-status.intake-status-info { color: var(--muted); }
+.export-action-status { min-height: 1.1rem; margin: 0.35rem 0 0; font-size: 0.82rem; }
+.export-action-status.export-action-ok { color: var(--ok); font-weight: 600; }
+.export-action-status.export-action-err { color: #fecaca; font-weight: 600; }
+.export-action-status.export-action-info { color: var(--muted); }
 .grid { display: grid; gap: 1rem; }
 @media (min-width: 900px) {
   .grid-2 { grid-template-columns: 1fr 1fr; }
@@ -593,8 +597,9 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       <h2>Actions</h2>
       <p class="muted">POST-Body = ExportPackageRequest (BA 10.3–10.5).</p>
       <p id="story-engine-request-debug" class="muted" style="font-size:0.78rem;min-height:1.1rem;margin:0.35rem 0 0.25rem" aria-live="polite"></p>
+      <p id="export-action-status" class="export-action-status muted" role="status" aria-live="polite"></p>
       <div class="actions">
-        <button type="button" class="primary" id="btn-export" data-label="Build Export Package">Build Export Package</button>
+        <button type="button" class="primary" id="btn-export-package" data-label="Build Export Package">Build Export Package</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
         <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
         <button type="button" id="btn-optimize" data-label="Optimize Provider Prompts">Optimize Provider Prompts</button>
@@ -627,6 +632,10 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   <details class="fd-coll" open id="coll-export">
     <summary>Export Package (roh)</summary>
     <div class="coll-body">
+      <div id="export-scene-plan-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem">
+        <strong>Scene Plan Summary</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Export — zuerst „Build Export Package“.</p>
+      </div>
       <div class="out-toolbar">
         <button type="button" class="sm tb-copy" data-pre="out-export-full">Copy</button>
         <button type="button" class="sm tb-json" data-pre="out-export-full" data-dlname="export-package.json">JSON</button>
@@ -896,6 +905,9 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       btn.classList.add("is-error");
       setTimeout(function() { btn.classList.remove("is-error"); }, 1600);
       showError(String(e.message || e));
+      if (btn && btn.id === "btn-export-package") {
+        setExportActionStatus("Build Export fehlgeschlagen — siehe Error-Bar.", "err");
+      }
       openPanelAndScroll(detailsId, scrollTargetId || detailsId);
     }
   }
@@ -924,6 +936,54 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   function setStoryEngineRequestDebug(msg) {
     var el = $("story-engine-request-debug");
     if (el) el.textContent = msg || "";
+  }
+
+  function setExportActionStatus(msg, kind) {
+    var el = $("export-action-status");
+    if (!el) return;
+    el.textContent = msg || "";
+    var base = "export-action-status muted";
+    if (kind === "success") el.className = base + " export-action-ok";
+    else if (kind === "err") el.className = base + " export-action-err";
+    else if (kind === "info") el.className = base + " export-action-info";
+    else el.className = base;
+  }
+
+  function clearExportScenePlanSummary() {
+    var box = $("export-scene-plan-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Scene Plan Summary</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Export — zuerst „Build Export Package“.</p>';
+  }
+
+  function renderExportScenePlanSummary(exportData, requestBody) {
+    var box = $("export-scene-plan-summary");
+    if (!box || !exportData) return;
+    var sp = exportData.scene_plan || {};
+    var scenes = sp.scenes || [];
+    var sceneCount = scenes.length;
+    var chIn = requestBody && requestBody.chapters && requestBody.chapters.length ? requestBody.chapters.length : 0;
+    var hk = exportData.hook || {};
+    var rhythm = exportData.rhythm && typeof exportData.rhythm === "object" ? exportData.rhythm : {};
+    var rKeys = Object.keys(rhythm);
+    var rhythmBrief = rKeys.length ? rKeys.slice(0, 8).join(", ") + (rKeys.length > 8 ? "…" : "") : "—";
+    var ul = document.createElement("ul");
+    ul.style.margin = "0.35rem 0 0";
+    ul.style.paddingLeft = "1.15rem";
+    function addLi(t) {
+      var li = document.createElement("li");
+      li.textContent = t;
+      ul.appendChild(li);
+    }
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Scene Plan Summary";
+    box.appendChild(head);
+    box.appendChild(ul);
+    addLi("scene_count (scene_plan): " + sceneCount);
+    addLi("Kapitel (Request): " + chIn);
+    addLi("Rhythm (Keys): " + rhythmBrief);
+    addLi("Hook Type: " + (hk.hook_type || "—"));
+    addLi("Hook Score: " + (typeof hk.hook_score === "number" ? String(hk.hook_score) : "—"));
   }
 
   function validateExportFormForStoryEngine() {
@@ -963,7 +1023,11 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
 
   function buildCurrentExportRequestFromForm() {
-    validateExportFormForStoryEngine();
+    try {
+      validateExportFormForStoryEngine();
+    } catch (eVal) {
+      throw new Error("Export Request ungültig: " + String(eVal.message || eVal));
+    }
     var raw = $("fd-chapters").value.trim();
     var chapters = JSON.parse(raw);
     return {
@@ -1481,7 +1545,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     showError("");
     if (kind === "export") {
       openPanelAndScroll("coll-export", "coll-export");
-      var bx = $("btn-export");
+      var bx = $("btn-export-package");
       if (bx) bx.click();
       return;
     }
@@ -2125,6 +2189,8 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     updatePqBadge();
     renderPromptLab();
     renderProviderPromptCards();
+    clearExportScenePlanSummary();
+    setExportActionStatus("", "");
   }
 
   async function runBuildBodyFromIntake() {
@@ -2200,9 +2266,11 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
 
   async function runExportOnlyInternal() {
+    setExportActionStatus("Build Export: Formular wird validiert…", "info");
     const body = buildCurrentExportRequestFromForm();
     var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
     setStoryEngineRequestDebug("Export Request gebaut: Template=" + body.video_template + " | Provider=" + body.provider_profile + " | Kapitel=" + nc);
+    setExportActionStatus("Build Export: POST /story-engine/export-package …", "info");
     const data = await fetchJson("/story-engine/export-package", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2214,6 +2282,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     updatePqBadge();
     setOut("out-export-full", data);
     setOut("out-hook", data.hook || null);
+    renderExportScenePlanSummary(data, body);
     const pq = data.prompt_quality || (data.scene_prompts && data.scene_prompts.prompt_quality);
     if (pq) {
       setOut("out-pq-score", "(Report)");
@@ -2225,7 +2294,10 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     mergeWarnings(data.warnings || []);
     renderPromptLab();
     renderProviderPromptCards();
+    var cx = $("coll-export");
+    if (cx && cx.tagName === "DETAILS") cx.open = true;
     openPanelAndScroll("coll-export", "out-export-full");
+    setExportActionStatus("Build Export: fertig — Rohpaket & Hook Preview aktualisiert.", "success");
     return data;
   }
 
@@ -2786,13 +2858,35 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   $("lab-right").addEventListener("change", renderPromptLab);
   $("lab-refresh").addEventListener("click", renderPromptLab);
 
-  $("btn-export").onclick = async function(){
-    var btn = this;
+  async function onBuildExportPackageClick() {
+    var btn = $("btn-export-package");
+    if (!btn) return;
+    showError("DEBUG: Build Export Button ausgelöst");
+    setExportActionStatus("Build Export gestartet…", "info");
     clearWarnings();
     await withActionButton(btn, "coll-export", "out-export-full", async function() {
       await runExportOnlyInternal();
     });
-  };
+  }
+
+  function bindBuildExportPackageButton() {
+    var el = $("btn-export-package");
+    if (!el || el.getAttribute("data-fd-bound-export") === "1") return;
+    el.setAttribute("data-fd-bound-export", "1");
+    el.addEventListener("click", function() {
+      onBuildExportPackageClick();
+    });
+  }
+
+  function fdBootstrapStoryActions() {
+    bindBuildExportPackageButton();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", fdBootstrapStoryActions);
+  } else {
+    fdBootstrapStoryActions();
+  }
 
   $("btn-preview").onclick = async function(){
     var btn = this;
