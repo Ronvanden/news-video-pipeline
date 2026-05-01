@@ -405,6 +405,10 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 9.8** | **done** | **Story Intelligence Layer:** Read-only Narrative-/Cross-Template-Hinweise, Self-Learning-Readiness-Checkliste ohne Closed-Loop; gleicher Health-Endpoint + Control-Panel **`story_engine.story_intelligence`**. **`story_intelligence_layer.py`**; **[docs/modules/ba98_story_intelligence_layer.md](docs/modules/ba98_story_intelligence_layer.md)**; Tests **`tests/test_ba98_story_intelligence.py`**. |
 | **BA 9.9** | **done** | **Story Engine Operations Maturity:** Canonical **Story OS** [docs/STORY_ENGINE_OS.md](docs/STORY_ENGINE_OS.md); Runbook-Reife [OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md) „Story Engine (Daily)“; Deploy-Verweis [docs/runbooks/cloud_run_deploy_runbook.md](docs/runbooks/cloud_run_deploy_runbook.md); Abschlusskriterien dokumentiert (**kein BA 10** für Story-, **Phase 9/10** unverändert Packaging/Publishing). Modulüberblick: [docs/modules/ba99_story_engine_operations_maturity.md](docs/modules/ba99_story_engine_operations_maturity.md). |
 
+### BA 10.x — Prompt-to-Production (Export-Paket)
+
+**Abgrenzung:** **BA 10.1–10.3** bezeichnen die **Prompt-to-Production-Core**-Linie (lokaler Export **`POST /story-engine/export-package`**, Quality-Layer, Provider-Stub-Formatter). Das ist **nicht** die Makro-Roadmap-**Phase 10** (Publishing) und **keine** Fortsetzung der abgeschlossenen **BA-9.x**-Story-Template-Nummerierung — nur eine eigene Bauphase für produktionsnahe Prompt-Pakete ohne externe Provider-Calls.
+
 ---
 
 ### BA 9.3–9.9 Story Engine Maturity Track (Reihenfolge)

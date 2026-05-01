@@ -3,6 +3,8 @@
 from fastapi import APIRouter, HTTPException
 
 from app.models import (
+    ExportPackageRequest,
+    ExportPackageResponse,
     GenerateHookRequest,
     GenerateHookResponse,
     RhythmHintRequest,
@@ -12,6 +14,7 @@ from app.models import (
     ScenePromptsResponse,
     StorySceneBlueprintRequest,
 )
+from app.story_engine.export_package import build_export_package_v1
 from app.story_engine.hook_engine import generate_hook_v1
 from app.story_engine.experiment_registry import public_experiment_registry
 from app.story_engine.rhythm_engine import rhythm_hints_v1
@@ -90,6 +93,20 @@ async def story_engine_scene_prompts(req: ScenePromptsRequest):
     **`GenerateScriptResponse`** unverändert.
     """
     return build_scene_prompts_v1(req)
+
+
+@router.post(
+    "/story-engine/export-package",
+    response_model=ExportPackageResponse,
+)
+async def story_engine_export_package(req: ExportPackageRequest) -> ExportPackageResponse:
+    """
+    BA 10.3 — Prompt-to-Production Export V1 (lokal, kein Bild-API, kein Firestore-Write).
+
+    Aggregiert Hook, Rhythm, Scene-Plan, Scene-Prompts, alle Provider-Stub-Varianten,
+    Thumbnail-Platzhalter-Prompt, `prompt_quality` und gemergte Warnings.
+    """
+    return build_export_package_v1(req)
 
 
 @router.get("/story-engine/experiment-registry")

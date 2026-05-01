@@ -160,6 +160,29 @@ class SceneExpandedPrompt(BaseModel):
     )
 
 
+class PromptQualitySceneEntry(BaseModel):
+    """BA 10.1 — Heuristische Qualitätscodes je Szene (deterministisch, kein LLM)."""
+
+    scene_number: int = Field(ge=1)
+    checks: List[str] = Field(default_factory=list)
+    evidence_hints: List[str] = Field(
+        default_factory=list,
+        description="Kurze Hinweise ohne Geheimnisse (z. B. Längen, Flag-Namen).",
+    )
+
+
+class PromptQualityReport(BaseModel):
+    """BA 10.1 — aggregierter Prompt-Quality-Block für Scene-Prompts / Export."""
+
+    policy_profile: str = Field(
+        default="prompt_quality_v10_1_20260501",
+        description="Versionierter Qualitäts-Profilstring.",
+    )
+    summary: str = ""
+    global_checks: List[str] = Field(default_factory=list)
+    scenes: List[PromptQualitySceneEntry] = Field(default_factory=list)
+
+
 class ScenePromptsResponse(BaseModel):
     """Phase 8.2 — expandierte Prompts, keine Binär- oder Provider-URLs."""
 
@@ -170,6 +193,49 @@ class ScenePromptsResponse(BaseModel):
     continuity_anchor: str = ""
     blueprint_status: Literal["draft", "ready", "failed"] = "ready"
     scenes: List[SceneExpandedPrompt] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    prompt_quality: Optional[PromptQualityReport] = Field(
+        default=None,
+        description="BA 10.1 — deterministische Qualitätsmetadaten (optional im Typ, in V1 befüllt).",
+    )
+
+
+class ProviderPromptsBundle(BaseModel):
+    """BA 10.2 — gleiche Blueprint-Basis, drei Provider-Stub-Formatierungen."""
+
+    leonardo: List[SceneExpandedPrompt] = Field(default_factory=list)
+    openai: List[SceneExpandedPrompt] = Field(default_factory=list)
+    kling: List[SceneExpandedPrompt] = Field(default_factory=list)
+
+
+class ExportPackageRequest(ScenePromptsRequest):
+    """BA 10.3 — Export-Paket-Eingabe inkl. Hook-Engine-Ankern."""
+
+    topic: str = ""
+    source_summary: str = ""
+
+
+class ExportHookBlock(BaseModel):
+    """Hook-Teil im Export-Paket (spiegelt GenerateHookResponse-Kern)."""
+
+    hook_text: str
+    hook_type: str
+    hook_score: float = Field(ge=0.0, le=10.0)
+    rationale: str
+    template_match: str
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ExportPackageResponse(BaseModel):
+    """BA 10.3 — produktionsnahes Prompt-Paket ohne externe Provider-Calls."""
+
+    hook: ExportHookBlock
+    rhythm: Dict[str, Any] = Field(default_factory=dict)
+    scene_plan: SceneBlueprintPlanResponse
+    scene_prompts: ScenePromptsResponse
+    provider_prompts: ProviderPromptsBundle
+    thumbnail_prompt: str = ""
+    prompt_quality: Optional[PromptQualityReport] = None
     warnings: List[str] = Field(default_factory=list)
 
 
