@@ -409,6 +409,8 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **Abgrenzung:** **BA 10.1–10.3** bezeichnen die **Prompt-to-Production-Core**-Linie (lokaler Export **`POST /story-engine/export-package`**, Quality-Layer, Provider-Stub-Formatter). Das ist **nicht** die Makro-Roadmap-**Phase 10** (Publishing) und **keine** Fortsetzung der abgeschlossenen **BA-9.x**-Story-Template-Nummerierung — nur eine eigene Bauphase für produktionsnahe Prompt-Pakete ohne externe Provider-Calls.
 
+**BA 10.6 — Founder Dashboard UI V1** (**implemented / ready for deploy**): **`GET /founder/dashboard`** — read-only internes Cockpit als **`HTMLResponse`** (eingebettetes CSS/JS); **`GET /founder/dashboard/config`** — JSON-Konfig/Meta zu den angebundenen Pfaden. V1: **keine Auth**, **keine Firestore-Writes**, **keine externen Provider-Calls**; ruft bestehende Story-Engine-Endpunkte **nur clientseitig** per **`fetch`** auf. Tests: **`tests/test_phase10_founder_dashboard.py`**.
+
 ---
 
 ### BA 9.3–9.9 Story Engine Maturity Track (Reihenfolge)
