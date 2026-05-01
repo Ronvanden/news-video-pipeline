@@ -540,6 +540,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       <button type="button" class="primary" id="btn-intake-body" data-label="Auto Body aus Quelle">Auto Body aus Quelle</button>
     </div>
     <p id="intake-status" class="intake-status muted" role="status" aria-live="polite"></p>
+    <p id="intake-source-debug" class="muted" style="font-size:0.78rem;margin:0.15rem 0 0" aria-live="polite"></p>
   </section>
 
   <section class="panel" id="coll-full-pipeline" style="margin-top:1rem">
@@ -563,6 +564,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   <div class="grid grid-2">
     <section class="panel" id="coll-input-panel">
       <h2>Input Panel</h2>
+      <p id="fd-intake-apply-badge" class="muted" style="font-size:0.78rem;min-height:1.1rem;margin:0 0 0.55rem" aria-live="polite"></p>
       <label for="fd-title">Title (Headline)</label>
       <input type="text" id="fd-title" placeholder="Headline / Videotitel"/>
       <label for="fd-topic">Topic (optional Kategorie/Thema)</label>
@@ -827,6 +829,25 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   ];
   const $ = function(id){ return document.getElementById(id); };
   const err = $("error-bar");
+
+  function getIntakeSourceTypeNormalized() {
+    var el = document.getElementById("intake-source-type");
+    if (!el || el.value == null) return "";
+    return String(el.value).trim().toLowerCase();
+  }
+
+  function isIntakeRawMode(st) {
+    return st === "raw_text" || st === "raw" || st.indexOf("roh") >= 0;
+  }
+
+  function setIntakeSourceDebug(msg) {
+    var d = $("intake-source-debug");
+    if (d) d.textContent = msg || "";
+  }
+  function setFdIntakeApplyBadge(msg) {
+    var b = $("fd-intake-apply-badge");
+    if (b) b.textContent = msg || "";
+  }
   let lastExport = null;
   let lastOptimize = null;
   let lastPreview = null;
@@ -875,6 +896,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
 
   function showError(msg) {
+    if (!err) return;
     err.textContent = msg || "";
     err.classList.toggle("visible", !!msg);
   }
@@ -1761,25 +1783,175 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
 
   function rawTextToChapters(raw) {
     var t = String(raw || "").trim();
-    if (!t) return [{ title: "Kapitel 1", content: "" }];
-    var paras = t.replace(/\\r\\n/g, "\\n").split(/\\n\\s*\\n+/).map(function(p) { return p.trim(); }).filter(Boolean);
-    if (!paras.length) paras = [t];
-    if (paras.length === 1 && paras[0].length > 1200) {
-      var one = paras[0];
-      paras = [];
-      var i = 0;
-      while (i < one.length) {
-        paras.push(one.slice(i, i + 900));
-        i += 900;
+    if (!t || t.length < 20) return [];
+    var mono = t.replace(/\\r\\n/g, "\\n");
+    var parts = mono.split(/\\n\\s*\\n+/).map(function(x) {
+      return x.replace(/[ \\t]+/g, " ").trim();
+    }).filter(function(x) { return x.length > 0; });
+    if (!parts.length) parts = [mono.replace(/[ \\t]+/g, " ").trim()];
+    var merged = [];
+    parts.forEach(function(p) {
+      if (!merged.length) { merged.push(p); return; }
+      var last = merged[merged.length - 1];
+      if (last.length < 20 || p.length < 12) merged[merged.length - 1] = (last + "\\n\\n" + p).trim();
+      else merged.push(p);
+    });
+    if (merged.length === 1 && merged[0].length > 800) {
+      var one = merged[0];
+      var targetN = Math.min(4, Math.max(2, Math.ceil(one.length / 400)));
+      merged = [];
+      var start = 0;
+      for (var ci = 0; ci < targetN && start < one.length; ci++) {
+        var chunkSize = Math.ceil((one.length - start) / (targetN - ci));
+        var chunk = one.slice(start, start + chunkSize).trim();
+        var cut = chunk.lastIndexOf(" ");
+        if (ci < targetN - 1 && cut > 35) chunk = chunk.slice(0, cut).trim();
+        if (chunk.length >= 20) merged.push(chunk);
+        start += chunk.length;
+        while (start < one.length && one.charAt(start) === " ") start++;
+      }
+      if (!merged.length) merged = [one];
+    }
+    while (merged.length > 4) {
+      var a = merged.pop();
+      var b = merged.pop();
+      merged.push((b + "\\n\\n" + a).trim());
+    }
+    if (merged.length === 1 && merged[0].length > 240) {
+      var u = merged[0];
+      var mid = Math.floor(u.length / 2);
+      var spm = u.lastIndexOf(" ", mid + 50);
+      if (spm > 25 && u.length - spm - 1 >= 20) {
+        merged = [u.slice(0, spm).trim(), u.slice(spm + 1).trim()];
       }
     }
-    return paras.map(function(p, idx) {
+    var out = merged.map(function(p, idx) {
       return { title: "Abschnitt " + (idx + 1), content: p };
     });
+    for (var j = 0; j < out.length; j++) {
+      if (out[j].content.length < 20) {
+        if (t.length >= 20) out[j] = { title: out[j].title, content: t };
+        else return [];
+      }
+    }
+    return out;
+  }
+
+  function normalizeChapterListForIntake(chs) {
+    if (!chs || !Array.isArray(chs)) return [];
+    var out = [];
+    for (var i = 0; i < chs.length; i++) {
+      var c = chs[i];
+      if (!c || typeof c !== "object") continue;
+      var t = c.title != null ? String(c.title).trim() : "";
+      var body = c.content != null ? String(c.content).trim() : "";
+      if (!body) continue;
+      if (!t) t = "Kapitel " + (out.length + 1);
+      out.push({ title: t, content: body });
+    }
+    return out;
+  }
+
+  function normalizeIntakePayloadFromResponse(gen, typ, fromRaw) {
+    var topicIn = $("intake-topic") ? $("intake-topic").value.trim() : "";
+    var warnings = (gen && gen.warnings && Array.isArray(gen.warnings)) ? gen.warnings.slice() : [];
+    if (fromRaw) {
+      var chR = normalizeChapterListForIntake(gen.chapters);
+      var titleR = String(gen.title != null ? gen.title : "").trim();
+      var fsR = String(gen.full_script != null ? gen.full_script : "").trim();
+      var sumR = String(gen.client_summary != null ? gen.client_summary : "").trim();
+      return {
+        title: titleR,
+        topic: topicIn || titleR,
+        source_summary: sumR,
+        chapters: chR,
+        full_script: fsR,
+        warnings: warnings
+      };
+    }
+    var title = String(gen && gen.title != null ? gen.title : "").trim();
+    var full_script = String(gen && gen.full_script != null ? gen.full_script : "").trim();
+    var hook = String(gen && gen.hook != null ? gen.hook : "").trim();
+    var source_summary = hook;
+    if (!source_summary && full_script) {
+      if (full_script.length <= 480) source_summary = full_script;
+      else {
+        var slice = full_script.slice(0, 440);
+        var sp = slice.lastIndexOf(" ");
+        if (sp > 80) slice = slice.slice(0, sp);
+        source_summary = slice.trim() + " …";
+      }
+    }
+    if (!source_summary && gen && gen.chapters && gen.chapters.length) {
+      source_summary = gen.chapters.slice(0, 3).map(function(c) {
+        var ct = (c && c.title != null) ? String(c.title).trim() : "";
+        var cx = (c && c.content != null) ? String(c.content).trim().slice(0, 140) : "";
+        return (ct || "Kapitel") + ": " + cx;
+      }).join(" — ").trim();
+    }
+    var chapters = normalizeChapterListForIntake(gen && gen.chapters ? gen.chapters : []);
+    return {
+      title: title,
+      topic: topicIn || title,
+      source_summary: source_summary,
+      chapters: chapters,
+      full_script: full_script,
+      warnings: warnings
+    };
+  }
+
+  function getRequiredInputEl(id) {
+    var el = $(id);
+    if (!el) {
+      var m = "Input-Feld nicht gefunden: " + id;
+      showError(m);
+      throw new Error(m);
+    }
+    return el;
+  }
+
+  function applyIntakeToForm(payload) {
+    if (!payload || typeof payload !== "object") {
+      throw new Error("applyIntakeToForm: kein gültiger Payload.");
+    }
+    getRequiredInputEl("fd-title").value = String(payload.title || "");
+    getRequiredInputEl("fd-topic").value = String(payload.topic || "");
+    getRequiredInputEl("fd-summary").value = String(payload.source_summary || "");
+    var chs = payload.chapters && payload.chapters.length ? payload.chapters : [];
+    getRequiredInputEl("fd-chapters").value = JSON.stringify(chs, null, 2);
+  }
+
+  function validateFormAfterIntake(mode) {
+    mode = mode || "intake";
+    var prefix = mode === "pipeline" ? "Bitte zuerst Auto Body aus Quelle erfolgreich ausführen. " : "";
+    var titleEl = $("fd-title");
+    if (!titleEl) throw new Error(prefix + "Input-Feld nicht gefunden: fd-title");
+    var title = (titleEl.value || "").trim();
+    if (!title) throw new Error(prefix + "Titel (Title/Headline) ist leer.");
+    var chEl = $("fd-chapters");
+    if (!chEl) throw new Error(prefix + "Input-Feld nicht gefunden: fd-chapters");
+    var raw = (chEl.value || "").trim();
+    if (!raw) throw new Error(prefix + "Kapitel (JSON) ist leer.");
+    var arr;
+    try { arr = JSON.parse(raw); } catch (e0) {
+      throw new Error(prefix + "Kapitel-JSON nicht parsebar: " + e0.message);
+    }
+    if (!Array.isArray(arr) || arr.length === 0) {
+      throw new Error(prefix + "Keine Kapitel (JSON-Array leer).");
+    }
+    for (var i = 0; i < arr.length; i++) {
+      var c = arr[i];
+      var body = c && c.content != null ? String(c.content).trim() : "";
+      if (!body) throw new Error(prefix + "Kapitel #" + (i + 1) + " hat leeren content.");
+    }
+    return arr.length;
   }
 
   function buildPseudoScriptResponseFromRaw(raw) {
     var ch = rawTextToChapters(raw);
+    if (!ch || !ch.length) {
+      throw new Error("Rohtext fehlt oder zu kurz — mindestens ca. 20 Zeichen sinnvoller Text für Kapitel erforderlich.");
+    }
     var topicIntake = $("intake-topic") ? $("intake-topic").value.trim() : "";
     var headline = buildRawHeadline(raw, topicIntake);
     var sumShort = buildRawSourceSummary(raw);
@@ -1797,34 +1969,18 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     };
   }
 
-  function applyIntakeToForm(gen) {
-    if (!gen) return;
-    $("fd-title").value = String(gen.title || "");
-    var topicIn = $("intake-topic").value.trim();
-    if (topicIn) $("fd-topic").value = topicIn;
-    var sum = "";
-    if (gen.client_summary != null && String(gen.client_summary).trim()) {
-      sum = String(gen.client_summary).trim();
-    } else {
-      sum = String(gen.full_script || "").trim();
-    }
-    if (!sum && gen.chapters && gen.chapters.length) {
-      sum = gen.chapters.map(function(c) {
-        return (c.title || "") + "\\n" + (c.content || "");
-      }).join("\\n\\n");
-    }
-    $("fd-summary").value = sum;
-    var chs = gen.chapters && gen.chapters.length ? gen.chapters : DEFAULT_CHAPTERS;
-    $("fd-chapters").value = JSON.stringify(chs, null, 2);
-  }
-
   function validateScriptResponseForIntake(gen, typ) {
     if (!gen || typeof gen !== "object") throw new Error("Ungültige Skript-Antwort vom Server.");
-    if (typ === "raw" || typ === "raw_text") return;
-    var hasCh = gen.chapters && Array.isArray(gen.chapters) && gen.chapters.length > 0;
+    if (isIntakeRawMode(String(typ || "").trim().toLowerCase())) return;
+    var normCh = normalizeChapterListForIntake(gen.chapters);
+    var hasCh = normCh.length > 0;
     var t = gen.title != null ? String(gen.title).trim() : "";
     var fs = gen.full_script != null ? String(gen.full_script).trim() : "";
     var hook = gen.hook != null ? String(gen.hook).trim() : "";
+    if ((typ === "youtube" || typ === "news") && !hasCh) {
+      mergeWarnings(gen.warnings || []);
+      throw new Error("Skript-Response ohne Kapitel mit Inhalt (title/chapters) — prüfe response.title und response.chapters von /generate-script bzw. /youtube/generate-script.");
+    }
     if (!hasCh && fs.length < 12 && t.length < 3 && hook.length < 3) {
       mergeWarnings(gen.warnings || []);
       throw new Error("Skript-Response ohne nutzbaren Inhalt (leere Kapitel/Text) — Transkript/URL prüfen oder Fehlermeldung in der Error-Bar.");
@@ -1832,15 +1988,17 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
 
   function validateIntakeBeforeFullPipeline() {
-    var typ = $("intake-source-type").value;
+    var typ = getIntakeSourceTypeNormalized();
+    if (isIntakeRawMode(typ)) {
+      if ($("intake-raw-text").value.trim().length < 20) throw new Error("Full Pipeline: Rohtext fehlt oder zu kurz (min. 20 Zeichen).");
+      return;
+    }
     if (typ === "youtube") {
       if (!$("intake-youtube-url").value.trim()) throw new Error("Full Pipeline: YouTube-URL im Intake ausfüllen oder Quelle wechseln.");
     } else if (typ === "news") {
       if (!$("intake-news-url").value.trim()) throw new Error("Full Pipeline: News-URL im Intake ausfüllen.");
-    } else if (typ === "raw" || typ === "raw_text") {
-      if ($("intake-raw-text").value.trim().length < 12) throw new Error("Full Pipeline: Rohtext mindestens ca. 12 Zeichen.");
     } else {
-      throw new Error("Full Pipeline: Unbekannte Intake-Quelle.");
+      throw new Error("Full Pipeline: Unbekannte Intake-Quelle: " + typ);
     }
   }
 
@@ -1870,14 +2028,23 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   }
 
   async function runBuildBodyFromIntake() {
+    var typ = getIntakeSourceTypeNormalized();
+    setFdIntakeApplyBadge("");
+    var labelCanon = isIntakeRawMode(typ) ? "raw_text" : (typ === "news" ? "news" : (typ === "youtube" ? "youtube" : typ || "?"));
+    setIntakeSourceDebug("Quelle erkannt: " + labelCanon);
     setIntakeStatus("Body aus Quelle wird geladen…", "info");
-    var typ = $("intake-source-type").value;
     var tmpl = $("fd-template").value || "generic";
     var dur = Math.min(180, Math.max(1, parseInt($("fd-duration").value, 10) || 10));
     var conf = "warn";
     var gen;
+    var fromRaw = false;
     try {
-      if (typ === "youtube") {
+      if (isIntakeRawMode(typ)) {
+        var rt = $("intake-raw-text").value.trim();
+        if (rt.length < 20) throw new Error("Rohtext fehlt oder zu kurz — mindestens 20 Zeichen erforderlich.");
+        gen = buildPseudoScriptResponseFromRaw(rt);
+        fromRaw = true;
+      } else if (typ === "youtube") {
         var yu = $("intake-youtube-url").value.trim();
         if (!yu) throw new Error("YouTube URL fehlt — Feld „YouTube URL“ ausfüllen.");
         gen = await fetchJson("/youtube/generate-script", {
@@ -1907,21 +2074,25 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
           })
         });
         validateScriptResponseForIntake(gen, typ);
-      } else if (typ === "raw" || typ === "raw_text") {
-        var rt = $("intake-raw-text").value.trim();
-        if (rt.length < 12) throw new Error("Rohtext zu kurz (min. ca. 12 Zeichen).");
-        gen = buildPseudoScriptResponseFromRaw(rt);
       } else {
         throw new Error("Unbekannter Quelltyp: " + typ);
       }
-      applyIntakeToForm(gen);
-      mergeWarnings(gen.warnings || []);
+      var normalized = normalizeIntakePayloadFromResponse(gen, typ, fromRaw);
+      if (!normalized.chapters || normalized.chapters.length === 0) {
+        throw new Error("Keine Kapitel mit Inhalt aus der Quelle — Eingabe oder Server-Antwort prüfen (response.chapters).");
+      }
+      applyIntakeToForm(normalized);
+      var nCh = validateFormAfterIntake("intake");
+      mergeWarnings(normalized.warnings || []);
       refreshFounderInterpretation();
-      setIntakeStatus("Body aus Quelle erstellt — Eingabepanel wurde aktualisiert.", "success");
+      var okMsg = "Input Panel aktualisiert: " + nCh + " Kapitel";
+      setIntakeStatus(fromRaw ? "Rohtext verarbeitet — " + okMsg + "." : okMsg + ".", "success");
+      setFdIntakeApplyBadge("Übernommen: Titel, Topic, Summary, Kapitel (JSON).");
       showError("");
       openPanelAndScroll(null, "coll-input-panel");
       return gen;
     } catch (e) {
+      setFdIntakeApplyBadge("");
       var msg = String(e.message || e);
       setIntakeStatus("Fehler: " + msg, "err");
       throw e;
@@ -2047,6 +2218,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       stepIdx = 0;
       setPipelineStep(stepIdx, "active", "");
       await runBuildBodyFromIntake();
+      validateFormAfterIntake("pipeline");
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 1;
