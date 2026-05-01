@@ -258,13 +258,76 @@ table.data th { background: var(--bg); color: var(--muted); }
   max-height: 140px;
   overflow-y: auto;
 }
-.founder-summary-sticky {
+.founder-compact-bar {
   position: sticky;
   top: 0;
-  z-index: 30;
-  margin-bottom: 1rem;
+  z-index: 10;
+  margin: 0 0 0.75rem;
+  padding: 0.45rem 0.65rem 0.5rem;
+  background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.founder-compact-bar .fcb-heading {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.founder-compact-bar .fcb-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
+  row-gap: 0.25rem;
+}
+.founder-compact-bar .fcb-metric {
+  font-size: 0.78rem;
+  color: var(--text);
+  max-width: 100%;
+}
+.founder-compact-bar .fcb-metric strong { font-weight: 700; }
+.founder-compact-bar .fcb-l {
+  color: var(--muted);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 0.2rem;
+}
+.founder-compact-bar .fcb-nba-wrap {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.founder-compact-bar .fcb-nba-val {
+  display: inline-block;
+  max-width: min(100%, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+@media (min-width: 900px) {
+  .founder-compact-bar .fcb-nba-val { max-width: 360px; }
+}
+.founder-compact-bar .fcb-skip {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 0.15rem 0;
+}
+.founder-compact-bar .fcb-skip:hover { text-decoration: underline; }
+@media (max-width: 560px) {
+  .founder-compact-bar .fcb-skip {
+    margin-left: 0;
+    width: 100%;
+    text-align: right;
+  }
 }
 .mode-toggle { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
 .mode-toggle button.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
@@ -364,7 +427,17 @@ body.raw-view #founder-human-layer { display: none !important; }
 <main>
   <div id="error-bar" role="alert"></div>
 
-  <section class="panel founder-summary-sticky" id="founder-strategic-summary">
+  <div id="founder-compact-summary-bar" class="founder-compact-bar" role="region" aria-labelledby="fcb-heading-id">
+    <h2 class="fcb-heading" id="fcb-heading-id">Founder Compact Summary</h2>
+    <div class="fcb-inner">
+      <div class="fcb-metric"><span class="fcb-l">Themenpotenzial</span><strong id="fk-bar-potential">—</strong></div>
+      <div class="fcb-metric"><span class="fcb-l">Produktionsstatus</span><strong id="fk-bar-prod-status">—</strong></div>
+      <div class="fcb-metric fcb-nba-wrap"><span class="fcb-l">Next Best Action</span><strong id="fk-bar-nba" class="fcb-nba-val">—</strong></div>
+      <a href="#founder-strategic-summary" class="fcb-skip">Zur Summary</a>
+    </div>
+  </div>
+
+  <section class="panel" id="founder-strategic-summary">
     <h2>Founder Strategic Summary</h2>
     <div class="mode-toggle">
       <button type="button" id="btn-founder-mode" class="active" data-label="Founder Mode">Founder Mode</button>
@@ -1122,13 +1195,20 @@ body.raw-view #founder-human-layer { display: none !important; }
     var wCount = collectAllWarningsStrings().length;
     var blocked = !hasEx || sc === 0;
     var allData = hasEx && sc > 0 && hasPr && hasRe && hasOpt && hasCtr;
-    $("fk-prod-status").textContent = blocked ? "Blockiert" : (allData && wCount === 0 ? "Produktionsbereit" : "Teilweise bereit");
+    var prodStatus = blocked ? "Blockiert" : (allData && wCount === 0 ? "Produktionsbereit" : "Teilweise bereit");
+    $("fk-prod-status").textContent = prodStatus;
     $("fk-best-provider").textContent = pickBestProviderName();
     var risk = computeRiskLevel();
     $("fk-risk").textContent = risk.label;
     $("fk-risk").style.color = risk.cls === "green" ? "var(--ok)" : risk.cls === "yellow" ? "var(--warn)" : risk.cls === "red" ? "var(--danger)" : "var(--muted)";
     var nba = computeNextBestAction();
     $("fk-handlung").textContent = nba.de + " — " + nba.hint;
+    var barPot = $("fk-bar-potential");
+    if (barPot) barPot.textContent = pot == null ? "—" : String(pot);
+    var barPs = $("fk-bar-prod-status");
+    if (barPs) barPs.textContent = prodStatus;
+    var barNba = $("fk-bar-nba");
+    if (barNba) barNba.textContent = nba.de + " — " + nba.hint;
     var nbaEl = $("next-best-action");
     if (nbaEl) {
       nbaEl.className = "nba-card " + nba.cls;
