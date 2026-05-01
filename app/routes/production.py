@@ -3,7 +3,7 @@ Voice-Plan (BA 6.8), Render-Manifest (BA 6.9), Connector-Export (BA 7.0),
 Production OS: Export-Download & Provider-Templates (BA 7.1–7.2), Checkliste (BA 7.3),
 Status-Workflow (BA 7.4), Execution Queue & Budget (BA 7.8–7.9); Audit / Recovery / Monitoring (BA 8.0–8.2);
 Status-Normalisierung & Eskalationen (BA 8.3); Phase 7.2: TTS‑Preview ohne Audio-Persistenz
-(``POST …/voice/synthesize-preview``); kein FFmpeg/Voll‑Rendering hier."""
+(``POST …/voice/synthesize-preview``, ``POST …/voice/synthesize``); kein FFmpeg/Voll‑Rendering hier."""
 
 import logging
 from typing import Optional
@@ -46,6 +46,8 @@ from app.watchlist.models import (
     VoicePlanGenerateRequest,
     VoicePlanGenerateResponse,
     VoicePlanGetResponse,
+    VoiceSynthCommitRequest,
+    VoiceSynthCommitResponse,
     VoiceSynthPreviewRequest,
     VoiceSynthPreviewResponse,
 )
@@ -232,6 +234,32 @@ async def production_voice_synthesize_preview(
         msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
         logger.warning("POST voice/synthesize-preview failed: Firestore unavailable")
         body503 = VoiceSynthPreviewResponse(chunks=[], warnings=[msg])
+        return JSONResponse(status_code=503, content=body503.model_dump(mode="json"))
+    if status_code != 200:
+        return JSONResponse(
+            status_code=status_code, content=out.model_dump(mode="json")
+        )
+    return out
+
+
+@router.post(
+    "/production/jobs/{production_job_id}/voice/synthesize",
+    response_model=VoiceSynthCommitResponse,
+)
+async def production_voice_synthesize(
+    production_job_id: str,
+    body: Optional[VoiceSynthCommitRequest] = None,
+):
+    """Phase 7.3 — TTS-Commit: Metadaten in ``production_files`` (Typ ``voice``), keine Blobs."""
+    req = body or VoiceSynthCommitRequest()
+    try:
+        out, status_code = watchlist_service.synthesize_voice_commit(
+            production_job_id, req, repo=None, provider=None
+        )
+    except FirestoreUnavailableError as e:
+        msg = str(e) if str(e) else "Firestore ist nicht erreichbar."
+        logger.warning("POST voice/synthesize failed: Firestore unavailable")
+        body503 = VoiceSynthCommitResponse(scenes=[], warnings=[msg])
         return JSONResponse(status_code=503, content=body503.model_dump(mode="json"))
     if status_code != 200:
         return JSONResponse(

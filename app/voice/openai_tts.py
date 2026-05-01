@@ -7,6 +7,7 @@ from typing import List
 
 import httpx
 
+from app.voice import warning_codes as vw
 from app.voice.contracts import VoiceSynthChunkResult, VoiceSynthRequest
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class OpenAiTtsProvider:
         text = raw.strip()
         if len(text) > _MAX_INPUT_CHARS:
             warns.append(
-                "[voice_synth:input_truncated] "
+                f"{vw.W_INPUT_TRUNCATED} "
                 f"Voice‑Text auf {_MAX_INPUT_CHARS} Zeichen gekürzt für OpenAI Speech."
             )
             text = text[:_MAX_INPUT_CHARS]
@@ -55,7 +56,7 @@ class OpenAiTtsProvider:
                 audio_bytes=b"",
                 mime_type="audio/mpeg",
                 warnings=[
-                    "[voice_synth:missing_api_key] OPENAI_API_KEY ist nicht gesetzt (leer)."
+                    f"{vw.W_MISSING_KEY} OPENAI_API_KEY ist nicht gesetzt (leer)."
                 ],
             )
 
@@ -83,7 +84,7 @@ class OpenAiTtsProvider:
                 audio_bytes=b"",
                 mime_type="audio/mpeg",
                 warnings=[
-                    "[voice_synth:transport_error] "
+                    f"{vw.W_TRANSPORT_ERROR} "
                     f"Verbindungsfehler ({type(exc).__name__}); kein Audio."
                 ],
             )
@@ -93,7 +94,7 @@ class OpenAiTtsProvider:
                 audio_bytes=b"",
                 mime_type="audio/mpeg",
                 warnings=[
-                    "[voice_synth:openai_http_error] "
+                    f"{vw.W_HTTP_ERROR} "
                     f"OpenAI Speech HTTP {resp.status_code} — ohne Response‑Body‑Logging."
                 ],
             )

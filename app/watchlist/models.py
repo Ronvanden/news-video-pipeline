@@ -524,6 +524,39 @@ class VoiceSynthPreviewResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list)
 
 
+class VoiceProductionFileRef(BaseModel):
+    """Phase 7.7 — Verweis aus ``production_files`` (Typ voice) ins Render-Manifest/Export."""
+
+    production_file_id: str = Field(min_length=1)
+    scene_number: int = Field(ge=1)
+    production_file_status: ProductionFileRecordStatusLiteral = "planned"
+    synthesis_byte_length: int = Field(default=0, ge=0)
+    storage_path: str = ""
+    provider_name: ProviderNameLiteral = "generic"
+
+
+class VoiceSynthCommitRequest(BaseModel):
+    """Phase 7.3 — Voice-Synthese in ``production_files`` (keine Secrets im Body)."""
+
+    dry_run: bool = False
+    max_blocks: int = Field(default=50, ge=1, le=50)
+    overwrite: bool = False
+    voice: Optional[str] = None
+
+
+class VoiceSynthCommitSceneResult(BaseModel):
+    scene_number: int = Field(ge=1)
+    production_file_id: str = ""
+    file_status: str = ""
+    synthesis_byte_length: int = Field(default=0, ge=0)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class VoiceSynthCommitResponse(BaseModel):
+    scenes: List[VoiceSynthCommitSceneResult] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
 class TimelineItem(BaseModel):
     """Zeile in der Produktions-Timeline (BA 6.9)."""
 
@@ -547,8 +580,10 @@ class RenderManifest(BaseModel):
     scene_assets: Optional[SceneAssets] = None
     voice_plan: Optional[VoicePlan] = None
     timeline: List[TimelineItem] = Field(default_factory=list)
+    #: Phase 7.7 — Metadaten zu persistiertem Voice ohne Audio-Payload.
+    voice_production_file_refs: List[VoiceProductionFileRef] = Field(default_factory=list)
     estimated_total_duration_seconds: int = Field(default=0, ge=0)
-    export_version: str = "7.0.0"
+    export_version: str = "7.1.0"
     status: RenderManifestStatusLiteral = "incomplete"
     warnings: List[str] = Field(default_factory=list)
     created_at: str = ""
@@ -586,6 +621,10 @@ class ConnectorExportPayload(BaseModel):
     story_pack: dict = Field(
         default_factory=dict,
         description="BA 9.5b — gebündelter Story-Nebenkanal (Hooks, Rhythm, strukturelle Meta).",
+    )
+    voice_artefakte: List[dict] = Field(
+        default_factory=list,
+        description="Phase 7.7 — production_files vom Typ voice als dict (read-only).",
     )
 
 
@@ -868,6 +907,11 @@ class ProductionFileRecord(BaseModel):
     updated_at: str = ""
     error: str = ""
     error_code: str = ""
+    synthesis_byte_length: int = Field(
+        default=0,
+        ge=0,
+        description="Phase 7.3: bytes der letzten Synthese (Metadata nur, kein Blob).",
+    )
 
 
 class ListProductionFilesResponse(BaseModel):
@@ -984,6 +1028,7 @@ PipelineRecommendedActionLiteral = Literal[
     "retry_scene_plan",
     "retry_scene_assets",
     "retry_voice_plan",
+    "retry_voice_synthesize",
     "retry_render_manifest",
     "retry_execution_job",
     "retry_cost_estimate",

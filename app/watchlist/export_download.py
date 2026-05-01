@@ -17,6 +17,7 @@ def build_provider_templates(
     voice_plan: Optional[VoicePlan],
     production_job: Optional[ProductionJob],
     generated_script: Optional[GeneratedScript],
+    voice_artefakte: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """BA 7.2 — strukturierte Blöcke für ElevenLabs, Kling, Leonardo, CapCut, YouTube."""
     elevenlabs_ready: List[Dict[str, Any]] = []
@@ -83,6 +84,7 @@ def build_provider_templates(
         "capcut_ready": capcut_ready,
         "youtube_upload_ready": youtube_upload_ready,
         "story_pack": build_story_pack_dict(generated_script=generated_script),
+        "voice_artefakte": list(voice_artefakte or []),
     }
 
 

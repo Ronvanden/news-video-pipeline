@@ -65,6 +65,8 @@ Der **kanonische** Deploy und die **Smoke-Tests** sind zentral beschrieben in:
 
 Nach erfolgreichem Deploy die dort dokumentierten `curl`-Aufrufe gegen **`GET /health`** und bei Bedarf **`POST /generate-script`** ausführen — keine Secrets in Shell-Logs.
 
+Optional **Phase 7 Voice** (ohne Blobs, nur Metadaten/Smoke): `POST /production/jobs/{production_job_id}/voice/synthesize-preview` oder `…/voice/synthesize` mit JSON `{"dry_run": true}` und einem gültigen Job (wie in [OPERATOR_RUNBOOK.md](../../OPERATOR_RUNBOOK.md)); Antwort sollte strukturierte Felder/`warnings` liefern, kein Blind‑HTTP‑500 bei fehlendem Schlüssel.
+
 ---
 
 ## Governancenotiz

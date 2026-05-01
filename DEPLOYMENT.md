@@ -42,6 +42,7 @@ gcloud run deploy news-to-video-pipeline \
 
 - `OPENAI_MODEL` ist optional; ohne Setzen gilt der Default aus `app/config.py`.
 - **`FIRESTORE_DATABASE`** muss zur **Named-Database-ID** in GCP passen (Standard in diesem Projekt: **`watchlist`**, nicht `(default)`).
+- **`OPENAI_API_KEY`** wird sowohl für Chat‑Completion (Skript) als auch für **OpenAI Speech** (Phase 7 TTS: Preview + Commit‑Metadaten) genutzt. Modell/Stimmenname sind **öffentliche** ENV‑Parameter ohne Secret: **`OPENAI_TTS_MODEL`** (Default `tts-1`), **`OPENAI_TTS_VOICE`** (Default `alloy`), siehe Feldnamen in `app/config.py`.
 - `--set-secrets` verbindet eine **Umgebungsvariable** mit einem **Secret-Manager-Eintrag** (siehe unten). Ersetze bei Bedarf Secret-Name und Version (`:latest` oder feste Version).
 - Keine API-Schlüssel oder anderen Geheimnisse in Befehlen, Images oder Git ablegen.
 

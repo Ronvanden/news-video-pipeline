@@ -10,6 +10,15 @@ Kurzleitfaden für Founder/Betrieb — **ohne Secrets**, **ohne `.env`-Inhalt**.
 - `GET /watchlist/dashboard` — Kanäle/Jobs/Skripte-Zähler und letzte Metazeitstempel.
 - `GET /production/control-panel/summary` — Audits, Eskalationen, Recovery-Stichprobe, Kostensätze; **Story Engine:** `story_engine.template_optimization`, `story_engine.story_intelligence` (**BA 9.7–9.8**).
 
+## Voice (Phase 7 — Smoke)
+
+Nach **`voice_plan`** und **`POST …/files/plan`** (legt **`production_files`** inkl. `voice`‑Zeilen an):
+
+- **`POST /production/jobs/{id}/voice/synthesize-preview`** — OpenAI‑Speech‑Stichprobe, **keine** Audio‑Persistenz in Firestore.
+- **`POST /production/jobs/{id}/voice/synthesize`** — Metadaten in **`production_files`** (`status`, `synthesis_byte_length`, …); sinnvoller Smoke zuerst mit **`dry_run`** und kleinem **`max_blocks`**.
+
+Ergebnis prüfen: **`POST …/render-manifest/generate`** (Feld **`voice_production_file_refs`**) sowie **`GET …/export`** (JSON **`voice_artefakte`**).
+
 ## Story Engine (Daily — BA 9.7–9.9)
 
 - `GET /story-engine/templates` — Katalog `video_template` (ohne vollständige Prompts).

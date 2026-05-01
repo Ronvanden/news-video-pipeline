@@ -290,6 +290,62 @@ def scan_production_job_for_issues(
                 )
             )
 
+        if vp is not None and (vp.blocks or []) and not terminal_bad:
+            scenes_exp = sorted({int(b.scene_number) for b in (vp.blocks or [])})
+            vf_by = {
+                int(r.scene_number): r
+                for r in files
+                if getattr(r, "file_type", "") == "voice"
+                and int(getattr(r, "scene_number", 0) or 0) >= 1
+            }
+            missing_sn = [sn for sn in scenes_exp if sn not in vf_by]
+            not_ready: List[int] = []
+            for sn in scenes_exp:
+                rrow = vf_by.get(sn)
+                if rrow is None:
+                    continue
+                if rrow.status != "ready" or int(
+                    getattr(rrow, "synthesis_byte_length", 0) or 0
+                ) <= 0:
+                    not_ready.append(sn)
+            if missing_sn:
+                suffix = ",".join(str(x) for x in missing_sn[:12])
+                ellip = "…" if len(missing_sn) > 12 else ""
+                out.append(
+                    PipelineAuditDraft(
+                        audit_type="missing_voice_production_files",
+                        severity="info",
+                        detected_issue=(
+                            "voice_plan erwartet Voice‑Zeilen in production_files, "
+                            f"aber es fehlen Szenen: {suffix}{ellip}"
+                        ),
+                        recommended_action="retry_voice_synthesize",
+                        auto_repairable=True,
+                        production_job_id=pj,
+                        script_job_id=None,
+                        extra_slug="vpf_missing",
+                    )
+                )
+            elif not_ready:
+                suffix = ",".join(str(x) for x in not_ready[:16])
+                ellip = "…" if len(not_ready) > 16 else ""
+                out.append(
+                    PipelineAuditDraft(
+                        audit_type="voice_production_files_not_ready",
+                        severity="info",
+                        detected_issue=(
+                            "Voice‑production_files nicht durchgängig „ready“ "
+                            "mit synthesis_byte_length>0 — "
+                            f"Szenen: {suffix}{ellip}"
+                        ),
+                        recommended_action="retry_voice_synthesize",
+                        auto_repairable=True,
+                        production_job_id=pj,
+                        script_job_id=None,
+                        extra_slug="vpf_not_ready",
+                    )
+                )
+
     if cl is not None:
         if (
             gst in statuses_need_scene_plan

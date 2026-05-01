@@ -93,6 +93,7 @@ def build_connector_export_payload(
     scene_assets: Optional[SceneAssets],
     generated_script: Optional[GeneratedScript],
     render_manifest_warnings: List[str],
+    voice_artefakte: Optional[List[Dict[str, Any]]] = None,
 ) -> ConnectorExportPayload:
     warns = list(render_manifest_warnings or [])
     if manifest is None:
@@ -173,4 +174,5 @@ def build_connector_export_payload(
             warnings=warns,
         ),
         story_pack=build_story_pack_dict(generated_script=generated_script),
+        voice_artefakte=list(voice_artefakte or []),
     )

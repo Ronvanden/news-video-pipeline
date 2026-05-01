@@ -16,7 +16,7 @@ from app.watchlist.models import (
 )
 from app.watchlist.voice_plan import estimate_speech_seconds_from_text
 
-EXPORT_VERSION = "7.0.0"
+EXPORT_VERSION = "7.1.0"
 
 
 def _scene_duration_from_plan(plan: Optional[ScenePlan], scene_number: int) -> int:

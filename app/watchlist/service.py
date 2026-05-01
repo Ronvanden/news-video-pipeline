@@ -63,6 +63,7 @@ from app.watchlist.scene_plan import (
 from app.config import settings as app_settings
 from app.voice.contracts import VoiceSynthProvider, VoiceSynthRequest
 from app.voice.openai_tts import OpenAiTtsProvider
+from app.voice import warning_codes as vw
 from app.watchlist.scene_asset_prompts import build_scene_asset_items
 from app.watchlist.render_manifest import (
     EXPORT_VERSION as RENDER_MANIFEST_EXPORT_VERSION,
@@ -131,7 +132,11 @@ from app.watchlist.models import (
     VoicePlanGenerateResponse,
     VoicePlanGetResponse,
     VoiceSynthPreviewChunk,
+    VoiceSynthCommitRequest,
+    VoiceSynthCommitResponse,
+    VoiceSynthCommitSceneResult,
     VoiceSynthPreviewRequest,
+    VoiceProductionFileRef,
     VoiceSynthPreviewResponse,
     WatchlistChannel,
     WatchlistChannelCreateRequest,
@@ -1471,6 +1476,12 @@ def _production_file_doc_id(
         ch if (ch.isalnum() or ch in "-_") else "_" for ch in production_job_id
     )
     return f"pfile_{safe}_{file_type}_{scene_number:04d}"
+
+
+def _voice_scene_storage_path(production_job_id: str, scene_number: int) -> str:
+    base = (production_job_id or "").strip()
+    sn = max(1, int(scene_number))
+    return f"voice/{base}/scene_{sn:03d}.mp3"
 
 
 ALL_PROVIDER_NAMES: Tuple[ProviderNameLiteral, ...] = (
@@ -3751,11 +3762,21 @@ def build_provider_templates(
                 gs = repo.get_generated_script(gid)
     except FirestoreUnavailableError:
         raise
+    va: List[Dict[str, Any]] = []
+    if rm_doc is not None and getattr(rm_doc, "voice_production_file_refs", None):
+        va = [
+            v.model_dump(mode="json")
+            for v in sorted(
+                rm_doc.voice_production_file_refs,
+                key=lambda x: int(x.scene_number),
+            )
+        ]
     return build_provider_templates_dict(
         manifest=rm_doc,
         voice_plan=vp,
         production_job=pj,
         generated_script=gs,
+        voice_artefakte=va,
     )
 
 
@@ -3792,11 +3813,21 @@ def generate_export_download(
             gs = repo.get_generated_script(gid)
     except FirestoreUnavailableError:
         raise
+    va: List[Dict[str, Any]] = []
+    if manifest is not None and manifest.voice_production_file_refs:
+        va = [
+            v.model_dump(mode="json")
+            for v in sorted(
+                manifest.voice_production_file_refs,
+                key=lambda x: int(x.scene_number),
+            )
+        ]
     templates = build_provider_templates_dict(
         manifest=manifest,
         voice_plan=vp,
         production_job=pj,
         generated_script=gs,
+        voice_artefakte=va,
     )
     title = ""
     if gs is not None and (gs.title or "").strip():
@@ -4165,7 +4196,7 @@ def synthesize_voice_plan_preview(
         return (
             VoiceSynthPreviewResponse(
                 chunks=[],
-                warnings=["[voice_synth:invalid_id] production_job_id ist leer."],
+                warnings=[f"{vw.W_INVALID_ID} production_job_id ist leer."],
             ),
             404,
         )
@@ -4178,7 +4209,7 @@ def synthesize_voice_plan_preview(
             VoiceSynthPreviewResponse(
                 chunks=[],
                 warnings=[
-                    "[voice_synth:voice_plan_missing] Kein VoicePlan in Firestore für diesen Production Job."
+                    f"{vw.W_PLAN_MISSING} Kein VoicePlan in Firestore für diesen Production Job."
                 ],
             ),
             404,
@@ -4188,19 +4219,19 @@ def synthesize_voice_plan_preview(
         return (
             VoiceSynthPreviewResponse(
                 chunks=[],
-                warnings=["[voice_synth:no_blocks] VoicePlan enthält keine Voice-Blöcke."],
+                warnings=[f"{vw.W_NO_BLOCKS} VoicePlan enthält keine Voice-Blöcke."],
             ),
             404,
         )
 
     warns_acc: List[str] = []
     if req.dry_run:
-        warns_acc.append("[voice_synth:dry_run] Kein externes TTS (dry_run=true).")
+        warns_acc.append(f"{vw.W_DRY_RUN} Kein externes TTS (dry_run=true).")
 
     gst = vp.status or ""
     if gst == "failed":
         warns_acc.append(
-            "[voice_synth:voice_plan_status_failed] VoicePlan‑Status „failed“ — Preview dennoch ausgeführt."
+            f"{vw.W_PLAN_STATUS_FAILED} VoicePlan‑Status „failed“ — Preview dennoch ausgeführt."
         )
 
     dd_voice = (app_settings.openai_tts_voice or "alloy").strip() or "alloy"
@@ -4223,7 +4254,7 @@ def synthesize_voice_plan_preview(
         h = getattr(block, "tts_provider_hint", None) or "generic"
         if h not in ("openai", "generic"):
             warns_acc.append(
-                "[voice_synth:provider_hint_ignored] "
+                f"{vw.W_HINT_IGNORED} "
                 f"tts_provider_hint={h!r} — MVP nutzt nur OpenAI Speech."
             )
         if req.dry_run:
@@ -4251,7 +4282,7 @@ def synthesize_voice_plan_preview(
                 b64_part = base64.standard_b64encode(raw_audio).decode("ascii")
             else:
                 warns_acc.append(
-                    "[voice_synth:preview_audio_omitted] "
+                    f"{vw.W_PREVIEW_OMITTED} "
                     "Audioblock übersteigt voice_synth_preview_max_bytes — Base64 unterdrückt."
                 )
 
@@ -4267,6 +4298,218 @@ def synthesize_voice_plan_preview(
 
     merged = _dedupe_preserve_order(warns_acc)
     return VoiceSynthPreviewResponse(chunks=chunks_out, warnings=list(merged)), 200
+
+
+def synthesize_voice_commit(
+    production_job_id: str,
+    req: VoiceSynthCommitRequest,
+    *,
+    repo: Optional[FirestoreWatchlistRepository] = None,
+    provider: Optional[VoiceSynthProvider] = None,
+) -> Tuple[VoiceSynthCommitResponse, int]:
+    """Phase 7.3 — TTS über OpenAI‑Adapter und Metadaten in ``production_files`` (kein Blob in Firestore)."""
+    repo = repo or FirestoreWatchlistRepository()
+    pid = (production_job_id or "").strip()
+    if not pid:
+        return (
+            VoiceSynthCommitResponse(
+                scenes=[],
+                warnings=[f"{vw.W_INVALID_ID} production_job_id ist leer."],
+            ),
+            404,
+        )
+    try:
+        vp = repo.get_voice_plan(pid)
+    except FirestoreUnavailableError:
+        raise
+    if vp is None:
+        return (
+            VoiceSynthCommitResponse(
+                scenes=[],
+                warnings=[
+                    f"{vw.W_PLAN_MISSING} Kein VoicePlan in Firestore für diesen Production Job."
+                ],
+            ),
+            404,
+        )
+    blocks = sorted(list(vp.blocks or []), key=lambda b: b.scene_number)
+    if not blocks:
+        return (
+            VoiceSynthCommitResponse(
+                scenes=[],
+                warnings=[f"{vw.W_NO_BLOCKS} VoicePlan enthält keine Voice-Blöcke."],
+            ),
+            404,
+        )
+
+    warns_acc: List[str] = []
+    if req.dry_run:
+        warns_acc.append(
+            f"{vw.W_COMMIT_DRY_RUN} Kein externes TTS (dry_run=true); nur Metadaten/Platzierung."
+        )
+
+    gst = vp.status or ""
+    if gst == "failed":
+        warns_acc.append(
+            f"{vw.W_PLAN_STATUS_FAILED} VoicePlan‑Status „failed“ — Commit dennoch ausgeführt."
+        )
+
+    dd_voice = (app_settings.openai_tts_voice or "alloy").strip() or "alloy"
+    if req.voice and str(req.voice).strip():
+        dd_voice = str(req.voice).strip()
+
+    prov = provider or OpenAiTtsProvider(
+        app_settings.openai_api_key,
+        default_voice=dd_voice,
+        default_model=(app_settings.openai_tts_model or "tts-1").strip() or "tts-1",
+    )
+    voice_for_blocks: Optional[str] = None
+    if req.voice and str(req.voice).strip():
+        voice_for_blocks = str(req.voice).strip()
+
+    selected = blocks[: int(req.max_blocks)]
+    scenes_out: List[VoiceSynthCommitSceneResult] = []
+    now_iso = utc_now_iso()
+
+    for block in selected:
+        scene_no = int(block.scene_number)
+        doc_id = _production_file_doc_id(pid, "voice", scene_no)
+        row_existing = repo.get_production_file_by_id(doc_id)
+        row = row_existing or ProductionFileRecord(
+            id=doc_id,
+            production_job_id=pid,
+            file_type="voice",
+            storage_path=_voice_scene_storage_path(pid, scene_no),
+            public_url="",
+            status="planned",
+            provider_name="openai",
+            scene_number=scene_no,
+            created_at=now_iso,
+            updated_at=now_iso,
+            synthesis_byte_length=0,
+        )
+
+        blk_warns: List[str] = []
+
+        if (
+            not req.overwrite
+            and row.status == "ready"
+            and int(row.synthesis_byte_length or 0) > 0
+        ):
+            msg = f"{vw.W_COMMIT_SKIPPED_READY} scene={scene_no}: bereits ready mit synthesis_byte_length>0."
+            warns_acc.append(msg)
+            blk_warns.append(msg)
+            scenes_out.append(
+                VoiceSynthCommitSceneResult(
+                    scene_number=scene_no,
+                    production_file_id=doc_id,
+                    file_status=row.status,
+                    synthesis_byte_length=int(row.synthesis_byte_length or 0),
+                    warnings=blk_warns,
+                )
+            )
+            continue
+
+        h = getattr(block, "tts_provider_hint", None) or "generic"
+        if h not in ("openai", "generic"):
+            mh = (
+                f"{vw.W_HINT_IGNORED} "
+                f"tts_provider_hint={h!r} — Commit nutzt nur OpenAI Speech."
+            )
+            warns_acc.append(mh)
+            blk_warns.append(mh)
+
+        preserve_ready_meta = (
+            req.dry_run
+            and row.status == "ready"
+            and int(row.synthesis_byte_length or 0) > 0
+        )
+
+        if req.dry_run:
+            if not preserve_ready_meta:
+                row = row.model_copy(
+                    update={
+                        "updated_at": now_iso,
+                        "status": "planned",
+                        "synthesis_byte_length": 0,
+                        "error": "",
+                        "error_code": "",
+                        "provider_name": "openai",
+                    }
+                )
+                repo.upsert_production_file(row)
+            scenes_out.append(
+                VoiceSynthCommitSceneResult(
+                    scene_number=scene_no,
+                    production_file_id=doc_id,
+                    file_status=row.status,
+                    synthesis_byte_length=int(row.synthesis_byte_length or 0)
+                    if preserve_ready_meta
+                    else 0,
+                    warnings=list(blk_warns),
+                )
+            )
+            continue
+
+        synth_req = VoiceSynthRequest(
+            text=str(block.voice_text or ""),
+            voice=voice_for_blocks,
+            model=(app_settings.openai_tts_model or "tts-1").strip() or "tts-1",
+        )
+        synth = prov.synthesize(synth_req)
+        sw = list(synth.warnings or [])
+        blk_warns.extend(sw)
+        warns_acc.extend(sw)
+
+        audio = synth.audio_bytes or b""
+
+        if len(audio) > 0:
+            row = row.model_copy(
+                update={
+                    "updated_at": now_iso,
+                    "status": "ready",
+                    "synthesis_byte_length": len(audio),
+                    "provider_name": "openai",
+                    "error": "",
+                    "error_code": "",
+                }
+            )
+        else:
+            err_tail = ""
+            if sw:
+                err_tail = str(sw[0])[:2048]
+            elif not audio:
+                err_tail = "Kein Audio (leer)."
+            row = row.model_copy(
+                update={
+                    "updated_at": now_iso,
+                    "status": "failed",
+                    "synthesis_byte_length": 0,
+                    "provider_name": "openai",
+                    "error_code": "voice_synth_failed",
+                    "error": err_tail,
+                }
+            )
+            cf = (
+                f"{vw.W_COMMIT_FAILED} scene={scene_no}: "
+                + (err_tail[:500] if err_tail else "(kein Detail)")
+            )
+            warns_acc.append(cf)
+            blk_warns.append(cf)
+
+        repo.upsert_production_file(row)
+        scenes_out.append(
+            VoiceSynthCommitSceneResult(
+                scene_number=scene_no,
+                production_file_id=doc_id,
+                file_status=row.status,
+                synthesis_byte_length=int(row.synthesis_byte_length or 0),
+                warnings=list(blk_warns),
+            )
+        )
+
+    merged = _dedupe_preserve_order(warns_acc)
+    return VoiceSynthCommitResponse(scenes=scenes_out, warnings=list(merged)), 200
 
 
 def generate_render_manifest(
@@ -4320,6 +4563,26 @@ def generate_render_manifest(
     except FirestoreUnavailableError:
         raise
 
+    try:
+        pfiles = repo.list_production_files_for_job(pid)
+    except FirestoreUnavailableError:
+        raise
+    voice_refs: List[VoiceProductionFileRef] = []
+    for pf in pfiles:
+        if pf.file_type != "voice" or int(pf.scene_number or 0) < 1:
+            continue
+        voice_refs.append(
+            VoiceProductionFileRef(
+                production_file_id=pf.id,
+                scene_number=int(pf.scene_number),
+                production_file_status=pf.status,
+                synthesis_byte_length=int(pf.synthesis_byte_length or 0),
+                storage_path=pf.storage_path or "",
+                provider_name=pf.provider_name,
+            )
+        )
+    voice_refs.sort(key=lambda x: x.scene_number)
+
     timeline, est_total = build_timeline(sp, assets, vp)
     st = decide_manifest_status(
         production_job=pj,
@@ -4349,6 +4612,7 @@ def generate_render_manifest(
         scene_assets=assets,
         voice_plan=vp,
         timeline=timeline,
+        voice_production_file_refs=voice_refs,
         estimated_total_duration_seconds=est_total,
         export_version=RENDER_MANIFEST_EXPORT_VERSION,
         status=st,
@@ -4407,6 +4671,7 @@ def get_production_connector_export(
                 scene_assets=None,
                 generated_script=None,
                 render_manifest_warnings=ws,
+                voice_artefakte=[],
             ),
             warnings=ws,
         )
@@ -4416,6 +4681,7 @@ def get_production_connector_export(
     vp: Optional[VoicePlan] = None
     rm_doc: Optional[RenderManifest] = None
     sa: Optional[SceneAssets] = None
+    voice_art: List[dict] = []
 
     try:
         pj = repo.get_production_job(pid)
@@ -4430,6 +4696,14 @@ def get_production_connector_export(
         sa = repo.get_scene_assets(pid)
         if pj is None and sa is None:
             ws.append("Keine exportierbaren Bausteine für diese ID.")
+        plist = repo.list_production_files_for_job(pid)
+        voice_art = [
+            r.model_dump(mode="json")
+            for r in sorted(
+                (x for x in plist if x.file_type == "voice"),
+                key=lambda z: (z.scene_number, z.id),
+            )
+        ]
     except FirestoreUnavailableError:
         raise
 
@@ -4441,6 +4715,7 @@ def get_production_connector_export(
         scene_assets=sa,
         generated_script=gs,
         render_manifest_warnings=extra,
+        voice_artefakte=voice_art,
     )
     top = list(block_warns.metadata.warnings or [])
     top.extend(ws)

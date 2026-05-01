@@ -160,6 +160,60 @@ def build_production_costs_document(
 
     merged_warns = list(cat.warnings)
 
+    try:
+        vp_audio = repo.get_voice_plan(pid)
+        pfiles_audio = repo.list_production_files_for_job(pid)
+    except FirestoreUnavailableError:
+        raise
+
+    if not isinstance(pfiles_audio, list):
+        pfiles_audio = []
+
+    bl_vp = getattr(vp_audio, "blocks", None) if vp_audio is not None else None
+
+    voice_chars = 0
+    if vp_audio is not None and isinstance(bl_vp, list) and bl_vp:
+        voice_chars = sum(
+            len((getattr(b, "voice_text", None) or "")) for b in bl_vp
+        )
+    vr = [
+        r
+        for r in (pfiles_audio or [])
+        if getattr(r, "file_type", "") == "voice"
+        and int(getattr(r, "scene_number", 0) or 0) >= 1
+    ]
+    ready_n = sum(
+        1
+        for r in vr
+        if r.status == "ready"
+        and int(getattr(r, "synthesis_byte_length", 0) or 0) > 0
+    )
+    vb_sum = sum(int(getattr(r, "synthesis_byte_length", 0) or 0) for r in vr)
+    fail_n = sum(1 for r in vr if r.status == "failed")
+    n_vp_blocks = len(bl_vp) if isinstance(bl_vp, list) else 0
+
+    if vb_sum > 0:
+        merged_warns.append(
+            "[costs:voice_synth_bytes] synthesis_byte_length summiert für Voice‑production_files "
+            "(Transparenz) — EUR‑Anteil weiter aus Skript‑Wörtern geschätzt."
+        )
+    if n_vp_blocks > 0 and vr and ready_n < n_vp_blocks:
+        merged_warns.append(
+            "[costs:voice_partial] Nicht alle Voice‑Szenen haben production_files ready "
+            "mit Byte‑Metadaten — Gesamtschätzung kann optimistisch sein."
+        )
+    if fail_n > 0:
+        merged_warns.append(
+            "[costs:voice_failed_rows] Voice‑production_files im Status failed vorhanden — Budget prüfen."
+        )
+    if voice_chars > 0 and cat.word_count > 0:
+        approx_w = max(1.0, voice_chars / 5.0)
+        ratio = approx_w / float(cat.word_count)
+        if ratio < 0.75 or ratio > 1.33:
+            merged_warns.append(
+                "[costs:voice_char_drift] Voice‑Plan‑Zeichen vs. Skript‑word_count weichen stark ab."
+            )
+
     baseline_total = _compute_cost_baseline_v1(
         word_count=cat.word_count, scene_count=cat.scene_count
     )
