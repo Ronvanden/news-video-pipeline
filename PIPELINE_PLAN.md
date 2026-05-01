@@ -413,6 +413,14 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **BA 10.7 — Founder Dashboard Upgrade** (**implemented / ready for deploy**): **additive** Erweiterung derselben **`GET /founder/dashboard`**-Seite (`app/founder_dashboard/html.py`): Copy-to-Clipboard und Downloads (JSON/CSV/TXT) pro Panel, **`<details>`**-Sektionen (Export, Preview, Readiness, Optimize, CTR, Batch Compare, Prompt Lab, Formats), **Prompt-Quality-Farbbadge** (Preview-Score), **Batch Template Compare** (alle IDs aus **`GET /story-engine/template-selector`**, nacheinander Preview + Readiness, Vergleichstabelle inkl. aggregiertem Readiness-Score), **Prompt Lab** (Side-by-side Leonardo/OpenAI/Kling). Weiterhin **kein** Build-Tool, **keine** Auth/Firestore/externe Provider; **keine** neuen Story-Engine-Verträge. Config-Version **`10.7-v1`**; Tests weiterhin **`tests/test_phase10_founder_dashboard.py`**.
 
+### BA 11.x — Founder Dashboard: Source Intake & Full-Pipeline (Dashboard-first)
+
+**Abgrenzung:** **BA 11.x** betrifft ausschließlich **`GET /founder/dashboard`** / **`app/founder_dashboard/html.py`**. Es gibt **keine** Makro-Roadmap-**Phase 11** in diesem Dokument; **BA 11.x** ist **nicht** **BA 9.x** (Story-Engine-Kern) und **nicht** **Phase 9** (Packaging) / **Phase 10** (Publishing). Der feste JSON-Vertrag **`GenerateScriptResponse`** (Sechs-Felder-Output der Skript-Endpoints) bleibt **unverändert**; neue **serverseitige** Pflichtlogik für „reinen Rohtext ohne URL“ ist **nicht** Teil von V1 — Rohtext wird im Dashboard nur **clientseitig** in Kapitel segmentiert, mit klarer **Warning** im Warning-Center.
+
+**BA 11.0 — Source Intake Layer** (**implemented / dashboard-first V1**): Eingaben **YouTube-URL**, **News-/Artikel-URL**, **Rohtext**, **Topic (optional)**; Aktion **„Auto Body aus Quelle“** füllt Titel, Topic, Zusammenfassung und Kapitel-JSON im bestehenden Input-Panel aus den Antworten von **`POST /youtube/generate-script`** bzw. **`POST /generate-script`** oder aus dem lokalen Pseudo-Skriptobjekt (Rohtext-Pfad). **Tests:** **`tests/test_phase10_founder_dashboard.py`** (Strings/IDs/JS-Helfer).
+
+**BA 11.1 — Run Full Pipeline** (**implemented / dashboard-first V1**): **One-Click-Orchestrierung** ausschließlich über bestehende Endpunkte (**`fetch`** im Browser): Intake-Generate → **`POST /story-engine/export-package`** → Preview → Readiness → Optimize → Thumbnail-CTR → **Founder Summary** (Client-Refresh der Interpretations-Widgets) → **Production Bundle** (mehrere Downloads wie bisher); **Timeline** mit Zuständen pro Schritt (inkl. Fehlerstufe); bei Fehler **Abbruch** und markierter Schritt; nach erfolgreichem Lauf **Session Snapshot** in **`localStorage`** (gleiche Struktur wie manuelles „Save Session Snapshot“). **Tests:** wie bei 11.0.
+
 ---
 
 ### BA 9.3–9.9 Story Engine Maturity Track (Reihenfolge)

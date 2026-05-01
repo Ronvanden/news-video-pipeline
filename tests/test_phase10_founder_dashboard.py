@@ -1,4 +1,4 @@
-"""BA 10.6/10.7 — Founder Dashboard Routen."""
+"""BA 10.6–11.1 — Founder Dashboard Routen."""
 
 from __future__ import annotations
 
@@ -38,6 +38,21 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("provider-prompt-cards", text)
         self.assertIn("Load Last Snapshot", text)
         self.assertIn("Clear Snapshot", text)
+        self.assertIn("Founder Strategic Summary", text)
+        self.assertIn("Founder Mode", text)
+        self.assertIn("Raw Mode", text)
+        self.assertIn("Next Best Action", text)
+        self.assertIn("Opportunity", text)
+        self.assertIn("Weakness", text)
+        self.assertIn("Strategic Badge", text)
+        self.assertIn("Source Intake (BA 11.0)", text)
+        self.assertIn("Run Full Pipeline (BA 11.1)", text)
+        self.assertIn('id="pipeline-timeline"', text)
+        self.assertIn('id="intake-source-type"', text)
+        self.assertIn('id="btn-intake-body"', text)
+        self.assertIn('id="btn-full-pipeline"', text)
+        self.assertIn("runFullPipelineOrchestrator", text)
+        self.assertIn("persistSessionSnapshotSilent", text)
 
     def test_dashboard_config_200(self):
         client = TestClient(app)

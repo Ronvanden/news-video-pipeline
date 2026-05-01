@@ -1,4 +1,4 @@
-"""BA 10.6–10.8 — eingebettetes HTML/CSS/JS für GET /founder/dashboard."""
+"""BA 10.6–11.1 — eingebettetes HTML/CSS/JS für GET /founder/dashboard."""
 
 
 def get_founder_dashboard_html() -> str:
@@ -258,15 +258,188 @@ table.data th { background: var(--bg); color: var(--muted); }
   max-height: 140px;
   overflow-y: auto;
 }
+.founder-summary-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.mode-toggle { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.mode-toggle button.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+body.raw-view #founder-human-layer { display: none !important; }
+.founder-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+.fk-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+}
+.fk-card .fk-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.fk-card .fk-val { font-size: 1.05rem; font-weight: 700; margin-top: 0.2rem; }
+.strat-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
+.strat-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.strat-badge.high { background: rgba(74,222,128,0.18); color: var(--ok); border-color: rgba(74,222,128,0.5); }
+.strat-badge.mid { background: rgba(251,191,36,0.15); color: var(--warn); }
+.strat-badge.low { background: rgba(139,156,179,0.2); color: var(--muted); }
+.nba-card {
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  margin: 0.5rem 0 0.75rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 1px solid var(--border);
+  background: rgba(61,139,253,0.12);
+}
+.nba-card.produzieren { background: rgba(74,222,128,0.15); border-color: var(--ok); color: #bbf7d0; }
+.nba-card.thumb { background: rgba(251,191,36,0.12); border-color: var(--warn); }
+.nba-card.provider { background: rgba(248,113,113,0.12); border-color: var(--danger); color: #fecaca; }
+.nba-card.hook { background: rgba(147,197,253,0.15); border-color: #93c5fd; }
+.nba-card.verwerfen { background: rgba(75,85,99,0.35); color: #e5e7eb; }
+.opp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+@media (max-width: 700px) { .opp-grid { grid-template-columns: 1fr; } }
+.opp-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.65rem;
+  background: var(--bg);
+}
+.opp-card h3 { margin: 0 0 0.4rem; font-size: 0.78rem; color: var(--muted); }
+.opp-card ul { margin: 0; padding-left: 1.1rem; font-size: 0.8rem; }
+.human-layer { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.human-block { margin-bottom: 0.65rem; }
+.human-block h4 { margin: 0 0 0.25rem; font-size: 0.75rem; color: var(--muted); }
+.human-block p { margin: 0; font-size: 0.82rem; line-height: 1.4; color: var(--text); }
+.pipe-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 1rem;
+  border-left: 2px solid var(--border);
+}
+.pipe-timeline li.pipe-step {
+  position: relative;
+  padding: 0.35rem 0 0.35rem 1rem;
+  margin-left: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.pipe-timeline li.pipe-step::before {
+  content: "";
+  position: absolute;
+  left: -0.55rem;
+  top: 0.55rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--border);
+}
+.pipe-timeline li.pipe-step.pending { color: var(--muted); }
+.pipe-timeline li.pipe-step.active { color: var(--accent); font-weight: 600; }
+.pipe-timeline li.pipe-step.active::before { background: var(--accent); box-shadow: 0 0 0 3px rgba(61,139,253,0.25); }
+.pipe-timeline li.pipe-step.done { color: var(--ok); }
+.pipe-timeline li.pipe-step.done::before { background: var(--ok); }
+.pipe-timeline li.pipe-step.err { color: var(--danger); }
+.pipe-timeline li.pipe-step.err::before { background: var(--danger); }
+.pipe-timeline .ps-msg { display: block; font-size: 0.72rem; font-weight: normal; margin-top: 0.15rem; color: var(--danger); }
+.intake-type-row { margin-bottom: 0.75rem; }
 </style>
 </head>
 <body>
 <header>
   <h1>Founder Dashboard</h1>
-  <p>Read-only Cockpit · Story-Engine per fetch · BA 10.8 Export Ops (ohne Auth / Firestore / externe Provider)</p>
+  <p>Read-only Cockpit · Story-Engine per fetch · BA 11.0/11.1 Source + Pipeline (ohne Auth / Firestore / externe Provider)</p>
 </header>
 <main>
   <div id="error-bar" role="alert"></div>
+
+  <section class="panel founder-summary-sticky" id="founder-strategic-summary">
+    <h2>Founder Strategic Summary</h2>
+    <div class="mode-toggle">
+      <button type="button" id="btn-founder-mode" class="active" data-label="Founder Mode">Founder Mode</button>
+      <button type="button" id="btn-raw-mode" data-label="Raw Mode">Raw Mode</button>
+    </div>
+    <div class="founder-kpi-grid">
+      <div class="fk-card"><div class="fk-label">Themenpotenzial</div><div class="fk-val" id="fk-potential">—</div></div>
+      <div class="fk-card"><div class="fk-label">Produktionsstatus</div><div class="fk-val" id="fk-prod-status">—</div></div>
+      <div class="fk-card"><div class="fk-label">Bester Provider</div><div class="fk-val" id="fk-best-provider">—</div></div>
+      <div class="fk-card"><div class="fk-label">Risikostufe</div><div class="fk-val" id="fk-risk">—</div></div>
+      <div class="fk-card" style="grid-column:1/-1"><div class="fk-label">Handlungsempfehlung</div><div class="fk-val" id="fk-handlung" style="font-size:0.9rem;font-weight:600">—</div></div>
+    </div>
+    <div class="strat-badges" id="strategic-badges-row" aria-label="Strategic Badges"></div>
+    <div id="next-best-action" class="nba-card">Next Best Action: <span id="nba-text">—</span></div>
+    <div class="opp-grid">
+      <div class="opp-card" id="opp-chances-card">
+        <h3>Opportunity · Top Chancen</h3>
+        <ul id="opp-chances-list"><li class="muted">Noch keine Daten — Export / Preview ausführen.</li></ul>
+      </div>
+      <div class="opp-card" id="opp-weak-card">
+        <h3>Weakness · Hauptschwächen</h3>
+        <ul id="opp-weak-list"><li class="muted">Noch keine Daten.</li></ul>
+      </div>
+    </div>
+    <div id="founder-human-layer" class="human-layer">
+      <h2 class="subh">Human Translation Layer</h2>
+      <div class="human-block"><h4>Hook</h4><p id="hum-hook">—</p></div>
+      <div class="human-block"><h4>Prompt Quality</h4><p id="hum-pq">—</p></div>
+      <div class="human-block"><h4>Provider Readiness</h4><p id="hum-readiness">—</p></div>
+      <div class="human-block"><h4>Thumbnail CTR</h4><p id="hum-ctr">—</p></div>
+    </div>
+  </section>
+
+  <section class="panel" id="coll-source-intake" style="margin-top:1rem">
+    <h2>Source Intake (BA 11.0)</h2>
+    <p class="muted">YouTube- oder News-URL ruft bestehende Generate-Endpunkte auf; Rohtext nur clientseitig in Kapitel segmentiert (Dashboard-V1, kein neuer API-Vertrag).</p>
+    <div class="intake-type-row">
+      <label for="intake-source-type">Quelle</label>
+      <select id="intake-source-type">
+        <option value="youtube">YouTube URL</option>
+        <option value="news">News / Artikel URL</option>
+        <option value="raw">Rohtext</option>
+      </select>
+    </div>
+    <label for="intake-youtube-url">YouTube URL</label>
+    <input type="text" id="intake-youtube-url" placeholder="https://www.youtube.com/watch?v=…"/>
+    <label for="intake-news-url">News URL</label>
+    <input type="text" id="intake-news-url" placeholder="https://…"/>
+    <label for="intake-raw-text">Rohtext</label>
+    <textarea id="intake-raw-text" placeholder="Freitext einfügen…" style="min-height:100px"></textarea>
+    <label for="intake-topic">Topic (optional, überschreibt Topic-Feld)</label>
+    <input type="text" id="intake-topic" placeholder="z. B. Schwerpunkt für Hook/Export"/>
+    <div class="actions" style="margin-top:0.5rem">
+      <button type="button" class="primary" id="btn-intake-body" data-label="Auto Body aus Quelle">Auto Body aus Quelle</button>
+    </div>
+  </section>
+
+  <section class="panel" id="coll-full-pipeline" style="margin-top:1rem">
+    <h2>Run Full Pipeline (BA 11.1)</h2>
+    <p class="muted">Orchestrierung: Generate → Export → Preview → Readiness → Optimize → CTR → Founder Summary → Production Bundle (Downloads). Bei Fehler: Schritt rot, Pipeline stoppt. Ende: Session Snapshot speichern.</p>
+    <ol id="pipeline-timeline" class="pipe-timeline" aria-label="Pipeline Timeline">
+      <li class="pipe-step pending" data-pi="0"><span class="ps-label">1. Generate (Quelle)</span><span class="ps-msg"></span></li>
+      <li class="pipe-step pending" data-pi="1"><span class="ps-label">2. Export Package</span><span class="ps-msg"></span></li>
+      <li class="pipe-step pending" data-pi="2"><span class="ps-label">3. Preview</span><span class="ps-msg"></span></li>
+      <li class="pipe-step pending" data-pi="3"><span class="ps-label">4. Readiness</span><span class="ps-msg"></span></li>
+      <li class="pipe-step pending" data-pi="4"><span class="ps-label">5. Optimize</span><span class="ps-msg"></span></li>
+      <li class="pipe-step pending" data-pi="5"><span class="ps-label">6. Thumbnail CTR</span><span class="ps-msg"></span></li>
+      <li class="pipe-step pending" data-pi="6"><span class="ps-label">7. Founder Summary</span><span class="ps-msg"></span></li>
+      <li class="pipe-step pending" data-pi="7"><span class="ps-label">8. Production Bundle</span><span class="ps-msg"></span></li>
+    </ol>
+    <div class="actions">
+      <button type="button" class="primary" id="btn-full-pipeline" data-label="Run Full Pipeline">Run Full Pipeline</button>
+    </div>
+  </section>
+
   <div class="grid grid-2">
     <section class="panel">
       <h2>Input Panel</h2>
@@ -753,6 +926,253 @@ table.data th { background: var(--bg); color: var(--muted); }
     addRow(hasOpt, "Optimize vorhanden: " + (hasOpt ? "ja" : "nein"));
     addRow(hasCtr, "CTR vorhanden: " + (hasCtr ? "ja" : "nein"));
     addRow(wCount === 0, "Warnings (gesamt): " + wCount);
+    refreshFounderInterpretation();
+  }
+
+  const VIEW_MODE_KEY = "fd_view_mode_v1";
+
+  function getHookScoreVal() {
+    if (lastPreview != null && lastPreview.hook_score != null) return Number(lastPreview.hook_score);
+    if (lastExport && lastExport.hook && lastExport.hook.hook_score != null) return Number(lastExport.hook.hook_score);
+    return null;
+  }
+
+  function getPqScoreVal() {
+    if (lastPreview != null && lastPreview.prompt_quality_score != null) return Number(lastPreview.prompt_quality_score);
+    return null;
+  }
+
+  function getCtrVal() {
+    if (lastCtrPayload && lastCtrPayload.ctr_score != null) return Number(lastCtrPayload.ctr_score);
+    return null;
+  }
+
+  function computeThemenpotenzialScore() {
+    if (!lastExport && !lastPreview && !lastReadiness && !lastCtrPayload) return null;
+    var h01 = (function() {
+      var h = getHookScoreVal();
+      if (h == null || isNaN(h)) return 50;
+      return Math.min(100, Math.max(0, h * 10));
+    })();
+    var pq01 = getPqScoreVal();
+    if (pq01 == null || isNaN(pq01)) pq01 = 50;
+    var ctr01 = getCtrVal();
+    if (ctr01 == null || isNaN(ctr01)) ctr01 = 50;
+    var w = collectAllWarningsStrings().length;
+    var warnPart = Math.max(0, 100 - Math.min(w * 8, 100));
+    var ra = 50;
+    if (lastReadiness && lastReadiness.scores) {
+      ra = readinessAggregate(lastReadiness.scores);
+      if (ra == null || isNaN(ra)) ra = 50;
+    }
+    var mix = h01 * 0.22 + pq01 * 0.26 + ctr01 * 0.2 + warnPart * 0.14 + ra * 0.18;
+    return Math.max(0, Math.min(100, Math.round(mix)));
+  }
+
+  function pickBestProviderName() {
+    if (!lastReadiness || !lastReadiness.scores) return "—";
+    var s = lastReadiness.scores;
+    var pairs = [
+      ["openai", Number(s.openai) || 0],
+      ["leonardo", Number(s.leonardo) || 0],
+      ["kling", Number(s.kling) || 0]
+    ];
+    pairs.sort(function(a, b) { return b[1] - a[1]; });
+    return pairs[0][0] + " (" + pairs[0][1] + ")";
+  }
+
+  function computeRiskLevel() {
+    var w = collectAllWarningsStrings().length;
+    var st = lastReadiness && lastReadiness.overall_status;
+    if (w > 8 || st === "not_ready") return { label: "HOCH", cls: "red" };
+    if (w > 3 || st === "partial_ready") return { label: "MITTEL", cls: "yellow" };
+    if (!lastExport && !lastPreview) return { label: "UNKLAR", cls: "neutral" };
+    return { label: "NIEDRIG", cls: "green" };
+  }
+
+  function computeNextBestAction() {
+    var sc = getSceneCount();
+    if (!lastExport || sc === 0) {
+      return { code: "VERWERFEN", cls: "verwerfen", de: "VERWERFEN", hint: "Kein nutzbares Szenenmaterial — Eingabe oder Kapitel prüfen." };
+    }
+    var h = getHookScoreVal();
+    if (h != null && !isNaN(h) && h < 4.5) {
+      return { code: "HOOK", cls: "hook", de: "HOOK ÜBERARBEITEN", hint: "Hook-Score wirkt schwach für Aufmerksamkeit." };
+    }
+    if (lastReadiness && lastReadiness.overall_status === "not_ready") {
+      return { code: "PROVIDER", cls: "provider", de: "PROVIDER PROMPTS VERBESSERN", hint: "Readiness signalisiert Blocker je Provider-Profil." };
+    }
+    var pq = getPqScoreVal();
+    if (pq != null && !isNaN(pq) && pq < 42) {
+      return { code: "PROVIDER", cls: "provider", de: "PROVIDER PROMPTS VERBESSERN", hint: "Prompt-Quality unter Zielkorridor." };
+    }
+    var ctr = getCtrVal();
+    if (ctr != null && !isNaN(ctr) && ctr < 42) {
+      return { code: "THUMBNAIL", cls: "thumb", de: "THUMBNAIL OPTIMIEREN", hint: "CTR-Heuristik niedrig — Titel/Hook/Varianten testen." };
+    }
+    var w = collectAllWarningsStrings().length;
+    if (w > 6) {
+      return { code: "PROVIDER", cls: "provider", de: "PROVIDER PROMPTS VERBESSERN", hint: "Viele Warnungen — Qualität und Konsistenz prüfen." };
+    }
+    return { code: "PRODUZIEREN", cls: "produzieren", de: "PRODUZIEREN", hint: "Kernsignale stabil — Export-Paket nutzbar." };
+  }
+
+  function humanHookSummary() {
+    var h = getHookScoreVal();
+    if (h == null || isNaN(h)) return "Noch kein belastbarer Hook-Score — bitte Export oder Preview ausführen.";
+    if (h >= 7.5) return "Der Hook wirkt stark: hohe Aufmerksamkeitswahrscheinlichkeit, klarer emotionaler Einstieg.";
+    if (h >= 5.5) return "Der Hook ist solide, aber noch ausbaufähig für maximale Klickmotivation.";
+    return "Der Hook wirkt schwach — Formulierung schärfen oder stärkeren Winkel wählen.";
+  }
+
+  function humanPqSummary() {
+    var pq = getPqScoreVal();
+    if (pq == null || isNaN(pq)) {
+      if (lastExport && (lastExport.prompt_quality || (lastExport.scene_prompts && lastExport.scene_prompts.prompt_quality))) {
+        return "Qualitätsreport aus Export vorhanden (ohne numerischen Preview-Score) — technische Checks in den Rohdaten prüfen.";
+      }
+      return "Noch keine Prompt-Quality-Bewertung — Preview ausführen oder Export-Paket bauen.";
+    }
+    if (pq >= 72) return "Prompt-Qualität liegt im oberen Bereich — gute Basis für konsistente Szenen-Prompts.";
+    if (pq >= 45) return "Prompt-Qualität ist mittig — einzelne Szenen könnten nachgeschärft werden.";
+    return "Prompt-Qualität ist niedrig — Eingaben, Kapitelinhalt oder Template-Kontext verbessern.";
+  }
+
+  function humanReadinessSummary() {
+    if (!lastReadiness) return "Readiness noch nicht geladen — Provider Readiness ausführen.";
+    var st = lastReadiness.overall_status || "—";
+    var rs = lastReadiness.scores;
+    var avg = rs ? readinessAggregate(rs) : null;
+    if (st === "ready") return "Provider-Pipeline wirkt stimmig (Status: ready). Mittlere Readiness ca. " + (avg != null ? avg : "?") + "/100.";
+    if (st === "partial_ready") return "Teilweise produzierbar (partial_ready) — Schwachstellen in Warnungen/Blocking prüfen.";
+    return "Produktion riskant (not_ready oder unklar) — zuerst Prompts und Szeneninhalt stabilisieren.";
+  }
+
+  function humanCtrSummary() {
+    if (!lastCtrPayload) return "CTR-Heuristik noch nicht geladen — Thumbnail CTR ausführen (nach Export sinnvoll).";
+    var c = getCtrVal();
+    if (c == null || isNaN(c)) return "Kein CTR-Score ermittelbar.";
+    if (c >= 68) return "Thumbnail/Title-Signale wirken stark für Aufmerksamkeit (heuristischer CTR-Score hoch).";
+    if (c >= 44) return "CTR-Potenzial mittel — Varianten und emotionalen Trigger testen.";
+    return "CTR-Potenzial niedrig — Hook, Titel und Thumbnail-Texte überarbeiten.";
+  }
+
+  function buildOpportunities() {
+    var out = [];
+    var h = getHookScoreVal();
+    if (h != null && !isNaN(h) && h >= 6) out.push("Starker Hook-Hebel für erste Sekunden");
+    var pq = getPqScoreVal();
+    if (pq != null && !isNaN(pq) && pq >= 65) out.push("Solide Prompt-Qualität für wiederholbare Szenen");
+    var ctr = getCtrVal();
+    if (ctr != null && !isNaN(ctr) && ctr >= 60) out.push("Thumbnail-Pfad mit CTR-Heuristik überdurchschnittlich");
+    if (lastReadiness && lastReadiness.overall_status === "ready") out.push("Provider-Readiness signalisiert Go");
+    if (getSceneCount() >= 3) out.push("Genug Szenen für klassischen Erzählbogen");
+    if (!out.length) out.push("Mehr Daten sammeln (Export + Preview + Readiness) für Chancen-Analyse.");
+    return out.slice(0, 5);
+  }
+
+  function buildWeaknesses() {
+    var ws = collectAllWarningsStrings().slice(0, 5);
+    if (!ws.length) {
+      var h = getHookScoreVal();
+      if (h != null && !isNaN(h) && h < 5) return ["Schwacher Hook-Score"];
+      return ["Keine Warnungen gelistet — trotzdem Readiness und Qualität manuell prüfen."];
+    }
+    return ws;
+  }
+
+  function renderStrategicBadges() {
+    var host = $("strategic-badges-row");
+    if (!host) return;
+    host.innerHTML = "";
+    function badge(cls, txt) {
+      var s = document.createElement("span");
+      s.className = "strat-badge " + cls;
+      s.textContent = txt;
+      host.appendChild(s);
+    }
+    var h = getHookScoreVal();
+    var ctr = getCtrVal();
+    var viral = 0;
+    if (h != null && !isNaN(h)) viral += h * 10;
+    if (ctr != null && !isNaN(ctr)) viral += ctr;
+    viral = viral ? Math.round(viral / (h != null && ctr != null ? 2 : 1)) : 40;
+    badge(viral >= 72 ? "high" : viral >= 48 ? "mid" : "low", "Strategic Badge · Viral Potential: " + (viral >= 72 ? "hoch" : viral >= 48 ? "mittel" : "niedrig"));
+    var tmpl = (buildExportBody().video_template || "").toLowerCase();
+    var dur = parseInt(String(buildExportBody().duration_minutes || 10), 10) || 10;
+    var ev = (tmpl.indexOf("generic") >= 0 || dur >= 10) ? "mittel" : "niedrig";
+    if (dur >= 12 && tmpl.indexOf("true") >= 0) ev = "hoch";
+    badge(ev === "hoch" ? "high" : ev === "mittel" ? "mid" : "low", "Strategic Badge · Evergreen Potential: " + ev);
+    var fit = "mittel";
+    if (lastPreview && lastPreview.export_ready) fit = "hoch";
+    else if (lastPreview && !lastPreview.export_ready) fit = "niedrig";
+    else if (lastExport && getSceneCount() > 0) fit = "mittel";
+    badge(fit === "hoch" ? "high" : fit === "mittel" ? "mid" : "low", "Strategic Badge · Template Fit: " + fit);
+  }
+
+  function refreshFounderInterpretation() {
+    var pot = computeThemenpotenzialScore();
+    $("fk-potential").textContent = pot == null ? "—" : String(pot);
+    var sc = getSceneCount();
+    var hasEx = !!lastExport;
+    var hasPr = !!lastPreview;
+    var hasRe = !!lastReadiness;
+    var hasOpt = !!lastOptimize;
+    var hasCtr = !!lastCtrPayload;
+    var wCount = collectAllWarningsStrings().length;
+    var blocked = !hasEx || sc === 0;
+    var allData = hasEx && sc > 0 && hasPr && hasRe && hasOpt && hasCtr;
+    $("fk-prod-status").textContent = blocked ? "Blockiert" : (allData && wCount === 0 ? "Produktionsbereit" : "Teilweise bereit");
+    $("fk-best-provider").textContent = pickBestProviderName();
+    var risk = computeRiskLevel();
+    $("fk-risk").textContent = risk.label;
+    $("fk-risk").style.color = risk.cls === "green" ? "var(--ok)" : risk.cls === "yellow" ? "var(--warn)" : risk.cls === "red" ? "var(--danger)" : "var(--muted)";
+    var nba = computeNextBestAction();
+    $("fk-handlung").textContent = nba.de + " — " + nba.hint;
+    var nbaEl = $("next-best-action");
+    if (nbaEl) {
+      nbaEl.className = "nba-card " + nba.cls;
+      $("nba-text").textContent = nba.de;
+    }
+    $("hum-hook").textContent = humanHookSummary();
+    $("hum-pq").textContent = humanPqSummary();
+    $("hum-readiness").textContent = humanReadinessSummary();
+    $("hum-ctr").textContent = humanCtrSummary();
+    var oc = $("opp-chances-list");
+    var ow = $("opp-weak-list");
+    if (oc) {
+      oc.innerHTML = "";
+      buildOpportunities().forEach(function(t) {
+        var li = document.createElement("li");
+        li.textContent = t;
+        oc.appendChild(li);
+      });
+    }
+    if (ow) {
+      ow.innerHTML = "";
+      buildWeaknesses().forEach(function(t) {
+        var li = document.createElement("li");
+        li.textContent = t;
+        ow.appendChild(li);
+      });
+    }
+    renderStrategicBadges();
+  }
+
+  function applyViewMode(mode) {
+    var f = $("btn-founder-mode");
+    var r = $("btn-raw-mode");
+    if (!f || !r) return;
+    if (mode === "raw") {
+      document.body.classList.add("raw-view");
+      f.classList.remove("active");
+      r.classList.add("active");
+    } else {
+      document.body.classList.remove("raw-view");
+      f.classList.add("active");
+      r.classList.remove("active");
+    }
+    try { sessionStorage.setItem(VIEW_MODE_KEY, mode); } catch (e1) {}
   }
 
   function buildMarkdownBriefing() {
@@ -925,6 +1345,307 @@ table.data th { background: var(--bg); color: var(--muted); }
       continuity_lock: $("fd-lock").checked,
       chapters_json: $("fd-chapters").value
     };
+  }
+
+  function persistSessionSnapshotSilent() {
+    try {
+      var pack = {
+        timestamp: new Date().toISOString(),
+        input: getInputSnapshot(),
+        lastExport: lastExport,
+        lastPreview: lastPreview,
+        lastReadiness: lastReadiness,
+        lastOptimize: lastOptimize,
+        lastCtr: lastCtrPayload
+      };
+      localStorage.setItem(LS_SNAPSHOT_KEY, JSON.stringify(pack));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function resetPipelineTimeline() {
+    var lis = document.querySelectorAll("#pipeline-timeline li.pipe-step");
+    for (var k = 0; k < lis.length; k++) {
+      lis[k].className = "pipe-step pending";
+      var m = lis[k].querySelector(".ps-msg");
+      if (m) m.textContent = "";
+    }
+  }
+
+  function setPipelineStep(idx, status, msg) {
+    var lis = document.querySelectorAll("#pipeline-timeline li.pipe-step");
+    var li = lis[idx];
+    if (!li) return;
+    var cls = "pending";
+    if (status === "active") cls = "active";
+    else if (status === "done") cls = "done";
+    else if (status === "err") cls = "err";
+    li.className = "pipe-step " + cls;
+    var m = li.querySelector(".ps-msg");
+    if (m) m.textContent = msg || "";
+  }
+
+  function rawTextToChapters(raw) {
+    var t = String(raw || "").trim();
+    if (!t) return [{ title: "Kapitel 1", content: "" }];
+    var paras = t.replace(/\\r\\n/g, "\\n").split(/\\n\\s*\\n+/).map(function(p) { return p.trim(); }).filter(Boolean);
+    if (!paras.length) paras = [t];
+    if (paras.length === 1 && paras[0].length > 1200) {
+      var one = paras[0];
+      paras = [];
+      var i = 0;
+      while (i < one.length) {
+        paras.push(one.slice(i, i + 900));
+        i += 900;
+      }
+    }
+    return paras.map(function(p, idx) {
+      return { title: "Abschnitt " + (idx + 1), content: p };
+    });
+  }
+
+  function buildPseudoScriptResponseFromRaw(raw) {
+    var ch = rawTextToChapters(raw);
+    var titleLine = String(raw || "").trim().replace(/\\s+/g, " ");
+    if (titleLine.length > 90) titleLine = titleLine.slice(0, 90) + "…";
+    if (!titleLine) titleLine = "Rohtext";
+    return {
+      title: titleLine,
+      hook: "",
+      chapters: ch,
+      full_script: String(raw || ""),
+      sources: [],
+      warnings: [
+        "[Dashboard BA 11.0] Rohtext ohne URL: Kapitel nur clientseitig segmentiert; für Extraktion News- oder YouTube-URL nutzen."
+      ]
+    };
+  }
+
+  function applyIntakeToForm(gen) {
+    if (!gen) return;
+    $("fd-title").value = String(gen.title || "");
+    var topicIn = $("intake-topic").value.trim();
+    if (topicIn) $("fd-topic").value = topicIn;
+    var sum = String(gen.full_script || "").trim();
+    if (!sum && gen.chapters && gen.chapters.length) {
+      sum = gen.chapters.map(function(c) {
+        return (c.title || "") + "\\n" + (c.content || "");
+      }).join("\\n\\n");
+    }
+    $("fd-summary").value = sum;
+    var chs = gen.chapters && gen.chapters.length ? gen.chapters : DEFAULT_CHAPTERS;
+    $("fd-chapters").value = JSON.stringify(chs, null, 2);
+  }
+
+  async function runGenerateFromIntake() {
+    var typ = $("intake-source-type").value;
+    var tmpl = $("fd-template").value || "generic";
+    var dur = Math.min(180, Math.max(1, parseInt($("fd-duration").value, 10) || 10));
+    var conf = "warn";
+    var gen;
+    if (typ === "youtube") {
+      var yu = $("intake-youtube-url").value.trim();
+      if (!yu) throw new Error("YouTube URL fehlt.");
+      gen = await fetchJson("/youtube/generate-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          video_url: yu,
+          target_language: "de",
+          duration_minutes: dur,
+          video_template: tmpl,
+          template_conformance_level: conf
+        })
+      });
+    } else if (typ === "news") {
+      var nu = $("intake-news-url").value.trim();
+      if (!nu) throw new Error("News-URL fehlt.");
+      gen = await fetchJson("/generate-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: nu,
+          target_language: "de",
+          duration_minutes: dur,
+          video_template: tmpl,
+          template_conformance_level: conf
+        })
+      });
+    } else if (typ === "raw") {
+      var rt = $("intake-raw-text").value.trim();
+      if (rt.length < 12) throw new Error("Rohtext zu kurz (min. ca. 12 Zeichen).");
+      gen = buildPseudoScriptResponseFromRaw(rt);
+    } else {
+      throw new Error("Unbekannter Quelltyp.");
+    }
+    applyIntakeToForm(gen);
+    mergeWarnings(gen.warnings || []);
+    refreshFounderInterpretation();
+    return gen;
+  }
+
+  async function runExportOnlyInternal() {
+    const body = buildExportBody();
+    const data = await fetchJson("/story-engine/export-package", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    lastExport = data;
+    lastNumericPq = null;
+    updatePqBadge();
+    setOut("out-export-full", data);
+    setOut("out-hook", data.hook || null);
+    const pq = data.prompt_quality || (data.scene_prompts && data.scene_prompts.prompt_quality);
+    if (pq) {
+      setOut("out-pq-score", "(Report)");
+      setOut("out-pq-detail", pq);
+    } else {
+      setOut("out-pq-score", null);
+      setOut("out-pq-detail", null);
+    }
+    mergeWarnings(data.warnings || []);
+    renderPromptLab();
+    renderProviderPromptCards();
+    return data;
+  }
+
+  async function runPreviewOnlyInternal() {
+    const data = await fetchJson("/story-engine/export-package/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildExportBody())
+    });
+    lastPreview = data;
+    lastNumericPq = data.prompt_quality_score;
+    updatePqBadge();
+    setOut("out-hook", {
+      hook_type: data.hook_type,
+      hook_score: data.hook_score,
+      template_id: data.template_id,
+      export_ready: data.export_ready,
+      readiness_status: data.readiness_status,
+      top_warnings: data.top_warnings
+    });
+    setOut("out-pq-score", data.prompt_quality_score);
+    setOut("out-pq-detail", { prompt_quality_score: data.prompt_quality_score, scene_count: data.scene_count });
+    mergeWarnings(data.top_warnings || []);
+    return data;
+  }
+
+  async function runReadinessOnlyInternal() {
+    const data = await fetchJson("/story-engine/provider-readiness", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildExportBody())
+    });
+    lastReadiness = data;
+    setOut("out-readiness", data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    return data;
+  }
+
+  async function runOptimizeOnlyInternal() {
+    const data = await fetchJson("/story-engine/provider-prompts/optimize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildExportBody())
+    });
+    lastOptimize = data;
+    const op = data.optimized_prompts || {};
+    setOut("out-leo", op.leonardo || []);
+    setOut("out-openai", op.openai || []);
+    setOut("out-kling", op.kling || []);
+    setOut("out-capcut", data.capcut_shotlist || []);
+    setOut("out-csv", data.csv_shotlist || []);
+    setOut("out-thumb-var", data.thumbnail_variants || []);
+    mergeWarnings(data.warnings || []);
+    renderPromptLab();
+    renderProviderPromptCards();
+    return data;
+  }
+
+  async function runCtrOnlyInternal() {
+    var hook = "";
+    var thumb = "";
+    const title = $("fd-title").value || "";
+    const vt = $("fd-template").value || "generic";
+    if (lastExport && lastExport.hook) hook = lastExport.hook.hook_text || "";
+    if (lastExport && lastExport.thumbnail_prompt) thumb = lastExport.thumbnail_prompt;
+    const body = {
+      title: title,
+      hook: hook,
+      video_template: vt,
+      thumbnail_prompt: thumb,
+      chapters: parseChapters()
+    };
+    const data = await fetchJson("/story-engine/thumbnail-ctr", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    lastCtrPayload = data;
+    setOut("out-ctr", data.ctr_score);
+    setOut("out-ctr-raw", data);
+    setOut("out-thumb-var", data.thumbnail_variants || []);
+    mergeWarnings(data.warnings || []);
+    return data;
+  }
+
+  async function runFullPipelineOrchestrator() {
+    var stepIdx = 0;
+    resetPipelineTimeline();
+    try {
+      stepIdx = 0;
+      setPipelineStep(stepIdx, "active", "");
+      await runGenerateFromIntake();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 1;
+      setPipelineStep(stepIdx, "active", "");
+      await runExportOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 2;
+      setPipelineStep(stepIdx, "active", "");
+      await runPreviewOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 3;
+      setPipelineStep(stepIdx, "active", "");
+      await runReadinessOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 4;
+      setPipelineStep(stepIdx, "active", "");
+      await runOptimizeOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 5;
+      setPipelineStep(stepIdx, "active", "");
+      await runCtrOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 6;
+      setPipelineStep(stepIdx, "active", "");
+      refreshFounderInterpretation();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 7;
+      setPipelineStep(stepIdx, "active", "");
+      await runDownloadProductionBundle();
+      setPipelineStep(stepIdx, "done", "");
+
+      persistSessionSnapshotSilent();
+      showError("");
+      openPanelAndScroll("coll-ops", "coll-ops");
+    } catch (e) {
+      setPipelineStep(stepIdx, "err", String(e.message || e));
+      throw e;
+    }
   }
 
   function applyInputSnapshot(inp) {
@@ -1293,6 +2014,20 @@ table.data th { background: var(--bg); color: var(--muted); }
 
   $("fd-chapters").value = JSON.stringify(DEFAULT_CHAPTERS, null, 2);
 
+  $("btn-intake-body").onclick = async function() {
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-source-intake", "coll-source-intake", async function() {
+      await runGenerateFromIntake();
+    });
+  };
+
+  $("btn-full-pipeline").onclick = async function() {
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-full-pipeline", "coll-full-pipeline", runFullPipelineOrchestrator);
+  };
+
   $("lab-left").addEventListener("change", renderPromptLab);
   $("lab-right").addEventListener("change", renderPromptLab);
   $("lab-refresh").addEventListener("click", renderPromptLab);
@@ -1490,22 +2225,12 @@ table.data th { background: var(--bg); color: var(--muted); }
 
   $("btn-snapshot-save").onclick = function() {
     var btn = this;
-    try {
-      var pack = {
-        timestamp: new Date().toISOString(),
-        input: getInputSnapshot(),
-        lastExport: lastExport,
-        lastPreview: lastPreview,
-        lastReadiness: lastReadiness,
-        lastOptimize: lastOptimize,
-        lastCtr: lastCtrPayload
-      };
-      localStorage.setItem(LS_SNAPSHOT_KEY, JSON.stringify(pack));
+    if (persistSessionSnapshotSilent()) {
       btn.classList.add("is-success");
       setTimeout(function() { btn.classList.remove("is-success"); }, 1600);
       showError("");
-    } catch (e) {
-      showError("Snapshot speichern fehlgeschlagen: " + String(e.message || e));
+    } else {
+      showError("Snapshot speichern fehlgeschlagen.");
     }
   };
 
@@ -1531,6 +2256,15 @@ table.data th { background: var(--bg); color: var(--muted); }
     btn.classList.add("is-success");
     setTimeout(function() { btn.classList.remove("is-success"); }, 1200);
   };
+
+  $("btn-founder-mode").onclick = function() { applyViewMode("founder"); };
+  $("btn-raw-mode").onclick = function() { applyViewMode("raw"); };
+  try {
+    var vm0 = sessionStorage.getItem(VIEW_MODE_KEY);
+    applyViewMode(vm0 === "raw" ? "raw" : "founder");
+  } catch (eView) {
+    applyViewMode("founder");
+  }
 
   loadTemplates().then(function() {
     renderPromptLab();
