@@ -22,6 +22,8 @@ from app.models import (
     ThumbnailCTRRequest,
     ThumbnailCTRResponse,
 )
+from app.prompt_engine import build_production_prompt_plan
+from app.prompt_engine.schema import ProductionPromptPlan, PromptPlanRequest
 from app.story_engine.export_package import build_export_package_v1
 from app.story_engine.export_formats import list_export_formats
 from app.story_engine.founder_preview import build_export_preview
@@ -67,6 +69,52 @@ async def generate_hook(req: GenerateHookRequest) -> GenerateHookResponse:
         template_match=r.template_match,
         warnings=r.warnings,
     )
+
+
+@router.post(
+    "/story-engine/prompt-plan",
+    response_model=ProductionPromptPlan,
+)
+async def story_engine_prompt_plan(req: PromptPlanRequest) -> ProductionPromptPlan:
+    """
+    BA 9.10–9.30 & BA 10.0–10.10 & Connector BA 11.0–11.5 & BA 12–13 — Prompt Planning inkl. Quality (9.11), Narrative (9.12), optional
+    ``performance_record`` (9.13), Review Gate (9.14), ``repair_suggestions_result`` (9.15),
+    ``repair_preview_result`` (9.16), ``human_approval_state`` (9.17),
+    ``production_handoff_result`` (9.18), ``production_export_contract_result`` (9.19),
+    ``provider_packaging_result`` (9.20), ``provider_export_bundle_result`` (9.21),
+    ``package_validation_result`` (9.22), ``production_connector_suite_result`` (10.0 Dry-Run),
+    ``connector_auth_contracts_result`` (10.1 Auth-Contract), ``provider_execution_queue_result`` (10.2 Queue),
+    ``production_timeline_result`` (9.23),
+    ``cost_projection_result`` (9.24), ``final_readiness_gate_result`` (9.25),
+    ``template_performance_comparison_result`` (9.26), ``template_recommendation_result`` (9.27),
+    ``provider_strategy_optimizer_result`` (9.28), ``production_os_dashboard_result`` (9.29),
+    ``master_orchestration_result`` (9.30); nach ``plan_readiness`` additiv
+    ``live_execution_guard_result`` (10.4), ``api_activation_control_result`` (10.5),
+    ``execution_policy_result`` (10.6 Policy/Kill-Switch), ``provider_job_runner_mock_result`` (10.8),
+    ``asset_status_tracker_result`` (10.9), ``production_run_summary_result`` (10.10); danach
+    **Connector BA 11.0–11.5** ``live_provider_safety_result``, ``runtime_secret_check_result``,
+    ``leonardo_live_result``, ``voice_live_result``, ``asset_persistence_result``,
+    ``provider_error_recovery_result`` (optional echtes HTTP nur mit Safety + Secrets + Request-Flag);
+    danach **BA 12.0–12.6 Production Assembly** ``master_asset_manifest_result``,
+    ``multi_asset_assembly_result``, ``final_timeline_result``, ``voice_scene_alignment_result``,
+    ``render_instruction_package_result``, ``downloadable_production_bundle_result``,
+    ``human_final_review_package_result``; danach **BA 13.0–13.6 Publishing Preparation**
+    ``metadata_master_package_result``, ``metadata_optimizer_result``, ``thumbnail_variant_pack_result``,
+    ``upload_checklist_result``, ``schedule_plan_result``, ``publishing_readiness_gate_result``,
+    ``founder_publishing_summary_result``; danach **BA 14.0–14.7 Performance Feedback**
+    ``kpi_ingest_contract_result``, ``kpi_normalization_result``, ``hook_performance_result``,
+    ``template_evolution_result``, ``cost_revenue_analysis_result``, ``auto_recommendation_upgrade_result``,
+    ``founder_growth_intelligence_result``, ``master_feedback_orchestrator_result`` — keine verpflichtende
+    YouTube-Live-API, keine Auto-Monetization.
+    Schema-Layer: ``result_store_schema`` (10.7), **ohne** DB-Write.
+
+    Deterministisch, JSON-getrieben unter ``app/templates/prompt_planning/``; **kein** Teil von
+    ``GenerateScriptResponse``.
+    """
+    try:
+        return build_production_prompt_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.post("/story-engine/rhythm-hint")

@@ -13,6 +13,10 @@ Eine **zuverlässige, modulare Pipeline** von **Quellen** (Nachrichten-URLs, You
 
 ## Aktueller Stand (Kurz)
 
+### BA 0.0 — Prompt Operating System (PPOS) V1 (**done / meta**)
+
+**Zweck:** Meta-Governance-Layer für zukünftige BA-Prompts: **Global Prompt Ruleset**, Pattern Library, Token-Compression-Makros und Standard-BA-/Suite-Contracts. **Nicht Teil der Produktionsausführung**; keine Runtime-, API-, Firestore-, Frontend- oder `GenerateScriptResponse`-Änderung. Kanonische Dokumente: [docs/PROMPT_OPERATING_SYSTEM.md](docs/PROMPT_OPERATING_SYSTEM.md), [docs/PROMPT_PATTERNS.md](docs/PROMPT_PATTERNS.md), optionaler Effizienzleitfaden [docs/TOKEN_EFFICIENCY_GUIDE.md](docs/TOKEN_EFFICIENCY_GUIDE.md).
+
 | Bereich | Stand |
 |--------|--------|
 | FastAPI, Health | Lokal und Cloud Run MVP v1 nutzbar |
@@ -387,7 +391,8 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 ## BA 9 — Template Engine / Story Engine (Produktachse)
 
 Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitellogik, Tonfall-Hinweise) über ein optionales Feld **`video_template`**, **ohne** den festen Sechs-Felder-JSON-Vertrag von **`POST /generate-script`** und **`POST /youtube/generate-script`** zu brechen (`title`, `hook`, `chapters`, `full_script`, `sources`, `warnings`).  
-**Abgrenzung:** „**Phase 9**“ im Phasenplan oben meint **technisches Video-Packaging** (Schnitt, Export, MP4); „**Phase 10**“ meint **Veröffentlichungsvorbereitung**. **BA 9.x** meint ausschließlich **Story Engine / Template / Hook / Review / Optimierung** — **BA** = modulare Bauphase im Modul; **Phase** = Makro-Roadmap (**BA 9.x** ist **nicht** Phase 9 oder 10). **BA 9.9** schließt das Story-Kernmodul **innerhalb der BA-9.x-Linie** ab; es gibt **kein „BA 10“** für Story Engine, solange diese Achse nicht bewusst neu nummeriert wird.
+**Abgrenzung:** „**Phase 9**“ im Phasenplan oben meint **technisches Video-Packaging** (Schnitt, Export, MP4); „**Phase 10**“ meint **Veröffentlichungsvorbereitung**. **BA 9.x** meint ausschließlich **Story Engine / Template / Hook / Review / Optimierung** — **BA** = modulare Bauphase im Modul; **Phase** = Makro-Roadmap (**BA 9.x** ist **nicht** Phase 9 oder 10). **BA 9.9** schließt das Story-Kernmodul **innerhalb der BA-9.x-Linie** ab; es gibt **kein „BA 10“** für Story Engine, solange diese Achse nicht bewusst neu nummeriert wird.  
+**Hinweis (Namensgebung):** Ein **Prompt-Planning-System V1** wird produktseitig mitunter als „**BA 9.1**“ beschriftet; **im Kanon dieses Repos** ist es **BA 9.10** (siehe unten), damit **BA 9.1** unverändert die historische Stufe **Operable Templates** bezeichnet.
 
 ### Übersicht Release-Stufen
 
@@ -404,10 +409,928 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 9.7** | **done** | **Adaptive Template Optimization:** Drift je `video_template` (`distinct_nonempty_template_definition_versions`, Dispersion), interne Health-/Performance-Scores, Refinement-Hinweise (`[template_refinement:…]`); **`GET /story-engine/template-health`** und Einbettung in **`GET /production/control-panel/summary`** → `story_engine.template_optimization`. Module: `template_drift.py`, `template_health_score.py`, `refinement_signals.py`, `template_optimization_aggregate.py`; Tests **`tests/test_ba97_template_optimization.py`**. Steckbrief: [docs/modules/ba97_adaptive_template_optimization.md](docs/modules/ba97_adaptive_template_optimization.md). |
 | **BA 9.8** | **done** | **Story Intelligence Layer:** Read-only Narrative-/Cross-Template-Hinweise, Self-Learning-Readiness-Checkliste ohne Closed-Loop; gleicher Health-Endpoint + Control-Panel **`story_engine.story_intelligence`**. **`story_intelligence_layer.py`**; **[docs/modules/ba98_story_intelligence_layer.md](docs/modules/ba98_story_intelligence_layer.md)**; Tests **`tests/test_ba98_story_intelligence.py`**. |
 | **BA 9.9** | **done** | **Story Engine Operations Maturity:** Canonical **Story OS** [docs/STORY_ENGINE_OS.md](docs/STORY_ENGINE_OS.md); Runbook-Reife [OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md) „Story Engine (Daily)“; Deploy-Verweis [docs/runbooks/cloud_run_deploy_runbook.md](docs/runbooks/cloud_run_deploy_runbook.md); Abschlusskriterien dokumentiert (**kein BA 10** für Story-, **Phase 9/10** unverändert Packaging/Publishing). Modulüberblick: [docs/modules/ba99_story_engine_operations_maturity.md](docs/modules/ba99_story_engine_operations_maturity.md). |
+| **BA 9.10** | **done** | **Prompt Planning System V1:** Topic-getriebenes, **deterministisches** Produktions-Blueprint (`template_type`, `tone`, `hook`, `chapter_outline`, `scene_prompts`, `voice_style`, `thumbnail_angle`); Module **`app/prompt_engine/`**, JSON-Templates **`app/templates/prompt_planning/`** (V1: `true_crime`, `mystery_history`); Hook-Schritt delegiert an **BA 9.2** `generate_hook_v1`; **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba910_prompt_planning.py`**. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.11** | **done** | **Prompt Plan Quality Check V1:** Heuristische **Produktionsreife** (`PromptPlanQualityResult`: `score`, `status` pass/warning/fail, `warnings`, `blocking_issues`, `checked_fields`); Modul **`app/prompt_engine/quality_check.py`**, Funktion **`evaluate_prompt_plan_quality`**; in **`POST /story-engine/prompt-plan`** als Feld **`quality_result`** im **`ProductionPromptPlan`**; Tests **`tests/test_ba911_prompt_plan_quality.py`**. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.12** | **done** | **Narrative Scoring V1:** Erzählerische **Zugkraft** (`NarrativeScoreResult`: Aggregat + Teilscores Hook/Curiosity, Emotion, Eskalation, Kapitel-Progression, Thumbnail-Potenzial); **`app/prompt_engine/narrative_scoring.py`**, **`evaluate_narrative_score`**; Feld **`narrative_score_result`** in **`ProductionPromptPlan`** / **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba912_narrative_scoring.py`**. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.13** | **done** | **Performance Learning Loop V1:** Logisches **`performance_records`**-Modell (`PerformanceRecord`, KPI-Optionalfelder), Builder **`build_performance_record_from_prompt_plan`**, **`evaluate_performance_snapshot`**, **`summarize_template_performance`** in **`app/prompt_engine/performance_learning.py`**; optional **`include_performance_record`** auf **`PromptPlanRequest`** → Feld **`performance_record`** im Plan (ohne Firestore/Migration V1); Tests **`tests/test_ba913_performance_learning.py`**. **Keine YouTube-API**. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.14** | **done** | **Prompt Plan Review Gate V1:** Operative Ampel **`go` / `revise` / `stop`** aus Quality (9.11), Narrative (9.12), optional Performance-Hinweis (9.13); **`PromptPlanReviewGateResult`** (`decision`, `confidence`, `reasons`, `required_actions`, `checked_signals`); **`app/prompt_engine/review_gate.py`**, Feld **`review_gate_result`** auf **`ProductionPromptPlan`** / **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba914_prompt_plan_review_gate.py`**. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.15** | **done** | **Prompt Repair Suggestions V1:** Konkrete, priorisierte Reparatur-To-dos aus Gate **`revise`/`stop`**, Quality (`blocking_issues`, Warnungsbudget), Narrativ (Schwächen, Teilscores), Struktur (Hook/Kapitel/Szenen/Voice/Thumbnail) und optionalem Performance-**`pending_data`**-Hinweis; **`PromptRepairSuggestion`** / **`PromptRepairSuggestionsResult`**, **`app/prompt_engine/repair_suggestions.py`** (`build_prompt_repair_suggestions`), Feld **`repair_suggestions_result`**; Tests **`tests/test_ba915_prompt_repair_suggestions.py`**. Kein LLM, keine Firestore-Writes. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.16** | **done** | **Repair Preview / Auto-Revision V1:** Deterministische **Vorschau** eines reparierten Plans (**`PromptRepairPreviewResult`**: `preview_available` / `not_needed` / `not_possible`, **`preview_plan`**, **`applied_repairs`**, **`remaining_issues`**, **`warnings`**); Modul **`app/prompt_engine/repair_preview.py`** (`build_repair_preview`); Hook-/Kapitel-/Szenen-/Voice-/Thumbnail-Heuristiken, Narrativ-**weak** nur als Hinweis; Re-Evaluation von Quality/Narrative/Gate/Suggestions auf der Preview mit **`preview_plan.repair_preview_result = None`** (keine Rekursion); **`POST /story-engine/prompt-plan`** additiv **`repair_preview_result`**; Tests **`tests/test_ba916_repair_preview.py`**. Kein Auto-Overwrite, kein LLM/Firestore. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.17** | **done** | **Human Approval Layer V1:** Freigabe-Vorbereitung (**`HumanApprovalState`**: `pending_review` / `approved` / `rejected` / `needs_revision`, **`recommended_action`**, **`approval_required`**, **`reasons`**, **`checklist`**, optional **`approved_by`**/**`approved_at`**/**`rejected_reason`**); **`app/prompt_engine/human_approval.py`** (`build_human_approval_state`); Mapping aus Review Gate (9.14) + Repair-Summary (9.15); **`human_approval_state`** auf **`ProductionPromptPlan`** / **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba917_human_approval_layer.py`**. Keine Persistenz, kein Auth, keine User-Aktion in V1. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.18** | **done** | **Production Handoff V1:** Übergabepaket (**`ProductionHandoffResult`**: `handoff_status` ready/blocked/needs_review/needs_revision, **`production_ready`**, **`summary`**, **`package`** mit Plan-/Quality-/Narrative-/Gate-/Approval-Metadaten, **`warnings`**, **`blocking_reasons`**, **`checked_sources`**); **`app/prompt_engine/production_handoff.py`** (`build_production_handoff`); konservativ: **`pending_review`** → nicht **`production_ready`**; **`approved`** → **`ready`**; **`POST /story-engine/prompt-plan`** additiv **`production_handoff_result`**; Tests **`tests/test_ba918_production_handoff.py`**. Kein Produktionsstart, kein Firestore. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.19** | **done** | **Production Handoff Export Contract V1:** Versionierter JSON-Vertrag (**`ProductionExportContractResult`**, **`export_contract_version`** `9.19-v1`, **`handoff_package_id`**, **`export_ready`**/**`export_status`**, **`export_payload`** mit vollem Plan-/Quality-/Narrative-/Gate-/Approval-/Handoff-Inhalt, ohne Secrets); **`app/prompt_engine/production_export_contract.py`** (`build_production_export_contract`); abbildet **`production_handoff_result`**; fehlendes Handoff → **`blocked`**; **`POST /story-engine/prompt-plan`** additiv **`production_export_contract_result`**; Tests **`tests/test_ba919_production_export_contract.py`**. Kein Provider/Firestore/Produktionsstart. **`GenerateScriptResponse`** unverändert. |
+| **BA 9.20** | **done** | **Connector Packaging / Provider Mapping V1:** Rolle **`ProviderPackage`** (image/video/voice/thumbnail/render), **`ProviderPackagingResult`** (`packaging_status` ready/partial/blocked); Mapping Leonardo/Kling/Voice-Stubs/Thumbnail/Render-Timeline aus Plan + Export-Contract-Gate; **`app/prompt_engine/provider_packaging.py`**; Feld **`provider_packaging_result`**; Tests **`tests/test_ba920_provider_packaging.py`**. Keine echten Provider-Calls. |
+| **BA 9.21** | **done** | **Multi-Provider Export Bundle V1:** **`ProviderExportBundleResult`** (`bundle_version` **`9.21-v1`**, **`bundle_id`**, **`providers`** mit fünf Slots); **`app/prompt_engine/provider_export_bundle.py`**; Feld **`provider_export_bundle_result`**; Tests **`tests/test_ba921_provider_export_bundle.py`**. |
+| **BA 9.22** | **done** | **Production Package Validation V1:** **`PackageValidationResult`** (`validation_status`, **`production_safety`**, **`missing_components`**, **`recommendations`**); **`app/prompt_engine/package_validation.py`**; Feld **`package_validation_result`**; Tests **`tests/test_ba922_package_validation.py`**. |
+| **BA 9.23** | **done** | **Production Timeline Builder V1:** **`TimelineScene`** / **`ProductionTimelineResult`** (Rollen Hook→Outro, geschätzte Sekunden, **`target_video_length_category`** short/medium/long); **`app/prompt_engine/timeline_builder.py`** (`build_production_timeline`); Feld **`production_timeline_result`**; Tests **`tests/test_ba923_timeline_builder.py`**. Kein Render-Start. |
+| **BA 9.24** | **done** | **Cost Projection V2:** **`ProviderCostEstimate`** / **`CostProjectionResult`** (EUR-Heuristik Leonardo/Kling/Voice/Thumbnail/Render); **`app/prompt_engine/cost_projection.py`**; Feld **`cost_projection_result`**; Tests **`tests/test_ba924_cost_projection.py`**. Keine API-Preise. |
+| **BA 9.25** | **done** | **Final Production Readiness Gate V1:** **`FinalProductionReadinessResult`** (`readiness_decision`, Score, Blocker, Review-Flags, Strengths); **`app/prompt_engine/final_readiness_gate.py`**; Feld **`final_readiness_gate_result`**; Tests **`tests/test_ba925_final_readiness_gate.py`**. Operative Freigabe ohne Produktionsstart. |
+| **BA 9.26** | **done** | **Template Performance Comparison V1:** **`TemplatePerformanceEntry`** / **`TemplatePerformanceComparisonResult`**; **`app/prompt_engine/template_performance_comparison.py`** (`compare_template_performance`); Feld **`template_performance_comparison_result`** (optional leer); Tests **`tests/test_ba926_template_performance_comparison.py`**. |
+| **BA 9.27** | **done** | **Auto Template Recommendation V1:** **`TemplateRecommendationResult`** (Basis topic_match / historical_performance / narrative_fit); **`app/prompt_engine/template_recommendation.py`**; Feld **`template_recommendation_result`**; Tests **`tests/test_ba927_template_recommendation.py`**. |
+| **BA 9.28** | **done** | **Provider Strategy Optimizer V1:** **`ProviderStrategyOptimizerResult`** (Kosten-Priorität, Stub-Provider, Reasoning); **`app/prompt_engine/provider_strategy_optimizer.py`**; Feld **`provider_strategy_optimizer_result`**; Tests **`tests/test_ba928_provider_strategy_optimizer.py`**. |
+| **BA 9.29** | **done** | **Production OS Dashboard Summary V1:** **`ProductionOSDashboardResult`** (Gesundheit, Readiness, Kosten, Risiken, Executive Summary); **`app/prompt_engine/production_os_dashboard.py`**; Feld **`production_os_dashboard_result`**; Tests **`tests/test_ba929_production_os_dashboard.py`**. |
+| **BA 9.30** | **done** | **Story-to-Production Master Orchestrator V1:** **`MasterOrchestrationResult`** (Launch-Empfehlung proceed/revise/hold); **`app/prompt_engine/master_orchestrator.py`**; Feld **`master_orchestration_result`**; Tests **`tests/test_ba930_master_orchestrator.py`**. |
+| **BA 10.0** | **done** | **Production Connector Layer V1:** **`app/production_connectors/`** (Base, Registry, **`dry_run_provider_bundle`**, Provider-Stubs Leonardo/Kling/Voice/Thumbnail/Render); Schema **`ConnectorExecutionRequest`**/**`ConnectorExecutionResult`**/**`ProductionConnectorSuiteResult`**; Feld **`production_connector_suite_result`** auf **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba100_*.py`**. Nur Dry-Run — keine Live-APIs. |
+| **BA 10.1** | **done** | **Live Connector Auth Contract V1:** **`ConnectorAuthContractResult`** / **`ConnectorAuthContractsResult`**; **`app/production_connectors/auth_contract.py`** (`build_connector_auth_contract`, `build_connector_auth_contracts_result`); Felder **`connector_auth_contracts_result`** + optional **`auth_contracts`** in **`ProductionConnectorSuiteResult`**; Tests **`tests/test_ba101_auth_contract.py`**. Keine ENV-Lesung, kein Secret-Logging. |
+| **BA 10.2** | **done** | **Provider Execution Queue V1:** **`ExecutionQueueJob`** / **`ProviderExecutionQueueResult`**; **`app/production_connectors/execution_queue.py`** (`build_provider_execution_queue`); Feld **`provider_execution_queue_result`** + optional **`execution_queue_result`** in Suite; Tests **`tests/test_ba102_execution_queue.py`**. Deterministische Reihenfolge, kein Queue-Backend. |
+| **BA 10.3** | **done** | **Asset Return Normalization V1:** **`NormalizedAssetResult`**; **`app/production_connectors/asset_normalization.py`** (`normalize_provider_asset_result`); Utility + Tests **`tests/test_ba103_asset_normalization.py`**. Keine Downloads/Uploads. |
+| **BA 15.0–15.9** | **done** | **First Production Acceleration Suite V1:** **`app/production_acceleration/`** macht aus Live-/Smoke-Assets eine reproduzierbare lokale Demo-Produktion: Demo-Video-Automation, Asset-Downloader-Plan, Voice Registry, Scene Stitcher, Subtitle Draft, Thumbnail Extract, Founder Local Dashboard, Batch Topic Runner, Cost Snapshot, Viral Prototype Presets; Felder **`*_result`** additiv auf **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba150_production_acceleration.py`**. Kein Firestore-/YouTube-/Frontend-Zwang. |
+| **BA 16.0–16.9** | **done** | **Monetization & Scale Operating System V1:** **`app/monetization_scale/`** bereitet Revenue, Channel Portfolio, Multi-Platform, Opportunity Scanning, Founder KPI, Scale Blueprint, Sponsorship Readiness, Content Investment, Scale Risks und Founder Summary strategisch vor; Felder **`*_result`** additiv auf **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba160_monetization_scale.py`**. Kein Upload, keine Pflicht-Analytics, keine Business-Automation. |
+| **BA 17.0–17.9** | **planned** | **Media OS / SaaS / Platform Empire Blueprint:** strategische Produktisierungsschicht für White-Label, SaaS Dashboard, API Productization, Licensing, Agency Mode, Marketplace, Investor Readiness, Founder Replacement, Acquisition Funnel und Exit Blueprint. **Blueprint first:** noch keine Runtime-Implementierung, keine SaaS-Billing-/Mandantenpflicht, keine Plattform-Automation. |
+
+### BA 9.10 — Prompt Planning System V1 (**done**)
+
+**Ziel:** Reproduzierbares **Story-Planning** statt isolierter Einzelprompts — Backend-first, modular, erweiterbar um weitere JSON-Templates.
+
+**Core Flow (Umsetzung):** Topic Input → **Topic Classifier** (`topic_classifier.py`) → **Narrative Selector** (`narrative_selector.py`) → **Hook Generator** (`hook_generator.py`, delegiert **`generate_hook_v1`** aus BA 9.2) → **Chapter Planner** (`chapter_planner.py`) → **Scene Prompt Builder** (`scene_builder.py`) → Felder **Voice** / **Thumbnail** aus Template-JSON; Orchestrierung **`pipeline.py`**, Schema **`schema.py`**, Loader **`loader.py`**.
+
+**Kontrakte:** Response-Modell **`ProductionPromptPlan`** (u. a. `video_template` für Downstream-Alignment mit `story_engine`); **kein** neuer Pflichtpfad für `/generate-script` oder `/youtube/generate-script`.
+
+**Nächste Ausbaustufen (optional):** Zusätzliche Templates unter `app/templates/prompt_planning/`; LLM-gestützte Varianten nur als Schicht **hinter** dem deterministischen Kern.
+
+### BA 9.11 — Prompt Plan Quality Check V1 (**done**)
+
+**Zweck:** Ein erzeugter **`ProductionPromptPlan`** soll **bewertbar** sein, bevor Downstream (Export, Produktion) startet — ohne LLM, nur strukturierte Heuristiken.
+
+**Dateien:** **`app/prompt_engine/quality_check.py`** (`evaluate_prompt_plan_quality`); Schema **`PromptPlanQualityResult`** in **`app/prompt_engine/schema.py`**; Einbindung in **`app/prompt_engine/pipeline.py`** (Feld **`quality_result`** nach Planbau).
+
+**API-Verhalten:** **`POST /story-engine/prompt-plan`** liefert dasselbe JSON wie zuvor **plus** verschachteltes **`quality_result`** (additive Felder). Clients, die das Feld ignorieren, bleiben kompatibel. Blocker (z. B. leerer Hook, leere Kapitel) → **`status: fail`**; nachrangige Lücken (z. B. unter Mindestkapitelzahl 5, leeres `voice_style`) → **`warning`**; Einträge mit Präfix **`inherited_plan_warning:`** spiegeln Plan-Warnungen aus BA 9.10/Hook-Engine.
+
+**Anschluss:** **BA 9.12** (Narrative Scoring) liefert die erzählerische Bewertung; **BA 9.13** übernimmt das **Performance-Learning-Datenmodell** und KPI-Vorbereitung (keine YouTube-API in V1).
+
+### BA 9.12 — Narrative Scoring V1 (**done**)
+
+**Zweck:** **BA 9.11** beantwortet: *„Kann produziert werden?“* (strukturelle Reife). **BA 9.12** beantwortet: *„Ist die Story klick- und watch-würdig?“* — **regelbasiert**, nachvollziehbar, ohne OpenAI-Calls.
+
+**Unterschied zu BA 9.11:** Keine Blocker/Warnungen zur Pflichtfeldern-Lückenlogik, sondern **fünf Narrativ-Dimensionen** mit Teilscores und **`strong` / `moderate` / `weak`** ab Gesamtscore (≥80 / 50–79 / &lt;50).
+
+**Bewertungsdimensionen:** `hook_curiosity_score`, `emotional_pull_score`, `escalation_score`, `chapter_progression_score`, `thumbnail_potential_score` — jeweils Keyword-/Struktur-Heuristiken auf Hook, Kapiteltexte und Thumbnail-Winkel; optional leichte Kopplung an **`hook_score`** (BA 9.2) bei Curiosity.
+
+**Dateien / API:** **`app/prompt_engine/narrative_scoring.py`**, Schema **`NarrativeScoreResult`** / **`NarrativeSubscores`** in **`schema.py`**; Pipeline setzt **`narrative_score_result`** gemeinsam mit **`quality_result`**; **`POST /story-engine/prompt-plan`** liefert beide Felder additiv.
+
+**Anschluss:** **BA 9.13** übernimmt Persistenz-Vorbereitung und KPI-Anbindung (siehe unten).
+
+### BA 9.13 — Performance Learning Loop V1 (**done**)
+
+**Zweck:** Ein **messbares Gedächtnis** für Template-, Hook- und Story-Signale vorbereiten: Prompt-Plan-Metadaten und spätere **echte Performance-KPIs** (CTR, Watchtime, RPM, Revenue, Kosten) in einem gemeinsamen **`PerformanceRecord`**-Schema — **ohne YouTube-API** und **ohne Firestore-Write** in V1 (bestehendes Watchlist-Repo wird nicht erweitert, bis ein eigenes Persistenz-Deliverable folgt).
+
+**Verbindung BA 9.10–9.12:** Aus einem fertigen **`ProductionPromptPlan`** (inkl. **`quality_result`**, **`narrative_score_result`**) erzeugt **`build_performance_record_from_prompt_plan`** einen Entwurf mit **`template_type`**, **`video_template`**, **`hook_*`**, **`quality_*`**, **`narrative_*`** und Zeitstempeln. **`evaluate_performance_snapshot`** liefert **`pending_data`**, solange keine KPIs gesetzt sind; bei Views + CTR + Watch/Retention **`ready`** mit grobem **`learning_score`** (0–100). **`summarize_template_performance`** gruppiert nach **`template_type`**.
+
+**Optionale API:** Gleicher Endpunkt **`POST /story-engine/prompt-plan`** mit **`include_performance_record: true`** — additive Response, keine neuen Routen.
+
+**Spätere Felder:** `youtube_video_id`, `impressions`, `views`, `ctr`, `average_view_duration`, `retention_percent`, `watch_time_minutes`, `rpm`, `estimated_revenue`, `production_cost_estimate`, `profit_estimate` — alle optional im Modell.
+
+**Langfristiges Ziel:** Templates **datenbasiert** verbessern, sobald Produktions- und Plattformdaten eingespeist werden (nächste Ausbaustufen: Firestore-Collection **`performance_records`** oder Anbindung an bestehende Job-Dokumente — **keine** große Migration in V1).
+
+### BA 9.14 — Prompt Plan Review Gate V1 (**done**)
+
+**Zweck:** Aus den Signalen von **9.11–9.13** eine **einzige operative Entscheidung** ableiten: **`go`** (weiter produzieren), **`revise`** (nachbessern), **`stop`** (nicht produktionsfähig). Kein LLM, keine Firestore-Writes.
+
+**Unterschied zu 9.11/9.12:** Quality und Narrative liefern **einzelne Bewertungsdimensionen**; das Review Gate **priorisiert** (z. B. **stop** bei fail/blocking/leerem Hook/fehlenden Kapiteln/Szenen oder Kombination **narrative weak** mit **quality ≠ pass**) und bündelt **reasons** / **required_actions** für Operateure.
+
+**Decision Matrix (V1):** **`stop`** bei Quality-fail, **`blocking_issues`**, leerem Hook, 0 Kapiteln/Szenen, oder **weak + Quality nicht pass**; **`revise`** bei Quality-warning, alleinstehendem **weak** bei Quality-pass, Narrativ-Score &lt; 50, Warnungsbudget überschritten; sonst **`go`** bei **pass** und Narrativ **strong/moderate**. **`confidence`** wird aus Abzügen berechnet und auf Bereiche **stop ≤ 40**, **revise 40–79**, **go 80–100** begrenzt. Vorhandenes **`performance_record`** mit KPI **`pending_data`** ist nur **Hinweis**, kein Stop.
+
+**Dateien:** **`app/prompt_engine/review_gate.py`** (`evaluate_prompt_plan_review_gate`), Schema **`PromptPlanReviewGateResult`**, Einbindung in **`pipeline.py`** nach Quality/Narrative/optional **`performance_record`**.
+
+**Anschluss:** **BA 9.15** liefert strukturierte Reparaturvorschläge; **BA 9.16** eine deterministische Repair-Vorschau (siehe unten).
+
+### BA 9.15 — Prompt Repair Suggestions V1 (**done**)
+
+**Zweck:** **BA 9.14** sagt, ob der Plan weiter darf (**`go` / `revise` / `stop`**). **BA 9.15** übersetzt Probleme in **konkrete, priorisierte To-dos** — die Pipeline bleibt kritisch, wird aber **operativ hilfreich** (nicht nur Ampel, sondern „wo die Schraube locker ist“).
+
+**Input-Signale:** **`review_gate_result`** (bei **`go`** → **`not_needed`**, leere Liste); bei **`revise`** / **`stop`** u. a. **`quality_result.blocking_issues`** und Warnungslast, **`narrative_score_result.weaknesses`** und niedrige Teilscores (Curiosity, Eskalation, Emotion, Thumbnail-Potenzial), strukturelle Lücken (**Hook**, **Kapitel** ≥ 5 Produktionsziel, **Szenen** 1:1 zu Kapiteln, **voice_style**, **thumbnail_angle**), **`review_gate_result.required_actions`**, optional **`performance_record`** mit Snapshot **`pending_data`** (nur **low**-Priority-Hinweis auf spätere KPIs: CTR, Watchtime, RPM).
+
+**Kategorien:** `hook`, `chapters`, `scenes`, `voice`, `thumbnail`, `narrative`, `quality`, `performance` — jeweils mit **`high` / `medium` / `low`**.
+
+**Unterschied zum Review Gate:** Das Gate **entscheidet** (Ampel + Confidence); Repair Suggestions **benennen** priorisierte Maßnahmen und Kurzvorschläge im gleichen Request — **ohne** Änderung von **`GenerateScriptResponse`** oder neuen externen Abhängigkeiten.
+
+**Dateien:** **`app/prompt_engine/repair_suggestions.py`**, Schema in **`app/prompt_engine/schema.py`**, Einbindung in **`app/prompt_engine/pipeline.py`** unmittelbar nach **`review_gate_result`**; **`POST /story-engine/prompt-plan`** liefert additiv **`repair_suggestions_result`**.
+
+**Anschluss:** **BA 9.16** (siehe unten).
+
+### BA 9.16 — Repair Preview / Auto-Revision V1 (**done**)
+
+**Zweck:** **BA 9.15** benennt, **was** zu reparieren ist; **BA 9.16** liefert eine **deterministische Vorschau**, wie ein Plan nach einfachen strukturellen Nachbesserungen aussehen könnte — **ohne** den Originalplan zu überschreiben und **ohne** automatische Produktions-Freigabe („der Chef drückt noch selbst“).
+
+**Kein Auto-Overwrite:** Der zurückgegebene **`ProductionPromptPlan`** (Live-Plan) bleibt unverändert; nur **`repair_preview_result.preview_plan`** ist die **Kopie** mit Heuristiken (Hook-Platzhaltertext, Kapitel auf ≥ 5 Standardbeats, Szenen 1:1, Voice/Thumbnail aus Template-Regeln). **Narrativ `weak`:** keine vollständige Story-Neuschreibung; Hinweis in **`remaining_issues`** / **`warnings`**.
+
+**Re-Evaluation:** Auf der Preview werden **`quality_result`**, **`narrative_score_result`**, **`review_gate_result`** und **`repair_suggestions_result`** neu berechnet; **`preview_plan.repair_preview_result`** ist immer **`None`**, um Rekursion und Doppel-Vorschau zu vermeiden.
+
+**Unterschied zu BA 9.15:** 9.15 = **Checkliste / To-dos**; 9.16 = **konkreter Entwurf** plus **`applied_repairs`**-Telemetrie.
+
+**Dateien:** **`app/prompt_engine/repair_preview.py`**, Schema **`PromptRepairPreviewResult`**, Pipeline nach **`repair_suggestions_result`**, **`POST /story-engine/prompt-plan`** additiv.
+
+**Anschluss:** **BA 9.17** — Human Approval Layer (siehe unten).
+
+### BA 9.17 — Human Approval Layer V1 (**done**)
+
+**Zweck:** **BA 9.14** liefert die **technische** Ampel; **BA 9.17** bereitet die **menschliche** Freigabe vor — klarer Status, empfohlene Aktion, Pflicht-Freigabe-Flag und **Redaktions-Checkliste**, ohne den Chefredakteur zu ersetzen.
+
+**Statuswerte:** **`pending_review`** (u. a. technisch **`go`** oder fehlendes Gate → manuelle Prüfung), **`needs_revision`** (**`revise`**), **`rejected`** (**`stop`**), sowie Schema-Reservat **`approved`** für spätere Persistenz-Runden. **`recommended_action`:** `approve` / `review` / `revise` / `reject`.
+
+**Warum V1 ohne Firestore/Auth:** Nur **API-Output** als Entscheidungshilfe; **`approved_by`** / **`approved_at`** bleiben **`None`**, bis eine spätere Persistenz-Stufe (z. B. nach **BA 9.22** oder eigenem Persistenz-Deliverable) greift — kein Schreiben in Firestore, kein Login, kein Frontend-Zwang.
+
+**Unterschied zu Review Gate:** Gate = automatisierte technische Kriterien; Human Approval = **explizite** Vorbereitung auf menschliche Endfreigabe (Checkliste bei **`go`**, gebündelte **`reasons`** bei **`revise`** inkl. Repair-Summary, **`rejected_reason`** bei **`stop`**).
+
+**Dateien:** **`app/prompt_engine/human_approval.py`**, Schema **`HumanApprovalState`**, Pipeline nach **`repair_preview_result`**.
+
+**Anschluss:** **BA 9.18** — Production Handoff (siehe unten).
+
+### BA 9.18 — Production Handoff V1 (**done**)
+
+**Zweck:** Aus einem vollständigen **`ProductionPromptPlan`** ein **kontrolliertes Übergabepaket** für eine spätere Produktionspipeline bauen — strukturierte **`package`**-Felder, Ampel **`handoff_status`**, **`production_ready`** und Klartext-**`summary`** — **ohne** Render-Jobs, Provider-Calls oder „roten Knopf“.
+
+**`handoff_status`:** **`ready`** (Paket für Übergabe vorgesehen), **`blocked`** (**`rejected`** / Stop-Pfad), **`needs_review`** (**`pending_review`** oder fehlende Human-Approval-Schicht), **`needs_revision`**.
+
+**Konservative V1-Regel:** **`pending_review`** bedeutet technisch oft **`go`**, aber **`production_ready=False`** — echte Übergabe erst nach persistierter oder explizit gesetzter **`approved`**-Freigabe (**`production_ready=True`**). Fehlendes **`human_approval_state`** → **`needs_review`** + Warning.
+
+**Unterschied zu Human Approval (9.17):** 9.17 formuliert **Redaktionspflicht** und Empfehlung; 9.18 sagt, **was** als Paket an Produktion denkbar ist und **welche Blocker** die Übergabe stoppen.
+
+**Dateien:** **`app/prompt_engine/production_handoff.py`**, Schema **`ProductionHandoffPackage`** / **`ProductionHandoffResult`**, Pipeline nach **`human_approval_state`**.
+
+**Anschluss:** **BA 9.19** — Export Contract (siehe unten).
+
+### BA 9.19 — Production Handoff Export Contract V1 (**done**)
+
+**Zweck:** Aus internem **`ProductionPromptPlan`** und **`production_handoff_result`** einen **stabilen, maschinenlesbaren Export-Vertrag** erzeugen — für Connectoren, spätere Produktionssysteme oder Batch-Verarbeitung — **ohne** Render, Provider und Firestore.
+
+**Export-Vertrag:** **`ProductionExportContractResult`** mit fester **`export_contract_version`** (`9.19-v1` für Parser), **`handoff_package_id`** (deterministisch; mit **`performance_record.production_job_id`** wenn gesetzt, sonst Hash aus Template/Hook/Struktur), **`export_ready`** / **`export_status`** (spiegelt Handoff), **`summary`**, **`export_payload`** (Hook, Kapitel, Szenen, Voice, Thumbnail, eingebettete Quality/Narrative/Gate/Human-Approval/Handoff-Objekte), **`warnings`**, **`blocking_reasons`**, **`checked_sources`**. Keine API-Keys, keine Binärdaten, keine erzwungenen Firestore-IDs.
+
+**Versionierung:** Downstream prüft **`export_contract_version`** und kann Felder strikt parsen; Änderungen am Contract → neue Version (`9.19-v2`, …).
+
+**Unterschied zu BA 9.18:** 9.18 = **operative Übergabeentscheidung** und kompaktes **`package`**; 9.19 = **vollständiger, versionierter Export-Container** für externe Systeme.
+
+**Downstream-Nutzung:** JSON aus **`production_export_contract_result`** serialisieren, validieren, an Queue/Connector übergeben — **`GenerateScriptResponse`** bleibt unberührt.
+
+**Dateien:** **`app/prompt_engine/production_export_contract.py`**, Schema **`ProductionExportPayload`** / **`ProductionExportContractResult`**, Pipeline nach **`production_handoff_result`**.
+
+**Anschluss:** **BA 9.20–9.22** — Production Packaging Suite (siehe unten).
+
+### BA 9.20 — Connector Packaging / Provider Mapping V1 (**done**)
+
+**Zweck:** Den Export-Vertrag (**9.19**) in **provider-spezifische, JSON-serialisierbare Payloads** übersetzen — weiterhin **ohne** HTTP-Calls zu Leonardo, Kling, ElevenLabs usw.
+
+**Providerrollen:** **`image`** (Leonardo, `style_profile` ← `template_type`, Prompts ← `scene_prompts`), **`video`** (Kling, Motion-Prompts + Kapitel-Progression), **`voice`** (OpenAI/ElevenLabs **Stub**, `voice_style` + Kapitel-Blöcke), **`thumbnail`** (Hook + `thumbnail_angle`), **`render`** (Timeline-Skeleton aus Kapitel-/Szenen-Reihenfolge).
+
+**Status:** Export-Contract **`blocked`** oder fehlend → alle Pakete **`blocked`**; fehlende Pflichtdaten (z. B. leere Szenen) → **`incomplete`**, Gesamt oft **`partial`**; nur bei lokaler Vollständigkeit **und** **`export_ready`** → **`packaging_status: ready`**.
+
+**Dateien:** **`app/prompt_engine/provider_packaging.py`**, Schema **`ProviderPackage`** / **`ProviderPackagingResult`**, Pipeline nach **`production_export_contract_result`**.
+
+### BA 9.21 — Multi-Provider Export Bundle V1 (**done**)
+
+**Zweck:** Alle Provider-Pakete in **ein** maschinenlesbares Objekt bündeln — **`bundle_version`** `9.21-v1`, **`bundle_id`** (deterministischer Hash), **`providers`** mit fünf benannten Slots.
+
+**Bundle-Logik:** Spiegelt **`ProviderPackagingResult.packaging_status`** als **`bundle_status`**; sammelt Warnungen aus den Einzelpaketen; **`export_summary`** in Klartext für Operateure.
+
+**Unterschied zu 9.19:** 9.19 = normativer Gesamt-Export des Plans; 9.21 = **Connector-orientiertes** Sammelpaket je Provider-Rolle.
+
+**Dateien:** **`app/prompt_engine/provider_export_bundle.py`**, Schema **`ProviderExportProviders`** / **`ProviderExportBundleResult`**, Pipeline nach **`provider_packaging_result`**.
+
+### BA 9.22 — Production Package Validation V1 (**done**)
+
+**Zweck:** Prüfen, ob das Bundle **produktionsnah sicher** ist: Kernpakete (**alle fünf** Provider-Slots **`ready`**), Bundle nicht **`blocked`**, Kapitel/Szenen-Zähler konsistent, Hook/Voice/Thumbnail ohne kritische Lücken.
+
+**Validierung:** **`validation_status`** `pass` / `warning` / `fail`; **`production_safety`** `safe` / `review` / `unsafe`; **`missing_components`** listet fehlende oder inkonsistente Teile; **`recommendations`** für nächste Schritte. **Ergänzung (BA 9.23+):** Sind alle fünf Provider-Slots **`ready`**, Kapitel/Szenen konsistent, aber das Bundle nur **`partial`** weil **`export_ready`** noch nicht gesetzt ist (typisch: Human **`pending_review`**), liefert die Validierung **`warning`** / **`production_safety: review`** statt **`fail`** — damit die operative Readiness-Ampel (**BA 9.25**) zwischen „hart blockiert“ und „Review-Pfad“ unterscheiden kann.
+
+**Dateien:** **`app/prompt_engine/package_validation.py`**, Schema **`PackageValidationResult`**, Pipeline nach **`provider_export_bundle_result`**.
+
+### BA 9.23 — Production Timeline Builder V1 (**done**)
+
+**Zweck:** Aus Hook und Kapitel/Szenen (1:1) eine **operative Timeline** ableiten — geschätzte **Sekunden pro Szene**, Rolle (**hook** / **setup** / **build** / **escalation** / **climax** / **outro**), **`provider_targets`** (Leonardo/Kling als Planungsanker). Beantwortet: *Wie läuft das Video zeitlich?*
+
+**Produktionsdauer V1:** deterministische Mittelwerte innerhalb der Bandbreiten (Hook 8–15s, Standard 20–45s, Climax 30–60s, Outro 10–20s). **Kategorie:** **short** &lt; 90 s Gesamt, **medium** 90–480 s, **long** &gt; 480 s.
+
+**Einbindung:** Pipeline unmittelbar nach **`package_validation_result`** → Feld **`production_timeline_result`** auf **`POST /story-engine/prompt-plan`**. Export-Contract **blocked** / fehlend → Timeline **`blocked`**. Kapitel/Szenen-Mismatch → **`partial`** + Warnungen.
+
+**Anschluss:** **BA 9.24** nutzt Timeline-Längen für Kosten pro Minute; **`GenerateScriptResponse`** unverändert.
+
+### BA 9.24 — Cost Projection V2 (**done**)
+
+**Zweck:** Grobe **Kostenprojektion in EUR** aus Planungsgrößen (Szenen/Kapitel/Timeline), ohne echte Provider-Antworten. Beantwortet: *Was kostet das ungefähr?*
+
+**Heuristik V1:** Leonardo ≈ pro Timeline-Szene, Kling ≈ pro Szenen-Prompt, Voice ≈ pro Kapitel, Thumbnail pauschal (entfällt ohne **`thumbnail_angle`**), Render pauschal. Ohne nutzbare Timeline → **`insufficient_data`**.
+
+**Einbindung:** Nach **`production_timeline_result`** → **`cost_projection_result`**.
+
+**Anschluss:** **BA 9.25** wertet Kosteningenieurspfad zusammen mit Export, Validation und Timeline für die finale Ampel aus.
+
+### BA 9.25 — Final Production Readiness Gate V1 (**done**)
+
+**Zweck:** Ein **Gesamturteil** vor einem hypothetischen Produktionsstart (ohne Job-Enqueue): **`ready_for_production`**, **`ready_for_review`** oder **`not_ready`**, plus Score, Blocker, Review-Flags und Stärken. Beantwortet: *Ist das Gesamtpaket wirklich bereit?*
+
+**Freigabelogik V1:** Harte Blocker bei fehlgeschlagenem Package-Validation (**fail**), blockiertem Export/Bundle, fehlender/blockierter Timeline, **`insufficient_data`** bei Kosten, **`rejected`** / **`needs_revision`** bei Human-Approval. **`ready_for_production`** nur bei grünem Bundle/Validation, Timeline **`ready`**, Kosten **`estimated`**, Human **`approved`** und konsistent hohem Score — in der Default-Pipeline bleibt Human typischerweise **`pending_review`** → Ergebnis **`ready_for_review`**.
+
+**Einbindung:** Letzter Schritt der Prompt-Plan-Pipeline → **`final_readiness_gate_result`**.
+
+### BA 9.26 — Template Performance Comparison V1 (**done**)
+
+**Zweck:** Aus einer Liste von **`PerformanceRecord`** (BA 9.13) je **`template_type`** Mittelwerte für Qualität, Narrativ und optionalen **Learning-Score** bilden und Templates vergleichen. Antwort auf: *Was performt am besten?*
+
+**Logik V1:** Gruppierung, kombinierter **`overall_template_score`** (ohne KPIs: Qualität/Narrativ 50/50; mit Learning-Anteilen: 35/35/30), **`strengths`** / **`weaknesses`** pro Eintrag. Ohne Records → **`comparison_status: insufficient_data`**.
+
+**Unterschied zu 9.13:** **`summarize_template_performance`** liefert flache Summaries; **9.26** liefert **Vergleichs**objekt inkl. **`best_template_type`** und **`insights`**.
+
+**Anschluss:** **BA 9.27** nutzt dieselben Records optional für Empfehlungen.
+
+### BA 9.27 — Auto Template Recommendation V1 (**done**)
+
+**Zweck:** **`recommend_best_template`** — Topic-Keywords (**`classify_topic`**), optional **historische** Record-Summaries, optional **Narrative-Fit** (Archetyp-ID in Template-JSON). Antwort: *Welches Template sollen wir wählen?*
+
+**API:** Feld **`template_recommendation_result`** auf **`POST /story-engine/prompt-plan`**.
+
+### BA 9.28 — Provider Strategy Optimizer V1 (**done**)
+
+**Zweck:** Heuristische **`cost_priority`** (low_cost / balanced / premium) und konsistente **Stub-Provider-Namen** aus **`cost_projection_result`**, Timeline-Länge, Packaging-/Bundle-Status. Antwort: *Welche Providerstrategie ist sinnvoll?* — **keine** echten Connector-Calls.
+
+### BA 9.29 — Production OS Dashboard Summary V1 (**done**)
+
+**Zweck:** Ein **JSON-Dashboard-Layer** für Founder/Operator (ohne Frontend): Gesundheits- und Readiness-Scores, geschätzte Kosten, empfohlenes Template, Provider-Strategie-Zeile, Top-Risiken/-Stärken, **`executive_summary`**.
+
+**Unterschied zu BA 9.25:** **9.25** = formale **Readiness-Ampel** mit Blockern; **9.29** = **aggregierte Cockpit-Sicht** inkl. Kosten- und Empfehlungsstrings für Reporting.
+
+### BA 9.30 — Story-to-Production Master Orchestrator V1 (**done**)
+
+**Zweck:** Eine **Master-Zusammenfassung** von Topic/Plan über Produktion/Provider bis **`launch_recommendation`** (proceed / revise / hold), abgeleitet von **`final_readiness_gate_result`**. Antwort: *Sollten wir dieses Projekt wirklich starten?* — Weiterhin **kein** Produktionsstart, kein Queue-Write.
+
+**Intelligence Layer:** Daten (Records, Kosten, Timeline) → Entscheidungshilfen (9.26–9.28) → Sichten (9.29–9.30); **keine LLM-/Firestore-/API-Pflicht**.
+
+**Anschluss:** **BA 10.0** nimmt das Export-Bundle und materialisiert die erste **Connector-fähige** Ausführungs-Schicht (Dry-Run); siehe unten.
+
+### BA 10.0 — Production Connector Layer V1 (**done**)
+
+**Zweck:** Brücke von **BA 9.20–9.21 Packaging** zur späteren **Live-Ausführung**: einheitlicher **Adapter-Contract** (`validate_payload` → `build_request` → `dry_run` → `normalize_response`), **zentrale Registry**, **Dry-Run-Suite** über alle fünf Bundle-Slots — **ohne** HTTP-Calls, **ohne** Secrets, **ohne** Firestore.
+
+**Unterschied zu BA 9.x:** **9.20–9.21** liefern strukturierte **Payloads** im Bundle; **10.0** definiert **wie** ein Connector diese Payloads technisch ansprechen würde und normiert Request/Response-Stubs. **9.22–9.25** bewerten Produktions-/Ops-Reife; **10.0** bewusst **Ausführungs-Vorbereitung**, keine zweite Readiness-Ampel.
+
+**Sicherheitsmodell:** Bundle **`blocked`** → Suite **`blocked`**; fehlendes Bundle → **`blocked`** ohne Slot-Ergebnisse; ungültige Payloads → **`invalid_payload`** je Connector; Default immer **Dry-Run**.
+
+**Connector-Architektur:** `app/production_connectors/base.py` (**`BaseProductionConnector`**), Stubs **`leonardo_connector`**, **`kling_connector`**, **`voice_connector`**, **`thumbnail_connector`**, **`render_connector`**, **`registry.py`**, **`dry_run_executor.py`**, **`schema.py`**.
+
+**Integration:** Pipeline nach **`package_validation_result`** → **`production_connector_suite_result`** (inkl. angereicherter **`suite_version`**), **`connector_auth_contracts_result`**, **`provider_execution_queue_result`**; nachgelagerte BA-9.23+ Schritte nutzen den Plan **mit** diesen Feldern.
+
+**Anschluss:** **BA 10.1–10.3** erweitern die Suite um Auth-Matrix und Queue; **BA 10.4–10.10** (siehe unten) liefern **Execution Safety & Run Core**; **Connector BA 11.0–11.5** (siehe unten) die erste **kontrollierte Live-Provider-Aktivierung** (optional HTTP). **Dashboard BA 11.x** (Founder UI) ist **eine andere** Nummernkreis-Linie.
+
+### BA 10.1 — Live Connector Auth Contract V1 (**done**)
+
+**Zweck:** Pro Connector **sichtbar machen, welche Auth später nötig wäre** (`LEONARDO_API_KEY`, `KLING_API_KEY`, `VOICE_API_KEY`, …) — nur **Namen**, keine Werte, **kein** `os.environ`-Read in V1. Thumbnail/Render: **`auth_not_required`** / **`none`**.
+
+**Sicherheitsmodell:** Kein Secret-Logging; Warnhinweis, dass V1 keine echte Konfigurationsprüfung durchführt.
+
+### BA 10.2 — Provider Execution Queue V1 (**done**)
+
+**Zweck:** **Deterministische Job-Reihenfolge** für spätere Worker: Thumbnail zuerst (`dependency_order` 0), **Image** und **Voice** in derselben Welle (10), **Video** (20), **Render** zuletzt (30). Bundle **`blocked`** → alle Jobs **`blocked`**; incomplete Slots → Job **`invalid`**, Queue **`partial`**.
+
+**Unterschied zu 10.0:** **10.0** validiert Payloads im Dry-Run; **10.2** modelliert **Ausführungsgraph** und repliziert Payloads in **`ExecutionQueueJob`**.
+
+### BA 10.3 — Asset Return Normalization V1 (**done**)
+
+**Zweck:** **Einheitliches Rückgabe-Schema** (`asset_url`, `local_path`, `metadata`, `normalization_status`) für künftige Provider-Responses — aktuell **rein heuristisch** aus Dict-Keys, ohne Netzwerk.
+
+**Unterschied zu 9.x:** Kein Eingriff in Skript-Verträge; nur Utility für spätere Live-Returns.
+
+### BA 10.4 — Live Execution Guard V1 (**done**)
+
+**Zweck:** Vor jedem hypothetischen **Live**-Schritt ein **Gate-Ergebnis** (`live_ready` / `dry_run_only` / `blocked` / `policy_review`): Human Approval, Final Readiness, Export-Contract, Package-Validation, Auth-Contracts, Execution Queue, Cost Projection, Kill-Switch-Default. **Regel:** Default **`dry_run_only`**; **`live_ready`** nur bei explizit grünen, konsistenten Bedingungen — praktisch bleibt V1 durch **Kill Switch an** typischerweise bei **`dry_run_only`** / **`live_execution_allowed: false`**.
+
+**Modul:** `app/production_connectors/live_execution_guard.py` — **`evaluate_live_execution_guard(plan)`**.
+
+### BA 10.5 — Controlled API Activation V1 (**done**)
+
+**Zweck:** **`activation_mode`** (`dry_run` / `restricted_live` / `disabled`) und **`provider_activation_matrix`** (Leonardo, Kling, Voice, Thumbnail, Render) — **theoretisch**, ohne Keys, ohne HTTP. **V1-Standard:** Modus **`dry_run`** (auch wenn der Guard **`blocked`** meldet: keine Live-Aktivierung, Blocker in **`warnings`**).
+
+**Modul:** `app/production_connectors/api_activation_control.py` — **`build_api_activation_control(plan)`**.
+
+### BA 10.6 — Execution Policy / Kill Switch V1 (**done**)
+
+**Zweck:** **`global_execution_mode`** (`dry_run_only` / `guarded_live` / `emergency_stop`), **`kill_switch_active`** (Default **an**), **`max_estimated_cost_eur`**, **`max_jobs_per_run`**, **`policy_flags`**, **`violations`**. Fehlende oder widersprüchliche Policy → **`dry_run_only`** / **`emergency_stop`** bei harten Verstößen.
+
+**Hinweis zur Nummerierung:** Diese **Connector-BA 10.6** = Policy-Layer; sie ist **nicht** dasselbe wie **„BA 10.6 Founder Dashboard“** weiter unten im Dokument (ältere Dashboard-Schiene).
+
+**Modul:** `app/production_connectors/execution_policy.py` — **`build_execution_policy(plan)`**.
+
+### BA 10.7 — Connector Result Store Schema V1 (**done**)
+
+**Zweck:** **`ProviderExecutionRecord`** und **`ProductionRunRecord`** als **reines Schema** (Request/Response-Snapshots, Modus, Status, Warnungen) — **kein** Firestore, **kein** DB-Write.
+
+**Modul:** `app/production_connectors/result_store_schema.py`.
+
+### BA 10.8 — Provider Job Runner Mock V1 (**done**)
+
+**Zweck:** Queue-Jobs **simuliert** abarbeiten (`queued` → `simulated_success` / `skipped` / `blocked`); optionale **`ProviderExecutionRecord`**-Einträge — **keine** Provider-HTTP-Calls.
+
+**Modul:** `app/production_connectors/job_runner_mock.py` — **`simulate_provider_job_run(plan)`**.
+
+### BA 10.9 — Asset Status Tracker V1 (**done**)
+
+**Zweck:** Aus Mock-Runner-Ergebnis **`total_expected_assets`**, **`generated_assets`**, **`pending_assets`**, **`failed_assets`**, **`asset_matrix`** (Typen image / video / audio / thumbnail / render), **`tracker_status`**.
+
+**Modul:** `app/production_connectors/asset_status_tracker.py` — **`build_asset_status_tracker(run_result)`**.
+
+### BA 10.10 — Production Run Summary V1 (**done**)
+
+**Zweck:** Kompakte **Run-Sicht**: **`run_readiness`**, **`execution_safety`**, **`projected_cost`**, **`projected_jobs`**, **`provider_summary`**, **`asset_summary`**, **`launch_recommendation`** (`hold` / `dry_run_execute` / `guarded_live_candidate`), **`founder_summary`**.
+
+**Modul:** `app/production_connectors/production_run_summary.py` — **`build_production_run_summary(plan)`**.
+
+**Integration (Pipeline):** Nach **`plan_readiness`** (Final Readiness Gate) → **`apply_run_core_suite`** (`run_core_bundle.py`): Guard → API-Aktivierung → Policy → Job-Runner-Mock → Asset-Tracker → Run-Summary; Felder additiv auf **`ProductionPromptPlan`**.
+
+**Unterschied zu BA 10.0–10.3:** **10.0–10.3** = die Maschine **versteht** Payloads, Auth-Stubs, Queue und Normalisierung; **10.4–10.10** = die Maschine **kontrolliert** Ausführungspfade, Kosten-/Job-Limits und aggregierte Launch-Empfehlung — weiterhin **ohne** echten Produktionsstart.
+
+### Connector BA 11.0–11.5 — Live Provider Activation Suite V1 (**done**)
+
+**Abgrenzung:** Diese **Connector-BA 11.0–11.5** sind **nicht** identisch mit **„Dashboard BA 11.x“** weiter unten (**Founder Dashboard**). Hier geht es um **serverseitige** Prompt-Plan-Erweiterungen unter **`app/production_connectors/`** und **`POST /story-engine/prompt-plan`**.
+
+**Leitsatz:** **BA 10** = die Maschine ist **sicher**; **BA 11** = unter Aufsicht **vorsichtig echte Provider** (optional HTTP), Standard weiterhin **Dry-Run**.
+
+### BA 11.0 — Live Provider Safety Contract V1 (**done**)
+
+**Zweck:** Vor Live-HTTP ein zusätzliches Gate **`live_provider_mode`** (`dry_run_only` / `guarded_live_ready` / `provider_restricted` / `blocked`): Execution Policy, Kill-Switch, API-Aktivierung, Auth-Contracts (Schema), Human Approval, Final Readiness, Provider-Mindestanforderungen, Flag **`allow_live_provider_execution`** auf **`PromptPlanRequest`** / **`ProductionPromptPlan`**.
+
+**Modul:** `live_provider_safety.py` — **`evaluate_live_provider_safety(plan)`**.
+
+### BA 11.1 — Secret / ENV Runtime Check V1 (**done**)
+
+**Zweck:** **Presence-only** für **`LEONARDO_API_KEY`**, **`VOICE_API_KEY`** (optional **`VOICE_API_ENDPOINT`**) via **`os.getenv`** — **keine** Werte in Logs.
+
+**Modul:** `runtime_secret_check.py` — **`build_runtime_secret_check(plan)`**.
+
+### BA 11.2 — Leonardo Live Connector V1 (**done**)
+
+**Zweck:** Optional **`urllib`**-HTTP zu **`LEONARDO_API_ENDPOINT`** nur wenn Safety-Bundle + Secret + Aktivierung; sonst **Dry-Run** über **`LeonardoProductionConnector`**; Response über **BA 10.3** **`normalize_provider_asset_result`**.
+
+**Modul:** `leonardo_live_connector.py` — **`execute_leonardo_live(request, runtime_guard)`**.
+
+### BA 11.3 — Voice Live Connector V1 (**done**)
+
+**Zweck:** Analog **Voice** mit **`VOICE_API_ENDPOINT`** / **`VOICE_API_KEY`**, Fallback Dry-Run.
+
+**Modul:** `voice_live_connector.py` — **`execute_voice_live(request, runtime_guard)`**.
+
+### BA 11.4 — Asset Persist / Download Contract V1 (**done**)
+
+**Zweck:** **`metadata_manifest`**, **`downloadable_assets`**, lokale Zielpfadvorschläge — **keine** Cloud-Pflicht, **kein** automatischer Write.
+
+**Modul:** `asset_persistence.py` — **`build_asset_persistence_contract(plan)`**.
+
+### BA 11.5 — Provider Error Recovery V1 (**done**)
+
+**Zweck:** Aggregierte **`recovery_status`** / **`error_classification`** (auth / timeout / payload / provider / unknown) aus Leonardo-/Voice-Live-Ergebnissen.
+
+**Modul:** `error_recovery.py` — **`build_provider_error_recovery(plan)`**.
+
+**Integration:** Nach **`apply_run_core_suite`** → **`apply_live_provider_suite`** (`live_provider_suite.py`): Safety → Runtime-Secrets → **`LiveRuntimeGuardBundle`** → Leonardo/Voice → Persistenz → Recovery.
+
+**Unterschied zu BA 10.x:** **10.x** simuliert und sperrt standardmäßig; **11.0–11.5** erlauben **kontrolliert** echte HTTP-Versuche **nur** bei explizitem Flag und grünem Safety-Pfad.
+
+**Anschluss:** **BA 12.0–12.6 Full Production Asset Assembly** — Zusammenführung, finale Timeline, Render-Instructions und Human Review über die Persistenz-/Manifest-Schicht.
+
+### Connector BA 12.0–12.6 — Full Production Asset Assembly Suite V1 (**done**)
+
+**Abgrenzung:** **BA 12.x** baut aus BA-10/11-Ergebnissen ein **renderfähiges Produktionspaket**. Es gibt weiterhin **kein Auto-Publishing**, **keinen YouTube-Upload**, **kein Frontend-Erfordernis** und **keinen kommerziellen Final-Render**. Die Schicht liegt in **`app/production_assembly/`** und erweitert **`POST /story-engine/prompt-plan`** additiv.
+
+**Leitsatz:** **BA 11** = die Maschine kann Assets erzeugen; **BA 12** = die Maschine kann daraus ein echtes Produktionspaket bauen.
+
+### BA 12.0 — Master Asset Manifest V1 (**done**)
+
+**Zweck:** Zentrale **Asset-Liste** aus Leonardo-/Voice-Ergebnissen, Persistenz-Kontrakt und Mock-Runner: **`ManifestAsset`** mit Provider, Typ, Source-Status, URLs/Pfaden, optional Szene/Kapitel und Metadaten. Status **`complete`**, **`partial`**, **`blocked`**.
+
+**Modul:** `master_asset_manifest.py` — **`build_master_asset_manifest(plan)`**.
+
+### BA 12.1 — Multi-Asset Assembly V1 (**done**)
+
+**Zweck:** Gruppiert Manifest-Assets in **image**, **video**, **voice/audio**, **thumbnail**, **render** und berechnet **`coverage_score`**. Beantwortet: *Welche Assetgruppen sind vorhanden?*
+
+**Modul:** `multi_asset_assembly.py` — **`build_multi_asset_assembly(plan)`**.
+
+### BA 12.2 — Timeline Finalizer V1 (**done**)
+
+**Zweck:** Führt **BA-9-Timeline** und Asset-Manifest zusammen: finale Szenen mit **`start_time`**, **`end_time`**, **`linked_assets`**, **`narration_asset`**, **`render_priority`**. Fehlende Links → **`partial`**.
+
+**Modul:** `timeline_finalizer.py` — **`build_final_timeline(plan)`**.
+
+### BA 12.3 — Voice / Scene Alignment V1 (**done**)
+
+**Zweck:** Prüft, ob jede finale Szene eine Voice-/Narration-Verknüpfung besitzt und ob Dauerfenster auffällig kurz/lang sind. Liefert fehlende Voice-Szenen, Pacing-Warnungen und Empfehlungen.
+
+**Modul:** `voice_scene_alignment.py` — **`build_voice_scene_alignment(plan)`**.
+
+### BA 12.4 — Render Instruction Package V1 (**done**)
+
+**Zweck:** Bereitet ein späteres Render-System vor: **`render_targets`**, **`scene_render_map`**, **`voice_track_map`**, **`thumbnail_target`** — ohne Renderstart.
+
+**Modul:** `render_instruction_package.py` — **`build_render_instruction_package(plan)`**.
+
+### BA 12.5 — Downloadable Production Bundle V1 (**done**)
+
+**Zweck:** Erzeugt eine exportierbare Paketstruktur mit deterministischem **`bundle_id`**, **`downloadable_manifest`**, Komponentenliste und lokalen Exportziel-Vorschlägen — ohne tatsächliches Zip/Cloud-Write.
+
+**Modul:** `downloadable_bundle.py` — **`build_downloadable_production_bundle(plan)`**.
+
+### BA 12.6 — Human Final Review Package V1 (**done**)
+
+**Zweck:** Finales Review-Paket vor Render-Freigabe: Checkliste, Risiken, Stärken, Summary und **`release_recommendation`** (`approve_for_render` / `revise_before_render` / `hold`). Prüft Asset-Vollständigkeit, Timeline, Voice-Alignment, Render-Package, Cost und Safety.
+
+**Modul:** `human_final_review.py` — **`build_human_final_review_package(plan)`**.
+
+**Integration:** Nach **`apply_live_provider_suite`** → **`apply_production_assembly_suite`** (`assembly_suite.py`): Manifest → Multi-Asset Assembly → Final Timeline → Voice Alignment → Render Instructions → Download Bundle → Human Final Review. Danach laufen die bestehenden Intelligence-/Dashboard-/Master-Orchestration-Schritte weiter.
+
+**Unterschied zu BA 11.x:** **11.x** erzeugt oder simuliert Provider-Assets unter Safety-Gates; **12.x** organisiert diese Assets zu einer Produktionsbasis mit Timeline, Render-Anweisungen und Review-Paket.
+
+**Anschluss:** **BA 13.0–13.6 Publishing Preparation** — Veröffentlichungs-Vorbereitung, Metadaten-QA und Upload-Readiness, weiterhin getrennt von echtem Auto-Publishing.
+
+### BA 13.0–13.6 — Publishing Preparation Suite V1 (**done**)
+
+**Abgrenzung:** **BA 13.x** bereitet aus dem renderfähigen BA-12-Produktionspaket ein **veröffentlichungsfähiges Medienpaket** vor. Es gibt weiterhin **keinen echten Upload**, **keine OAuth-/YouTube-Live-Integration**, **kein Auto-Publishing**, **kein Frontend-Erfordernis** und **keinen Scheduler-Deploy**. Die Schicht liegt in **`app/publishing/`** und erweitert **`POST /story-engine/prompt-plan`** additiv.
+
+**Leitsatz:** **BA 12** = die Maschine kann ein Produktionspaket bauen; **BA 13** = die Maschine kann daraus ein veröffentlichungsfähiges Medienpaket vorbereiten.
+
+### BA 13.0 — Metadata Master Package V1 (**done**)
+
+**Zweck:** Zentraler Metadata-SoT für Plattform-Publishing: **`platform_target`** (Default YouTube), **`canonical_title`**, **`canonical_description`**, **`canonical_tags`**, Kategorie, Audience Flags und Compliance-Warnings.
+
+**Modul:** `app/publishing/metadata_master_package.py` — **`build_metadata_master_package(plan)`**.
+
+### BA 13.1 — Title / Description / Tag Optimizer V1 (**done**)
+
+**Zweck:** Heuristische Publishing-Optimierung ohne LLM-Pflicht: Titelvarianten, Description-Blöcke, Tag-Cluster, **`seo_score`**, **`click_potential_score`**. Hybrid aus Hook, Narrativ und Such-/YouTube-Kontext.
+
+**Modul:** `app/publishing/metadata_optimizer.py` — **`build_metadata_optimizer(plan)`**.
+
+### BA 13.2 — Thumbnail Variant Pack V1 (**done**)
+
+**Zweck:** Mehrere Thumbnail-Angles (**curiosity**, **urgency**, **authority**, **emotional**) inklusive empfohlenem Primary Variant und Visual Hooks — **keine** Bildgenerierung.
+
+**Modul:** `app/publishing/thumbnail_variant_pack.py` — **`build_thumbnail_variant_pack(plan)`**.
+
+### BA 13.3 — Upload Checklist V1 (**done**)
+
+**Zweck:** Upload-Readiness ohne Upload prüfen: Metadata, Thumbnail, Download Bundle, Human Final Review, Policy/Compliance, Copyright-/Risk-Hinweise. Blocker bleiben strukturiert sichtbar.
+
+**Modul:** `app/publishing/upload_checklist.py` — **`build_upload_checklist(plan)`**.
+
+### BA 13.4 — Schedule Plan V1 (**done**)
+
+**Zweck:** Heuristischer Veröffentlichungsplan: **`suggested_publish_mode`** (`immediate` / `scheduled` / `hold`), empfohlene Publish-Windows, Zeitzonen- und Strategienotizen — **keine** Live Analytics und kein Scheduler.
+
+**Modul:** `app/publishing/schedule_plan.py` — **`build_schedule_plan(plan)`**.
+
+### BA 13.5 — Publishing Readiness Gate V1 (**done**)
+
+**Zweck:** Publishing-Gate mit **`publishing_status`** (`ready_to_publish` / `ready_for_review` / `not_ready`), Score, Blockern, Warnungen, Stärken und Release-Empfehlung (`publish` / `review` / `hold`). Human-Final-Review mit **`needs_revision`** bleibt bewusst **Review**, nicht Publish.
+
+**Modul:** `app/publishing/publishing_readiness_gate.py` — **`evaluate_publishing_readiness(plan)`**.
+
+### BA 13.6 — Founder Publishing Summary V1 (**done**)
+
+**Zweck:** Founder-/Operator-Zusammenfassung: Content Summary, Marketability, SEO, Publishing-Risiko, Release Strategy und Final Founder Note.
+
+**Modul:** `app/publishing/founder_publishing_summary.py` — **`build_founder_publishing_summary(plan)`**.
+
+**Integration:** Nach **`apply_production_assembly_suite`** → **`apply_publishing_preparation_suite`** (`publishing_suite.py`): Metadata Master → Optimizer → Thumbnail Variants → Upload Checklist → Schedule Plan → Publishing Readiness Gate → Founder Publishing Summary. Danach laufen die bestehenden Intelligence-/Dashboard-/Master-Orchestration-Schritte weiter.
+
+**Unterschied zu BA 12.x:** **12.x** macht das Paket renderfähig; **13.x** macht es publish-ready: Metadaten, SEO/CTR-Schicht, Upload-Checklist, Schedule-Plan, Publishing-Gate und Founder-Summary — weiterhin ohne externen Upload.
+
+**Anschluss:** **BA 14.0–14.7 Performance Feedback Loop** — nach Veröffentlichung oder manueller Ausspielung können Performance-Signale in Template-, Metadata- und Publishing-Optimierung zurückfließen.
+
+### BA 14.0–14.7 — Performance Feedback Loop Suite V1 (**done**)
+
+**Abgrenzung:** **BA 14.x** macht das veröffentlichungsfähige Medienpaket **learn-ready**. V1 nutzt manuelle KPI-Eingabe, CSV-/API-Stub-Contracts und normalisierte Performance-Signale. Es gibt **keine verpflichtende Live-YouTube-API**, **keine Auto-Monetization**, **kein Frontend-Erfordernis** und keine automatischen Business-Entscheidungen. Die Schicht liegt in **`app/performance_feedback/`** und erweitert **`POST /story-engine/prompt-plan`** additiv.
+
+**Leitsatz:** **BA 13** = die Maschine kann veröffentlichen; **BA 14** = die Maschine kann lernen, was nach Veröffentlichung wirklich funktioniert.
+
+### BA 14.0 — KPI Ingest Contract V1 (**done**)
+
+**Zweck:** Importvertrag für Kernmetriken **views**, **impressions**, **ctr**, **avg_view_duration**, **watch_time**, **subscribers_gained**, **revenue_optional**. Quellen: **manual**, **csv**, **youtube_api_stub**, **unknown** — ohne Live-Fetch-Pflicht.
+
+**Modul:** `app/performance_feedback/kpi_ingest_contract.py` — **`build_kpi_ingest_contract(plan, external_metrics=None)`**.
+
+### BA 14.1 — YouTube KPI Normalization V1 (**done**)
+
+**Zweck:** Einheitlicher KPI-SoT: normalisierte CTR, Retention, RPM und Growth; leitet CTR/Retention heuristisch ab, wenn Rohdaten ausreichen.
+
+**Modul:** `app/performance_feedback/kpi_normalization.py` — **`normalize_kpi_metrics(raw_metrics)`**.
+
+### BA 14.2 — Hook Performance Analyzer V1 (**done**)
+
+**Zweck:** Hook-Score und CTR zusammenführen: Effektivitäts-Score, Alignment, Stärken, Schwächen und Empfehlungen für Hook-/Packaging-Tests.
+
+**Modul:** `app/performance_feedback/hook_performance.py` — **`analyze_hook_performance(plan, normalized_metrics)`**.
+
+### BA 14.3 — Template Performance Evolution V1 (**done**)
+
+**Zweck:** Template-/Narrativ-Outcomes aus echten oder importierten KPIs bewerten: Real-World-Score, Skalierbarkeit, Best Use Cases, Avoid Cases und Optimierungsnotizen.
+
+**Modul:** `app/performance_feedback/template_evolution.py` — **`build_template_evolution(plan, metrics)`**.
+
+### BA 14.4 — Cost vs Revenue Analyzer V1 (**done**)
+
+**Zweck:** Produktionskosten aus BA 9.24/Run-Plan mit optionalem Revenue vergleichen: ROI, Break-even-Status, Monetization Notes. **Keine** Auto-Monetization.
+
+**Modul:** `app/performance_feedback/cost_revenue_analysis.py` — **`build_cost_revenue_analysis(plan, metrics)`**.
+
+### BA 14.5 — Auto Recommendation Upgrade V1 (**done**)
+
+**Zweck:** Performance-Signale in Empfehlungen übersetzen: Template, Hook-Strategie, Provider-Anpassung, Publishing-Anpassung und Confidence.
+
+**Modul:** `app/performance_feedback/auto_recommendation_upgrade.py` — **`build_auto_recommendation_upgrade(plan)`**.
+
+### BA 14.6 — Founder Growth Intelligence V1 (**done**)
+
+**Zweck:** Founder-Level Wachstumsanalyse: Growth Summary, Scaling Opportunities, Major Risks, Content Strategy Shift und konkrete Founder Actions.
+
+**Modul:** `app/performance_feedback/founder_growth_intelligence.py` — **`build_founder_growth_intelligence(plan)`**.
+
+### BA 14.7 — Master Feedback Orchestrator V1 (**done**)
+
+**Zweck:** Eine einzige Wachstumszusammenfassung: Story → Production → Publishing → Performance → Wachstum. Liefert Market-Fit-Zusammenfassungen, Scaling Score, Strategic Direction und Final Growth Note.
+
+**Modul:** `app/performance_feedback/master_feedback_orchestrator.py` — **`build_master_feedback_orchestrator(plan)`**.
+
+**Integration:** Nach **`apply_publishing_preparation_suite`** → **`apply_performance_feedback_suite`** (`feedback_suite.py`): KPI Ingest → Normalisierung → Hook Performance → Template Evolution → Cost/Revenue → Recommendation Upgrade → Founder Growth Intelligence → Master Feedback Orchestrator. Danach laufen die bestehenden Intelligence-/Dashboard-/Master-Orchestration-Schritte weiter.
+
+**Unterschied zu BA 13.x:** **13.x** bereitet Veröffentlichung vor; **14.x** wertet nach manueller oder späterer externer Ausspielung Performance-Signale aus und macht daraus Lern- und Wachstumsempfehlungen.
+
+**Anschluss:** **Manual URL Story Execution V1** (URL-Eingang → Extraktion → Rewrite → Asset-Prompts → Demo-Hinweis, Feld **`manual_url_story_execution_result`**) plus **BA 15.0–15.9 First Production Acceleration Suite** — lokale Wiederholbarkeit aus realen Assets: Demo-Video, Download-/Registry-/Stitching-Schicht, Founder-Snapshot und Prototyp-Presets, ohne Upload- oder Frontend-Pflicht.
+
+### Manual URL Story Execution Engine V1 — operative Bausteine **15.0–15.4** (**done**)
+
+**Nummerierungs-Hinweis:** Die folgenden Bausteine **15.0–15.4** benennen den **manuellen Kernpfad „URL rein → Geschichte/Szenen raus → Demo-Kommando“**. Sie sind **nicht** identisch mit den **BA 15.0–15.9 Production Acceleration**-Feldern (`demo_video_automation_result`, `asset_downloader_result`, …). Beide Spuren sind additiv auf **`POST /story-engine/prompt-plan`**.
+
+**Modul:** **`app/manual_url_story/`** — **`run_manual_url_rewrite_phase`** / **`finalize_manual_url_story_execution_result`**; Anbindung in **`build_production_prompt_plan`** (`pipeline.py`).
+
+**Regeln:** kein Topic Discovery, kein Watch-Ausbau, kein Firestore-/YouTube-/Full-SaaS-Zwang; gemeinsamer Textpfad mit **`build_script_response_from_extracted_text`** (wie **`POST /generate-script`**).
+
+**Leitsatz:** URL rein — bessere Geschichte raus — echte Szenen-Prompts raus — nächster Ausführungsschritt: lokales Demo-Video wie BA 15.0.
+
+#### 15.0 — Manual URL Intake V1 (**done**)
+
+**Zweck:** Optional **`manual_source_url`** auf **`PromptPlanRequest`**; sichere Anzeige (**Host/Pfad**, keine Query) in **`manual_url_story_execution_result.intake`**.
+
+#### 15.1 — Source Extraction Layer V1 (**done**)
+
+**Zweck:** **`extract_text_from_url`** (Trafilatura / YouTube-Pfad wie **`app/utils.py`**); Status und Warnungen in **`extraction`**.
+
+#### 15.2 — Narrative Rewrite Engine V1 (**done**)
+
+**Zweck:** Strukturiertes Skript aus extrahiertem Text; **`chapter_outline`**, **`hook`** und **`source_summary`-Naher Feed** für Hook/Szenen werden aus dem Rewrite gespeist, wenn Extraktion erfolgreich war.
+
+#### 15.3 — Asset Prompt Builder V1 (**done**)
+
+**Zweck:** Bestehende **`build_scene_prompts`** auf URL-Kapitel × gewähltem Template; **`asset_prompt_build.scene_prompt_count`**.
+
+#### 15.4 — Demo Video Execution V1 (**done**)
+
+**Zweck:** Reproduzierbares **`command_hint`** für **`scripts/build_first_demo_video.py`** sobald Narrativ und Szenen-Prompts bereitstehen (Bild kommt wie gehabt aus Manifest/Live-Smoke); konsistent mit **BA 15.0 Demo Video Automation**.
+
+### BA 15.5–15.7 — URL To Demo Acceleration Layer V1 (**done**, manueller URL-Track)
+
+**Unterschied zu 15.0–15.4:** Die Basis-Spur liefert Intake → Extraktion → Rewrite → Szenen-Prompts → Demo-Hinweis (**`manual_url_story_execution_result`**). **15.5–15.7** verdichten das zu **schneller operativer Demo-Orchestrierung**: ein CLI-Einstieg, standardisierte Rewrite-Presets und ein **heuristisches Quality Gate** — ohne Auto-Publishing, ohne Firestore, ohne Frontend.
+
+**Nummerierungs-Hinweis:** Dieselben Nummern **15.5–15.7** existieren **parallel** auch als **Production Acceleration** (Thumbnail Extract / Founder Dashboard / Batch Runner). Hier bezeichnet **15.5–15.7** ausschließlich den **URL→Demo-Beschleuniger** (`manual_url_demo_execution_result`, `manual_url_quality_gate_result`, **`scripts/run_url_to_demo.py`**).
+
+**Full Flow:** Manual URL → Extraktion → Rewrite → **URL Quality Gate** → **Rewrite Mode** (optional) → PromptPlan / Asset-Prompts → **Demo-Kommando-Hooks** (Leonardo-Smoke, Voice-Smoke, First-Demo-Video).
+
+#### 15.5 — One-Command URL to Demo Execution V1 (**done**)
+
+**Zweck:** **`python scripts/run_url_to_demo.py "<URL>"`** — JSON mit **`rewritten_story`**, **`prompt_plan_summary`**, **`leonardo_asset_hook`**, **`voice_asset_hook`**, **`first_demo_video_command`**, **`local_output_summary`**, **`local_run_id`**. Feld **`manual_url_demo_execution_result`** auf **`POST /story-engine/prompt-plan`**.
+
+#### 15.6 — Rewrite Preset Modes V1 (**done**)
+
+**Zweck:** **`manual_url_rewrite_mode`**: `documentary` \| `emotional` \| `mystery` \| `viral`. **`template_override`** bleibt strikt prioritär. Ohne Override: Preset mappt auf **Video-Rewrite-Template** und **Prompt-Planning-Template** (z. B. mystery → `mystery_history` / `mystery_explainer`); Hook-Engine nutzt den Modus für Tonalität (**`generate_hook_v1`**).
+
+#### 15.7 — URL Quality Gate V1 (**done**)
+
+**Zweck:** **`UrlQualityGateResult`** (**`manual_url_quality_gate_result`**): `strong` \| `moderate` \| `weak` \| `blocked`, Scores (Hook-Potenzial, Narrativdichte, emotionaler Gewicht), **`recommended_mode`**, Warnungen, Blocking-Gründe. **Schwache** URLs bleiben rewritebar; **blocked** nur bei klar unzureichender Extraktion / Länge — rein heuristisch, keine externe API.
+
+### BA 15.8–15.9 — Batch URL Engine + Watch Approval Layer V1 (**done**, manueller URL-Track)
+
+**Unterschied zu 15.5–15.7:** Dort ging es um **einen** URL→Demo-Pfad inkl. PromptPlan-Feldern. **15.8–15.9** sind eine **eigenständige operative Schicht** (keine Aufblähung von **`ProductionPromptPlan`**): **Multi-URL-Priorisierung** und **Watch-Radar mit Founder-Approval** — maximal Reuse der bestehenden Manual-URL-Engine bzw. des **URL Quality Gates**.
+
+**Batch statt Single:** Mehrere kuratierte URLs pro Lauf; Ausgabe je URL + **`ranked_urls`**, **`top_candidates`**, **`blocked_urls`**.
+
+**Radar statt Vollauto:** Lokale JSON-Config (**`items`** / **`sources`** mit **`urls`**); **kein** Watch-Autofetch, **kein** Provider-Auto-Run, **kein** Publish.
+
+**Founder-first Approval:** **`approval_queue`** (approve/review) vs **`rejected_items`** (skip u. a. Duplikat/Blocked); Relevanz aus Gate-Scores + Hook-Potenzial; **Duplicate Guard light** (normalisierte URL ohne Query).
+
+#### 15.8 — Batch URL Engine V1 (**done**)
+
+**Modul:** **`app/manual_url_story/batch_engine.py`** — **`run_batch_url_demo`** ruft nur **`run_manual_url_rewrite_phase`** pro URL (gleiche Rewrite-Logik wie Single-URL, keine zweite Implementierung).
+
+**CLI:** **`python scripts/run_batch_url_demo.py urls.txt`** oder **`--json-file`** (`["…"]` oder `{"urls":[…]}`).
+
+**Output-Modell:** **`BatchUrlRunResult`** (`items`, `ranked_urls`, `top_candidates`, `blocked_urls`) in **`app/manual_url_story/schema.py`**.
+
+#### 15.9 — Watch Approval Layer V1 (**done**)
+
+**Modul:** **`app/manual_url_story/watch_approval.py`** — **`run_watch_approval_scan`** nutzt **Extraktion + `build_url_quality_gate_result`** ohne vollen Rewrite (token-effizienter Radar-Modus).
+
+**CLI:** **`python scripts/run_watch_approval.py config.json`**.
+
+**Output-Modell:** **`WatchApprovalResult`** (`detected_items`, `approval_queue`, `rejected_items`) in **`app/manual_url_story/schema.py`**.
+
+**Anschluss:** **BA 16 Monetization & Scale OS** — strategische Nutzung priorisierter Inputs und wiederholbarer Demo-Pfade (**Cash-/ROI-Denken** auf bestehender Produktionsbasis), ohne operative Monetarisierungsautomatik.
+
+### BA 15.0–15.9 — First Production Acceleration Suite V1 (**done**)
+
+**Abgrenzung:** **BA 15.x** beschleunigt die lokale Demo-Produktion nach den ersten echten Leonardo-/ElevenLabs-Smoke-Erfolgen. Es gibt weiterhin **keinen YouTube-Upload**, **keinen Firestore-Zwang**, **keine Frontend-Pflicht**, **keine Breaking Changes** und keinen Ersatz für die Makro-**Phase 9** (Packaging) oder **Phase 10** (Publishing). Die Schicht liegt in **`app/production_acceleration/`** und erweitert **`POST /story-engine/prompt-plan`** additiv.
+
+**Leitsatz:** **BA 14** = die Maschine lernt aus Performance-Signalen; **BA 15** = die Maschine produziert lokal wiederholbar aus echten Assets.
+
+### BA 15.0 — Demo Video Automation V1 (**done**)
+
+**Zweck:** Strukturierter Build-Plan für **`scripts/build_first_demo_video.py`** und **`output/first_demo_video.mp4`** aus einem Bild plus **`output/voice_smoke_test_output.mp3`**. Feld **`demo_video_automation_result`**.
+
+### BA 15.1 — Asset Downloader V1 (**done**)
+
+**Zweck:** Manifest-Assets in lokale Download-Ziele und lokale Pfade aufteilen, ohne Pflicht-Download im Prompt-Plan. Feld **`asset_downloader_result`**.
+
+### BA 15.2 — Voice Registry V1 (**done**)
+
+**Zweck:** Sichere Voice-Registry mit Default-Test-Voice-ID, **`VOICE_ID`**-Präsenz und Verweis auf **`scripts/list_elevenlabs_voices.py`** — keine Secret-Werte. Feld **`voice_registry_result`**.
+
+### BA 15.3 — Scene Stitcher V1 (**done**)
+
+**Zweck:** Finale Timeline-Szenen in eine einfache lokale Stitching-Map überführen. Feld **`scene_stitcher_result`**.
+
+### BA 15.4 — Subtitle Draft V1 (**done**)
+
+**Zweck:** Erster SRT-kompatibler Entwurf aus Kapitel-/Szenenstruktur, ohne Burn-in und ohne Publishing. Feld **`subtitle_draft_result`**.
+
+### BA 15.5 — Thumbnail Extract V1 (**done**)
+
+**Zweck:** Lokalen ffmpeg-Extraktplan für **`output/first_demo_thumbnail.jpg`** aus **`output/first_demo_video.mp4`** bereitstellen. Feld **`thumbnail_extract_result`**.
+
+### BA 15.6 — Founder Local Dashboard V1 (**done**)
+
+**Zweck:** Lokaler Readiness-Score, bereite/blockierte Komponenten und nächste Aktionen für wiederholbare Demo-Produktion. Feld **`founder_local_dashboard_result`**.
+
+### BA 15.7 — Batch Topic Runner V1 (**done**)
+
+**Zweck:** Minimaler Batch-Plan für wiederholbare Demo-Themen ohne Job-Backend und ohne Scheduler. Feld **`batch_topic_runner_result`**.
+
+### BA 15.8 — Cost Snapshot V1 (**done**)
+
+**Zweck:** Lokaler Kosten-Snapshot aus vorhandener Cost Projection plus realem Demo-Pfad (Image, Voice, ffmpeg), ohne Live-Abrechnung. Feld **`cost_snapshot_result`**.
+
+### BA 15.9 — Viral Prototype Presets V1 (**done**)
+
+**Zweck:** Kleine Preset-Liste für wiederholbare Prototypen (Documentary Proof, Mystery Short, Authority Explainer) aus Template-/Hook-Kontext. Feld **`viral_prototype_presets_result`**.
+
+**Integration:** Nach **`apply_performance_feedback_suite`** → **`apply_production_acceleration_suite`** (`acceleration_suite.py`): Demo Video Automation → Asset Downloader → Voice Registry → Scene Stitcher → Subtitle Draft → Thumbnail Extract → Founder Local Dashboard → Batch Topic Runner → Cost Snapshot → Viral Prototype Presets. Danach laufen Template-Comparison, Recommendation, Provider Strategy, Production OS Dashboard und Master Orchestration weiter.
+
+**Unterschied zu BA 12–14:** **12.x** organisiert Assets, **13.x** macht publish-ready, **14.x** macht learn-ready; **15.x** macht den lokalen Beweis wiederholbar und operativ schneller — ohne neue Plattform- oder Datenbankpflicht.
+
+**Anschluss:** **Cash Optimization Layer (CO 16.0–16.4)** plus **BA 16.0–16.9 Monetization & Scale Operating System** — strategische Vorbereitung von Umsatz, Portfolio, Multi-Platform und Skalierung aus der wiederholbaren lokalen Produktion.
+
+### BA 16.0–16.4 — Cash Optimization Layer V1 (**done**, Cash-Track / Founder Profit Filter)
+
+**Nummerierungs-Hinweis:** Diese **16.0–16.4** bezeichnen **`app/cash_optimization/`** (Profit-Priorität, RPM-Schätzung, Produktionskosten-Snapshot, Viral-Hook-Heuristik, Winner-Cluster). Sie sind **nicht** identisch mit **`app/monetization_scale/` BA 16.0–16.4** (**`revenue_model_result`**, **`channel_portfolio_result`**, **`multi_platform_strategy_result`**, **`opportunity_scanning_result`**, **`founder_kpi_result`**).
+
+**Kern:** **Heuristik first** — keine Viral-Hellseherei, kein ML, keine externe API. Nutzt **URL Quality Gate**, Textblob (Titel/Rewrite/Modus) und bestehende Batch-/Watch-Pfade.
+
+**Integration:** **`cash_optimization_layer_result`** auf **`POST /story-engine/prompt-plan`** bei **`manual_source_url`**; **`BatchUrlItemResult.cash_layer`** + **`profit_ranked_urls`**; **`WatchItemVerdict.cash_layer`** und nach **ROI sortierte `approval_queue`**.
+
+#### CO 16.0 — Candidate ROI Score V1 (**done**)
+
+**Zweck:** **`CandidateRoiScoreResult`**: aggregierter **`candidate_roi_score`**, Teilscores (Hook-Power, Narrativ, Nische, Produktions-Effizienz), **`confidence_level`**, **`recommended_priority`**, **`warnings`**.
+
+#### CO 16.1 — Estimated RPM Category V1 (**done**)
+
+**Zweck:** Keyword-/Nischen-Raster **`high` / `medium` / `low`** mit **`estimated_rpm_confidence`** und **`niche_reasoning`**.
+
+#### CO 16.2 — Production Cost Snapshot V1 (**done**)
+
+**Zweck:** **`production_cost_tier`** (`lean` / `standard` / `heavy`), Szenen-Schätzung, Fact-Check-Risiko, visuelle Schwierigkeit.
+
+#### CO 16.3 — Viral Hook Score V1 (**done**)
+
+**Zweck:** Dimensionen shock/secrecy/controversy/transformation/money/danger/exclusivity → **`viral_hook_score`**, **`dominant_hook_type`**, **`hook_risk_warning`**.
+
+#### CO 16.4 — Winner Repeat Detector V1 (**done**)
+
+**Zweck:** Cluster wie hidden_truth, scandal, survival → **`winner_cluster`**, **`repeatability_score`**, **`format_scaling_potential`**.
+
+### BA 16.5–16.9 — Real KPI Feedback Loop V1 (**done**, Cash-Feedback-Track)
+
+**Nummerierungs-Hinweis:** Diese **16.5–16.9** liegen in **`app/cash_feedback/`** (echte Post-Publish-Metriken, Kalibrierung gegen **`CashOptimizationLayerResult`**). Sie sind **nicht** identisch mit **`monetization_scale` BA 16.5–16.9** (**`scale_blueprint_result`** … **`monetization_scale_summary_result`**).
+
+**Unterschied zu CO 16.0–16.4:** Dort **Heuristik vor Publish**; hier **Realität nach Publish** — manuelle JSON-KPI, Winner/Loser-Klassifikation, Prognose-vs.-Ist, Founder-Decision, Summary. **Kein** Firestore, **kein** Frontend, **kein** YouTube-API-Import in V1.
+
+#### CF 16.5 — Real KPI Capture V1 (**done**)
+
+**Modul:** **`app/cash_feedback/loop.py`** — **`capture_real_kpi`**, **`RealKpiCaptureResult`**. **CLI:** **`python scripts/record_video_kpi.py metrics.json`** optional **`--cash-layer-json`**.
+
+#### CF 16.6 — Winner / Loser Classification V1 (**done**)
+
+**Output:** **`PerformanceClassificationResult`** (`winner` \| `promising` \| `neutral` \| `loser`), Confidence, Stärken/Schwächen, **`repeat_recommendation`**.
+
+#### CF 16.7 — Prediction vs Reality Compare V1 (**done**)
+
+**Output:** **`PredictionRealityResult`** — **`prediction_accuracy`**, over-/underestimated Signals, **`calibration_notes`** (benötigt optional gespeichertes **`cash_optimization_layer_result`**).
+
+#### CF 16.8 — Repeat / Kill Recommendation V1 (**done**)
+
+**Output:** **`FounderPerformanceDecisionResult`** — `repeat_format` \| `modify_hook` \| `change_niche` \| `kill_topic` \| `test_again`.
+
+#### CF 16.9 — KPI Feedback Summary V1 (**done**)
+
+**Output:** **`KpiFeedbackSummaryResult`** + gebündelt **`RealKpiFeedbackLoopResult`**.
+
+**Öffentlicher Einstieg:** **`run_real_kpi_feedback_loop(metrics_dict, cash_layer=…)`** — **kein** Pflicht-Hook in **`build_production_prompt_plan`**.
+
+**Anschluss (später):** optionaler automatischer YouTube-KPI-Import — bewusst **nicht** in V1.
+
+### BA 16.0–16.9 — Monetization & Scale Operating System V1 (**done**)
+
+**Abgrenzung:** **BA 16.x** macht aus dem Produktionssystem eine strategische Medienunternehmens-Vorstufe. Es gibt weiterhin **keinen Upload**, **keine Pflicht-Analytics**, **keine Auto-Monetarisierung**, **keine Business-Automation**, **keinen Firestore-Zwang** und keine Änderung an **`GenerateScriptResponse`**. Die Schicht liegt in **`app/monetization_scale/`** und erweitert **`POST /story-engine/prompt-plan`** additiv.
+
+**Leitsatz:** **BA 15** = lokale Produktion wird wiederholbar; **BA 16** = aus wiederholbarer Produktion entsteht ein skalierbares Medienunternehmen-Modell.
+
+### BA 16.0 — Revenue Model V1 (**done**)
+
+**Zweck:** Primäre und sekundäre Revenue Streams, Monetization-Readiness und Warnungen aus Produktions- und KPI-Reife ableiten. Feld **`revenue_model_result`**.
+
+### BA 16.1 — Channel Portfolio V1 (**done**)
+
+**Zweck:** Channel-Lanes wie Flagship Documentary, Shorts Discovery und Evergreen Explainer strukturieren. Feld **`channel_portfolio_result`**.
+
+### BA 16.2 — Multi-Platform Strategy V1 (**done**)
+
+**Zweck:** Plattform-Ziele und Repurposing-Plan ohne Upload-Pflicht definieren. Feld **`multi_platform_strategy_result`**.
+
+### BA 16.3 — Opportunity Scanning V1 (**done**)
+
+**Zweck:** Hook-/Narrativ-/Template-Signale zu Opportunity Score und Experimenten verdichten. Feld **`opportunity_scanning_result`**.
+
+### BA 16.4 — Founder KPI V1 (**done**)
+
+**Zweck:** North-Star-Metrik, wöchentliche KPIs und Entscheidungsgrenzen für Founder-Betrieb festlegen. Feld **`founder_kpi_result`**.
+
+### BA 16.5 — Scale Blueprint V1 (**done**)
+
+**Zweck:** Stufen von Proof → Repeatability → Portfolio → Monetization als strategischen Skalierungsplan modellieren. Feld **`scale_blueprint_result`**.
+
+### BA 16.6 — Sponsorship Readiness V1 (**done**)
+
+**Zweck:** Sponsor-Fit-Kategorien und Media-Kit-Anforderungen ohne Outreach oder externe Kontakte vorbereiten. Feld **`sponsorship_readiness_result`**.
+
+### BA 16.7 — Content Investment Plan V1 (**done**)
+
+**Zweck:** Reinvestitionsprioritäten und Budget-Guardrails für wiederholbare Produktion definieren. Feld **`content_investment_plan_result`**.
+
+### BA 16.8 — Scale Risk Register V1 (**done**)
+
+**Zweck:** Skalierungsrisiken wie Qualitätsabfall, Plattformabhängigkeit, Rechte-/Quellenrisiken und Kostenwachstum sichtbar machen. Feld **`scale_risk_register_result`**.
+
+### BA 16.9 — Monetization & Scale Summary V1 (**done**)
+
+**Zweck:** Founder-Level Summary mit Company Stage, Readiness Score, strategischem Fokus und nächsten Aktionen. Feld **`monetization_scale_summary_result`**.
+
+**Integration:** Nach **`apply_production_acceleration_suite`** → **`apply_monetization_scale_suite`** (`scale_suite.py`): Revenue → Channel Portfolio → Multi-Platform → Opportunity Scanning → Founder KPI → Scale Blueprint → Sponsorship Readiness → Content Investment → Risk Register → Monetization Scale Summary. Danach laufen Template-Comparison, Recommendation, Provider Strategy, Production OS Dashboard und Master Orchestration weiter.
+
+**Unterschied zu BA 15.x:** **15.x** beweist wiederholbare Produktion; **16.x** bereitet Wachstums-, Umsatz- und Unternehmensentscheidungen vor — strategisch, additiv und ohne operative Monetarisierungsaktionen.
+
+---
+
+## Master Blueprint BA 15.0–17.9 — Production → Monetization → Platform Empire
+
+**Mission:** Aus der Pipeline wird kein bloßes Feature-Bündel, sondern ein schrittweise betreibbares Medienunternehmen-System. Die Reihenfolge bleibt bewusst: erst wiederholbar produzieren, dann Umsatzlogik validieren, dann Produktisierung/SaaS/Exit vorbereiten.
+
+**Leitsatz:** **BA 15** = Maschine produziert. **BA 16** = Maschine verdient. **BA 17** = Maschine wird Produkt / Plattform / Exit.
+
+### Strategische Architektur
+
+```mermaid
+flowchart LR
+  BA15[BA 15 Production Acceleration] --> BA16[BA 16 Monetization & Scale OS]
+  BA16 --> BA17[BA 17 Media OS / SaaS / Platform Empire]
+  BA15A[Real Assets + Local MP4] --> BA15
+  BA16A[Manual KPIs + Revenue Hypotheses] --> BA16
+  BA17A[Validated Repeatability + Revenue Signals] --> BA17
+```
+
+**Architekturprinzip:** Jede Stufe erzeugt erst ein **Operating Artifact** (Plan, Registry, Score, Blueprint, Checkliste), bevor daraus Runtime, UI, Persistenz oder externe Automatisierung wird. Dadurch bleiben Kosten, Komplexität und Haftungsrisiken kontrolliert.
+
+### Prioritätsreihenfolge
+
+1. **BA 15 stabilisieren:** echte lokale Produktion wiederholbar machen (`image + audio + mp4`, Batch-Plan, Kosten-Snapshot, Thumbnail/Subtitles nur als Hilfsschichten).
+2. **BA 16 validieren:** reale oder manuelle KPIs sammeln, Revenue-Hypothesen priorisieren, Channel-Portfolio eng halten, Multi-Platform erst als Export-/Repurposing-Plan.
+3. **BA 17 vorbereiten:** erst White-Label/API/Licensing-Contracts dokumentieren, bevor SaaS Dashboard, Marketplace oder Agency Mode gebaut werden.
+4. **Nur bei Beweisen skalieren:** keine Plattform-/SaaS-Entwicklung ohne wiederholbare Produktion und erste Revenue-/Demand-Signale.
+
+### Dependency Map
+
+| Ebene | Hängt ab von | Liefert | Gate zur nächsten Ebene |
+|-------|--------------|---------|--------------------------|
+| **BA 15 Production Acceleration** | Leonardo/Voice Smoke, Demo-Video, BA12 Asset Manifest | Wiederholbare lokale Demo-Produktion | 3 echte MP4s + Kosten-/Asset-Snapshot |
+| **BA 16 Monetization & Scale** | BA15 Wiederholbarkeit, BA14 KPI-Schicht, manuelle Performance-Daten | Revenue-Modell, Portfolio, Founder KPIs, Scale Blueprint | 1 validierter Revenue-Test oder klarer Demand-Indikator |
+| **BA 17 Media OS / SaaS / Platform Empire** | BA16 Revenue-/Demand-Signale, stabile Produktionskosten, klare Zielgruppe | Produktisierungs-, White-Label-, API-, Licensing- und Exit-Blueprint | zahlender Pilot / wiederholbarer Agency-Workflow / belegter White-Label-Bedarf |
+
+### Welche BA zuerst real bauen
+
+- **BA 15.0 Demo Video Automation:** weiter realisieren und härten, weil es den Beweis „echte Assets → echtes Video“ materialisiert.
+- **BA 15.1 Asset Downloader:** als lokale Asset-Verlässlichkeit priorisieren; keine Cloud-Pflicht.
+- **BA 15.7 Batch Topic Runner:** zuerst klein halten: 3 Themen, lokale Artefakte, keine Scheduler-Automation.
+- **BA 15.8 Cost-per-video Snapshot:** bei jedem Demo-Run mitschreiben, damit BA16 nicht auf Gefühl skaliert.
+- **BA 16.4 Founder KPI Command Center:** früh operationalisieren, aber zunächst manuell und read-only.
+- **BA 16.0 Revenue Forecast Engine:** als konservative Heuristik bauen, nicht als Finanzversprechen.
+
+### Welche BA nur vorbereiten
+
+- **BA 16.3 Content Opportunity Scanner:** vorerst regelbasiert und manuell speisbar; kein Trend-Scraping-Zwang.
+- **BA 16.4 Affiliate Insert Layer:** zuerst Placement-Contract und Compliance-Check, keine echten Affiliate-Links in Runtime.
+- **BA 16.5 Sponsor Placement Framework:** Media-Kit-Anforderungen und Sponsor-Kategorien, kein Outreach-Automat.
+- **BA 16.6 Multi-Platform Export:** Export-Presets vorbereiten, kein Auto-Upload.
+- **BA 16.7 Trend Response Mode:** nur Playbook und Priorisierungslogik, keine Live-Trend-Abhängigkeit.
+- **BA 17.0–17.9 komplett:** zunächst Blueprint/Contracts/Readiness, keine SaaS-/Marketplace-/Agency-Runtime ohne Demand-Beweis.
+
+### BA 17.0–17.9 — Media OS / SaaS / Platform Empire Blueprint (**planned**)
+
+**Abgrenzung:** BA 17 ist **nicht** die nächste Runtime-Suite. BA 17 beschreibt Produktisierung und Unternehmensoptionen nur als strategische Architektur, bis BA15/16 reale Wiederholbarkeit und Monetarisierungssignale liefern.
+
+#### BA 17.0 — White-Label Pipeline (**planned**)
+
+Mandantenfähige Branding-/Template-/Output-Contracts vorbereiten. **Nicht bauen:** Tenant-DB, Billing, Auth oder UI, bevor ein zahlender White-Label-Pilot existiert.
+
+#### BA 17.1 — SaaS Dashboard (**planned**)
+
+Produkt-Oberfläche als Zielbild: Run-Status, Artefakte, Kosten, KPI, Export. **Nicht bauen:** neues Frontend-Framework oder Multi-User-System ohne validated demand.
+
+#### BA 17.2 — API Productization (**planned**)
+
+Stabile externe API-Flächen definieren: `create_run`, `get_assets`, `get_video`, `get_report`. **Nicht bauen:** Public API Keys, Rate Limits oder Billing vor Pilot.
+
+#### BA 17.3 — Licensing Layer (**planned**)
+
+Lizenzpakete für Templates, Workflows, Presets und Medienpakete modellieren. **Nicht bauen:** Vertragsautomation oder Legal-Tech.
+
+#### BA 17.4 — Agency Mode (**planned**)
+
+Client-/Projekt-/Deliverable-Struktur für Done-for-you-Produktion vorbereiten. **Nicht bauen:** CRM, Invoicing oder Mitarbeiter-Workflow vor manuellem Agency-Pilot.
+
+#### BA 17.5 — Marketplace Layer (**planned**)
+
+Spätere Bausteine für Templates, Voice Packs, Thumbnail Packs, Channel Kits. **Nicht bauen:** Marketplace-Listing, Payments oder Seller-Onboarding.
+
+#### BA 17.6 — Investor Readiness (**planned**)
+
+Metriken und Narrative für Investoren: Unit Economics, Run-Rate, Retention, Produktionskosten, Moat. **Nicht bauen:** Pitch-Automation ohne echte KPIs.
+
+#### BA 17.7 — Founder Replacement System (**planned**)
+
+Runbooks, Decision Logs und Delegationspfade, damit operative Aufgaben nicht am Founder hängen. **Nicht bauen:** Autopilot ohne menschliche Review-Gates.
+
+#### BA 17.8 — Acquisition Funnel (**planned**)
+
+Lead- und Demo-Funnel für SaaS/Agency/White-Label-Angebote. **Nicht bauen:** Cold Outreach Automation oder Lead Scraping ohne Compliance.
+
+#### BA 17.9 — Exit Blueprint (**planned**)
+
+Optionen für Verkauf, Lizenzierung, Spin-out oder Mediennetzwerk. **Nicht bauen:** Bewertungs- oder Deal-Automation ohne Umsatzdaten.
+
+### Token-Effizienz-Hinweise
+
+- Künftige Prompts sollen **Difference-only** sein: `Use PPOS_FULL_SUITE. Delta: BA 15.7 harden batch runner with 3 local topics.`
+- Nutze **Makro + Delta + Out of scope** statt Wiederholung aller Regeln.
+- Verweise auf kanonische Artefakte: `PIPELINE_PLAN.md`, `docs/PROMPT_OPERATING_SYSTEM.md`, `docs/TOKEN_EFFICIENCY_GUIDE.md`.
+- Pro Folgeauftrag nur eine Ebene anfassen: **Production**, **Monetization** oder **Platform**, nicht alle drei gleichzeitig implementieren.
+- Für BA17 zuerst `MODULE_TEMPLATE.md` pro realem Modul nutzen, bevor Code entsteht.
+
+### Risikoanalyse
+
+| Risiko | Warum kritisch | Gegenmaßnahme |
+|--------|----------------|---------------|
+| **Overengineering** | SaaS-/Marketplace-/Agency-Features können Produktivität blockieren, bevor Produktion stabil ist. | BA17 nur Blueprint bis BA15 drei echte Videos und BA16 erste KPI-/Revenue-Signale liefert. |
+| **Monetarisierung zu früh** | Revenue-Forecasts ohne echte Retention/CTR/Views erzeugen Scheingenauigkeit. | BA16-Forecasts als Hypothesen markieren; Founder KPI Command Center zuerst manuell. |
+| **SaaS zu früh** | Auth, Billing, Tenanting und Support erzeugen Komplexität ohne validierten Markt. | Erst White-Label-/Agency-Pilot manuell verkaufen; dann API/SaaS schrittweise extrahieren. |
+| **Feature-Spam** | Zu viele Module verwässern den Kern: echte Assets → echtes Video → echte Nachfrage. | Founder Execution Order als Gate verwenden; pro Sprint maximal ein echter Produktionsengpass. |
+| **Rechts-/Brand-Risiko** | News, True Crime, Sponsorship und Licensing brauchen saubere Quellen-/Compliance-Logik. | Human Review, Quellenhinweise, Sponsorship Readiness und Risk Register vor Monetarisierung. |
+
+### Founder Execution Order
+
+#### NOW
+
+- Drei echte lokale Demo-Videos aus Leonardo-Bild + ElevenLabs-Voice + ffmpeg bauen.
+- Pro Video speichern: Kosten, Dauer, Thema, Hook, Thumbnail-Frame, Warnungen.
+- Manual KPI Sheet vorbereiten: Views, CTR, Retention, Watch Time, qualitative Kommentare.
+- BA15 stabilisieren: Asset Download, MP4 Build, Batch Topic Runner, Cost Snapshot.
+
+#### NEXT
+
+- BA16 realer machen: Founder KPI Command Center, Revenue Forecast Engine, Channel Portfolio und Multi-Platform Export mit echten Ergebnissen füttern.
+- Einen Revenue-Test wählen: Affiliate-Hinweis, Sponsor-Dummy-Package oder Newsletter-CTA, aber jeweils mit Review-Gate.
+- Opportunity Scanner nur mit manuell bestätigten Signalen nutzen.
+- Team-/VA-Handoff als Checkliste und Runbook vorbereiten, nicht als Automatisierung.
+
+#### LATER
+
+- BA17 nur dann in Code ziehen, wenn mindestens ein klarer Produktisierungspfad validiert ist: zahlender Agency-Kunde, White-Label-Pilot, API-Interessent oder wiederholbares Medienformat mit KPI-Traktion.
+- SaaS Dashboard erst nach manuellem Founder-/Operator-Workflow bauen.
+- Marketplace, Investor Readiness und Exit Blueprint bleiben Dokument-/Contract-Schichten, bis Umsatzdaten vorliegen.
 
 ### BA 10.x — Prompt-to-Production (Export-Paket)
 
-**Abgrenzung:** **BA 10.1–10.3** bezeichnen die **Prompt-to-Production-Core**-Linie (lokaler Export **`POST /story-engine/export-package`**, Quality-Layer, Provider-Stub-Formatter). Das ist **nicht** die Makro-Roadmap-**Phase 10** (Publishing) und **keine** Fortsetzung der abgeschlossenen **BA-9.x**-Story-Template-Nummerierung — nur eine eigene Bauphase für produktionsnahe Prompt-Pakete ohne externe Provider-Calls.
+**Abgrenzung:** **BA 10.0–10.3** = **Connector-/Queue-/Auth-Vorbereitung** in der **Prompt-Plan-Pipeline** (`POST /story-engine/prompt-plan`). Die **Export-Package-UI-Linie** (lokaler Export **`POST /story-engine/export-package`**, Quality, Stub-Formatter) bleibt ein **eigenes** Themenfeld unter **`app/story_engine/`** — **nicht** Makro-**Phase 10** (Publishing). **BA 10.6+** = Founder-Dashboard (HTML). **Numerische Überschneidung:** die ältere Sprechweise „10.1–10.3 Export-Core“ im Dokument bezieht sich **nicht** auf die **neuen** BA-10.1–10.3 Connector-Prep-Einträge in der Tabelle oben.
 
 **BA 10.6 — Founder Dashboard UI V1** (**implemented / ready for deploy**): **`GET /founder/dashboard`** — read-only internes Cockpit als **`HTMLResponse`** (eingebettetes CSS/JS); **`GET /founder/dashboard/config`** — JSON-Konfig/Meta zu den angebundenen Pfaden. V1: **keine Auth**, **keine Firestore-Writes**, **keine externen Provider-Calls**; ruft bestehende Story-Engine-Endpunkte **nur clientseitig** per **`fetch`** auf. Tests: **`tests/test_phase10_founder_dashboard.py`**.
 

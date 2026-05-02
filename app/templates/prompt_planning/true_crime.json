@@ -1,0 +1,62 @@
+{
+  "template_key": "true_crime",
+  "video_template": "true_crime",
+  "tone": "ernst, faktenorientiert, zurückhaltend bei Emotionen; keine Spekulation als Fakt",
+  "classifier_keywords": [
+    "mord",
+    "fall",
+    "polizei",
+    "ermittlung",
+    "opfer",
+    "täter",
+    "gericht",
+    "true crime",
+    "verbrechen",
+    "forensik",
+    "haft",
+    "urteil",
+    "lebenslang"
+  ],
+  "narrative_archetypes": [
+    {
+      "id": "cold_case_arc",
+      "match_keywords": ["kalt", "jahre", "ungeklärt", "archiv", "später", "wieder"],
+      "chapter_slots": [
+        {
+          "title": "Einordnung: Stand der Fakten",
+          "summary": "Zeitlinie und gesicherte Informationen zu «{topic}» — ohne Verdikt."
+        },
+        {
+          "title": "Ermittlungsspur und Hypothesen",
+          "summary": "Welche Spuren diskutiert wurden; klar als Hypothese kennzeichnen."
+        },
+        {
+          "title": "Offene Fragen und nächste Schritte",
+          "summary": "Was unklar bleibt; respektvoll gegenüber Betroffenen."
+        }
+      ]
+    },
+    {
+      "id": "timeline_arc",
+      "match_keywords": ["chronologie", "zeitlinie", "tag", "stunde", "ablauf"],
+      "chapter_slots": [
+        {
+          "title": "Der entscheidende Tag",
+          "summary": "Streng chronologisch zu «{topic}»."
+        },
+        {
+          "title": "Ermittlerische Wendepunkte",
+          "summary": "Momente, die den Fall prägten — nur nachvollziehbar Belegtes."
+        },
+        {
+          "title": "Rechtlicher und menschlicher Kontext",
+          "summary": "Prozessrahmen und Sensibilität (Opfer, Angehörige)."
+        }
+      ]
+    }
+  ],
+  "default_archetype_id": "cold_case_arc",
+  "scene_pattern": "Szene {idx} ({chapter_title}): Dokumentarischer DE-Ton; visuelle Ruhe; Themenanker «{topic}»; keine sensationalistischen Adjektive.",
+  "voice_style": "neutral dokumentarisch, kurze Sätze, klare Attribution von Behauptungen",
+  "thumbnail_angle": "Kontrastreich, ernst, optional Akten oder Stadt-Silhouette — keine expliziten Gewaltdetails"
+}

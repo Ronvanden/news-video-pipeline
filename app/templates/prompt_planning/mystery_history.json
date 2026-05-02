@@ -1,0 +1,67 @@
+{
+  "template_key": "mystery_history",
+  "video_template": "mystery_explainer",
+  "tone": "analytisch-spannend mit historischer Tiefe; Rätsel strukturiert auflösen",
+  "classifier_keywords": [
+    "geschichte",
+    "historisch",
+    "mysterium",
+    "geheimnis",
+    "dynastie",
+    "schicksal",
+    "verborgen",
+    "hybrid",
+    "legende",
+    "überlieferung",
+    "archäologie",
+    "kaiser",
+    "krieg",
+    "zeitalter"
+  ],
+  "narrative_archetypes": [
+    {
+      "id": "hidden_thread_arc",
+      "match_keywords": ["verborgen", "enthüll", "linie", "zusammenhang"],
+      "chapter_slots": [
+        {
+          "title": "Das Rätsel in einem Satz",
+          "summary": "Kernaussage zu «{topic}» als Mystery-Framing (ohne neu zu erfinden)."
+        },
+        {
+          "title": "Historischer Boden",
+          "summary": "Epoche, Akteure, Quellenlage — Transparenz über Lücken."
+        },
+        {
+          "title": "Erklärpfade und Gegenargumente",
+          "summary": "Mehrere Lesarten fair gegenüberstellen."
+        },
+        {
+          "title": "Was wir heute sicher sagen können",
+          "summary": "Fazit mit offenen Punkten."
+        }
+      ]
+    },
+    {
+      "id": "why_now_arc",
+      "match_keywords": ["warum", "wieso", "heute", "aktuell"],
+      "chapter_slots": [
+        {
+          "title": "Warum dieses Thema jetzt",
+          "summary": "Bezug zu «{topic}» und aktuellem Interesse."
+        },
+        {
+          "title": "Die übersehene Spur",
+          "summary": "Strukturierte Spannungskurve mit Quellenhinweisen."
+        },
+        {
+          "title": "Auflösung oder bleibendes Geheimnis",
+          "summary": "Ehrliche Einordnung des Unbekannten."
+        }
+      ]
+    }
+  ],
+  "default_archetype_id": "hidden_thread_arc",
+  "scene_pattern": "Szene {idx} ({chapter_title}): Mystery-History Hybrid; deutscher Voice-over; metaphorisch sparsam; Fokus «{topic}»; eine klare Frage pro Szene.",
+  "voice_style": "neugierig, präzise, respektvoll gegenüber Geschichte und Betroffenen",
+  "thumbnail_angle": "Dramatisches Seitenlicht, historisches Motiv oder Schattenriss — Lesbarkeit im Kleinformat"
+}
