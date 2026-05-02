@@ -541,7 +541,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     <input type="text" id="intake-topic" placeholder="z. B. Politik, True Crime, Wirtschaft"/>
     <p class="muted" id="intake-raw-headline-hint" style="font-size:0.76rem;margin:-0.25rem 0 0.6rem">Rohtext: Titel automatisch aus Rohtext erzeugt — oder aus dem Topic-Feld als Headline, falls gesetzt. Rohtext ≠ Titel.</p>
     <div class="actions" style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
-      <button type="button" class="primary" id="btn-intake-body" data-label="Auto Body aus Quelle">Auto Body aus Quelle</button>
+      <button type="button" class="primary" id="btn-intake-body" data-label="Quelle analysieren & Input füllen">Quelle analysieren & Input füllen</button>
       <button type="button" id="btn-fill-test-body" title="Schreibt feste Testwerte ins Input Panel (DOM/IDs prüfen, kein Intake)">Fill Test Body</button>
       <button type="button" id="btn-dom-test" title="Prüft Error-Bar / JS ohne Intake">DOM TEST</button>
     </div>
