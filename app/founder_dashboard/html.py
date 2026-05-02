@@ -1241,7 +1241,7 @@ try {
     if (!root) return;
     var all = collectAllWarningsStrings();
     if (!all.length) {
-      root.innerHTML = "<p class=\\"muted\\">Keine Warnungen aus Export / Preview / Readiness / Optimize / CTR.</p>";
+      root.innerHTML = '<p class="muted">Keine Warnungen aus Export / Preview / Readiness / Optimize / CTR.</p>';
       return;
     }
     var buckets = { prompt_quality: [], provider: [], input: [], source: [], other: [] };
@@ -1907,7 +1907,7 @@ try {
     host.innerHTML = "";
     promptCardCopyData = [];
     if (!lastOptimize || !lastOptimize.optimized_prompts) {
-      host.innerHTML = "<p class=\\"muted\\">Noch keine Optimize-Daten — zuerst „Optimize Provider Prompts“ ausführen.</p>";
+      host.innerHTML = '<p class="muted">Noch keine Optimize-Daten — zuerst „Optimize Provider Prompts“ ausführen.</p>';
       return;
     }
     var op = lastOptimize.optimized_prompts;
@@ -1927,12 +1927,12 @@ try {
       card.className = "prompt-card";
       card.innerHTML =
         "<h3>Szene " + (i + 1) + "</h3>" +
-        "<div class=\\"pc-block\\"><label>Leonardo</label><pre class=\\"pc-pre\\">" + escapeHtml(leoT || "—") + "</pre>" +
-        "<button type=\\"button\\" class=\\"sm pc-copy-btn\\" data-pc-idx=\\"" + i + "\\" data-pc-kind=\\"leo\\">Copy</button></div>" +
-        "<div class=\\"pc-block\\"><label>Kling Motion / Kamera / Keyframe</label><pre class=\\"pc-pre\\">" + escapeHtml(kT || "—") + "</pre>" +
-        "<button type=\\"button\\" class=\\"sm pc-copy-btn\\" data-pc-idx=\\"" + i + "\\" data-pc-kind=\\"kling\\">Copy</button></div>" +
-        "<div class=\\"pc-block\\"><label>OpenAI</label><pre class=\\"pc-pre\\">" + escapeHtml(oaiT || "—") + "</pre>" +
-        "<button type=\\"button\\" class=\\"sm pc-copy-btn\\" data-pc-idx=\\"" + i + "\\" data-pc-kind=\\"openai\\">Copy</button></div>";
+        '<div class="pc-block"><label>Leonardo</label><pre class="pc-pre">' + escapeHtml(leoT || "—") + "</pre>" +
+        '<button type="button" class="sm pc-copy-btn" data-pc-idx="' + i + '" data-pc-kind="leo">Copy</button></div>' +
+        '<div class="pc-block"><label>Kling Motion / Kamera / Keyframe</label><pre class="pc-pre">' + escapeHtml(kT || "—") + "</pre>" +
+        '<button type="button" class="sm pc-copy-btn" data-pc-idx="' + i + '" data-pc-kind="kling">Copy</button></div>' +
+        '<div class="pc-block"><label>OpenAI</label><pre class="pc-pre">' + escapeHtml(oaiT || "—") + "</pre>" +
+        '<button type="button" class="sm pc-copy-btn" data-pc-idx="' + i + '" data-pc-kind="openai">Copy</button></div>';
       host.appendChild(card);
     }
   }
