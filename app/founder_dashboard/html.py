@@ -886,8 +886,8 @@ try {
     var prefix = contextLabel ? String(contextLabel) + "\\n" : "";
     dbg.textContent = prefix +
       "Debug fd-* nach applyIntake:\\n" +
-      "  title=\"" + titleV.slice(0, 120) + (titleV.length > 120 ? "…" : "") + "\"\\n" +
-      "  topic=\"" + topicV.slice(0, 80) + (topicV.length > 80 ? "…" : "") + "\"\\n" +
+      '  title="' + titleV.slice(0, 120) + (titleV.length > 120 ? "…" : "") + '"\\n' +
+      '  topic="' + topicV.slice(0, 80) + (topicV.length > 80 ? "…" : "") + '"\\n' +
       "  summary_len=" + sumV.length + "\\n" +
       "  chapters_json_chars=" + chRaw.length + " | chapters_count=" + chCount;
   }
