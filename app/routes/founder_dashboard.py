@@ -33,6 +33,7 @@ def production_proof_summary_payload() -> dict:
                 "BA 14 performance feedback",
                 "BA 15 production acceleration",
                 "BA 16 monetization scale",
+                "BA 17.0 viral upgrade (advisory, pre-assembly)",
             ],
         },
         "script_only_fast_path": {

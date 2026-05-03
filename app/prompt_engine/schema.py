@@ -68,6 +68,7 @@ from app.production_acceleration.schema import (
     VoiceRegistryResult,
 )
 from app.cash_optimization.schema import CashOptimizationLayerResult
+from app.viral_upgrade.schema import ViralUpgradeLayerResult
 from app.monetization_scale.schema import (
     ChannelPortfolioResult,
     ContentInvestmentPlanResult,
@@ -952,5 +953,12 @@ class ProductionPromptPlan(BaseModel):
         description=(
             "Cash Optimization CO 16.0–16.4 — Founder Profit Filter bei manual_source_url; "
             "nicht identisch mit monetization_scale BA 16.0–16.9."
+        ),
+    )
+    viral_upgrade_layer_result: Optional[ViralUpgradeLayerResult] = Field(
+        default=None,
+        description=(
+            "BA 17.0 — Viral Upgrade Layer (Founder-only, advisory): Titel-/Thumbnail-Ideen, "
+            "Hook-Intensität, emotionaler Treiber — keine Skript-Überschreibung, keine APIs."
         ),
     )

@@ -276,9 +276,15 @@ def build_production_prompt_plan(req: PromptPlanRequest) -> ProductionPromptPlan
 
     plan_after_live = apply_live_provider_suite(plan_run_core)
 
+    from app.viral_upgrade.layer import build_viral_upgrade_layer
+
+    plan_viral = plan_after_live.model_copy(
+        update={"viral_upgrade_layer_result": build_viral_upgrade_layer(plan_after_live)}
+    )
+
     from app.production_assembly.assembly_suite import apply_production_assembly_suite
 
-    plan_assembled = apply_production_assembly_suite(plan_after_live)
+    plan_assembled = apply_production_assembly_suite(plan_viral)
 
     from app.publishing.publishing_suite import apply_publishing_preparation_suite
 

@@ -436,7 +436,8 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 10.3** | **done** | **Asset Return Normalization V1:** **`NormalizedAssetResult`**; **`app/production_connectors/asset_normalization.py`** (`normalize_provider_asset_result`); Utility + Tests **`tests/test_ba103_asset_normalization.py`**. Keine Downloads/Uploads. |
 | **BA 15.0–15.9** | **done** | **First Production Acceleration Suite V1:** **`app/production_acceleration/`** macht aus Live-/Smoke-Assets eine reproduzierbare lokale Demo-Produktion: Demo-Video-Automation, Asset-Downloader-Plan, Voice Registry, Scene Stitcher, Subtitle Draft, Thumbnail Extract, Founder Local Dashboard, Batch Topic Runner, Cost Snapshot, Viral Prototype Presets; Felder **`*_result`** additiv auf **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba150_production_acceleration.py`**. Kein Firestore-/YouTube-/Frontend-Zwang. |
 | **BA 16.0–16.9** | **done** | **Monetization & Scale Operating System V1:** **`app/monetization_scale/`** bereitet Revenue, Channel Portfolio, Multi-Platform, Opportunity Scanning, Founder KPI, Scale Blueprint, Sponsorship Readiness, Content Investment, Scale Risks und Founder Summary strategisch vor; Felder **`*_result`** additiv auf **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba160_monetization_scale.py`**. Kein Upload, keine Pflicht-Analytics, keine Business-Automation. |
-| **BA 17.0–17.9** | **planned** | **Media OS / SaaS / Platform Empire Blueprint:** strategische Produktisierungsschicht für White-Label, SaaS Dashboard, API Productization, Licensing, Agency Mode, Marketplace, Investor Readiness, Founder Replacement, Acquisition Funnel und Exit Blueprint. **Blueprint first:** noch keine Runtime-Implementierung, keine SaaS-Billing-/Mandantenpflicht, keine Plattform-Automation. |
+| **BA 17.0** | **done** | **Viral Upgrade Layer V1 (Founder-only, Lean):** **`app/viral_upgrade/`** — advisory Verpackung (3 Titelvarianten, Hook-Intensität 0–100, 3 Thumbnail-Winkel, emotionaler Treiber, Audience-Mode, Caution-Flags) aus Rewrite-Preview + Prompt-Plan; Feld **`viral_upgrade_layer_result`** auf **`POST /story-engine/prompt-plan`** **vor** Production Assembly; **keine** Skript-Überschreibung, **keine** externen APIs, **kein** Auto-Publish. |
+| **BA 17.1–17.9** | **planned** | **Media OS / SaaS / Platform Empire Blueprint:** strategische Produktisierungsschicht für White-Label, SaaS Dashboard, API Productization, Licensing, Agency Mode, Marketplace, Investor Readiness, Founder Replacement, Acquisition Funnel und Exit Blueprint. **Blueprint first:** noch keine Runtime-Implementierung, keine SaaS-Billing-/Mandantenpflicht, keine Plattform-Automation. |
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 
@@ -966,7 +967,7 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **Zweck:** Festhalten des **einen** Minimalpfads „**produce one real asset end-to-end**“ — ohne SaaS-Overbuild, ohne Multi-User-Architektur.
 
-**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**.
+**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **BA 17.0 Viral Upgrade (advisory)** → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**.
 
 **Lücke / bewusste Trennung:** **`POST /generate-script`** und **`POST /youtube/generate-script`** liefern nur den festen **`GenerateScriptResponse`** und **keinen** vollen Prompt-Plan, **kein** Publishing-Pack und **keine** Acceleration-Felder. Proof-of-Production für „alles aus einem Guss“ = Prompt-Plan-Spine; Skript-Endpoints bleiben Schnellpfad / Vertrags-API.
 
@@ -1218,24 +1219,36 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **Unterschied zu BA 15.x:** **15.x** beweist wiederholbare Produktion; **16.x** bereitet Wachstums-, Umsatz- und Unternehmensentscheidungen vor — strategisch, additiv und ohne operative Monetarisierungsaktionen.
 
+### BA 17.0 — Viral Upgrade Layer V1 (**done**, Founder-only, Lean)
+
+**Zweck:** Vor Production Assets eine **leichte** Schicht CTR/Retention-Verpackung (nur **Vorschläge**), ohne Faktenstruktur des Rewrites zu überschreiben.
+
+**Modul:** **`app/viral_upgrade/`** — **`build_viral_upgrade_layer(plan)`**; Ergebnis **`ViralUpgradeLayerResult`** auf **`ProductionPromptPlan.viral_upgrade_layer_result`**.
+
+**Integration:** In **`build_production_prompt_plan`** nach Live-Provider-Suite und **vor** **`apply_production_assembly_suite`** — additiv, deterministisch, **keine** HTTP-APIs.
+
+**Nicht-Ziele:** kein SaaS, kein Multi-User, kein Auto-Publish, keine Skript-Overwrite, keine LLM-Pflicht.
+
 ---
 
 ## Master Blueprint BA 15.0–17.9 — Production → Monetization → Platform Empire
 
 **Mission:** Aus der Pipeline wird kein bloßes Feature-Bündel, sondern ein schrittweise betreibbares Medienunternehmen-System. Die Reihenfolge bleibt bewusst: erst wiederholbar produzieren, dann Umsatzlogik validieren, dann Produktisierung/SaaS/Exit vorbereiten.
 
-**Leitsatz:** **BA 15** = Maschine produziert. **BA 16** = Maschine verdient. **BA 17** = Maschine wird Produkt / Plattform / Exit.
+**Leitsatz:** **BA 15** = Maschine produziert. **BA 16** = Maschine verdient. **BA 17.0** = Maschine packt stärker (advisory). **BA 17.1+** = Maschine wird Produkt / Plattform / Exit (Blueprint).
 
 ### Strategische Architektur
 
 ```mermaid
 flowchart LR
   BA15[BA 15 Production Acceleration] --> BA16[BA 16 Monetization & Scale OS]
-  BA16 --> BA17[BA 17 Media OS / SaaS / Platform Empire]
+  BA16 --> BA171[BA 17.1+ Media OS / Empire Blueprint]
   BA15A[Real Assets + Local MP4] --> BA15
   BA16A[Manual KPIs + Revenue Hypotheses] --> BA16
-  BA17A[Validated Repeatability + Revenue Signals] --> BA17
+  BA17A[Validated Repeatability + Revenue Signals] --> BA171
 ```
+
+**Hinweis:** **BA 17.0 Viral Upgrade** läuft **auf dem Prompt-Plan** (Packaging-Heuristik) und ist **kein** SaaS-/Empire-Runtime-Schritt; siehe eigenes Unterkapitel oben.
 
 **Architekturprinzip:** Jede Stufe erzeugt erst ein **Operating Artifact** (Plan, Registry, Score, Blueprint, Checkliste), bevor daraus Runtime, UI, Persistenz oder externe Automatisierung wird. Dadurch bleiben Kosten, Komplexität und Haftungsrisiken kontrolliert.
 
@@ -1243,7 +1256,7 @@ flowchart LR
 
 1. **BA 15 stabilisieren:** echte lokale Produktion wiederholbar machen (`image + audio + mp4`, Batch-Plan, Kosten-Snapshot, Thumbnail/Subtitles nur als Hilfsschichten).
 2. **BA 16 validieren:** reale oder manuelle KPIs sammeln, Revenue-Hypothesen priorisieren, Channel-Portfolio eng halten, Multi-Platform erst als Export-/Repurposing-Plan.
-3. **BA 17 vorbereiten:** erst White-Label/API/Licensing-Contracts dokumentieren, bevor SaaS Dashboard, Marketplace oder Agency Mode gebaut werden.
+3. **BA 17.1+ vorbereiten:** erst White-Label/API/Licensing-Contracts dokumentieren, bevor SaaS Dashboard, Marketplace oder Agency Mode gebaut werden.
 4. **Nur bei Beweisen skalieren:** keine Plattform-/SaaS-Entwicklung ohne wiederholbare Produktion und erste Revenue-/Demand-Signale.
 
 ### Dependency Map
@@ -1252,7 +1265,7 @@ flowchart LR
 |-------|--------------|---------|--------------------------|
 | **BA 15 Production Acceleration** | Leonardo/Voice Smoke, Demo-Video, BA12 Asset Manifest | Wiederholbare lokale Demo-Produktion | 3 echte MP4s + Kosten-/Asset-Snapshot |
 | **BA 16 Monetization & Scale** | BA15 Wiederholbarkeit, BA14 KPI-Schicht, manuelle Performance-Daten | Revenue-Modell, Portfolio, Founder KPIs, Scale Blueprint | 1 validierter Revenue-Test oder klarer Demand-Indikator |
-| **BA 17 Media OS / SaaS / Platform Empire** | BA16 Revenue-/Demand-Signale, stabile Produktionskosten, klare Zielgruppe | Produktisierungs-, White-Label-, API-, Licensing- und Exit-Blueprint | zahlender Pilot / wiederholbarer Agency-Workflow / belegter White-Label-Bedarf |
+| **BA 17.1+ Media OS / SaaS / Platform Empire** | BA16 Revenue-/Demand-Signale, stabile Produktionskosten, klare Zielgruppe | Produktisierungs-, White-Label-, API-, Licensing- und Exit-Blueprint | zahlender Pilot / wiederholbarer Agency-Workflow / belegter White-Label-Bedarf |
 
 ### Welche BA zuerst real bauen
 
