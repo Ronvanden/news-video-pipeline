@@ -980,6 +980,16 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **Ops:** Read-only **`GET /founder/production-proof/summary`** — statische Verweise auf Endpunkte/Skripte/Doku (keine Secrets).
 
+#### Founder Demo V1 (Local Proof Complete) — Meilenstein
+
+**Status:** Lokaler **Founder Production Proof** durchgespielt und als Demo-V1-Meilenstein festgehalten — **operativ**, nicht als Produkt-Ausbau.
+
+**Was konkret bestätigt wurde:** **`manual_source_url`** auf **`POST /story-engine/prompt-plan`**; vollständiger **Prompt-Plan** inkl. nachgelagerter Suites; bei schwachem Template-Match **Zero-Keyword-Fallback** → **`documentary`** / **`generic`** (siehe `documentary.json` + `topic_classifier`); **Voice-Smoke** als **lokale Datei**; **ffmpeg**-basiertes **lokales Render**; **ein Standbild + eine Audio-Datei → `first_demo_video.mp4`** (z. B. **`python scripts/build_first_demo_video.py`** / `app/production_assembly/first_demo_video.py`).
+
+**Abgrenzung (bewusst):** Das ist **kein** SaaS, **kein** Auto-Publish, **kein** Multi-User-System und **keine** Mandanten-Architektur — **Founder-first**, **lokal**, **Proof** vor weiterer Automatisierung.
+
+**Nicht-Ziel:** Keine Architektur-Rewrites und kein „Empire“-Backend; nächste Schritte bleiben **manuell** (Plattform-Upload, KPI, Freigaben) oder spätere **optionale** Anbindungen.
+
 #### 15.0 — Manual URL Intake V1 (**done**)
 
 **Zweck:** Optional **`manual_source_url`** auf **`PromptPlanRequest`**; sichere Anzeige (**Host/Pfad**, keine Query) in **`manual_url_story_execution_result.intake`**.
