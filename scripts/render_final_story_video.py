@@ -37,6 +37,39 @@ def _escape_concat_path(p: Path) -> str:
     return s.replace("'", "'\\''")
 
 
+def _timeline_video_duration_seconds(scenes: List[Dict[str, Any]]) -> float:
+    """Summe der Szenenlängen (entspricht concat-Demuxer-Gesamtlänge ohne Nachlauf-Frame)."""
+    return sum(float(sc.get("duration_seconds") or 6) for sc in scenes)
+
+
+def _probe_audio_duration(audio: Path, ffprobe: str) -> Tuple[Optional[float], List[str]]:
+    warns: List[str] = []
+    try:
+        cp = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(audio),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        raw = (cp.stdout or "").strip()
+        if not raw or raw == "N/A":
+            warns.append("audio_duration_probe_empty")
+            return None, warns
+        return float(raw), warns
+    except Exception:
+        warns.append("audio_duration_probe_failed")
+        return None, warns
+
+
 def _write_concat_list(scenes: List[Dict[str, Any]], assets_dir: Path, tmp_list: Path) -> None:
     lines: List[str] = []
     for i, sc in enumerate(scenes):
@@ -156,6 +189,8 @@ def render_final_story_video(
     if not audio_file:
         warnings.append("audio_missing_silent_render")
 
+    timeline_seconds = _timeline_video_duration_seconds(scenes)
+
     output_video.parent.mkdir(parents=True, exist_ok=True)
 
     fd, tmp_name = tempfile.mkstemp(suffix="_concat.txt", text=True)
@@ -179,21 +214,31 @@ def render_final_story_video(
         ]
         if audio_file:
             cmd.extend(["-i", str(audio_file)])
-        cmd.extend(["-map", "0:v"])
-        if audio_file:
+            td = max(timeline_seconds, 0.04)
+            td_s = f"{td:.6f}"
+            audio_d: Optional[float] = None
+            if ffprobe:
+                audio_d, aw = _probe_audio_duration(audio_file, ffprobe)
+                warnings.extend(aw)
+            if audio_d is not None and audio_d + 0.1 < td:
+                warnings.append("audio_shorter_than_timeline_padded_or_continued")
+            # Video folgt der Timeline: Audio auf exakt td trimmen/padden — kein -shortest.
             cmd.extend(
                 [
+                    "-filter_complex",
+                    f"[1:a]atrim=duration={td_s},apad=whole_dur={td_s}[aout]",
                     "-map",
-                    "1:a:0",
+                    "0:v",
+                    "-map",
+                    "[aout]",
                     "-c:a",
                     "aac",
                     "-b:a",
                     "192k",
-                    "-shortest",
                 ]
             )
         else:
-            cmd.append("-an")
+            cmd.extend(["-map", "0:v", "-an"])
         cmd.extend(
             [
                 "-c:v",

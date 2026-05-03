@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+from subprocess import CompletedProcess
 
 import pytest
 
@@ -162,3 +163,101 @@ def test_render_assets_directory_missing(final_render_mod, tmp_path):
     )
     assert meta["video_created"] is False
     assert "assets_directory_missing" in meta["blocking_reasons"]
+
+
+def _setup_two_scene_assets(assets_dir: Path) -> None:
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("scene_001.png", "scene_002.png"):
+        (assets_dir / name).write_bytes(b"\x89PNG\r\n\x1a\n")
+
+
+def test_render_short_audio_uses_timeline_not_shortest(final_render_mod, tmp_path, monkeypatch):
+    """Kurzes Audio darf die Videolänge nicht auf -shortest kürzen; apad auf Timeline."""
+    assets = tmp_path / "gen"
+    _setup_two_scene_assets(assets)
+    (tmp_path / "short.mp3").write_bytes(b"fake")  # wird von ffmpeg nicht gelesen (mock)
+
+    tl_path = tmp_path / "tl.json"
+    tl_path.write_text(
+        json.dumps(
+            {
+                "assets_directory": str(assets),
+                "audio_path": str(tmp_path / "short.mp3"),
+                "scenes": [
+                    {"image_path": "scene_001.png", "duration_seconds": 6},
+                    {"image_path": "scene_002.png", "duration_seconds": 6},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "out.mp4"
+    captured: list[list[str]] = []
+
+    def fake_run(cmd, check=True, capture_output=True, text=True):
+        captured.append(list(cmd))
+        out.touch()
+        return CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(final_render_mod.subprocess, "run", fake_run)
+
+    def fake_probe_audio(_path, _ffprobe):
+        return 2.0, []
+
+    monkeypatch.setattr(final_render_mod, "_probe_audio_duration", fake_probe_audio)
+    monkeypatch.setattr(final_render_mod, "_probe_video_duration", lambda _v, _f: (12.0, []))
+
+    meta = final_render_mod.render_final_story_video(
+        tl_path,
+        output_video=out,
+        ffmpeg_bin="ffmpeg_mock",
+        ffprobe_bin="ffprobe_mock",
+    )
+    assert meta["video_created"] is True
+    assert meta["duration_seconds"] == 12.0
+    assert "audio_shorter_than_timeline_padded_or_continued" in meta["warnings"]
+    assert captured, "ffmpeg sollte aufgerufen werden"
+    cmd = captured[0]
+    assert "-shortest" not in cmd
+    fc = next(x for x in cmd if x.startswith("[1:a]"))
+    assert "atrim=duration=12.000000" in fc
+    assert "apad=whole_dur=12.000000" in fc
+
+
+def test_render_missing_audio_still_silent_an(final_render_mod, tmp_path, monkeypatch):
+    assets = tmp_path / "gen2"
+    _setup_two_scene_assets(assets)
+    tl_path = tmp_path / "tl2.json"
+    tl_path.write_text(
+        json.dumps(
+            {
+                "assets_directory": str(assets),
+                "audio_path": "",
+                "scenes": [
+                    {"image_path": "scene_001.png", "duration_seconds": 6},
+                    {"image_path": "scene_002.png", "duration_seconds": 6},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "silent.mp4"
+    captured: list[list[str]] = []
+
+    def fake_run(cmd, check=True, capture_output=True, text=True):
+        captured.append(list(cmd))
+        out.touch()
+        return CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(final_render_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(final_render_mod, "_probe_video_duration", lambda _v, _f: (12.0, []))
+
+    meta = final_render_mod.render_final_story_video(
+        tl_path, output_video=out, ffmpeg_bin="ffmpeg_mock", ffprobe_bin="ffprobe_mock"
+    )
+    assert meta["video_created"] is True
+    assert "audio_missing_silent_render" in meta["warnings"]
+    cmd = captured[0]
+    assert "-an" in cmd
+    assert "-shortest" not in cmd
+    assert "-filter_complex" not in cmd
