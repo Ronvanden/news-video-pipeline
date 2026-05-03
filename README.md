@@ -461,6 +461,7 @@ python scripts/record_video_kpi.py examples/metrics.sample.json --cash-layer-jso
 
 ## 18. Lokale Tests
 
+- Untertitel-Burn-in-Preview (bestehendes Video + `subtitle_manifest.json` aus BA 20.5): `python scripts/burn_in_subtitles_preview.py --input-video … --subtitle-manifest …` (Details: [PIPELINE_PLAN.md](PIPELINE_PLAN.md), BA 20.6).
 - App kompilieren:
   ```bash
   python -m compileall app
