@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import importlib.util
 import json
+from io import BytesIO
 from pathlib import Path
+from unittest.mock import patch
+from urllib.error import HTTPError
 
 import pytest
+from PIL import Image
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SCRIPT = _ROOT / "scripts" / "run_asset_runner.py"
@@ -198,3 +202,95 @@ def test_chunk_helpers_generation_id_nested(asset_runner_mod):
         {"sdGenerationJob": {"generationId": "abc-123", "status": "PENDING"}}
     )
     assert gid == "abc-123"
+
+
+def test_download_leonardo_image_url_success_png(asset_runner_mod, tmp_path):
+    buf = BytesIO()
+    Image.new("RGB", (4, 4), color="red").save(buf, format="PNG")
+    png = buf.getvalue()
+
+    class Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        headers = {"Content-Type": "image/png"}
+
+        def read(self):
+            return png
+
+        def getcode(self):
+            return 200
+
+    dest = tmp_path / "scene_dl.png"
+    with patch.object(asset_runner_mod, "urlopen", return_value=Resp()):
+        ok, warns = asset_runner_mod._download_leonardo_image_url(
+            "https://cdn.example.test/path/img.png?token=NEVER_LEAK",
+            dest,
+            10.0,
+        )
+    assert ok is True
+    assert dest.is_file()
+    assert dest.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    blob = " ".join(warns)
+    assert "NEVER_LEAK" not in blob
+    assert "token=" not in blob
+
+
+def test_download_leonardo_image_url_jpeg_converted_to_png(asset_runner_mod, tmp_path):
+    buf = BytesIO()
+    Image.new("RGB", (16, 16), color=(40, 50, 60)).save(buf, format="JPEG", quality=90)
+    jpeg = buf.getvalue()
+
+    class Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        headers = {"Content-Type": "image/jpeg"}
+
+        def read(self):
+            return jpeg
+
+        def getcode(self):
+            return 200
+
+    dest = tmp_path / "scene_dl.png"
+    with patch.object(asset_runner_mod, "urlopen", return_value=Resp()):
+        ok, warns = asset_runner_mod._download_leonardo_image_url(
+            "https://cdn.leonardo.ai/user-static/image.jpg?signature=TOPSECRETVALUE",
+            dest,
+            10.0,
+        )
+    assert ok is True
+    assert dest.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    joined = " ".join(warns)
+    assert "TOPSECRETVALUE" not in joined
+    assert "signature=" not in joined
+
+
+def test_download_leonardo_image_url_http_error_no_secret_in_warning(asset_runner_mod, tmp_path):
+    err = HTTPError(
+        "https://cdn.test/x?apiKey=SECRET123",
+        403,
+        "Forbidden",
+        {"Content-Type": "application/json"},
+        BytesIO(b"{}"),
+    )
+    dest = tmp_path / "f.png"
+    with patch.object(asset_runner_mod, "urlopen", side_effect=err):
+        ok, warns = asset_runner_mod._download_leonardo_image_url(
+            "https://cdn.test/x?apiKey=SECRET123",
+            dest,
+            5.0,
+        )
+    assert ok is False
+    text = " ".join(warns)
+    assert "SECRET123" not in text
+    assert "apiKey=" not in text
+    assert "status=403" in text or "403" in text
+    assert "cdn.test" in text

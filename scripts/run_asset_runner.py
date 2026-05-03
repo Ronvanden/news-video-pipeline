@@ -8,9 +8,11 @@ import os
 import sys
 import time
 import uuid
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +27,12 @@ from app.production_connectors.leonardo_live_connector import _build_leonardo_ge
 
 DEFAULT_LEONARDO_GENERATIONS_URL = "https://cloud.leonardo.ai/api/rest/v1/generations"
 DEFAULT_MAX_ASSETS_LIVE = 3
+
+# Browser-ähnliche Header helfen bei CDN / signierten URLs (403 ohne UA).
+LEONARDO_IMAGE_DOWNLOAD_UA = (
+    "Mozilla/5.0 (compatible; news-to-video-pipeline/1.0; +https://github.com/) "
+    "LeonardoAssetRunner/1.0"
+)
 
 
 def _sorted_beats(scene_expansion: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -122,6 +130,83 @@ def _generation_id_from_dict(data: Any) -> str:
     return ""
 
 
+def _redacted_download_hint(url: str) -> str:
+    """Nur Host + kurzer Pfad-Prefix ohne Query/Fragment — keine signierten Token."""
+    try:
+        p = urlparse(url)
+        host = (p.netloc or "unknown_host")[:200]
+        path = (p.path or "")[:48]
+        return f"{host}{path}"
+    except Exception:
+        return "invalid_url"
+
+
+def _download_leonardo_image_url(url: str, dest_png: Path, timeout: float) -> Tuple[bool, List[str]]:
+    """
+    Lädt Bild-URL (Leonardo CDN / signiert) und schreibt PNG nach dest_png.
+    Rückgabe: (ok, warnings) — Warnungen/Fehler niemals mit voller URL oder Query.
+    """
+    warns: List[str] = []
+    hint = _redacted_download_hint(url)
+    headers = {
+        "User-Agent": LEONARDO_IMAGE_DOWNLOAD_UA,
+        "Accept": "image/avif,image/webp,image/apng,image/jpeg,image/png,image/*,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        # Manche CDNs erwarten Referer von der Leonardo-Domain
+        "Referer": "https://app.leonardo.ai/",
+    }
+    req = Request(url, headers=headers, method="GET")
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            code = int(getattr(resp, "status", None) or resp.getcode() or 0)
+            raw_ct = ""
+            if resp.headers:
+                raw_ct = resp.headers.get("Content-Type") or resp.headers.get("content-type") or ""
+            content_type = raw_ct.split(";")[0].strip().lower() if raw_ct else ""
+            data = resp.read()
+    except HTTPError as exc:
+        code = int(exc.code)
+        reason = str(getattr(exc, "reason", "") or "")[:120]
+        return False, [f"leonardo_image_download_http:status={code}:reason={reason}:target={hint}"]
+    except URLError as exc:
+        reason = str(getattr(exc, "reason", exc) or "")[:120]
+        return False, [f"leonardo_image_download_urlerror:reason={reason}:target={hint}"]
+    except (OSError, ValueError) as exc:
+        return False, [f"leonardo_image_download_os:reason={type(exc).__name__}:target={hint}"]
+
+    if code and code != 200:
+        return False, [f"leonardo_image_download_http:status={code}:target={hint}"]
+
+    if not data:
+        return False, [f"leonardo_image_download_empty:target={hint}:content_type={content_type or 'unknown'}"]
+
+    is_image_ct = bool(content_type) and content_type.startswith("image/")
+    if content_type and not is_image_ct and "application/octet-stream" not in content_type:
+        warns.append(f"leonardo_image_download_unexpected_content_type:{content_type[:80]}:target={hint}")
+
+    dest_png.parent.mkdir(parents=True, exist_ok=True)
+
+    # Raster → einheitlich PNG (Pipeline / ffmpeg erwarten konsistente Bitmap-Pfade)
+    try:
+        from PIL import Image
+
+        im = Image.open(BytesIO(data))
+        im.load()
+        if im.mode in ("RGBA", "P", "LA"):
+            im = im.convert("RGBA")
+        else:
+            im = im.convert("RGB")
+        im.save(dest_png, format="PNG")
+        return True, warns
+    except Exception as exc:
+        if data[:8] == b"\x89PNG\r\n\x1a\n":
+            dest_png.write_bytes(data)
+            return True, warns
+        return False, [
+            f"leonardo_image_download_decode_failed:type={type(exc).__name__}:target={hint}:content_type={content_type or 'unknown'}"
+        ]
+
+
 def _http_post_json(url: str, headers: Dict[str, str], body: Dict[str, Any], timeout: float) -> Tuple[int, Dict[str, Any]]:
     req = Request(
         url,
@@ -137,20 +222,6 @@ def _http_post_json(url: str, headers: Dict[str, str], body: Dict[str, Any], tim
     except json.JSONDecodeError:
         return int(code) if code is not None else 0, {"raw_text": raw[:2048].decode("utf-8", errors="replace")}
     return int(code) if code is not None else 0, parsed if isinstance(parsed, dict) else {"value": parsed}
-
-
-def _download_binary(url: str, dest: Path, timeout: float) -> bool:
-    try:
-        req = Request(url, method="GET", headers={})
-        with urlopen(req, timeout=timeout) as resp:
-            data = resp.read()
-        if not data:
-            return False
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_bytes(data)
-        return True
-    except (HTTPError, URLError, OSError, ValueError):
-        return False
 
 
 def _leonardo_terminal_status(status: Optional[str]) -> bool:
@@ -201,9 +272,11 @@ def leonardo_generate_image_to_path(
 
     urls_post = _extract_image_urls(parsed)
     if urls_post:
-        if _download_binary(urls_post[0], dest_png, timeout_poll):
+        ok_dl, dl_warns = _download_leonardo_image_url(urls_post[0], dest_png, timeout_poll)
+        warns.extend(dl_warns)
+        if ok_dl:
             return True, warns
-        return False, ["leonardo_download_failed_after_create_response"]
+        return False, warns
 
     gen_id = _generation_id_from_dict(parsed)
     if not gen_id:
@@ -220,7 +293,9 @@ def leonardo_generate_image_to_path(
             warns.extend([w for w in fres.warnings if w not in warns])
         st = fres.generation_status
         if fres.image_urls:
-            if _download_binary(fres.image_urls[0], dest_png, timeout_poll):
+            ok_dl, dl_warns = _download_leonardo_image_url(fres.image_urls[0], dest_png, timeout_poll)
+            warns.extend(dl_warns)
+            if ok_dl:
                 return True, warns
             warns.append("leonardo_image_url_present_but_download_failed")
             return False, warns
