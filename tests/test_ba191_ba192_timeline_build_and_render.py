@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 from subprocess import CompletedProcess
 
 import pytest
@@ -210,11 +211,13 @@ def test_render_short_audio_uses_timeline_not_shortest(final_render_mod, tmp_pat
     meta = final_render_mod.render_final_story_video(
         tl_path,
         output_video=out,
+        motion_mode="static",
         ffmpeg_bin="ffmpeg_mock",
         ffprobe_bin="ffprobe_mock",
     )
     assert meta["video_created"] is True
     assert meta["duration_seconds"] == 12.0
+    assert meta.get("motion_applied") is False
     assert "audio_shorter_than_timeline_padded_or_continued" in meta["warnings"]
     assert captured, "ffmpeg sollte aufgerufen werden"
     cmd = captured[0]
@@ -253,11 +256,161 @@ def test_render_missing_audio_still_silent_an(final_render_mod, tmp_path, monkey
     monkeypatch.setattr(final_render_mod, "_probe_video_duration", lambda _v, _f: (12.0, []))
 
     meta = final_render_mod.render_final_story_video(
-        tl_path, output_video=out, ffmpeg_bin="ffmpeg_mock", ffprobe_bin="ffprobe_mock"
+        tl_path,
+        output_video=out,
+        motion_mode="static",
+        ffmpeg_bin="ffmpeg_mock",
+        ffprobe_bin="ffprobe_mock",
     )
     assert meta["video_created"] is True
+    assert meta.get("motion_applied") is False
     assert "audio_missing_silent_render" in meta["warnings"]
     cmd = captured[0]
     assert "-an" in cmd
     assert "-shortest" not in cmd
     assert "-filter_complex" not in cmd
+
+
+def test_basic_motion_builds_filter_script_with_xfade_and_zoompan(final_render_mod, tmp_path, monkeypatch):
+    assets = tmp_path / "genm"
+    _setup_two_scene_assets(assets)
+    tl_path = tmp_path / "tl_motion.json"
+    tl_path.write_text(
+        json.dumps(
+            {
+                "assets_directory": str(assets),
+                "audio_path": "",
+                "scenes": [
+                    {
+                        "image_path": "scene_001.png",
+                        "duration_seconds": 6,
+                        "zoom_type": "slow_push",
+                        "pan_direction": "none",
+                        "transition": "fade",
+                    },
+                    {
+                        "image_path": "scene_002.png",
+                        "duration_seconds": 6,
+                        "zoom_type": "static",
+                        "pan_direction": "left",
+                        "transition": "fade",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "motion.mp4"
+    captured: list[list[str]] = []
+    script_snapshots: list[str] = []
+
+    def fake_run(cmd, check=True, capture_output=True, text=True):
+        captured.append(list(cmd))
+        if "-filter_complex_script" in cmd:
+            si = cmd.index("-filter_complex_script") + 1
+            script_snapshots.append(Path(cmd[si]).read_text(encoding="utf-8"))
+        out.touch()
+        return CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(final_render_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(final_render_mod, "_probe_video_duration", lambda _v, _f: (11.65, []))
+
+    meta = final_render_mod.render_final_story_video(
+        tl_path,
+        output_video=out,
+        motion_mode="basic",
+        ffmpeg_bin="ffmpeg_mock",
+        ffprobe_bin="ffprobe_mock",
+    )
+    assert meta["video_created"] is True
+    assert meta.get("motion_applied") is True
+    assert meta.get("motion_mode") == "basic"
+    cmd = captured[0]
+    assert "-filter_complex_script" in cmd
+    assert script_snapshots, "Skript sollte vor ffmpeg-Löschung eingelesen werden"
+    script = script_snapshots[0]
+    assert "xfade" in script
+    assert "zoompan" in script
+    assert "-f concat" not in " ".join(cmd)
+
+
+def test_basic_motion_failure_falls_back_static(final_render_mod, tmp_path, monkeypatch):
+    assets = tmp_path / "genfb"
+    _setup_two_scene_assets(assets)
+    tl_path = tmp_path / "tl_fb.json"
+    tl_path.write_text(
+        json.dumps(
+            {
+                "assets_directory": str(assets),
+                "audio_path": "",
+                "scenes": [
+                    {"image_path": "scene_001.png", "duration_seconds": 4, "zoom_type": "slow_push"},
+                    {"image_path": "scene_002.png", "duration_seconds": 4, "zoom_type": "static"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "fallback.mp4"
+    calls: list[list[str]] = []
+
+    def fake_run(cmd, check=True, capture_output=True, text=True):
+        calls.append(list(cmd))
+        if len(calls) == 1:
+            raise subprocess.CalledProcessError(1, cmd, stderr="motion_graph_failed")
+        Path(cmd[-1]).touch()
+        return CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(final_render_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(final_render_mod, "_probe_video_duration", lambda _v, _f: (8.0, []))
+
+    meta = final_render_mod.render_final_story_video(
+        tl_path,
+        output_video=out,
+        motion_mode="basic",
+        ffmpeg_bin="ffmpeg_mock",
+        ffprobe_bin="ffprobe_mock",
+    )
+    assert meta["video_created"] is True
+    assert "motion_render_failed_fallback_static" in meta["warnings"]
+    assert meta.get("motion_applied") is False
+    assert len(calls) == 2
+    assert any("-filter_complex_script" in c for c in calls)
+    assert any("-f" in c and "concat" in c for c in calls)
+
+
+def test_motion_mode_unknown_warns_and_uses_basic(final_render_mod, tmp_path, monkeypatch):
+    assets = tmp_path / "genunk"
+    _setup_two_scene_assets(assets)
+    tl_path = tmp_path / "tl_unk.json"
+    tl_path.write_text(
+        json.dumps(
+            {
+                "assets_directory": str(assets),
+                "audio_path": "",
+                "scenes": [
+                    {"image_path": "scene_001.png", "duration_seconds": 3},
+                    {"image_path": "scene_002.png", "duration_seconds": 3},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "unk.mp4"
+
+    def fake_run(cmd, check=True, capture_output=True, text=True):
+        out.touch()
+        return CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(final_render_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(final_render_mod, "_probe_video_duration", lambda _v, _f: (5.65, []))
+
+    meta = final_render_mod.render_final_story_video(
+        tl_path,
+        output_video=out,
+        motion_mode="not_a_mode",
+        ffmpeg_bin="ffmpeg_mock",
+        ffprobe_bin="ffprobe_mock",
+    )
+    assert any(w.startswith("motion_mode_unknown_defaulting_basic:") for w in meta["warnings"])
+    assert meta.get("motion_mode") == "basic"

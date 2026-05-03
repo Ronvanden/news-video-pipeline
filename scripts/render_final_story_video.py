@@ -1,4 +1,4 @@
-"""BA 19.2 — timeline_manifest + Bilder + Audio → MP4 (ffmpeg)."""
+"""BA 19.2 / BA 20.4 — timeline_manifest + Bilder + Audio → MP4 (ffmpeg)."""
 
 from __future__ import annotations
 
@@ -15,6 +15,10 @@ from typing import Any, Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+MOTION_FPS = 25
+DEFAULT_XFADE_FADE_SEC = 0.35
+CUT_XFADE_SEC = 0.06
 
 
 def which_ffmpeg() -> Optional[str]:
@@ -38,8 +42,107 @@ def _escape_concat_path(p: Path) -> str:
 
 
 def _timeline_video_duration_seconds(scenes: List[Dict[str, Any]]) -> float:
-    """Summe der Szenenlängen (entspricht concat-Demuxer-Gesamtlänge ohne Nachlauf-Frame)."""
+    """Summe der Szenenlängen (Plan-Länge für Audio-Trim, identisch zu BA 19.2 concat)."""
     return sum(float(sc.get("duration_seconds") or 6) for sc in scenes)
+
+
+def _zoom_from_camera_hint(hint: str) -> str:
+    h = (hint or "").lower()
+    if "pull" in h or "zoom out" in h:
+        return "slow_pull"
+    if "push" in h or "zoom in" in h or "push-in" in h:
+        return "slow_push"
+    return "static"
+
+
+def _scene_zoom_type(sc: Dict[str, Any]) -> str:
+    zt = str(sc.get("zoom_type") or "").strip().lower()
+    if zt in ("slow_push", "slow_pull", "static"):
+        return zt
+    return _zoom_from_camera_hint(str(sc.get("camera_motion_hint") or ""))
+
+
+def _scene_pan_direction(sc: Dict[str, Any]) -> str:
+    pd = str(sc.get("pan_direction") or "none").strip().lower()
+    if pd in ("left", "right", "none"):
+        return pd
+    return "none"
+
+
+def _boundary_fade_seconds(scene_after: Dict[str, Any]) -> float:
+    """Übergang vor Szene scene_after (Eintritt): fade vs. harter Schnitt (kurzer xfade)."""
+    tr = str(scene_after.get("transition") or "fade").strip().lower()
+    if tr in ("fade", "crossfade", ""):
+        return DEFAULT_XFADE_FADE_SEC
+    return CUT_XFADE_SEC
+
+
+def _xfade_offset_sequence(durs: List[float], fades: List[float]) -> List[float]:
+    """Pro Kante fades[k]: offset im xfade-Filter."""
+    if len(durs) < 2 or len(fades) != len(durs) - 1:
+        return []
+    offsets: List[float] = []
+    acc_len = durs[0]
+    for k in range(len(durs) - 1):
+        fd = fades[k]
+        offsets.append(acc_len - fd)
+        acc_len = acc_len + durs[k + 1] - fd
+    return offsets
+
+
+def _segment_motion_filter(d_sec: float, zoom_type: str, pan_direction: str, fps: int) -> str:
+    """Filterkette ohne Eingabe-Label: fps → Motion → setpts (einheitlich 1920×1080 yuv420p)."""
+    frames = max(3, int(round(d_sec * float(fps))))
+    zt = (zoom_type or "static").strip().lower()
+    pd = (pan_direction or "none").strip().lower()
+    d_str = f"{d_sec:.6f}"
+
+    if zt in ("slow_push", "slow_zoom_in"):
+        return (
+            f"fps={fps},format=yuv420p,scale=iw*4:-1:flags=lanczos,"
+            f"zoompan=z='if(eq(on,1),1,min(zoom+0.0010,1.14))':d={frames}:"
+            f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps={fps},"
+            f"format=yuv420p,setpts=PTS-STARTPTS"
+        )
+    if zt in ("slow_pull", "slow_zoom_out"):
+        return (
+            f"fps={fps},format=yuv420p,scale=iw*4:-1:flags=lanczos,"
+            f"zoompan=z='if(eq(on,1),1.14,max(zoom-0.0010,1))':d={frames}:"
+            f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps={fps},"
+            f"format=yuv420p,setpts=PTS-STARTPTS"
+        )
+
+    if pd in ("left", "right"):
+        dmax = max(frames - 1, 1)
+        if pd == "left":
+            xexpr = f"(iw-iw/zoom)*(1-on/{dmax})"
+        else:
+            xexpr = f"(iw-iw/zoom)*on/{dmax}"
+        return (
+            f"fps={fps},format=yuv420p,scale=iw*3:-1:flags=lanczos,"
+            f"zoompan=z='1.1':d={frames}:x='{xexpr}':y='ih/2-(ih/zoom/2)':s=1920x1080:fps={fps},"
+            f"format=yuv420p,setpts=PTS-STARTPTS"
+        )
+
+    return (
+        f"fps={fps},format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
+        f"pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,"
+        f"trim=duration={d_str},setpts=PTS-STARTPTS"
+    )
+
+
+def _write_concat_list(scenes: List[Dict[str, Any]], assets_dir: Path, tmp_list: Path) -> None:
+    lines: List[str] = []
+    for i, sc in enumerate(scenes):
+        img = assets_dir / str(sc.get("image_path") or "")
+        dur = float(sc.get("duration_seconds") or 6)
+        lines.append(f"file '{_escape_concat_path(img)}'")
+        lines.append(f"duration {dur}")
+    if scenes:
+        last = assets_dir / str(scenes[-1].get("image_path") or "")
+        lines.append(f"file '{_escape_concat_path(last)}'")
+        lines.append("duration 0.04")
+    tmp_list.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def _probe_audio_duration(audio: Path, ffprobe: str) -> Tuple[Optional[float], List[str]]:
@@ -70,20 +173,6 @@ def _probe_audio_duration(audio: Path, ffprobe: str) -> Tuple[Optional[float], L
         return None, warns
 
 
-def _write_concat_list(scenes: List[Dict[str, Any]], assets_dir: Path, tmp_list: Path) -> None:
-    lines: List[str] = []
-    for i, sc in enumerate(scenes):
-        img = assets_dir / str(sc.get("image_path") or "")
-        dur = float(sc.get("duration_seconds") or 6)
-        lines.append(f"file '{_escape_concat_path(img)}'")
-        lines.append(f"duration {dur}")
-    if scenes:
-        last = assets_dir / str(scenes[-1].get("image_path") or "")
-        lines.append(f"file '{_escape_concat_path(last)}'")
-        lines.append("duration 0.04")
-    tmp_list.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-
 def _probe_video_duration(video: Path, ffprobe: str) -> Tuple[Optional[float], List[str]]:
     warns: List[str] = []
     try:
@@ -108,91 +197,80 @@ def _probe_video_duration(video: Path, ffprobe: str) -> Tuple[Optional[float], L
         return None, warns
 
 
-def render_final_story_video(
-    timeline_path: Path,
+def _normalize_motion_mode(raw: Optional[str]) -> Tuple[str, List[str]]:
+    warns: List[str] = []
+    m = (raw or "basic").strip().lower()
+    if m not in ("static", "basic"):
+        warns.append(f"motion_mode_unknown_defaulting_basic:{m}")
+        m = "basic"
+    return m, warns
+
+
+def _build_basic_motion_filter_script(
+    scenes: List[Dict[str, Any]],
     *,
+    fps: int,
+    timeline_seconds: float,
+    has_audio: bool,
+    audio_input_index: int,
+) -> str:
+    n = len(scenes)
+    durs = [float(s.get("duration_seconds") or 6) for s in scenes]
+    fades = [_boundary_fade_seconds(scenes[k + 1]) for k in range(n - 1)]
+    offs = _xfade_offset_sequence(durs, fades)
+
+    parts: List[str] = []
+    for i, sc in enumerate(scenes):
+        zt = _scene_zoom_type(sc)
+        pd = _scene_pan_direction(sc)
+        if zt in ("slow_push", "slow_pull"):
+            pd_eff = "none"
+        else:
+            pd_eff = pd
+        vf = _segment_motion_filter(durs[i], zt, pd_eff, fps)
+        parts.append(f"[{i}:v]{vf}[b{i}]")
+
+    if n == 1:
+        parts.append("[b0]null[vcore]")
+    else:
+        cur = "b0"
+        for k in range(n - 1):
+            nxt = f"b{k + 1}"
+            fd = fades[k]
+            off = offs[k]
+            out = f"xc{k}" if k < n - 2 else "vcore"
+            parts.append(f"[{cur}][{nxt}]xfade=transition=fade:duration={fd:.4f}:offset={off:.4f}[{out}]")
+            cur = out
+
+    produced = durs[0]
+    for k in range(1, n):
+        produced += durs[k] - fades[k - 1]
+    gap = max(0.0, float(timeline_seconds) - float(produced))
+    if gap > 0.02:
+        parts.append(f"[vcore]tpad=stop_mode=clone:stop_duration={gap:.4f}[vfin]")
+    else:
+        parts.append("[vcore]null[vfin]")
+
+    if has_audio:
+        td = max(float(timeline_seconds), 0.04)
+        td_s = f"{td:.6f}"
+        parts.append(f"[{audio_input_index}:a]atrim=duration={td_s},apad=whole_dur={td_s}[aout]")
+
+    return ";".join(parts) + "\n"
+
+
+def _run_ffmpeg_static_concat(
+    scenes: List[Dict[str, Any]],
+    assets_dir: Path,
     output_video: Path,
-    ffmpeg_bin: Optional[str] = None,
-    ffprobe_bin: Optional[str] = None,
-) -> Dict[str, Any]:
-    """
-    MVP: concat demuxer → scale/pad 1920x1080 → H.264 + optional AAC.
-    Ohne Audio: stumm (warnings audio_missing_silent_render).
-    """
-    warnings: List[str] = []
+    ffmpeg: str,
+    ffprobe: Optional[str],
+    audio_file: Optional[Path],
+    timeline_seconds: float,
+    warnings: List[str],
+) -> Tuple[bool, List[str], List[str]]:
+    """BA 19.2 Pfad: concat-Demuxer + globales scale/pad."""
     blocking: List[str] = []
-    ffprobe = ffprobe_bin or which_ffprobe()
-
-    try:
-        tl = load_timeline_manifest(timeline_path)
-    except (OSError, json.JSONDecodeError, FileNotFoundError) as e:
-        return {
-            "video_created": False,
-            "output_path": str(output_video),
-            "duration_seconds": None,
-            "scene_count": 0,
-            "warnings": warnings + [f"timeline_load_failed:{type(e).__name__}"],
-            "blocking_reasons": ["timeline_manifest_invalid_or_missing"],
-        }
-
-    scenes = tl.get("scenes") or []
-    if not isinstance(scenes, list) or not scenes:
-        return {
-            "video_created": False,
-            "output_path": str(output_video),
-            "duration_seconds": None,
-            "scene_count": 0,
-            "warnings": warnings,
-            "blocking_reasons": ["timeline_scenes_empty"],
-        }
-
-    n_scenes = len(scenes)
-    ffmpeg = ffmpeg_bin if ffmpeg_bin is not None else which_ffmpeg()
-    if not ffmpeg:
-        return {
-            "video_created": False,
-            "output_path": str(output_video),
-            "duration_seconds": None,
-            "scene_count": n_scenes,
-            "warnings": warnings,
-            "blocking_reasons": ["ffmpeg_missing"],
-        }
-
-    assets_dir = Path(str(tl.get("assets_directory") or ""))
-    if not assets_dir.is_dir():
-        return {
-            "video_created": False,
-            "output_path": str(output_video),
-            "duration_seconds": None,
-            "scene_count": n_scenes,
-            "warnings": warnings,
-            "blocking_reasons": ["assets_directory_missing"],
-        }
-
-    for sc in scenes:
-        ip = assets_dir / str(sc.get("image_path") or "")
-        if not ip.is_file():
-            return {
-                "video_created": False,
-                "output_path": str(output_video),
-                "duration_seconds": None,
-                "scene_count": n_scenes,
-                "warnings": warnings,
-                "blocking_reasons": [f"missing_image:{sc.get('image_path')}"],
-            }
-
-    audio_path = (tl.get("audio_path") or "").strip()
-    audio_file: Optional[Path] = Path(audio_path) if audio_path else None
-    if audio_file and not audio_file.is_file():
-        warnings.append("audio_path_set_but_file_missing_silent_render")
-        audio_file = None
-    if not audio_file:
-        warnings.append("audio_missing_silent_render")
-
-    timeline_seconds = _timeline_video_duration_seconds(scenes)
-
-    output_video.parent.mkdir(parents=True, exist_ok=True)
-
     fd, tmp_name = tempfile.mkstemp(suffix="_concat.txt", text=True)
     os.close(fd)
     tmp_path = Path(tmp_name)
@@ -222,7 +300,6 @@ def render_final_story_video(
                 warnings.extend(aw)
             if audio_d is not None and audio_d + 0.1 < td:
                 warnings.append("audio_shorter_than_timeline_padded_or_continued")
-            # Video folgt der Timeline: Audio auf exakt td trimmen/padden — kein -shortest.
             cmd.extend(
                 [
                     "-filter_complex",
@@ -253,19 +330,250 @@ def render_final_story_video(
         subprocess.run(cmd, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
         err = (e.stderr or e.stdout or "")[:800]
-        return {
-            "video_created": False,
-            "output_path": str(output_video),
-            "duration_seconds": None,
-            "scene_count": n_scenes,
-            "warnings": warnings + [f"ffmpeg_failed:{err}"],
-            "blocking_reasons": ["ffmpeg_encode_failed"],
-        }
+        return False, warnings + [f"ffmpeg_failed:{err}"], ["ffmpeg_encode_failed"]
     finally:
         try:
             tmp_path.unlink(missing_ok=True)
         except OSError:
             pass
+
+    return True, warnings, blocking
+
+
+def _run_ffmpeg_basic_motion(
+    scenes: List[Dict[str, Any]],
+    assets_dir: Path,
+    output_video: Path,
+    ffmpeg: str,
+    ffprobe: Optional[str],
+    audio_file: Optional[Path],
+    timeline_seconds: float,
+    warnings: List[str],
+) -> Tuple[bool, List[str], List[str]]:
+    """BA 20.4: Ken-Burns-ähnlich + xfade; Audio wie BA 19.2."""
+    blocking: List[str] = []
+    n = len(scenes)
+    fps = MOTION_FPS
+    has_audio = audio_file is not None
+    audio_idx = n if has_audio else -1
+
+    fd, script_name = tempfile.mkstemp(suffix="_motion.fc", text=True)
+    os.close(fd)
+    script_path = Path(script_name)
+    try:
+        body = _build_basic_motion_filter_script(
+            scenes,
+            fps=fps,
+            timeline_seconds=timeline_seconds,
+            has_audio=has_audio,
+            audio_input_index=audio_idx,
+        )
+        script_path.write_text(body, encoding="utf-8")
+
+        cmd: List[str] = [ffmpeg, "-y"]
+        for sc in scenes:
+            img = assets_dir / str(sc.get("image_path") or "")
+            d = float(sc.get("duration_seconds") or 6)
+            cmd.extend(["-loop", "1", "-framerate", str(fps), "-t", f"{d:.6f}", "-i", str(img)])
+        if audio_file:
+            cmd.extend(["-i", str(audio_file)])
+
+        cmd.extend(["-filter_complex_script", str(script_path)])
+        if has_audio:
+            td = max(timeline_seconds, 0.04)
+            if ffprobe:
+                audio_d, aw = _probe_audio_duration(audio_file, ffprobe)
+                warnings.extend(aw)
+                if audio_d is not None and audio_d + 0.1 < td:
+                    warnings.append("audio_shorter_than_timeline_padded_or_continued")
+            cmd.extend(
+                [
+                    "-map",
+                    "[vfin]",
+                    "-map",
+                    "[aout]",
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "192k",
+                    str(output_video),
+                ]
+            )
+        else:
+            cmd.extend(
+                [
+                    "-map",
+                    "[vfin]",
+                    "-an",
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    str(output_video),
+                ]
+            )
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        err = (e.stderr or e.stdout or "")[:800]
+        return False, warnings + [f"ffmpeg_motion_failed:{err}"], ["ffmpeg_encode_failed"]
+    except OSError as e:
+        return False, warnings + [f"motion_filter_script_failed:{type(e).__name__}"], ["ffmpeg_encode_failed"]
+    finally:
+        try:
+            script_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+    return True, warnings, blocking
+
+
+def render_final_story_video(
+    timeline_path: Path,
+    *,
+    output_video: Path,
+    motion_mode: Optional[str] = None,
+    ffmpeg_bin: Optional[str] = None,
+    ffprobe_bin: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    concat demuxer (static) oder Motion+xfade (basic) → scale/pad 1920x1080 → H.264 + optional AAC.
+    Ohne Audio: stumm (warnings audio_missing_silent_render).
+    """
+    warnings: List[str] = []
+    blocking: List[str] = []
+    ffprobe = ffprobe_bin or which_ffprobe()
+
+    motion_eff, mw = _normalize_motion_mode(motion_mode)
+    warnings.extend(mw)
+
+    try:
+        tl = load_timeline_manifest(timeline_path)
+    except (OSError, json.JSONDecodeError, FileNotFoundError) as e:
+        return {
+            "video_created": False,
+            "output_path": str(output_video),
+            "duration_seconds": None,
+            "scene_count": 0,
+            "motion_mode": motion_eff,
+            "warnings": warnings + [f"timeline_load_failed:{type(e).__name__}"],
+            "blocking_reasons": ["timeline_manifest_invalid_or_missing"],
+        }
+
+    scenes = tl.get("scenes") or []
+    if not isinstance(scenes, list) or not scenes:
+        return {
+            "video_created": False,
+            "output_path": str(output_video),
+            "duration_seconds": None,
+            "scene_count": 0,
+            "motion_mode": motion_eff,
+            "warnings": warnings,
+            "blocking_reasons": ["timeline_scenes_empty"],
+        }
+
+    n_scenes = len(scenes)
+    ffmpeg = ffmpeg_bin if ffmpeg_bin is not None else which_ffmpeg()
+    if not ffmpeg:
+        return {
+            "video_created": False,
+            "output_path": str(output_video),
+            "duration_seconds": None,
+            "scene_count": n_scenes,
+            "motion_mode": motion_eff,
+            "warnings": warnings,
+            "blocking_reasons": ["ffmpeg_missing"],
+        }
+
+    assets_dir = Path(str(tl.get("assets_directory") or ""))
+    if not assets_dir.is_dir():
+        return {
+            "video_created": False,
+            "output_path": str(output_video),
+            "duration_seconds": None,
+            "scene_count": n_scenes,
+            "motion_mode": motion_eff,
+            "warnings": warnings,
+            "blocking_reasons": ["assets_directory_missing"],
+        }
+
+    for sc in scenes:
+        ip = assets_dir / str(sc.get("image_path") or "")
+        if not ip.is_file():
+            return {
+                "video_created": False,
+                "output_path": str(output_video),
+                "duration_seconds": None,
+                "scene_count": n_scenes,
+                "motion_mode": motion_eff,
+                "warnings": warnings,
+                "blocking_reasons": [f"missing_image:{sc.get('image_path')}"],
+            }
+
+    audio_path = (tl.get("audio_path") or "").strip()
+    audio_file: Optional[Path] = Path(audio_path) if audio_path else None
+    if audio_file and not audio_file.is_file():
+        warnings.append("audio_path_set_but_file_missing_silent_render")
+        audio_file = None
+    if not audio_file:
+        warnings.append("audio_missing_silent_render")
+
+    timeline_seconds = _timeline_video_duration_seconds(scenes)
+
+    output_video.parent.mkdir(parents=True, exist_ok=True)
+
+    used_motion = motion_eff == "basic"
+    ok = False
+    if motion_eff == "basic":
+        ok, warnings, blocking = _run_ffmpeg_basic_motion(
+            scenes,
+            assets_dir,
+            output_video,
+            ffmpeg,
+            ffprobe,
+            audio_file,
+            timeline_seconds,
+            warnings,
+        )
+        if not ok:
+            warnings.append("motion_render_failed_fallback_static")
+            used_motion = False
+            ok, warnings, blocking = _run_ffmpeg_static_concat(
+                scenes,
+                assets_dir,
+                output_video,
+                ffmpeg,
+                ffprobe,
+                audio_file,
+                timeline_seconds,
+                warnings,
+            )
+    else:
+        ok, warnings, blocking = _run_ffmpeg_static_concat(
+            scenes,
+            assets_dir,
+            output_video,
+            ffmpeg,
+            ffprobe,
+            audio_file,
+            timeline_seconds,
+            warnings,
+        )
+
+    if not ok:
+        return {
+            "video_created": False,
+            "output_path": str(output_video),
+            "duration_seconds": None,
+            "scene_count": n_scenes,
+            "motion_mode": motion_eff,
+            "motion_applied": used_motion,
+            "warnings": warnings,
+            "blocking_reasons": blocking or ["ffmpeg_encode_failed"],
+        }
 
     dur: Optional[float] = None
     if ffprobe:
@@ -276,13 +584,15 @@ def render_final_story_video(
         "output_path": str(output_video.resolve()),
         "duration_seconds": dur,
         "scene_count": n_scenes,
+        "motion_mode": motion_eff,
+        "motion_applied": used_motion,
         "warnings": warnings,
         "blocking_reasons": blocking,
     }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="BA 19.2 — timeline_manifest → MP4 (ffmpeg)")
+    parser = argparse.ArgumentParser(description="BA 19.2 / BA 20.4 — timeline_manifest → MP4 (ffmpeg)")
     parser.add_argument("--timeline-manifest", type=Path, required=True, dest="timeline_manifest")
     parser.add_argument(
         "--output",
@@ -290,9 +600,20 @@ def main() -> int:
         default=ROOT / "output" / "final_story_video.mp4",
         dest="output",
     )
+    parser.add_argument(
+        "--motion-mode",
+        choices=("static", "basic"),
+        default="basic",
+        dest="motion_mode",
+        help="BA 20.4: static = BA19.2 concat; basic = Zoom/Pan + xfade (Fallback bei ffmpeg-Fehler)",
+    )
     args = parser.parse_args()
 
-    meta = render_final_story_video(args.timeline_manifest, output_video=args.output)
+    meta = render_final_story_video(
+        args.timeline_manifest,
+        output_video=args.output,
+        motion_mode=args.motion_mode,
+    )
     print(json.dumps(meta, ensure_ascii=False, indent=2))
     return 0 if meta.get("video_created") else 4
 
