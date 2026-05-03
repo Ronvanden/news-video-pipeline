@@ -437,6 +437,7 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 15.0–15.9** | **done** | **First Production Acceleration Suite V1:** **`app/production_acceleration/`** macht aus Live-/Smoke-Assets eine reproduzierbare lokale Demo-Produktion: Demo-Video-Automation, Asset-Downloader-Plan, Voice Registry, Scene Stitcher, Subtitle Draft, Thumbnail Extract, Founder Local Dashboard, Batch Topic Runner, Cost Snapshot, Viral Prototype Presets; Felder **`*_result`** additiv auf **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba150_production_acceleration.py`**. Kein Firestore-/YouTube-/Frontend-Zwang. |
 | **BA 16.0–16.9** | **done** | **Monetization & Scale Operating System V1:** **`app/monetization_scale/`** bereitet Revenue, Channel Portfolio, Multi-Platform, Opportunity Scanning, Founder KPI, Scale Blueprint, Sponsorship Readiness, Content Investment, Scale Risks und Founder Summary strategisch vor; Felder **`*_result`** additiv auf **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba160_monetization_scale.py`**. Kein Upload, keine Pflicht-Analytics, keine Business-Automation. |
 | **BA 17.0** | **done** | **Viral Upgrade Layer V1 (Founder-only, Lean):** **`app/viral_upgrade/`** — advisory Verpackung (3 Titelvarianten, Hook-Intensität 0–100, 3 Thumbnail-Winkel, emotionaler Treiber, Audience-Mode, Caution-Flags) aus Rewrite-Preview + Prompt-Plan; Feld **`viral_upgrade_layer_result`** auf **`POST /story-engine/prompt-plan`** **vor** Production Assembly; **keine** Skript-Überschreibung, **keine** externen APIs, **kein** Auto-Publish. |
+| **BA 18.0** | **done** | **Multi-Scene Asset Expansion Layer V1:** **`app/scene_expansion/`** — pro Kapitel **2–3** produktionsnahe Visual-Beats (`expanded_scene_assets`: chapter/beat index, visual_prompt, camera_motion_hint, duration_seconds, asset_type, continuity_note, safety_notes) aus **`scene_prompts`** + **`chapter_outline`**; Feld **`scene_expansion_result`** additiv **vor** Production Assembly; **keine** Leonardo-/HTTP-Calls, nur Plan. |
 | **BA 17.1–17.9** | **planned** | **Media OS / SaaS / Platform Empire Blueprint:** strategische Produktisierungsschicht für White-Label, SaaS Dashboard, API Productization, Licensing, Agency Mode, Marketplace, Investor Readiness, Founder Replacement, Acquisition Funnel und Exit Blueprint. **Blueprint first:** noch keine Runtime-Implementierung, keine SaaS-Billing-/Mandantenpflicht, keine Plattform-Automation. |
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
@@ -967,7 +968,7 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **Zweck:** Festhalten des **einen** Minimalpfads „**produce one real asset end-to-end**“ — ohne SaaS-Overbuild, ohne Multi-User-Architektur.
 
-**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **BA 17.0 Viral Upgrade (advisory)** → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**.
+**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **BA 17.0 Viral Upgrade (advisory)** → **BA 18.0 Multi-Scene Expansion (plan-only)** → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**.
 
 **Lücke / bewusste Trennung:** **`POST /generate-script`** und **`POST /youtube/generate-script`** liefern nur den festen **`GenerateScriptResponse`** und **keinen** vollen Prompt-Plan, **kein** Publishing-Pack und **keine** Acceleration-Felder. Proof-of-Production für „alles aus einem Guss“ = Prompt-Plan-Spine; Skript-Endpoints bleiben Schnellpfad / Vertrags-API.
 
@@ -1228,6 +1229,16 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 **Integration:** In **`build_production_prompt_plan`** nach Live-Provider-Suite und **vor** **`apply_production_assembly_suite`** — additiv, deterministisch, **keine** HTTP-APIs.
 
 **Nicht-Ziele:** kein SaaS, kein Multi-User, kein Auto-Publish, keine Skript-Overwrite, keine LLM-Pflicht.
+
+### BA 18.0 — Multi-Scene Asset Expansion Layer V1 (**done**, plan-only)
+
+**Zweck:** Von **einem Bild** hin zu **vielen Szenen** — Founder kann **20–40** Visual-Prompts für ein **5–10-Minuten-Video** aus einem Story-Plan ableiten, ohne Provider-Pipeline zu verändern.
+
+**Modul:** **`app/scene_expansion/`** — **`build_scene_expansion_layer(plan)`** → **`SceneExpansionResult`** mit Liste **`expanded_scene_assets`** (je Beat: `chapter_index`, `beat_index`, `visual_prompt`, `camera_motion_hint`, `duration_seconds`, `asset_type` ∈ image|broll|establishing|detail, `continuity_note`, `safety_notes`).
+
+**Integration:** In **`build_production_prompt_plan`** direkt **nach** BA 17.0 und **vor** **`apply_production_assembly_suite`** — Feld **`scene_expansion_result`**.
+
+**Nicht-Ziele:** kein SaaS, kein Auto-Publish, keine Leonardo-Automatik, keine Architektur-Umstellung.
 
 ---
 

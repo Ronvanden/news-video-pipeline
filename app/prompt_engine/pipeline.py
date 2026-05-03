@@ -282,9 +282,15 @@ def build_production_prompt_plan(req: PromptPlanRequest) -> ProductionPromptPlan
         update={"viral_upgrade_layer_result": build_viral_upgrade_layer(plan_after_live)}
     )
 
+    from app.scene_expansion.layer import build_scene_expansion_layer
+
+    plan_scene = plan_viral.model_copy(
+        update={"scene_expansion_result": build_scene_expansion_layer(plan_viral)}
+    )
+
     from app.production_assembly.assembly_suite import apply_production_assembly_suite
 
-    plan_assembled = apply_production_assembly_suite(plan_viral)
+    plan_assembled = apply_production_assembly_suite(plan_scene)
 
     from app.publishing.publishing_suite import apply_publishing_preparation_suite
 

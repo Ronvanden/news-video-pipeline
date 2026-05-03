@@ -68,6 +68,7 @@ from app.production_acceleration.schema import (
     VoiceRegistryResult,
 )
 from app.cash_optimization.schema import CashOptimizationLayerResult
+from app.scene_expansion.schema import SceneExpansionResult
 from app.viral_upgrade.schema import ViralUpgradeLayerResult
 from app.monetization_scale.schema import (
     ChannelPortfolioResult,
@@ -960,5 +961,12 @@ class ProductionPromptPlan(BaseModel):
         description=(
             "BA 17.0 — Viral Upgrade Layer (Founder-only, advisory): Titel-/Thumbnail-Ideen, "
             "Hook-Intensität, emotionaler Treiber — keine Skript-Überschreibung, keine APIs."
+        ),
+    )
+    scene_expansion_result: Optional[SceneExpansionResult] = Field(
+        default=None,
+        description=(
+            "BA 18.0 — Multi-Scene Asset Expansion: 2–3 Visual-Beats pro Kapitel aus "
+            "scene_prompts + chapter_outline (plan-only, keine Leonardo-Calls)."
         ),
     )
