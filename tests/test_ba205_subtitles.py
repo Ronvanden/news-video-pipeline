@@ -78,6 +78,13 @@ def test_build_subtitle_creates_srt_and_manifest(sub_mod, tmp_path):
     assert "warnings" in disk and "blocking_reasons" in disk
     assert float(disk["estimated_duration_seconds"]) == 10.0
     assert "subtitle_timeline_duration_used" in meta["warnings"]
+    assert meta.get("subtitle_source") == "narration"
+    assert meta.get("transcription_used") is False
+    assert meta.get("fallback_used") is False
+    assert meta.get("subtitle_style") == "classic"
+    sc = meta.get("subtitle_render_contract") or {}
+    assert sc.get("style") == "classic"
+    assert sc.get("requires_word_timing") is False
 
 
 def test_subtitle_manifest_shape_none_mode(sub_mod, tmp_path):
@@ -293,6 +300,102 @@ def test_cue_end_times_not_exceed_total_duration(sub_mod, tmp_path):
     assert max(ends) <= total + 0.06
 
 
+def test_audio_mode_missing_openai_key_fallback_narration(sub_mod, tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    narr = tmp_path / "nar_a.txt"
+    narr.write_text("#\n\nEins zwei drei vier fünf sechs.\n", encoding="utf-8")
+    mp3 = tmp_path / "v.mp3"
+    mp3.write_bytes(b"id3fake")
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=None,
+        out_root=tmp_path / "outa2",
+        run_id="env205c",
+        subtitle_mode="simple",
+        subtitle_source="audio",
+        audio_path=mp3,
+    )
+    assert meta["ok"] is True
+    assert "subtitle_audio_transcription_env_missing_fallback_narration" in meta["warnings"]
+    assert meta.get("fallback_used") is True
+    assert meta.get("transcription_used") is False
+    assert meta.get("subtitle_source") == "narration"
+
+
+def test_audio_mode_mocked_segments_valid_srt(sub_mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-fake-not-real")
+    narr = tmp_path / "nar_seg.txt"
+    narr.write_text("#\n\nFallback text hier genug Wörter für den Notfall.\n", encoding="utf-8")
+    mp3 = tmp_path / "voice_seg.mp3"
+    mp3.write_bytes(b"x" * 200)
+
+    def fake_tf(_p: Path, _k: str):
+        return (
+            {
+                "text": "one two three four",
+                "segments": [
+                    {"start": 0.0, "end": 1.2, "text": "one two"},
+                    {"start": 1.2, "end": 3.0, "text": "three four five six seven"},
+                ],
+            },
+            [],
+        )
+
+    monkeypatch.setattr(sub_mod, "_probe_audio_file_duration", lambda _p: (3.0, []))
+
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=None,
+        out_root=tmp_path / "outs",
+        run_id="seg205c",
+        subtitle_mode="simple",
+        subtitle_source="audio",
+        audio_path=mp3,
+        transcribe_fn=fake_tf,
+    )
+    assert meta["ok"] is True
+    assert meta.get("transcription_used") is True
+    assert meta.get("fallback_used") is False
+    assert meta.get("subtitle_source") == "audio"
+    srt = Path(meta["subtitles_srt_path"]).read_text(encoding="utf-8")
+    assert "-->" in srt
+    assert meta["subtitle_count"] >= 2
+
+
+def test_audio_transcription_cues_short_word_count(sub_mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-fake")
+    narr = tmp_path / "nar_w.txt"
+    narr.write_text("#\n\nReserve Satz genug Wörter hier drin.\n", encoding="utf-8")
+    mp3 = tmp_path / "v2.mp3"
+    mp3.write_bytes(b"y" * 200)
+
+    long_seg = " ".join(f"w{i}" for i in range(25))
+
+    def fake_tf(_p: Path, _k: str):
+        return (
+            {
+                "text": long_seg,
+                "segments": [{"start": 0.0, "end": 8.0, "text": long_seg}],
+            },
+            [],
+        )
+
+    monkeypatch.setattr(sub_mod, "_probe_audio_file_duration", lambda _p: (8.0, []))
+
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=None,
+        out_root=tmp_path / "outw",
+        run_id="short205c",
+        subtitle_mode="simple",
+        subtitle_source="audio",
+        audio_path=mp3,
+        transcribe_fn=fake_tf,
+    )
+    assert meta["ok"] is True
+    assert meta["subtitle_count"] >= 4
+
+
 def test_fallback_estimate_without_timeline(sub_mod, tmp_path):
     narr = tmp_path / "e.txt"
     narr.write_text("Ein zwei drei vier fünf sechs sieben acht.\n", encoding="utf-8")
@@ -315,3 +418,59 @@ def test_escape_subtitle_path_colon(render_mod, tmp_path):
     raw_posix = p.resolve().as_posix()
     if ":" in raw_posix:
         assert r"\:" in s
+
+
+def test_typewriter_render_contract_fallback_word_by_word(sub_mod, tmp_path):
+    narr = tmp_path / "tw.txt"
+    narr.write_text("# h\n\n" + " ".join(f"w{i}" for i in range(20)) + ".\n", encoding="utf-8")
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=None,
+        out_root=tmp_path / "outtw",
+        run_id="tw205d",
+        subtitle_mode="simple",
+        subtitle_style="typewriter",
+    )
+    assert meta["ok"] is True
+    c = meta["subtitle_render_contract"]
+    assert c["style"] == "typewriter"
+    assert c["fallback_style"] == "word_by_word"
+    assert c["requires_character_timing"] is True
+    assert any("typewriter_v1_contract_only" in w for w in (c.get("warnings") or []))
+
+
+def test_subtitle_style_none_suppresses_cues_no_hard_error(sub_mod, tmp_path):
+    narr = tmp_path / "nonevis.txt"
+    narr.write_text("# x\n\nBeliebiger Text.\n", encoding="utf-8")
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=None,
+        out_root=tmp_path / "outnv",
+        run_id="nonvis205d",
+        subtitle_mode="simple",
+        subtitle_style="none",
+    )
+    assert meta["ok"] is True
+    assert meta["subtitle_count"] == 0
+    assert "subtitle_style_none_visual_suppressed" in meta["warnings"]
+    c = meta["subtitle_render_contract"]
+    assert c["style"] == "none"
+    assert c["max_words_per_cue"] == 0
+    srt = Path(meta["subtitles_srt_path"]).read_text(encoding="utf-8")
+    assert srt.strip() == ""
+
+
+def test_subtitle_style_invalid_programmatic_defaults_classic_warning(sub_mod, tmp_path):
+    narr = tmp_path / "inv.txt"
+    narr.write_text("# h\n\nEins zwei drei vier fünf sechs sieben.\n", encoding="utf-8")
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=None,
+        out_root=tmp_path / "outinv",
+        run_id="inv205d",
+        subtitle_mode="simple",
+        subtitle_style="neon_glow_not_valid",
+    )
+    assert meta["ok"] is True
+    assert meta.get("subtitle_style") == "classic"
+    assert any("subtitle_style_unknown_defaulting_classic" in w for w in meta["warnings"])
