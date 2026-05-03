@@ -77,6 +77,7 @@ def test_build_subtitle_creates_srt_and_manifest(sub_mod, tmp_path):
     assert disk["subtitle_count"] == meta["subtitle_count"]
     assert "warnings" in disk and "blocking_reasons" in disk
     assert float(disk["estimated_duration_seconds"]) == 10.0
+    assert "subtitle_timeline_duration_used" in meta["warnings"]
 
 
 def test_subtitle_manifest_shape_none_mode(sub_mod, tmp_path):
@@ -194,6 +195,116 @@ def test_subtitle_burn_failure_falls_back_static(render_mod, tmp_path, monkeypat
     assert len(calls) == 2
     assert "subtitles=" in " ".join(calls[0])
     assert "subtitles=" not in " ".join(calls[1])
+
+
+def test_audio_duration_preferred_when_probe_ok(sub_mod, tmp_path, monkeypatch):
+    narr = tmp_path / "na.txt"
+    narr.write_text(
+        "# h\n\n" + " ".join(f"word{i}" for i in range(80)) + ".",
+        encoding="utf-8",
+    )
+    mp3 = tmp_path / "voice.mp3"
+    mp3.write_bytes(b"fake")
+    tl = tmp_path / "tl_audio.json"
+    tl.write_text(
+        json.dumps(
+            {
+                "audio_path": str(mp3),
+                "scenes": [{"duration_seconds": 5, "image_path": "a.png"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    def fake_run(cmd, check=True, capture_output=True, text=True):
+        return CompletedProcess(cmd, 0, "42.5\n", "")
+
+    monkeypatch.setattr(sub_mod.subprocess, "run", fake_run)
+    monkeypatch.setattr(sub_mod.shutil, "which", lambda x: "ffprobe_bin" if x == "ffprobe" else None)
+
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=tl,
+        out_root=tmp_path / "outa",
+        run_id="aud205b",
+        subtitle_mode="simple",
+    )
+    assert meta["ok"] is True
+    assert "subtitle_audio_duration_used" in meta["warnings"]
+    assert abs(float(meta["estimated_duration_seconds"]) - 42.5) < 0.01
+
+
+def test_shorter_cues_more_chunks_for_long_text(sub_mod, tmp_path):
+    narr = tmp_path / "long.txt"
+    narr.write_text(
+        "# x\n\n"
+        + " ".join(f"w{i}" for i in range(55))
+        + ". Ende.",
+        encoding="utf-8",
+    )
+    tl = tmp_path / "tl_long.json"
+    tl.write_text(
+        json.dumps({"scenes": [{"duration_seconds": 30, "image_path": "a.png"}]}),
+        encoding="utf-8",
+    )
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=tl,
+        out_root=tmp_path / "outl",
+        run_id="chunk205b",
+        subtitle_mode="simple",
+    )
+    assert meta["ok"] is True
+    assert meta["subtitle_count"] >= 5
+
+
+def test_cue_end_times_not_exceed_total_duration(sub_mod, tmp_path):
+    narr = tmp_path / "t.txt"
+    narr.write_text("#\n\nHallo hier. Zweiter Satz. Dritter Satz.\n", encoding="utf-8")
+    tl = tmp_path / "tl_cap.json"
+    tl.write_text(
+        json.dumps(
+            {
+                "scenes": [
+                    {"duration_seconds": 4, "image_path": "a.png"},
+                    {"duration_seconds": 4, "image_path": "b.png"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=tl,
+        out_root=tmp_path / "outc",
+        run_id="cap205b",
+        subtitle_mode="simple",
+    )
+    total = float(meta["estimated_duration_seconds"])
+    text = Path(meta["subtitles_srt_path"]).read_text(encoding="utf-8")
+    ends: list[float] = []
+    for line in text.splitlines():
+        if "-->" in line:
+            _, right = line.split("-->", 1)
+            h, m, rest = right.strip().split(":")
+            sec, ms = rest.split(",")
+            ends.append(int(h) * 3600 + int(m) * 60 + int(sec) + int(ms) / 1000.0)
+    assert ends
+    assert max(ends) <= total + 0.06
+
+
+def test_fallback_estimate_without_timeline(sub_mod, tmp_path):
+    narr = tmp_path / "e.txt"
+    narr.write_text("Ein zwei drei vier fünf sechs sieben acht.\n", encoding="utf-8")
+    meta = sub_mod.build_subtitle_pack(
+        narr,
+        timeline_manifest_path=None,
+        out_root=tmp_path / "oute",
+        run_id="est205b",
+        subtitle_mode="simple",
+    )
+    assert meta["ok"] is True
+    assert "subtitle_duration_estimate_used" in meta["warnings"]
 
 
 def test_escape_subtitle_path_colon(render_mod, tmp_path):
