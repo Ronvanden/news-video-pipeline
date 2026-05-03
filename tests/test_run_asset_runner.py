@@ -1,4 +1,4 @@
-"""BA 19.0 — run_asset_runner.py Placeholder + Manifest."""
+"""BA 19.0 / BA 20.2 — run_asset_runner.py Placeholder + Leonardo live."""
 
 from __future__ import annotations
 
@@ -54,6 +54,29 @@ def _minimal_pack(tmp_path: Path) -> Path:
     return p
 
 
+def _five_beat_pack(tmp_path: Path) -> Path:
+    beats = []
+    for j in range(5):
+        beats.append(
+            {
+                "chapter_index": 0,
+                "beat_index": j,
+                "visual_prompt": f"Beat {j} establishing shot.",
+                "camera_motion_hint": "static",
+                "duration_seconds": 6,
+                "asset_type": "establishing",
+                "continuity_note": "",
+                "safety_notes": [],
+            }
+        )
+    p = tmp_path / "pack5.json"
+    p.write_text(
+        json.dumps({"export_version": "18.2-v1", "scene_expansion": {"expanded_scene_assets": beats}}),
+        encoding="utf-8",
+    )
+    return p
+
+
 def test_placeholder_creates_pngs_and_manifest(asset_runner_mod, tmp_path):
     pack = _minimal_pack(tmp_path)
     out_root = tmp_path / "out"
@@ -96,7 +119,7 @@ def test_empty_beats_raises(asset_runner_mod, tmp_path):
         asset_runner_mod.run_local_asset_runner(bad, tmp_path / "out", run_id="y", mode="placeholder")
 
 
-def test_live_without_key_skips_images(asset_runner_mod, tmp_path, monkeypatch):
+def test_live_without_key_fallback_all_placeholders(asset_runner_mod, tmp_path, monkeypatch):
     monkeypatch.delenv("LEONARDO_API_KEY", raising=False)
     pack = _minimal_pack(tmp_path)
     meta = asset_runner_mod.run_local_asset_runner(
@@ -105,10 +128,73 @@ def test_live_without_key_skips_images(asset_runner_mod, tmp_path, monkeypatch):
         run_id="liveskip",
         mode="live",
     )
-    assert meta["ok"] is False
-    assert meta["asset_count"] == 0
+    assert meta["ok"] is True
+    assert meta["asset_count"] == 2
     out_dir = Path(meta["output_dir"])
     man = json.loads((out_dir / "asset_manifest.json").read_text(encoding="utf-8"))
-    assert man["generation_mode"] == "live_skipped"
-    assert man["asset_count"] == 0
-    assert not (out_dir / "scene_001.png").exists()
+    assert man["generation_mode"] == "leonardo_fallback_placeholder"
+    assert "leonardo_env_missing_fallback_placeholder" in meta["warnings"]
+    assert (out_dir / "scene_001.png").is_file()
+    assert (out_dir / "scene_002.png").is_file()
+    assert all(a["generation_mode"] == "leonardo_fallback_placeholder" for a in man["assets"])
+
+
+def test_live_max_assets_limits_leonardo_attempts(asset_runner_mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("LEONARDO_API_KEY", "fake-key")
+
+    def fake_beat(vp: str, dest: Path) -> tuple[bool, list[str]]:
+        dest.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return True, []
+
+    pack = _five_beat_pack(tmp_path)
+    meta = asset_runner_mod.run_local_asset_runner(
+        pack,
+        tmp_path / "out",
+        run_id="cap20",
+        mode="live",
+        max_assets_live=2,
+        leonardo_beat_fn=fake_beat,
+    )
+    assert meta["ok"] is True
+    man = json.loads((Path(meta["output_dir"]) / "asset_manifest.json").read_text(encoding="utf-8"))
+    assert man["asset_count"] == 5
+    assert man["assets"][0]["generation_mode"] == "leonardo_live"
+    assert man["assets"][1]["generation_mode"] == "leonardo_live"
+    assert man["assets"][2]["generation_mode"] == "placeholder"
+    assert any("leonardo_live_max_assets_cap:2" in w for w in meta["warnings"])
+    assert man["generation_mode"] == "leonardo_live"
+
+
+def test_live_failed_beat_placeholder_continues(asset_runner_mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("LEONARDO_API_KEY", "fake-key")
+    n = {"c": 0}
+
+    def fake_beat(vp: str, dest: Path) -> tuple[bool, list[str]]:
+        n["c"] += 1
+        if n["c"] == 1:
+            return False, ["mock_fail"]
+        dest.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return True, []
+
+    pack = _minimal_pack(tmp_path)
+    meta = asset_runner_mod.run_local_asset_runner(
+        pack,
+        tmp_path / "out",
+        run_id="failmix",
+        mode="live",
+        max_assets_live=10,
+        leonardo_beat_fn=fake_beat,
+    )
+    assert meta["ok"] is True
+    man = json.loads((Path(meta["output_dir"]) / "asset_manifest.json").read_text(encoding="utf-8"))
+    assert man["assets"][0]["generation_mode"] == "leonardo_fallback_placeholder"
+    assert man["assets"][1]["generation_mode"] == "leonardo_live"
+    assert man["generation_mode"] == "leonardo_fallback_placeholder"
+    assert any("leonardo_live_beat_failed_fallback_placeholder:1" in w for w in meta["warnings"])
+
+
+def test_chunk_helpers_generation_id_nested(asset_runner_mod):
+    gid = asset_runner_mod._generation_id_from_dict(
+        {"sdGenerationJob": {"generationId": "abc-123", "status": "PENDING"}}
+    )
+    assert gid == "abc-123"

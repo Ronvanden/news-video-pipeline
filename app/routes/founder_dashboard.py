@@ -35,7 +35,7 @@ def production_proof_summary_payload() -> dict:
                 "BA 16 monetization scale",
                 "BA 17.0 viral upgrade (advisory, pre-assembly)",
                 "BA 18.0 scene expansion (multi-beat prompts, pre-assembly)",
-                "BA 19.0 run_asset_runner.py (placeholder PNGs + manifest)",
+                "BA 19.0/20.2 run_asset_runner.py (placeholder or Leonardo live + manifest)",
                 "BA 19.1 build_timeline_manifest.py (timeline_manifest.json)",
                 "BA 19.2 render_final_story_video.py (local MP4 via ffmpeg)",
                 "BA 20.0 build_full_voiceover.py (narration + smoke MP3 + manifest)",
@@ -57,6 +57,7 @@ def production_proof_summary_payload() -> dict:
             {"script": "scripts/build_timeline_manifest.py", "role": "BA 19.1 — asset_manifest → timeline_manifest.json"},
             {"script": "scripts/render_final_story_video.py", "role": "BA 19.2 — timeline + images + audio → MP4 (ffmpeg)"},
             {"script": "scripts/build_full_voiceover.py", "role": "BA 20.0/20.1 — narration + smoke or ElevenLabs/OpenAI TTS MP3"},
+            {"script": "scripts/run_asset_runner.py", "role": "BA 19.0/20.2 — scene_asset_pack → PNGs + asset_manifest (placeholder or Leonardo live)"},
         ],
         "docs": [
             "PIPELINE_PLAN.md — Founder Production Mode / Proof of Production",
