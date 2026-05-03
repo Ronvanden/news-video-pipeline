@@ -39,6 +39,7 @@ def production_proof_summary_payload() -> dict:
                 "BA 19.1 build_timeline_manifest.py (timeline_manifest.json)",
                 "BA 19.2 render_final_story_video.py (local MP4 via ffmpeg)",
                 "BA 20.0 build_full_voiceover.py (narration + smoke MP3 + manifest)",
+                "BA 20.1 build_full_voiceover.py (ElevenLabs / OpenAI TTS optional)",
             ],
         },
         "script_only_fast_path": {
@@ -55,7 +56,7 @@ def production_proof_summary_payload() -> dict:
             {"script": "scripts/run_watch_approval.py", "role": "Watch approval radar (local JSON)"},
             {"script": "scripts/build_timeline_manifest.py", "role": "BA 19.1 — asset_manifest → timeline_manifest.json"},
             {"script": "scripts/render_final_story_video.py", "role": "BA 19.2 — timeline + images + audio → MP4 (ffmpeg)"},
-            {"script": "scripts/build_full_voiceover.py", "role": "BA 20.0 — full narration text + timeline-length smoke MP3"},
+            {"script": "scripts/build_full_voiceover.py", "role": "BA 20.0/20.1 — narration + smoke or ElevenLabs/OpenAI TTS MP3"},
         ],
         "docs": [
             "PIPELINE_PLAN.md — Founder Production Mode / Proof of Production",
