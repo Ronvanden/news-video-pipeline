@@ -20,6 +20,31 @@ MOTION_FPS = 25
 DEFAULT_XFADE_FADE_SEC = 0.35
 CUT_XFADE_SEC = 0.06
 
+# libass force_style (Kommas im Filter escaped)
+SUBTITLE_FORCE_STYLE = (
+    "FontName=Arial,FontSize=22,"
+    "PrimaryColour=&H00FFFFFF&,OutlineColour=&H000000&,"
+    "Outline=2,Shadow=1,MarginV=64,Alignment=2"
+)
+
+
+def _ffmpeg_escape_subtitle_file_path(p: Path) -> str:
+    """Pfad für subtitles=… in -vf / filter_complex (Windows-tauglich)."""
+    s = p.resolve().as_posix()
+    s = s.replace("\\", "/")
+    s = s.replace(":", r"\:")
+    s = s.replace("'", r"\'")
+    s = s.replace(",", r"\,")
+    s = s.replace("[", r"\[")
+    s = s.replace("]", r"\]")
+    return s
+
+
+def _subtitles_vf_fragment(srt: Path) -> str:
+    pe = _ffmpeg_escape_subtitle_file_path(srt)
+    st = SUBTITLE_FORCE_STYLE.replace(",", r"\,")
+    return f"subtitles='{pe}':force_style={st}"
+
 
 def which_ffmpeg() -> Optional[str]:
     return shutil.which("ffmpeg")
@@ -268,8 +293,10 @@ def _run_ffmpeg_static_concat(
     audio_file: Optional[Path],
     timeline_seconds: float,
     warnings: List[str],
+    *,
+    subtitle_path: Optional[Path] = None,
 ) -> Tuple[bool, List[str], List[str]]:
-    """BA 19.2 Pfad: concat-Demuxer + globales scale/pad."""
+    """BA 19.2 Pfad: concat-Demuxer + globales scale/pad; optional BA 20.5 subtitles-Burn-in."""
     blocking: List[str] = []
     fd, tmp_name = tempfile.mkstemp(suffix="_concat.txt", text=True)
     os.close(fd)
@@ -280,6 +307,8 @@ def _run_ffmpeg_static_concat(
             "format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
             "pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black"
         )
+        if subtitle_path is not None and subtitle_path.is_file() and subtitle_path.stat().st_size > 0:
+            vf = f"{vf},{_subtitles_vf_fragment(subtitle_path)}"
         cmd: List[str] = [
             ffmpeg,
             "-y",
@@ -349,8 +378,10 @@ def _run_ffmpeg_basic_motion(
     audio_file: Optional[Path],
     timeline_seconds: float,
     warnings: List[str],
+    *,
+    subtitle_path: Optional[Path] = None,
 ) -> Tuple[bool, List[str], List[str]]:
-    """BA 20.4: Ken-Burns-ähnlich + xfade; Audio wie BA 19.2."""
+    """BA 20.4: Ken-Burns-ähnlich + xfade; Audio wie BA 19.2; optional BA 20.5 subtitles."""
     blocking: List[str] = []
     n = len(scenes)
     fps = MOTION_FPS
@@ -368,6 +399,11 @@ def _run_ffmpeg_basic_motion(
             has_audio=has_audio,
             audio_input_index=audio_idx,
         )
+        v_out = "vfin"
+        if subtitle_path is not None and subtitle_path.is_file() and subtitle_path.stat().st_size > 0:
+            frag = _subtitles_vf_fragment(subtitle_path)
+            body = body.rstrip() + f";[vfin]{frag}[vsubout]\n"
+            v_out = "vsubout"
         script_path.write_text(body, encoding="utf-8")
 
         cmd: List[str] = [ffmpeg, "-y"]
@@ -389,7 +425,7 @@ def _run_ffmpeg_basic_motion(
             cmd.extend(
                 [
                     "-map",
-                    "[vfin]",
+                    f"[{v_out}]",
                     "-map",
                     "[aout]",
                     "-c:v",
@@ -407,7 +443,7 @@ def _run_ffmpeg_basic_motion(
             cmd.extend(
                 [
                     "-map",
-                    "[vfin]",
+                    f"[{v_out}]",
                     "-an",
                     "-c:v",
                     "libx264",
@@ -436,24 +472,33 @@ def render_final_story_video(
     *,
     output_video: Path,
     motion_mode: Optional[str] = None,
+    subtitle_path: Optional[Path] = None,
     ffmpeg_bin: Optional[str] = None,
     ffprobe_bin: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     concat demuxer (static) oder Motion+xfade (basic) → scale/pad 1920x1080 → H.264 + optional AAC.
     Ohne Audio: stumm (warnings audio_missing_silent_render).
+    BA 20.5: optional Untertitel-Burn-in (--subtitle-path), bei Fehler erneuter Lauf ohne Untertitel.
     """
     warnings: List[str] = []
     blocking: List[str] = []
     ffprobe = ffprobe_bin or which_ffprobe()
+    sub_req = (str(subtitle_path).strip() if subtitle_path is not None else "") or ""
 
     motion_eff, mw = _normalize_motion_mode(motion_mode)
     warnings.extend(mw)
 
+    def _sub_meta() -> Dict[str, Any]:
+        return {
+            "subtitle_path_requested": sub_req or None,
+            "subtitles_burned": False,
+        }
+
     try:
         tl = load_timeline_manifest(timeline_path)
     except (OSError, json.JSONDecodeError, FileNotFoundError) as e:
-        return {
+        r = {
             "video_created": False,
             "output_path": str(output_video),
             "duration_seconds": None,
@@ -462,10 +507,12 @@ def render_final_story_video(
             "warnings": warnings + [f"timeline_load_failed:{type(e).__name__}"],
             "blocking_reasons": ["timeline_manifest_invalid_or_missing"],
         }
+        r.update(_sub_meta())
+        return r
 
     scenes = tl.get("scenes") or []
     if not isinstance(scenes, list) or not scenes:
-        return {
+        r = {
             "video_created": False,
             "output_path": str(output_video),
             "duration_seconds": None,
@@ -474,11 +521,13 @@ def render_final_story_video(
             "warnings": warnings,
             "blocking_reasons": ["timeline_scenes_empty"],
         }
+        r.update(_sub_meta())
+        return r
 
     n_scenes = len(scenes)
     ffmpeg = ffmpeg_bin if ffmpeg_bin is not None else which_ffmpeg()
     if not ffmpeg:
-        return {
+        r = {
             "video_created": False,
             "output_path": str(output_video),
             "duration_seconds": None,
@@ -487,10 +536,12 @@ def render_final_story_video(
             "warnings": warnings,
             "blocking_reasons": ["ffmpeg_missing"],
         }
+        r.update(_sub_meta())
+        return r
 
     assets_dir = Path(str(tl.get("assets_directory") or ""))
     if not assets_dir.is_dir():
-        return {
+        r = {
             "video_created": False,
             "output_path": str(output_video),
             "duration_seconds": None,
@@ -499,11 +550,13 @@ def render_final_story_video(
             "warnings": warnings,
             "blocking_reasons": ["assets_directory_missing"],
         }
+        r.update(_sub_meta())
+        return r
 
     for sc in scenes:
         ip = assets_dir / str(sc.get("image_path") or "")
         if not ip.is_file():
-            return {
+            r = {
                 "video_created": False,
                 "output_path": str(output_video),
                 "duration_seconds": None,
@@ -512,6 +565,8 @@ def render_final_story_video(
                 "warnings": warnings,
                 "blocking_reasons": [f"missing_image:{sc.get('image_path')}"],
             }
+            r.update(_sub_meta())
+            return r
 
     audio_path = (tl.get("audio_path") or "").strip()
     audio_file: Optional[Path] = Path(audio_path) if audio_path else None
@@ -525,22 +580,58 @@ def render_final_story_video(
 
     output_video.parent.mkdir(parents=True, exist_ok=True)
 
+    sub_file: Optional[Path] = None
+    if subtitle_path is not None and str(subtitle_path).strip():
+        sp = Path(str(subtitle_path).strip())
+        if not sp.is_file():
+            warnings.append("subtitle_path_set_but_file_missing_skipped")
+        elif sp.stat().st_size == 0:
+            warnings.append("subtitle_file_empty_skipped")
+        else:
+            sub_file = sp.resolve()
+
+    use_sub = sub_file is not None
+    burned_subtitles = False
     used_motion = motion_eff == "basic"
     ok = False
+    sub_tries = [True, False] if use_sub else [False]
+
     if motion_eff == "basic":
-        ok, warnings, blocking = _run_ffmpeg_basic_motion(
-            scenes,
-            assets_dir,
-            output_video,
-            ffmpeg,
-            ffprobe,
-            audio_file,
-            timeline_seconds,
-            warnings,
-        )
+        for sub_on in sub_tries:
+            ok, warnings, blocking = _run_ffmpeg_basic_motion(
+                scenes,
+                assets_dir,
+                output_video,
+                ffmpeg,
+                ffprobe,
+                audio_file,
+                timeline_seconds,
+                warnings,
+                subtitle_path=sub_file if sub_on else None,
+            )
+            if ok:
+                burned_subtitles = bool(sub_on)
+                break
         if not ok:
             warnings.append("motion_render_failed_fallback_static")
             used_motion = False
+            for sub_on in sub_tries:
+                ok, warnings, blocking = _run_ffmpeg_static_concat(
+                    scenes,
+                    assets_dir,
+                    output_video,
+                    ffmpeg,
+                    ffprobe,
+                    audio_file,
+                    timeline_seconds,
+                    warnings,
+                    subtitle_path=sub_file if sub_on else None,
+                )
+                if ok:
+                    burned_subtitles = bool(sub_on)
+                    break
+    else:
+        for sub_on in sub_tries:
             ok, warnings, blocking = _run_ffmpeg_static_concat(
                 scenes,
                 assets_dir,
@@ -550,21 +641,17 @@ def render_final_story_video(
                 audio_file,
                 timeline_seconds,
                 warnings,
+                subtitle_path=sub_file if sub_on else None,
             )
-    else:
-        ok, warnings, blocking = _run_ffmpeg_static_concat(
-            scenes,
-            assets_dir,
-            output_video,
-            ffmpeg,
-            ffprobe,
-            audio_file,
-            timeline_seconds,
-            warnings,
-        )
+            if ok:
+                burned_subtitles = bool(sub_on)
+                break
+
+    if ok and use_sub and not burned_subtitles:
+        warnings.append("subtitle_burn_failed_fallback_no_subtitles")
 
     if not ok:
-        return {
+        r = {
             "video_created": False,
             "output_path": str(output_video),
             "duration_seconds": None,
@@ -573,7 +660,10 @@ def render_final_story_video(
             "motion_applied": used_motion,
             "warnings": warnings,
             "blocking_reasons": blocking or ["ffmpeg_encode_failed"],
+            "subtitle_path_requested": sub_req or None,
+            "subtitles_burned": False,
         }
+        return r
 
     dur: Optional[float] = None
     if ffprobe:
@@ -588,11 +678,13 @@ def render_final_story_video(
         "motion_applied": used_motion,
         "warnings": warnings,
         "blocking_reasons": blocking,
+        "subtitle_path_requested": sub_req or None,
+        "subtitles_burned": burned_subtitles,
     }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="BA 19.2 / BA 20.4 — timeline_manifest → MP4 (ffmpeg)")
+    parser = argparse.ArgumentParser(description="BA 19.2 / BA 20.4 / BA 20.5 — timeline_manifest → MP4 (ffmpeg)")
     parser.add_argument("--timeline-manifest", type=Path, required=True, dest="timeline_manifest")
     parser.add_argument(
         "--output",
@@ -607,12 +699,20 @@ def main() -> int:
         dest="motion_mode",
         help="BA 20.4: static = BA19.2 concat; basic = Zoom/Pan + xfade (Fallback bei ffmpeg-Fehler)",
     )
+    parser.add_argument(
+        "--subtitle-path",
+        type=Path,
+        default=None,
+        dest="subtitle_path",
+        help="BA 20.5: SRT-Datei (z. B. output/subtitles_<id>/subtitles.srt) ins Video brennen",
+    )
     args = parser.parse_args()
 
     meta = render_final_story_video(
         args.timeline_manifest,
         output_video=args.output,
         motion_mode=args.motion_mode,
+        subtitle_path=args.subtitle_path,
     )
     print(json.dumps(meta, ensure_ascii=False, indent=2))
     return 0 if meta.get("video_created") else 4
