@@ -142,6 +142,23 @@ class FounderDashboardRouteTests(unittest.TestCase):
         paths = data["story_engine_relative"]
         self.assertIn("export_package", paths)
         self.assertEqual(paths["export_formats"]["path"], "/story-engine/export-formats")
+        self.assertEqual(
+            data["production_proof_summary_relative"]["path"],
+            "/founder/production-proof/summary",
+        )
+
+    def test_production_proof_summary_200(self):
+        client = TestClient(app)
+        r = client.get("/founder/production-proof/summary")
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        data = r.json()
+        self.assertEqual(data["summary_version"], "production-proof-v1")
+        self.assertIn("canonical_spine", data)
+        self.assertEqual(
+            data["canonical_spine"]["primary_http"]["path"],
+            "/story-engine/prompt-plan",
+        )
+        self.assertIn("manual_source_url", data["canonical_spine"]["primary_http"]["required_for_full_plan"])
 
     def test_dashboard_contains_story_engine_request_builder_and_validation(self):
         client = TestClient(app)

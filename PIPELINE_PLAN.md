@@ -962,6 +962,24 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **Leitsatz:** URL rein — bessere Geschichte raus — echte Szenen-Prompts raus — nächster Ausführungsschritt: lokales Demo-Video wie BA 15.0.
 
+### Founder Production Mode / Proof of Production (Kanon V1)
+
+**Zweck:** Festhalten des **einen** Minimalpfads „**produce one real asset end-to-end**“ — ohne SaaS-Overbuild, ohne Multi-User-Architektur.
+
+**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**.
+
+**Lücke / bewusste Trennung:** **`POST /generate-script`** und **`POST /youtube/generate-script`** liefern nur den festen **`GenerateScriptResponse`** und **keinen** vollen Prompt-Plan, **kein** Publishing-Pack und **keine** Acceleration-Felder. Proof-of-Production für „alles aus einem Guss“ = Prompt-Plan-Spine; Skript-Endpoints bleiben Schnellpfad / Vertrags-API.
+
+**BA 13.x (Publishing):** Vorbereitung zum Veröffentlichen (**Metadaten**, Thumbnail-Varianten, Checklisten, Schedule-Heuristik, **`publishing_readiness_gate_result`**, **`founder_publishing_summary_result`**) — **ohne** echten Upload/OAuth.
+
+**BA 15.x (Production Acceleration):** Lokale Wiederholbarkeit nach Smoke-Erfolgen (**`demo_video_automation_result`**, Downloader, Voice Registry, Stitcher, Subtitles, **`founder_local_dashboard_result`**, Batch/Cost/Presets) — **ohne** Firestore-/Frontend-Zwang.
+
+**Paralleler Ops-Pfad (nicht identisch):** **`GOLD_PRODUCTION_STANDARD.md`** — Referenz über Watchlist/Firestore **`production_jobs`** und gestaffelte **`POST /production/jobs/...`**-Schritte; Schwerpunkt Betrieb mit persistiertem Skript, nicht der rein lokale URL→PromptPlan-Einstieg.
+
+**First Real Demo Run (minimal):** (1) **`POST /story-engine/prompt-plan`** mit gültiger **`manual_source_url`**; (2) Response-Felder **`downloadable_production_bundle_result`**, **`founder_publishing_summary_result`**, **`demo_video_automation_result`** / **`manual_url_story_execution_result`** auslesen; (3) optional **`python scripts/run_url_to_demo.py "<URL>"`** für verdichteten CLI-JSON-Überblick; (4) **`python scripts/build_first_demo_video.py`** sobald Bild- und Audio-Artefakte vorliegen; (5) Publishing-Felder für manuelle Plattform-Eingabe nutzen.
+
+**Ops:** Read-only **`GET /founder/production-proof/summary`** — statische Verweise auf Endpunkte/Skripte/Doku (keine Secrets).
+
 #### 15.0 — Manual URL Intake V1 (**done**)
 
 **Zweck:** Optional **`manual_source_url`** auf **`PromptPlanRequest`**; sichere Anzeige (**Host/Pfad**, keine Query) in **`manual_url_story_execution_result.intake`**.
