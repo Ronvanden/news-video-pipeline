@@ -35,11 +35,12 @@ def test_classify_mystery_history_keywords():
     assert plan.video_template == "mystery_explainer"
 
 
-def test_default_true_crime_when_no_keyword_hit():
+def test_default_documentary_when_no_keyword_hit():
     plan = build_production_prompt_plan(
         PromptPlanRequest(topic="Allgemeines Video ohne Treffer", title="", source_summary="")
     )
-    assert plan.template_type == "true_crime"
+    assert plan.template_type == "documentary"
+    assert plan.video_template == "generic"
 
 
 def test_template_override():

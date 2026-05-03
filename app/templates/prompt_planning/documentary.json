@@ -1,0 +1,66 @@
+{
+  "template_key": "documentary",
+  "video_template": "generic",
+  "tone": "sachlich, einordnend, respektvoll; keine Spekulation als Nachricht",
+  "classifier_keywords": [
+    "nachrichten",
+    "nachricht",
+    "bericht",
+    "hintergrund",
+    "einordnung",
+    "analyse",
+    "pressekonferenz",
+    "statement",
+    "wirtschaft",
+    "politik",
+    "gesellschaft",
+    "interview",
+    "studie",
+    "daten",
+    "entwicklung",
+    "update",
+    "live-ticker"
+  ],
+  "narrative_archetypes": [
+    {
+      "id": "news_context_arc",
+      "match_keywords": ["hintergrund", "einordnung", "bedeutet", "folgen"],
+      "chapter_slots": [
+        {
+          "title": "Was passiert ist",
+          "summary": "Faktenlage zu «{topic}» knapp und nachvollziehbar."
+        },
+        {
+          "title": "Warum es relevant ist",
+          "summary": "Kontext und Betroffene — ohne neue Behauptungen."
+        },
+        {
+          "title": "Was als Nächstes zu beobachten ist",
+          "summary": "Offene Punkte und nächste dokumentierte Schritte."
+        }
+      ]
+    },
+    {
+      "id": "explain_the_numbers_arc",
+      "match_keywords": ["zahlen", "studie", "daten", "prozent", "quote"],
+      "chapter_slots": [
+        {
+          "title": "Die Kennzahl im Fokus",
+          "summary": "Was die Zahlen zu «{topic}» sagen — transparent zu Lücken."
+        },
+        {
+          "title": "Methodik und Grenzen",
+          "summary": "Was messbar ist und was nicht."
+        },
+        {
+          "title": "Fazit für Zuschauer",
+          "summary": "Handlungsempfehlung nur als Orientierung, nicht als Anlageberatung."
+        }
+      ]
+    }
+  ],
+  "default_archetype_id": "news_context_arc",
+  "scene_pattern": "Szene {idx} ({chapter_title}): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «{topic}»; keine Clickbait-Gewalt.",
+  "voice_style": "klar, moderat, attributionsbewusst",
+  "thumbnail_angle": "Redaktionell-seriös, hohe Lesbarkeit, optional Schlagzeile oder Symbolgrafik"
+}

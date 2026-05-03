@@ -5,6 +5,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
+# Bei 0 Keyword-Treffern: eher Nachricht/Doku als True-Crime (Founder-Demo, generische URLs).
+_ZERO_KEYWORD_FALLBACK_ORDER: Tuple[str, ...] = (
+    "documentary",
+    "public_interest",
+    "mystery_history",
+    "true_crime",
+)
+
+
+def _template_for_zero_keyword_hits(templates: Dict[str, Dict]) -> str:
+    for key in _ZERO_KEYWORD_FALLBACK_ORDER:
+        if key in templates:
+            return key
+    return sorted(templates.keys())[0]
+
 
 @dataclass(frozen=True)
 class TopicClassification:
@@ -23,19 +38,20 @@ def classify_topic(topic: str, templates: Dict[str, Dict]) -> TopicClassificatio
     scores.sort(key=lambda x: (-x[1], x[0]))
 
     if not scores:
+        fb = _template_for_zero_keyword_hits(templates) if templates else "true_crime"
         return TopicClassification(
-            template_type="true_crime",
+            template_type=fb,
             scores=tuple(),
-            rationale="Keine Templates geladen (Fallback true_crime).",
+            rationale=f"Keine Templates geladen oder leerer Katalog — Fallback {fb!r}.",
         )
 
     winner = scores[0][0]
-    if scores[0][1] == 0 and "true_crime" in templates:
-        winner = "true_crime"
+    if scores[0][1] == 0:
+        winner = _template_for_zero_keyword_hits(templates)
 
     rationale = (
         f"Keyword-Treffer je Template: {dict(scores)}; "
-        f"Auswahl '{winner}' (bei 0 Treffern: Default true_crime wenn vorhanden)."
+        f"Auswahl '{winner}' (bei 0 Treffern: Priorität documentary → public_interest → mystery_history → true_crime)."
     )
     return TopicClassification(
         template_type=winner,
