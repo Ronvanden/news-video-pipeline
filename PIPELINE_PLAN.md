@@ -441,8 +441,8 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 18.1** | **done** | **Scene Expansion CLI Visibility:** **`scripts/run_url_to_demo.py`** erweitert um **`scene_expansion_asset_count`**, **`beats_per_chapter_default`**, **`first_visual_beats_preview`** (max. 3); graceful Fallback wenn **`scene_expansion_result`** fehlt; Tests **`tests/test_run_url_to_demo_cli_payload.py`**. |
 | **BA 18.2** | **done** | **Scene Asset Export Pack (Founder):** **`scripts/export_scene_asset_pack.py`** — URL oder Prompt-Plan-JSON → **`output/scene_asset_pack_<run_id>/`** mit **`scene_asset_pack.json`**, **`leonardo_prompts.txt`**, **`shot_plan.md`**, **`founder_summary.txt`**; Leonardo-Zeilen bereinigt; Tests **`tests/test_export_scene_asset_pack.py`**. |
 | **BA 19.0** | **done** | **Local Asset Runner V1:** **`scripts/run_asset_runner.py`** — liest **`scene_asset_pack.json`** (BA 18.2) → **`output/generated_assets_<run_id>/`** mit **`scene_001.png`** …, **`asset_manifest.json`** (`run_id`, `source_pack`, `asset_count`, `assets[]` inkl. `generation_mode`); **`--mode placeholder`** (Default): PIL-Placeholder mit Szenen-/Kapitel-/Beat-Info + Prompt-Snippet; **`--mode live`**: ohne **`LEONARDO_API_KEY`** nur Warnung/Manifest ohne Bilder — **kein** SaaS, **kein** Auto-Publish. |
-| **BA 19.1** | **planned** | **Timeline Builder:** Bilder + Voice-MP3 + Kapitelstruktur → **`timeline_manifest.json`** (je Szene: start/end/duration, transition, zoom_type, pan_direction, optional subtitle_hint). |
-| **BA 19.2** | **planned** | **Final Video Render:** **`timeline_manifest`** + Assets + Voice → **`output/final_story_video.mp4`** (ffmpeg, optional MoviePy; Ken Burns, Fade, Kapitelsprünge, Audio-Sync). |
+| **BA 19.1** | **done** | **Timeline Builder V1:** **`scripts/build_timeline_manifest.py`** — **`asset_manifest.json`** → **`output/timeline_<run_id>/timeline_manifest.json`** (Szenen mit start/end/duration, **fade**, **zoom_type**, **pan_direction**, chapter/beat); optional **`--audio-path`**; **kein** Video-Render. Tests **`tests/test_ba191_ba192_timeline_build_and_render.py`**. |
+| **BA 19.2** | **done** | **Final Video Render V1 (ffmpeg):** **`scripts/render_final_story_video.py`** — **`timeline_manifest.json`** + Bilder + optional Audio → **`output/final_story_video.mp4`** (concat, scale/pad **1920×1080**, H.264; ohne gültiges Audio → stumm + Warnung **`audio_missing_silent_render`**); bei fehlendem ffmpeg **`blocking_reasons: ["ffmpeg_missing"]`**; stdout JSON mit **`video_created`**, **`scene_count`**, **`warnings`**, **`blocking_reasons`**. Tests **`tests/test_ba191_ba192_timeline_build_and_render.py`**. |
 | **BA 19.3** | **planned** | **Quality Polish (optional):** Intro/Outro, Lower Thirds, Subtitle-Burn-in, Thumbnail-Export — **nicht** nötig für ersten Proof. |
 | **BA 17.1–17.9** | **planned** | **Media OS / SaaS / Platform Empire Blueprint:** strategische Produktisierungsschicht für White-Label, SaaS Dashboard, API Productization, Licensing, Agency Mode, Marketplace, Investor Readiness, Founder Replacement, Acquisition Funnel und Exit Blueprint. **Blueprint first:** noch keine Runtime-Implementierung, keine SaaS-Billing-/Mandantenpflicht, keine Plattform-Automation. |
 
@@ -974,7 +974,7 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **Zweck:** Festhalten des **einen** Minimalpfads „**produce one real asset end-to-end**“ — ohne SaaS-Overbuild, ohne Multi-User-Architektur.
 
-**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **BA 17.0 Viral Upgrade (advisory)** → **BA 18.0 Multi-Scene Expansion (plan-only)** → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**. **Danach lokal (Skripte, kein API-Zwang):** **BA 18.1** CLI-Sicht (`run_url_to_demo.py`), **BA 18.2** Export-Pack (`export_scene_asset_pack.py`), **BA 19.0** Asset Runner Placeholder (`run_asset_runner.py`); **BA 19.1–19.2** = Timeline → finales MP4 (**planned**, siehe Master Bauplan Founder Local Production Machine).
+**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **BA 17.0 Viral Upgrade (advisory)** → **BA 18.0 Multi-Scene Expansion (plan-only)** → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**. **Danach lokal (Skripte, kein API-Zwang):** **BA 18.1** CLI-Sicht (`run_url_to_demo.py`), **BA 18.2** Export-Pack (`export_scene_asset_pack.py`), **BA 19.0** Asset Runner Placeholder (`run_asset_runner.py`), **BA 19.1** Timeline (`build_timeline_manifest.py`), **BA 19.2** ffmpeg-MP4 (`render_final_story_video.py`) — siehe Master Bauplan Founder Local Production Machine.
 
 **Lücke / bewusste Trennung:** **`POST /generate-script`** und **`POST /youtube/generate-script`** liefern nur den festen **`GenerateScriptResponse`** und **keinen** vollen Prompt-Plan, **kein** Publishing-Pack und **keine** Acceleration-Felder. Proof-of-Production für „alles aus einem Guss“ = Prompt-Plan-Spine; Skript-Endpoints bleiben Schnellpfad / Vertrags-API.
 
@@ -1281,8 +1281,8 @@ BA 18.1 (CLI-Sicht)  →  BA 18.2 (Export-Pack)  →  BA 19.0 (Asset Runner)  �
 | **18.1** | **done** | CLI zeigt Beat-Anzahl + Preview |
 | **18.2** | **done** | Ordner `scene_asset_pack_*` mit JSON, Prompts, Shot-Plan, Summary |
 | **19.0** | **done** | Ordner `generated_assets_*` mit Placeholder-**PNG** (+ Manifest); Live optional (V1 nur Env-Check) |
-| **19.1** | **planned** | `timeline_manifest.json` (filmische Struktur, Zeiten, Motion-Hints) |
-| **19.2** | **planned** | `final_story_video.mp4` (ffmpeg; Ken Burns, Übergänge, Audio-Sync) |
+| **19.1** | **done** | `output/timeline_<run_id>/timeline_manifest.json` (`build_timeline_manifest.py`) |
+| **19.2** | **done** | `final_story_video.mp4` — ffmpeg MVP (scale/pad, concat, optional Audio) |
 | **19.3** | **planned** (optional) | Polish: Intro/Outro, Lower Thirds, Burn-in-Subs, Thumbnail |
 
 ### BA 19.0 — Local Asset Runner V1 (**done**)
@@ -1292,6 +1292,22 @@ BA 18.1 (CLI-Sicht)  →  BA 18.2 (Export-Pack)  →  BA 19.0 (Asset Runner)  �
 **Skript:** **`scripts/run_asset_runner.py`** — **`--scene-asset-pack`**, optional **`--out-root`**, **`--run-id`**, **`--mode placeholder|live`** (Default **placeholder**).
 
 **Nicht-Ziele:** kein SaaS, kein Auto-Publish, **keine** vollständige Leonardo-Integration in V1 (Live nur Env-Check + Warnung).
+
+### BA 19.1 — Timeline Builder V1 (**done**)
+
+**Skript:** **`scripts/build_timeline_manifest.py`** — **`--asset-manifest`**, optional **`--audio-path`**, **`--out-root`**, **`--run-id`**, **`--scene-duration-seconds`** (Default 6).
+
+**Output:** **`output/timeline_<run_id>/timeline_manifest.json`** mit **`run_id`**, **`asset_manifest_path`**, **`assets_directory`**, **`audio_path`**, **`total_scenes`**, **`estimated_duration_seconds`**, **`scenes[]`** (u. a. **`scene_number`**, **`image_path`**, Zeiten, **`transition`:** fade, **`zoom_type`**, **`pan_direction`**, **`chapter_index`**, **`beat_index`**).
+
+**Nicht-Ziele:** kein ffmpeg, kein MP4 in diesem Schritt.
+
+### BA 19.2 — Final Video Render V1 (**done**)
+
+**Skript:** **`scripts/render_final_story_video.py`** — **`--timeline-manifest`**, optional **`--output`** (Default **`output/final_story_video.mp4`**).
+
+**Verhalten:** ffmpeg concat demuxer → scale/pad 1920×1080 → libx264; fehlendes ffmpeg → JSON mit **`ffmpeg_missing`**; fehlendes/ungültiges Audio → stumm + Warnungen; stdout immer JSON-Metadaten.
+
+**Nicht-Ziele:** kein Ken-Burns-MVP (nur statische Szenenlängen), kein Auto-Publish.
 
 ### Realitätscheck
 
@@ -1310,7 +1326,7 @@ BA 18.1 (CLI-Sicht)  →  BA 18.2 (Export-Pack)  →  BA 19.0 (Asset Runner)  �
 
 - **18.1–18.2:** leicht (umgesetzt).  
 - **19.0:** leicht–mittel (Placeholder umgesetzt; Live-Generierung später).  
-- **19.1–19.2:** mittel bis mittel/hoch (abhängig von Motion/Qualität und echten API-Limits).
+- **19.1–19.2:** V1 umgesetzt (Timeline JSON + ffmpeg-MVP); Feinschliff Motion/Polish optional **BA 19.3**.
 
 **Endzustand nach BA 19.2:** Keine reine Theorie-Pipeline mehr — **eine lokale Video-Maschine** unter Founder-Kontrolle.
 
