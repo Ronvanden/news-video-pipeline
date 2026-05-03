@@ -23,6 +23,7 @@ from app.production_connectors.leonardo_generation_result import (
     _extract_image_urls,
     fetch_leonardo_generation_result,
 )
+from app.founder_calibration.ba203_presets import apply_visual_style_to_prompt, resolve_visual_style_preset
 from app.production_connectors.leonardo_live_connector import _build_leonardo_generation_payload
 
 DEFAULT_LEONARDO_GENERATIONS_URL = "https://cloud.leonardo.ai/api/rest/v1/generations"
@@ -369,6 +370,7 @@ def run_local_asset_runner(
     run_id: str,
     mode: str,
     max_assets_live: Optional[int] = None,
+    visual_style_preset: Optional[str] = None,
     leonardo_beat_fn: Optional[Callable[[str, Path], Tuple[bool, List[str]]]] = None,
 ) -> Dict[str, Any]:
     """
@@ -386,6 +388,12 @@ def run_local_asset_runner(
     warnings: List[str] = []
     assets: List[Dict[str, Any]] = []
     mode_l = (mode or "placeholder").strip().lower()
+
+    visual_style_preset_requested = (visual_style_preset or "").strip()
+    visual_style_preset_effective, vs_warns = resolve_visual_style_preset(
+        visual_style_preset_requested or None
+    )
+    warnings.extend(vs_warns)
 
     live_attempt_cap: Optional[int] = None
     if mode_l == "live":
@@ -421,12 +429,17 @@ def run_local_asset_runner(
             warnings.append(f"leonardo_live_max_assets_cap:{live_attempt_cap}")
 
         if use_leonardo:
+            if visual_style_preset_effective != "default":
+                vp_for_leonardo, style_warns = apply_visual_style_to_prompt(vp, visual_style_preset_requested)
+                warnings.extend(style_warns)
+            else:
+                vp_for_leonardo = vp
             if leonardo_beat_fn is not None:
-                ok_live, lw = leonardo_beat_fn(vp, fpath)
+                ok_live, lw = leonardo_beat_fn(vp_for_leonardo, fpath)
                 warnings.extend(lw)
             else:
                 ok_live, lw = leonardo_generate_image_to_path(
-                    vp,
+                    vp_for_leonardo,
                     fpath,
                     api_key=(os.environ.get("LEONARDO_API_KEY") or "").strip(),
                     endpoint=_resolve_leonardo_endpoint(),
@@ -502,6 +515,8 @@ def run_local_asset_runner(
         "ok": True,
         "output_dir": str(out_dir),
         "asset_count": len(assets),
+        "visual_style_preset_requested": visual_style_preset_requested or None,
+        "visual_style_preset_effective": visual_style_preset_effective,
         "warnings": warnings,
         "manifest_path": str(out_dir / "asset_manifest.json"),
     }
@@ -531,6 +546,12 @@ def main() -> int:
         dest="max_assets",
         help="Nur live: max. Leonardo-Generierungen (Default 3); Placeholder für übrige Beats.",
     )
+    parser.add_argument(
+        "--visual-style-preset",
+        default="",
+        dest="visual_style_preset",
+        help="BA 20.3 optional: documentary_news | cinematic_explainer | social_media_policy (nur Leonardo-Prompt)",
+    )
     args = parser.parse_args()
 
     run_id = (args.run_id or "").strip() or str(uuid.uuid4())
@@ -541,6 +562,7 @@ def main() -> int:
             run_id=run_id,
             mode=args.mode,
             max_assets_live=args.max_assets,
+            visual_style_preset=(args.visual_style_preset or "").strip() or None,
         )
     except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError) as e:
         err = {"ok": False, "error": type(e).__name__, "message": str(e), "run_id": run_id}

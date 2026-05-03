@@ -19,6 +19,7 @@ if str(ROOT) not in sys.path:
 
 import httpx
 
+from app.founder_calibration.ba203_presets import resolve_voice_preset
 from app.prompt_engine.pipeline import build_production_prompt_plan
 from app.prompt_engine.schema import ProductionPromptPlan, PromptPlanRequest
 from app.utils import count_words
@@ -269,12 +270,15 @@ def _post_elevenlabs_tts(
     *,
     api_key: str,
     voice_id: str,
+    voice_settings: Optional[Dict[str, Any]] = None,
     timeout_seconds: float = 120.0,
     post_override: Optional[Callable[[str, str, str, str], bytes]] = None,
 ) -> Tuple[bytes, Optional[int], str]:
     """POST einen Chunk; Rückgabe (bytes, http_status, error_tag). error_tag leer bei Erfolg."""
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    body = {"text": text, "model_id": _elevenlabs_model_id()}
+    body: Dict[str, Any] = {"text": text, "model_id": _elevenlabs_model_id()}
+    if voice_settings:
+        body["voice_settings"] = dict(voice_settings)
     if post_override:
         try:
             return post_override(text, api_key, voice_id, json.dumps(body)), 200, ""
@@ -330,6 +334,7 @@ def synthesize_elevenlabs_mp3(
     ffmpeg: str,
     *,
     max_retries: int = 2,
+    elevenlabs_voice_settings: Optional[Dict[str, Any]] = None,
     elevenlabs_post_override: Optional[Callable[[str, str, str, str], bytes]] = None,
 ) -> Tuple[bool, int, List[str], List[str]]:
     """
@@ -360,6 +365,7 @@ def synthesize_elevenlabs_mp3(
                 chunk,
                 api_key=api_key,
                 voice_id=voice_id,
+                voice_settings=elevenlabs_voice_settings,
                 post_override=elevenlabs_post_override,
             )
             if audio:
@@ -395,6 +401,7 @@ def synthesize_openai_mp3(
     ffmpeg: str,
     *,
     max_retries: int = 2,
+    openai_voice_override: Optional[str] = None,
     openai_post_override: Optional[Callable[[str, str, str, str], bytes]] = None,
 ) -> Tuple[bool, int, List[str], List[str]]:
     api_key = _openai_api_key()
@@ -403,7 +410,7 @@ def synthesize_openai_mp3(
         warns.append("openai_tts_env_missing_fallback_smoke")
         return False, 0, warns, []
 
-    voice = _openai_tts_voice()
+    voice = (openai_voice_override or "").strip() or _openai_tts_voice()
     model = _openai_tts_model()
     chunks = chunk_narration_for_tts(narration, OPENAI_CHUNK_MAX_CHARS)
     if not chunks:
@@ -479,6 +486,7 @@ def build_full_voiceover(
     run_id: str,
     out_root: Path,
     voice_mode: str,
+    voice_preset: Optional[str] = None,
     full_script_json: str = "",
     ffmpeg_bin: Optional[str] = None,
     elevenlabs_post_override: Optional[Callable[[str, str, str, str], bytes]] = None,
@@ -495,6 +503,12 @@ def build_full_voiceover(
 
     narration, source_type, nw = extract_narration_text(plan, full_script_json=full_script_json)
     warnings.extend(nw)
+
+    voice_preset_requested = (voice_preset or "").strip()
+    voice_preset_effective, openai_voice_override, elevenlabs_voice_settings, vp_w = resolve_voice_preset(
+        voice_preset_requested or None
+    )
+    warnings.extend(vp_w)
 
     wc = count_words(narration) if narration else 0
     est_sec = estimate_speak_duration_seconds(wc)
@@ -540,6 +554,7 @@ def build_full_voiceover(
                 mp3_path,
                 work_tts,
                 ffmpeg or "",
+                elevenlabs_voice_settings=elevenlabs_voice_settings,
                 elevenlabs_post_override=elevenlabs_post_override,
             )
             warnings.extend(tw)
@@ -567,6 +582,7 @@ def build_full_voiceover(
                 mp3_path,
                 work_tts,
                 ffmpeg or "",
+                openai_voice_override=openai_voice_override,
                 openai_post_override=openai_post_override,
             )
             warnings.extend(tw)
@@ -607,6 +623,9 @@ def build_full_voiceover(
         "word_count": wc,
         "estimated_duration_seconds": est_sec,
         "voice_mode": requested,
+        "voice_preset_requested": voice_preset_requested or None,
+        "voice_preset_effective": voice_preset_effective,
+        "elevenlabs_voice_settings_from_preset": bool(elevenlabs_voice_settings),
         "provider_used": provider_used,
         "chunk_count": chunk_count,
         "real_tts_generated": real_tts_generated,
@@ -631,6 +650,8 @@ def build_full_voiceover(
         "estimated_duration_seconds": est_sec,
         "source_type": source_type,
         "voice_mode": manifest["voice_mode"],
+        "voice_preset_effective": voice_preset_effective,
+        "voice_preset_requested": voice_preset_requested or None,
         "provider_used": provider_used,
         "chunk_count": chunk_count,
         "real_tts_generated": real_tts_generated,
@@ -653,6 +674,12 @@ def main() -> int:
         default="smoke",
         dest="voice_mode",
     )
+    parser.add_argument(
+        "--voice-preset",
+        default="",
+        dest="voice_preset",
+        help="BA 20.3 optional: documentary_de | dramatic_documentary_de | calm_explainer_de",
+    )
     parser.add_argument("--topic", default="Full Voiceover Run", dest="topic")
     parser.add_argument("--duration-minutes", type=int, default=10, dest="duration_minutes")
     args = parser.parse_args()
@@ -666,6 +693,7 @@ def main() -> int:
                 run_id=run_id,
                 out_root=args.out_root,
                 voice_mode=args.voice_mode,
+                voice_preset=(args.voice_preset or "").strip() or None,
                 full_script_json=fs_extra,
             )
         else:
@@ -678,6 +706,7 @@ def main() -> int:
                 run_id=run_id,
                 out_root=args.out_root,
                 voice_mode=args.voice_mode,
+                voice_preset=(args.voice_preset or "").strip() or None,
                 full_script_json="",
             )
     except (OSError, ValueError, json.JSONDecodeError) as e:
