@@ -81,6 +81,22 @@ def _five_beat_pack(tmp_path: Path) -> Path:
     return p
 
 
+def test_placeholder_png_cinematic_draft_look(asset_runner_mod, tmp_path):
+    """BA 20.2b — Placeholder ist kein Flachgrau; 960×540; Gradient erkennbar."""
+    pack = _minimal_pack(tmp_path)
+    meta = asset_runner_mod.run_local_asset_runner(
+        pack, tmp_path / "out", run_id="polish20b", mode="placeholder"
+    )
+    from PIL import Image
+
+    p = Path(meta["output_dir"]) / "scene_001.png"
+    im = Image.open(p).convert("RGB")
+    assert im.size == (960, 540)
+    top = im.getpixel((480, 8))
+    bottom = im.getpixel((480, 531))
+    assert top != bottom
+
+
 def test_placeholder_creates_pngs_and_manifest(asset_runner_mod, tmp_path):
     pack = _minimal_pack(tmp_path)
     out_root = tmp_path / "out"

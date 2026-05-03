@@ -70,29 +70,83 @@ def _draw_placeholder_png(
     chapter_index: int,
     beat_index: int,
     snippet: str,
+    asset_type: str = "image",
+    camera_motion_hint: str = "",
 ) -> None:
+    """
+    BA 20.2b — bewusster Draft-Look: dunkler Verlauf, klare Szene, Kapitel/Beat, Prompt-Snippet, Typ-Badge.
+    Kein Leonardo-Call; 960×540 bleibt kompatibel mit ffmpeg-Scale im Render.
+    """
     from PIL import Image, ImageDraw, ImageFont
 
     w, h = 960, 540
-    img = Image.new("RGB", (w, h), color=(24, 28, 36))
+    img = Image.new("RGB", (w, h), color=(10, 12, 18))
     draw = ImageDraw.Draw(img)
+
+    # Vertikaler Kino-Verlauf (oben etwas heller, unten tiefer)
+    for y in range(h):
+        t = y / max(h - 1, 1)
+        r = int(22 + (6 - 22) * t)
+        g = int(26 + (8 - 26) * t)
+        b = int(38 + (14 - 38) * t)
+        draw.line([(0, y), (w, y)], fill=(r, g, b))
+
     try:
-        font = ImageFont.truetype("arial.ttf", 22)
-        font_small = ImageFont.truetype("arial.ttf", 16)
+        font_title = ImageFont.truetype("arial.ttf", 36)
+        font_sub = ImageFont.truetype("arial.ttf", 20)
+        font_body = ImageFont.truetype("arial.ttf", 17)
+        font_badge = ImageFont.truetype("arial.ttf", 14)
+        font_foot = ImageFont.truetype("arial.ttf", 14)
     except OSError:
-        font = ImageFont.load_default()
-        font_small = font
-    title = f"PLACEHOLDER  scene {scene_number:03d}"
-    meta = f"chapter_index={chapter_index}  beat_index={beat_index}"
-    snip = (snippet or "")[:320].replace("\n", " ")
-    draw.text((40, 40), title, fill=(230, 235, 245), font=font)
-    draw.text((40, 90), meta, fill=(180, 190, 210), font=font_small)
-    y = 140
-    for line in _wrap_text(snip, width=52):
-        draw.text((40, y), line, fill=(200, 205, 220), font=font_small)
-        y += 22
-        if y > h - 40:
+        font_title = font_sub = font_body = font_badge = font_foot = ImageFont.load_default()
+
+    # Dezente obere Akzentlinie
+    draw.rectangle([0, 0, w, 4], fill=(180, 145, 70))
+
+    ch_label = f"Chapter {int(chapter_index) + 1}"
+    beat_label = f"Beat {int(beat_index) + 1}"
+    scene_line = f"SCENE {scene_number:03d}"
+    meta_line = f"{ch_label}  ·  {beat_label}"
+
+    # Schlagschatten + heller Titel
+    tx, ty = 36, 52
+    for ox, oy in ((3, 3), (2, 2), (1, 1)):
+        draw.text((tx + ox, ty + oy), scene_line, fill=(0, 0, 0), font=font_title)
+    draw.text((tx, ty), scene_line, fill=(245, 242, 235), font=font_title)
+
+    draw.text((36, 102), meta_line, fill=(190, 198, 215), font=font_sub)
+
+    # Asset-Typ-Badge (oben rechts)
+    badge = (asset_type or "image").strip().upper()[:18] or "IMAGE"
+    bbox = draw.textbbox((0, 0), badge, font=font_badge)
+    bw = bbox[2] - bbox[0] + 28
+    bh = bbox[3] - bbox[1] + 18
+    bx0, by0 = w - bw - 28, 28
+    bx1, by1 = bx0 + bw, by0 + bh
+    try:
+        draw.rounded_rectangle([bx0, by0, bx1, by1], radius=8, fill=(32, 36, 48), outline=(140, 125, 85), width=1)
+    except AttributeError:
+        draw.rectangle([bx0, by0, bx1, by1], fill=(32, 36, 48), outline=(140, 125, 85))
+    draw.text((bx0 + 14, by0 + 8), badge, fill=(220, 210, 175), font=font_badge)
+
+    y0 = 148
+    snip = (snippet or "").replace("\n", " ").strip()
+    if not snip:
+        snip = f"({asset_type} — no visual prompt text)"
+    for line in _wrap_text(snip[:420], width=54):
+        draw.text((36, y0), line, fill=(205, 210, 225), font=font_body)
+        y0 += 24
+        if y0 > h - 120:
             break
+
+    cam = (camera_motion_hint or "").strip()
+    if cam:
+        cam_line = f"Camera: {cam[:96]}"
+        draw.text((36, min(y0 + 8, h - 100)), cam_line, fill=(150, 165, 190), font=font_foot)
+
+    foot = "DRAFT PLACEHOLDER — not generated with Leonardo for this beat"
+    draw.text((36, h - 42), foot, fill=(120, 128, 145), font=font_foot)
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path, format="PNG")
 
@@ -391,6 +445,8 @@ def run_local_asset_runner(
                     chapter_index=ch,
                     beat_index=bi,
                     snippet=snippet,
+                    asset_type=atype,
+                    camera_motion_hint=cam,
                 )
         else:
             _draw_placeholder_png(
@@ -399,6 +455,8 @@ def run_local_asset_runner(
                 chapter_index=ch,
                 beat_index=bi,
                 snippet=snippet,
+                asset_type=atype,
+                camera_motion_hint=cam,
             )
             if full_live_fallback:
                 gen_mode = "leonardo_fallback_placeholder"
