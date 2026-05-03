@@ -438,6 +438,12 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 16.0–16.9** | **done** | **Monetization & Scale Operating System V1:** **`app/monetization_scale/`** bereitet Revenue, Channel Portfolio, Multi-Platform, Opportunity Scanning, Founder KPI, Scale Blueprint, Sponsorship Readiness, Content Investment, Scale Risks und Founder Summary strategisch vor; Felder **`*_result`** additiv auf **`POST /story-engine/prompt-plan`**; Tests **`tests/test_ba160_monetization_scale.py`**. Kein Upload, keine Pflicht-Analytics, keine Business-Automation. |
 | **BA 17.0** | **done** | **Viral Upgrade Layer V1 (Founder-only, Lean):** **`app/viral_upgrade/`** — advisory Verpackung (3 Titelvarianten, Hook-Intensität 0–100, 3 Thumbnail-Winkel, emotionaler Treiber, Audience-Mode, Caution-Flags) aus Rewrite-Preview + Prompt-Plan; Feld **`viral_upgrade_layer_result`** auf **`POST /story-engine/prompt-plan`** **vor** Production Assembly; **keine** Skript-Überschreibung, **keine** externen APIs, **kein** Auto-Publish. |
 | **BA 18.0** | **done** | **Multi-Scene Asset Expansion Layer V1:** **`app/scene_expansion/`** — pro Kapitel **2–3** produktionsnahe Visual-Beats (`expanded_scene_assets`: chapter/beat index, visual_prompt, camera_motion_hint, duration_seconds, asset_type, continuity_note, safety_notes) aus **`scene_prompts`** + **`chapter_outline`**; Feld **`scene_expansion_result`** additiv **vor** Production Assembly; **keine** Leonardo-/HTTP-Calls, nur Plan. |
+| **BA 18.1** | **done** | **Scene Expansion CLI Visibility:** **`scripts/run_url_to_demo.py`** erweitert um **`scene_expansion_asset_count`**, **`beats_per_chapter_default`**, **`first_visual_beats_preview`** (max. 3); graceful Fallback wenn **`scene_expansion_result`** fehlt; Tests **`tests/test_run_url_to_demo_cli_payload.py`**. |
+| **BA 18.2** | **done** | **Scene Asset Export Pack (Founder):** **`scripts/export_scene_asset_pack.py`** — URL oder Prompt-Plan-JSON → **`output/scene_asset_pack_<run_id>/`** mit **`scene_asset_pack.json`**, **`leonardo_prompts.txt`**, **`shot_plan.md`**, **`founder_summary.txt`**; Leonardo-Zeilen bereinigt; Tests **`tests/test_export_scene_asset_pack.py`**. |
+| **BA 19.0** | **planned** | **Asset Runner (reale Bilder):** Prompts/Manifest → **`output/generated_assets_<run_id>/`** (`scene_001.jpg` …, **`asset_manifest.json`**); Option A Leonardo Live, Option B Placeholder/Mock; Retry/Fallback, rate-limit-schonend, **`dry_run`** möglich — **kein** SaaS, **kein** Auto-Publish. |
+| **BA 19.1** | **planned** | **Timeline Builder:** Bilder + Voice-MP3 + Kapitelstruktur → **`timeline_manifest.json`** (je Szene: start/end/duration, transition, zoom_type, pan_direction, optional subtitle_hint). |
+| **BA 19.2** | **planned** | **Final Video Render:** **`timeline_manifest`** + Assets + Voice → **`output/final_story_video.mp4`** (ffmpeg, optional MoviePy; Ken Burns, Fade, Kapitelsprünge, Audio-Sync). |
+| **BA 19.3** | **planned** | **Quality Polish (optional):** Intro/Outro, Lower Thirds, Subtitle-Burn-in, Thumbnail-Export — **nicht** nötig für ersten Proof. |
 | **BA 17.1–17.9** | **planned** | **Media OS / SaaS / Platform Empire Blueprint:** strategische Produktisierungsschicht für White-Label, SaaS Dashboard, API Productization, Licensing, Agency Mode, Marketplace, Investor Readiness, Founder Replacement, Acquisition Funnel und Exit Blueprint. **Blueprint first:** noch keine Runtime-Implementierung, keine SaaS-Billing-/Mandantenpflicht, keine Plattform-Automation. |
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
@@ -968,7 +974,7 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 
 **Zweck:** Festhalten des **einen** Minimalpfads „**produce one real asset end-to-end**“ — ohne SaaS-Overbuild, ohne Multi-User-Architektur.
 
-**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **BA 17.0 Viral Upgrade (advisory)** → **BA 18.0 Multi-Scene Expansion (plan-only)** → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**.
+**Durchgehend vorhanden:** Über **`POST /story-engine/prompt-plan`** mit **`manual_source_url`** (optional **`manual_url_rewrite_mode`**, **`template_override`**) orchestriert **`build_production_prompt_plan`** (`app/prompt_engine/pipeline.py`) in einem Lauf: Manual-URL-Story (Extraktion/Rewrite/Quality Gate) → Topic/Klassifikation → **Hook** → Kapitel → **Szenen-Prompts** → Export/Handoff/**Provider-Bundle** → Connector-Dry-Run/Live-Gates → **BA 17.0 Viral Upgrade (advisory)** → **BA 18.0 Multi-Scene Expansion (plan-only)** → **Production Assembly (BA 12)** → **Publishing Preparation (BA 13)** → Performance Feedback (BA 14) → **Production Acceleration (BA 15)** → Monetization Scale (BA 16) — jeweils additiv als Felder auf **`ProductionPromptPlan`**. **Danach lokal (Skripte, kein API-Zwang):** **BA 18.1** CLI-Sicht (`run_url_to_demo.py`), **BA 18.2** Export-Pack (`export_scene_asset_pack.py`); **BA 19.0–19.2** = Asset Runner → Timeline → finales MP4 (**planned**, siehe Master Bauplan Founder Local Production Machine).
 
 **Lücke / bewusste Trennung:** **`POST /generate-script`** und **`POST /youtube/generate-script`** liefern nur den festen **`GenerateScriptResponse`** und **keinen** vollen Prompt-Plan, **kein** Publishing-Pack und **keine** Acceleration-Felder. Proof-of-Production für „alles aus einem Guss“ = Prompt-Plan-Spine; Skript-Endpoints bleiben Schnellpfad / Vertrags-API.
 
@@ -1239,6 +1245,65 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 **Integration:** In **`build_production_prompt_plan`** direkt **nach** BA 17.0 und **vor** **`apply_production_assembly_suite`** — Feld **`scene_expansion_result`**.
 
 **Nicht-Ziele:** kein SaaS, kein Auto-Publish, keine Leonardo-Automatik, keine Architektur-Umstellung.
+
+### BA 18.1 — Scene Expansion CLI Visibility V1 (**done**)
+
+**Zweck:** Founder sieht im **CLI-JSON** von **`scripts/run_url_to_demo.py`** sofort **Skalierung** (Beat-Anzahl, Preview der ersten Visual-Beats).
+
+**Nicht-Ziele:** keine neuen HTTP-Endpunkte, kein SaaS.
+
+### BA 18.2 — Scene Asset Export Pack V1 (**done**)
+
+**Zweck:** **Produktionsordner** unter **`output/scene_asset_pack_<run_id>/`** — vollständige Beats, Leonardo-Textzeilen, Shotlist, Summary.
+
+**Beweis:** „Ich habe einen echten Produktionsordner.“
+
+---
+
+## Master Bauplan — Founder Local Production Machine V1 (BA 18.1 → BA 19.2)
+
+**Mission:** Von **URL → PromptPlan → Szene** zu **URL → Bilder → Voice → Timeline → echtes MP4** — **Founder-only**, **lokal**, **ein Artikel rein → ein 5–10-Minuten-Video raus**.
+
+**Nummerierungs-Hinweis:** **BA 19.x** ist die **Founder-Video-Render-Linie** (Assets → Timeline → MP4). **BA 17.1+** bleibt der **getrennte** Empire-/SaaS-**Blueprint** — nicht vermischen.
+
+### Nicht-Ziele (für die gesamte Linie 18.1–19.2)
+
+- Kein SaaS, kein Multi-User, kein Auto-Publish, kein Enterprise-System, **kein** Architektur-Neubau der Kern-PromptPlan-Verträge.
+
+### Kanonische Reihenfolge
+
+```
+BA 18.1 (CLI-Sicht)  →  BA 18.2 (Export-Pack)  →  BA 19.0 (Asset Runner)  →  BA 19.1 (Timeline)  →  BA 19.2 (Final Render)  →  Founder Production Proof „Video“
+```
+
+| BA | Status | Output / Beweis |
+|----|--------|------------------|
+| **18.1** | **done** | CLI zeigt Beat-Anzahl + Preview |
+| **18.2** | **done** | Ordner `scene_asset_pack_*` mit JSON, Prompts, Shot-Plan, Summary |
+| **19.0** | **planned** | Ordner `generated_assets_*` mit echten oder Placeholder-**Bildern** + `asset_manifest.json` |
+| **19.1** | **planned** | `timeline_manifest.json` (filmische Struktur, Zeiten, Motion-Hints) |
+| **19.2** | **planned** | `final_story_video.mp4` (ffmpeg; Ken Burns, Übergänge, Audio-Sync) |
+| **19.3** | **planned** (optional) | Polish: Intro/Outro, Lower Thirds, Burn-in-Subs, Thumbnail |
+
+### Realitätscheck
+
+- Nach **18.2:** „Ich habe **Produktionsmaterial**.“
+- Nach **19.0:** „Ich habe **echte Bilder** (oder kontrollierte Placeholders).“
+- Nach **19.1:** „Ich habe eine **Regie-Struktur**.“
+- Nach **19.2:** „Ich habe ein **echtes Video**.“
+
+### Strategie (kreditsparend)
+
+1. **Placeholder + lokal** zuerst validieren (Pfade, Manifeste, ffmpeg-Pipeline).  
+2. **Dann** optional Leonardo Live mit Safety/Dry-Run (bestehende Connector-Patterns).  
+3. **Dann** Feinschliff (19.3), nicht vor dem ersten durchgängigen MP4.
+
+### Komplexität (Richtwert)
+
+- **18.1–18.2:** leicht (umgesetzt).  
+- **19.0–19.2:** mittel bis mittel/hoch (abhängig von Motion/Qualität und echten API-Limits).
+
+**Endzustand nach BA 19.2:** Keine reine Theorie-Pipeline mehr — **eine lokale Video-Maschine** unter Founder-Kontrolle.
 
 ---
 
