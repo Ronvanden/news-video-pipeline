@@ -35,6 +35,7 @@ def production_proof_summary_payload() -> dict:
                 "BA 16 monetization scale",
                 "BA 17.0 viral upgrade (advisory, pre-assembly)",
                 "BA 18.0 scene expansion (multi-beat prompts, pre-assembly)",
+                "BA 19.0 run_asset_runner.py (placeholder PNGs + manifest)",
             ],
         },
         "script_only_fast_path": {
