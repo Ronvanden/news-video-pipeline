@@ -84,6 +84,18 @@ def test_shortcut_main_delegates_without_real_smoke(monkeypatch, mini_mod, tmp_p
         calls.append(a)
         return 0
 
+    monkeypatch.setattr(
+        mini_mod,
+        "_ffmpeg_preflight_check",
+        lambda: {
+            "ok": True,
+            "ffmpeg": {"available": True, "version": "x", "path": "/f"},
+            "ffprobe": {"available": True, "version": "y", "path": "/p"},
+            "missing_tools": [],
+            "warnings": [],
+            "setup_hint": "",
+        },
+    )
     monkeypatch.setattr(mini_mod, "_load_smoke_main", lambda: fake_main)
     rc = mini_mod.main(["--out-root", str(tmp_path), "--run-id", "deleg210"])
     assert rc == 0
