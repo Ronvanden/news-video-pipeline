@@ -1,0 +1,70 @@
+{
+    "template_id": "mystery_history",
+    "label": "Mystery History Story",
+    "narrative_style": "historical mystery documentary with cinematic curiosity",
+    "hook_style": [
+      "Dieser Ort sieht unscheinbar aus, doch seine Geschichte ist alles andere als gewöhnlich.",
+      "Was hier passiert ist, geriet fast in Vergessenheit.",
+      "Manche Spuren wirken klein, bis man versteht, wohin sie führen."
+    ],
+    "chapter_structure": [
+      "Der unscheinbare Anfang",
+      "Die historische Spur",
+      "Das vergessene Detail",
+      "Die Wendung in der Geschichte",
+      "Warum es heute noch relevant ist"
+    ],
+    "voice_style": "calm cinematic documentary, curious and serious",
+    "scene_style": "cinematic historical realism, atmospheric locations, subtle mystery, natural light, documentary look",
+    "thumbnail_angle": [
+      "abandoned place + hidden secret",
+      "old map + mysterious marker",
+      "forgotten building + bold question"
+    ],
+    "target_emotion": [
+      "curiosity",
+      "wonder",
+      "suspense",
+      "nostalgia"
+    ],
+    "duration_recommendation": {
+      "short": "8-10 min",
+      "medium": "10-15 min",
+      "long": "15-25 min"
+    },
+    "best_for_topics": [
+      "forgotten places",
+      "historical mysteries",
+      "lost buildings",
+      "strange roads",
+      "old events with modern relevance",
+      "regional history"
+    ],
+    "visual_rules": [
+      "avoid fake historical claims",
+      "avoid readable fake documents",
+      "avoid invented dates unless clearly fictionalized",
+      "keep visuals atmospheric but believable"
+    ],
+    "prompt_keywords": [
+      "cinematic documentary",
+      "historical atmosphere",
+      "forgotten place",
+      "soft dramatic light",
+      "realistic textures",
+      "archival feeling"
+    ],
+    "negative_prompt": [
+      "cartoon style",
+      "fantasy castle look",
+      "fake readable newspaper text",
+      "watermarks",
+      "overly glossy AI look",
+      "modern objects in historical scenes unless intended"
+    ],
+    "warnings": [
+      "No factual invention",
+      "Separate confirmed facts from interpretation",
+      "Use cautious language for uncertain historical details"
+    ]
+  }

@@ -1,0 +1,75 @@
+{
+    "template_id": "real_estate_story",
+    "label": "Real Estate Story",
+    "narrative_style": "cinematic real estate documentary with business and transformation angle",
+    "hook_style": [
+      "Dieses Gebäude wirkt unscheinbar, doch sein Wert erzählt eine größere Geschichte.",
+      "Was hier verkauft, saniert oder verändert wird, zeigt mehr als nur einen Immobilienwechsel.",
+      "Hinter dieser Immobilie steckt eine Geschichte aus Geld, Risiko und Veränderung."
+    ],
+    "chapter_structure": [
+      "Das Objekt und seine Ausgangslage",
+      "Warum diese Immobilie interessant ist",
+      "Die wirtschaftliche oder historische Bedeutung",
+      "Der Wandel: Verkauf, Sanierung oder neue Nutzung",
+      "Was diese Geschichte über den Markt verrät"
+    ],
+    "voice_style": "confident, calm, premium documentary narration",
+    "scene_style": "cinematic real estate realism, premium but grounded, architectural details, natural light, urban context",
+    "thumbnail_angle": [
+      "old building + high price question",
+      "luxury transformation before and after",
+      "empty property + bold market claim"
+    ],
+    "target_emotion": [
+      "curiosity",
+      "ambition",
+      "trust",
+      "market interest"
+    ],
+    "duration_recommendation": {
+      "short": "6-8 min",
+      "medium": "8-12 min",
+      "long": "12-18 min"
+    },
+    "best_for_topics": [
+      "property sales",
+      "real estate transformation",
+      "luxury renovations",
+      "abandoned buildings",
+      "market changes",
+      "historic properties",
+      "investment stories"
+    ],
+    "visual_rules": [
+      "avoid fake price claims",
+      "avoid invented ownership details",
+      "avoid showing private addresses too explicitly",
+      "keep visuals premium but realistic",
+      "separate confirmed facts from market interpretation"
+    ],
+    "prompt_keywords": [
+      "cinematic real estate documentary",
+      "architectural photography",
+      "premium atmosphere",
+      "realistic building textures",
+      "urban environment",
+      "natural light",
+      "before and after mood"
+    ],
+    "negative_prompt": [
+      "cartoon style",
+      "fake real estate signs",
+      "readable fake documents",
+      "watermarks",
+      "AI artifacts",
+      "overly glossy luxury ad look",
+      "unrealistic building geometry"
+    ],
+    "warnings": [
+      "No invented prices",
+      "No fake ownership claims",
+      "Use cautious market interpretation",
+      "Respect privacy and legal sensitivity"
+    ]
+  }

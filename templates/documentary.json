@@ -1,0 +1,70 @@
+{
+    "template_id": "documentary",
+    "label": "Documentary Story",
+    "narrative_style": "clear, serious, cinematic documentary",
+    "hook_style": [
+      "Auf den ersten Blick wirkt es wie eine einfache Geschichte. Doch dahinter steckt mehr.",
+      "Um zu verstehen, was hier passiert ist, muss man einen Schritt zurückgehen.",
+      "Diese Geschichte zeigt, wie schnell sich ein normales Ereignis in etwas Größeres verwandeln kann."
+    ],
+    "chapter_structure": [
+      "Der Ausgangspunkt",
+      "Der größere Zusammenhang",
+      "Die wichtigsten Fakten",
+      "Die Entwicklung",
+      "Was daraus folgt"
+    ],
+    "voice_style": "calm, serious, trustworthy documentary narration",
+    "scene_style": "cinematic documentary realism, clean compositions, natural light, realistic locations",
+    "thumbnail_angle": [
+      "main subject + bold question",
+      "before and after contrast",
+      "serious face + important object"
+    ],
+    "target_emotion": [
+      "understanding",
+      "curiosity",
+      "trust"
+    ],
+    "duration_recommendation": {
+      "short": "6-8 min",
+      "medium": "8-12 min",
+      "long": "12-20 min"
+    },
+    "best_for_topics": [
+      "news explainers",
+      "social issues",
+      "business stories",
+      "technology",
+      "history",
+      "real estate",
+      "economic changes"
+    ],
+    "visual_rules": [
+      "avoid fake facts",
+      "avoid dramatic exaggeration without source",
+      "avoid fake readable documents",
+      "keep visuals realistic and editorial"
+    ],
+    "prompt_keywords": [
+      "cinematic documentary",
+      "realistic environment",
+      "editorial composition",
+      "natural light",
+      "serious atmosphere",
+      "high detail"
+    ],
+    "negative_prompt": [
+      "cartoon style",
+      "overly dramatic horror look",
+      "fake newspaper headlines",
+      "watermarks",
+      "AI artifacts",
+      "overly glossy stock-photo look"
+    ],
+    "warnings": [
+      "No factual invention",
+      "Use neutral wording",
+      "Separate facts from interpretation"
+    ]
+  }

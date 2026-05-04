@@ -1,0 +1,79 @@
+{
+    "template_id": "news_explainer",
+    "label": "News Explainer",
+    "narrative_style": "clear journalistic explainer with context and cautious analysis",
+    "hook_style": [
+      "Diese Nachricht klingt auf den ersten Blick einfach, doch sie hat größere Folgen.",
+      "Was hier passiert ist, betrifft mehr Menschen, als man zunächst denkt.",
+      "Um diese Meldung richtig einzuordnen, muss man den Hintergrund verstehen."
+    ],
+    "chapter_structure": [
+      "Was ist passiert?",
+      "Warum ist das wichtig?",
+      "Der größere Zusammenhang",
+      "Wer ist betroffen?",
+      "Was könnte als Nächstes passieren?"
+    ],
+    "voice_style": "calm, clear, neutral and trustworthy news narration",
+    "scene_style": "cinematic editorial realism, modern news documentary look, clean visuals, realistic locations",
+    "thumbnail_angle": [
+      "main event + clear question",
+      "person or object + consequence headline",
+      "before and after situation contrast"
+    ],
+    "target_emotion": [
+      "curiosity",
+      "understanding",
+      "urgency",
+      "trust"
+    ],
+    "duration_recommendation": {
+      "short": "4-6 min",
+      "medium": "6-10 min",
+      "long": "10-14 min"
+    },
+    "best_for_topics": [
+      "news explainers",
+      "current events with background",
+      "policy changes",
+      "business news",
+      "technology news",
+      "society",
+      "real estate news",
+      "consumer topics"
+    ],
+    "visual_rules": [
+      "avoid unverified claims",
+      "avoid fake breaking news graphics",
+      "avoid fake readable documents",
+      "do not invent quotes",
+      "separate facts from interpretation",
+      "use cautious language for developing stories"
+    ],
+    "prompt_keywords": [
+      "cinematic editorial documentary",
+      "modern newsroom feeling",
+      "realistic environment",
+      "clean composition",
+      "serious atmosphere",
+      "subtle urgency",
+      "neutral visual tone"
+    ],
+    "negative_prompt": [
+      "fake newspaper headline",
+      "fake news lower third",
+      "watermarks",
+      "cartoon style",
+      "political propaganda look",
+      "overly dramatic disaster scene",
+      "AI artifacts",
+      "unreadable text blocks"
+    ],
+    "warnings": [
+      "No factual invention",
+      "Do not present speculation as fact",
+      "Use source-based wording",
+      "Mention uncertainty when facts are developing",
+      "Avoid sensationalism"
+    ]
+  }
