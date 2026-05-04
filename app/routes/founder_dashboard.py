@@ -1,9 +1,15 @@
 """BA 10.6/10.7 — Founder Dashboard (HTML + optionale JSON-Config)."""
 
-from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse, HTMLResponse
 
 from app.founder_dashboard.html import get_founder_dashboard_html
+from app.founder_dashboard.local_preview_panel import (
+    build_local_preview_panel_payload,
+    default_local_preview_out_root,
+    local_preview_file_media_type,
+    local_preview_safe_resolve_file,
+)
 
 router = APIRouter(tags=["founder-dashboard"])
 
@@ -72,12 +78,35 @@ async def founder_production_proof_summary() -> dict:
     return production_proof_summary_payload()
 
 
+@router.get("/founder/dashboard/local-preview/panel")
+async def founder_local_preview_panel() -> dict:
+    """BA 22.0 — read-only Local-Preview-Übersicht (Artefakt-Flags, Pfade, CLI-/Doku-Aktionen)."""
+    return build_local_preview_panel_payload()
+
+
+@router.get("/founder/dashboard/local-preview/file/{run_id}/{filename}")
+async def founder_local_preview_file(run_id: str, filename: str) -> FileResponse:
+    """BA 22.2 — sichere Auslieferung nur aus ``output/local_preview_<run_id>/`` (Whitelist, kein Symlink)."""
+    path = local_preview_safe_resolve_file(default_local_preview_out_root(), run_id, filename)
+    if path is None:
+        raise HTTPException(status_code=404, detail="not found")
+    return FileResponse(
+        path,
+        media_type=local_preview_file_media_type(filename),
+    )
+
+
 @router.get("/founder/dashboard/config")
 async def founder_dashboard_config() -> dict:
     """Statische Meta-Infos für Ops/Integrationstests (keine Secrets)."""
     return {
         "dashboard_version": "10.7-v1",
         "auth": False,
+        "local_preview_panel_relative": {"method": "GET", "path": "/founder/dashboard/local-preview/panel"},
+        "local_preview_file_relative": {
+            "method": "GET",
+            "path": "/founder/dashboard/local-preview/file/{run_id}/{filename}",
+        },
         "production_proof_summary_relative": {"method": "GET", "path": "/founder/production-proof/summary"},
         "story_engine_relative": {
             "export_package": {"method": "POST", "path": "/story-engine/export-package"},

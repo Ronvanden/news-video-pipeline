@@ -423,12 +423,41 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
 .pipe-timeline li.pipe-step.err::before { background: var(--danger); }
 .pipe-timeline .ps-msg { display: block; font-size: 0.72rem; font-weight: normal; margin-top: 0.15rem; color: var(--danger); }
 .intake-type-row { margin-bottom: 0.75rem; }
+.lp-action-list .lp-act { margin-bottom: 0.75rem; }
+.lp-action-list .lp-act h4 { margin: 0 0 0.3rem; font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+.lp-action-list pre { margin: 0; max-height: 120px; }
+.lp-cards { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem; }
+.lp-card {
+  flex: 1 1 120px;
+  min-width: 100px;
+  max-width: 180px;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 0.72rem;
+}
+.lp-card .lp-card-l { color: var(--muted); display: block; margin-bottom: 0.2rem; }
+.lp-card .lp-card-v { font-weight: 700; font-size: 0.78rem; }
+.lp-top-issue { font-size: 0.8rem; margin: 0.35rem 0; color: var(--text); }
+.lp-next-step { font-size: 0.78rem; color: var(--muted); margin: 0 0 0.5rem; }
+.lp-preview-btns { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.35rem 0 0.65rem; align-items: center; }
+.lp-preview-btns a { font-size: 0.78rem; color: var(--accent); text-decoration: underline; }
+.lp-preview-video-wrap { margin-top: 0.35rem; }
+.lp-preview-video-wrap video.lp-preview-video {
+  max-width: 100%;
+  max-height: 300px;
+  display: block;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #000;
+}
 </style>
 </head>
 <body>
-<header>
+  <header>
   <h1>Founder Dashboard</h1>
-  <p>Read-only Cockpit · Story-Engine per fetch · BA 11.0–11.2 Operator Clarity (ohne Auth / Firestore / externe Provider)</p>
+  <p>Read-only Cockpit · Story-Engine per fetch · BA 11.0–11.2 Operator Clarity · BA 22.0 Local Preview Panel (ohne Auth / Firestore / externe Provider)</p>
 </header>
 <main>
   <div id="error-bar" role="alert"></div>
@@ -465,6 +494,25 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       <div class="human-block"><h4>Prompt Quality</h4><p id="hum-pq">—</p></div>
       <div class="human-block"><h4>Provider Readiness</h4><p id="hum-readiness">—</p></div>
       <div class="human-block"><h4>Thumbnail CTR</h4><p id="hum-ctr">—</p></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-ba22-local-preview" aria-labelledby="lp-panel-h">
+    <h2 id="lp-panel-h">Local Preview (BA 22.0 / BA 22.1 / BA 22.2)</h2>
+    <p class="muted" id="lp-panel-status">Lade Panel…</p>
+    <div id="lp-panel-body" style="display:none">
+      <p class="muted" id="lp-out-root"></p>
+      <h3 class="subh">Status (Verdict / Quality / Founder)</h3>
+      <div id="lp-latest-cards" aria-live="polite"></div>
+      <p class="lp-top-issue" id="lp-top-issue" style="display:none"></p>
+      <p class="lp-next-step" id="lp-next-step" style="display:none"></p>
+      <h3 class="subh">Preview & Artefakte (BA 22.2)</h3>
+      <div id="lp-preview-toolbar" class="lp-preview-btns" aria-label="Preview Artefakte"></div>
+      <div id="lp-preview-video-wrap" class="lp-preview-video-wrap"></div>
+      <h3 class="subh">Operator-Aktionen</h3>
+      <div id="lp-actions" class="lp-action-list"></div>
+      <h3 class="subh">Letzte Läufe unter output/</h3>
+      <div id="lp-runs-wrap"></div>
     </div>
   </section>
 
@@ -2918,6 +2966,223 @@ try {
     }
   }
 
+  function lpAppendTextLink(container, label, href) {
+    if (!container || !href) return;
+    var a = document.createElement("a");
+    a.href = href;
+    a.textContent = label;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.className = "lp-file-link";
+    container.appendChild(a);
+  }
+
+  function lpRenderPreviewArtifacts(toolbarEl, videoEl, urls) {
+    if (!toolbarEl || !videoEl) return;
+    toolbarEl.innerHTML = "";
+    videoEl.innerHTML = "";
+    urls = urls || {};
+    var tu = document.createElement("div");
+    tu.className = "lp-preview-btns";
+    lpAppendTextLink(tu, "Preview öffnen", urls.preview_url);
+    lpAppendTextLink(tu, "Report öffnen", urls.report_url);
+    lpAppendTextLink(tu, "OPEN_ME öffnen", urls.open_me_url);
+    lpAppendTextLink(tu, "JSON öffnen", urls.result_json_url);
+    toolbarEl.appendChild(tu);
+    if (urls.preview_url) {
+      var v = document.createElement("video");
+      v.setAttribute("controls", "controls");
+      v.setAttribute("preload", "metadata");
+      v.setAttribute("playsinline", "");
+      v.className = "lp-preview-video";
+      v.src = urls.preview_url;
+      var hint = document.createElement("p");
+      hint.className = "muted";
+      hint.style.marginTop = "0.35rem";
+      hint.textContent = "Falls das Video nicht lädt, nutze „Preview öffnen“ (neuer Tab).";
+      videoEl.appendChild(v);
+      videoEl.appendChild(hint);
+    } else {
+      var mp = document.createElement("p");
+      mp.className = "muted";
+      mp.textContent = "Keine Preview-Datei gefunden.";
+      videoEl.appendChild(mp);
+    }
+  }
+
+  function lpRenderStatusCards(container, cards) {
+    if (!container) return;
+    container.innerHTML = "";
+    if (!cards) {
+      container.innerHTML = "<p class=\"muted\">Noch kein Local Preview Run gefunden.</p>";
+      return;
+    }
+    var defs = [
+      ["Verdict", cards.verdict || "UNKNOWN"],
+      ["Quality", cards.quality || "UNKNOWN"],
+      ["Subtitle Q.", cards.subtitle_quality || "UNKNOWN"],
+      ["Sync Guard", cards.sync_guard || "UNKNOWN"],
+      ["Warning level", cards.warning_level || "UNKNOWN"],
+      ["Founder decision", cards.founder_decision || "UNKNOWN"]
+    ];
+    var wrap = document.createElement("div");
+    wrap.className = "lp-cards";
+    defs.forEach(function(pair) {
+      var c = document.createElement("div");
+      c.className = "lp-card";
+      c.innerHTML = "<span class=\"lp-card-l\">" + pair[0] + "</span><span class=\"lp-card-v\">" + pair[1] + "</span>";
+      wrap.appendChild(c);
+    });
+    container.appendChild(wrap);
+    if (cards.contract_present === false) {
+      var hint = document.createElement("p");
+      hint.className = "muted";
+      hint.style.marginTop = "0.35rem";
+      hint.textContent = "Contract: nicht gefunden (älterer Run oder noch kein Lauf nach BA 22.1) — Status UNKNOWN.";
+      container.appendChild(hint);
+    }
+  }
+
+  async function fdLoadLocalPreviewPanel() {
+    var st = document.getElementById("lp-panel-status");
+    var body = document.getElementById("lp-panel-body");
+    var rootEl = document.getElementById("lp-out-root");
+    var actEl = document.getElementById("lp-actions");
+    var runsEl = document.getElementById("lp-runs-wrap");
+    var cardsEl = document.getElementById("lp-latest-cards");
+    var tiEl = document.getElementById("lp-top-issue");
+    var nsEl = document.getElementById("lp-next-step");
+    var tbPrev = document.getElementById("lp-preview-toolbar");
+    var vidWrap = document.getElementById("lp-preview-video-wrap");
+    if (!st || !body || !rootEl || !actEl || !runsEl) return;
+    try {
+      const r = await fetch("/founder/dashboard/local-preview/panel", { method: "GET" });
+      if (!r.ok) {
+        st.textContent = "Local Preview Panel: HTTP " + r.status;
+        st.classList.add("intake-status-err");
+        return;
+      }
+      const data = await r.json();
+      st.textContent = "Contract " + (data.result_contract && data.result_contract.id ? data.result_contract.id : "?")
+        + " · Läufe: " + ((data.runs && data.runs.length) || 0);
+      st.classList.remove("intake-status-err");
+      rootEl.textContent = "out_root: " + (data.out_root || "") + (data.out_root_exists ? "" : " (nicht lesbar)");
+      var latest = data.latest_status_cards;
+      if (!latest && data.runs && data.runs.length) {
+        latest = data.runs[0].status_cards || null;
+      }
+      if (cardsEl) {
+        if (!(data.runs && data.runs.length)) {
+          lpRenderStatusCards(cardsEl, null);
+        } else {
+          lpRenderStatusCards(cardsEl, latest);
+        }
+      }
+      if (tiEl && nsEl) {
+        if (latest && latest.top_issue) {
+          tiEl.style.display = "block";
+          tiEl.textContent = "Top issue: " + latest.top_issue;
+        } else {
+          tiEl.style.display = "none";
+        }
+        if (latest && latest.next_step) {
+          nsEl.style.display = "block";
+          nsEl.textContent = "Next step: " + latest.next_step;
+        } else {
+          nsEl.style.display = "none";
+        }
+      }
+      var latestUrls = data.latest_file_urls || {};
+      if ((!latestUrls.preview_url && !latestUrls.report_url) && data.runs && data.runs.length) {
+        latestUrls = data.runs[0].file_urls || latestUrls;
+      }
+      if (tbPrev && vidWrap) {
+        lpRenderPreviewArtifacts(tbPrev, vidWrap, latestUrls);
+      }
+      actEl.innerHTML = "";
+      (data.actions || []).forEach(function(a) {
+        var wrap = document.createElement("div");
+        wrap.className = "lp-act";
+        var h = document.createElement("h4");
+        h.textContent = (a.label_de || a.id || "Aktion");
+        wrap.appendChild(h);
+        if (a.kind === "shell" && a.example) {
+          var pre = document.createElement("pre");
+          pre.className = "out";
+          pre.textContent = a.example;
+          wrap.appendChild(pre);
+        } else if (a.kind === "doc" && a.path) {
+          var p = document.createElement("p");
+          p.className = "muted";
+          p.style.margin = "0";
+          p.textContent = "Repo: " + a.path;
+          wrap.appendChild(p);
+        }
+        actEl.appendChild(wrap);
+      });
+      runsEl.innerHTML = "";
+      if (!(data.runs && data.runs.length)) {
+        var empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "Keine local_preview_* Ordner gefunden.";
+        runsEl.appendChild(empty);
+      } else {
+        var tbl = document.createElement("table");
+        tbl.className = "data";
+        tbl.innerHTML = "<thead><tr><th>run_id</th><th>Verdict</th><th>Quality</th><th>Founder decision</th><th>Warning level</th><th>OPEN_ME</th><th>Report</th><th>Preview MP4</th><th>Aktionen</th></tr></thead><tbody></tbody>";
+        var tb = tbl.querySelector("tbody");
+        data.runs.forEach(function(run) {
+          var ar = run.artifacts || {};
+          var sc = run.status_cards || {};
+          var fu = run.file_urls || {};
+          var tr = document.createElement("tr");
+          function tdText(val) {
+            var d = document.createElement("td");
+            d.textContent = val;
+            return d;
+          }
+          tr.appendChild(tdText(run.run_id || ""));
+          tr.appendChild(tdText(sc.verdict || "UNKNOWN"));
+          tr.appendChild(tdText(sc.quality || "UNKNOWN"));
+          tr.appendChild(tdText(sc.founder_decision || "UNKNOWN"));
+          tr.appendChild(tdText(sc.warning_level || "UNKNOWN"));
+          tr.appendChild(tdText(ar.open_me ? "ja" : "nein"));
+          tr.appendChild(tdText(ar.founder_report ? "ja" : "nein"));
+          tr.appendChild(tdText(ar.preview_with_subtitles ? "ja" : "nein"));
+          var act = document.createElement("td");
+          function addAct(label, u) {
+            if (!u) return;
+            var a = document.createElement("a");
+            a.href = u;
+            a.textContent = label;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.style.marginRight = "0.35rem";
+            a.style.fontSize = "0.72rem";
+            act.appendChild(a);
+          }
+          addAct("Preview", fu.preview_url);
+          addAct("Report", fu.report_url);
+          addAct("OPEN_ME", fu.open_me_url);
+          addAct("JSON", fu.result_json_url);
+          if (!act.textContent.trim()) {
+            var sp = document.createElement("span");
+            sp.className = "muted";
+            sp.textContent = "—";
+            act.appendChild(sp);
+          }
+          tr.appendChild(act);
+          tb.appendChild(tr);
+        });
+        runsEl.appendChild(tbl);
+      }
+      body.style.display = "block";
+    } catch (e) {
+      st.textContent = "Local Preview Panel: " + (e && e.message ? e.message : String(e));
+      st.classList.add("intake-status-err");
+    }
+  }
+
   function fdBootstrapDashboard() {
     try {
       console.log("FD_BOOTSTRAP_START");
@@ -3173,6 +3438,7 @@ try {
   }
   updatePqBadge();
   refreshOperatorClarity();
+  fdLoadLocalPreviewPanel();
   }
 
   if (document.readyState === "loading") {
