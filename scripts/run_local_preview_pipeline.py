@@ -6,6 +6,7 @@ import argparse
 import importlib.util
 import json
 import shutil
+import subprocess
 import sys
 import uuid
 from pathlib import Path
@@ -44,6 +45,82 @@ def _list_str(x: Any) -> List[str]:
         t = str(x).strip()
         return [t] if t else []
     return [str(x)]
+
+
+def build_ffmpeg_setup_hint(missing_tools: List[str]) -> str:
+    """BA 21.0d — Kurzer Windows-/PowerShell-Hinweis zur FFmpeg-Installation."""
+    lines = [
+        "winget install Gyan.FFmpeg",
+        "",
+        "Danach PowerShell neu öffnen und prüfen:",
+        "ffmpeg -version",
+        "ffprobe -version",
+    ]
+    hint = "\n".join(lines)
+    if missing_tools:
+        hint += "\n\nFalls winget nicht verfügbar ist: FFmpeg manuell installieren und PATH setzen."
+    return hint
+
+
+def check_local_ffmpeg_tools(
+    *,
+    _which: Optional[Callable[[str], Optional[str]]] = None,
+    _run: Optional[Callable[..., Any]] = None,
+    _timeout_sec: float = 5.0,
+) -> Dict[str, Any]:
+    """
+    BA 21.0d — Lokaler Operator-Guard: ffmpeg/ffprobe im PATH und `-version` erreichbar.
+
+    `_which` / `_run` nur für Tests injizieren (z. B. Mock von shutil.which / subprocess.run).
+    """
+    which_fn = _which or shutil.which
+    run_fn = _run or subprocess.run
+    warnings: List[str] = []
+    missing_tools: List[str] = []
+
+    def _probe(name: str) -> Dict[str, Any]:
+        path = which_fn(name) or ""
+        if not path:
+            missing_tools.append(name)
+            return {"available": False, "version": "", "path": ""}
+        cmd = [path, "-version"]
+        try:
+            proc = run_fn(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=_timeout_sec,
+            )
+        except subprocess.TimeoutExpired:
+            warnings.append(f"{name}_version_check_timeout")
+            return {"available": False, "version": "", "path": str(path)}
+        except OSError:
+            warnings.append(f"{name}_version_check_os_error")
+            return {"available": False, "version": "", "path": str(path)}
+        if getattr(proc, "returncode", 1) != 0:
+            warnings.append(f"{name}_version_check_failed")
+            return {"available": False, "version": "", "path": str(path)}
+        out = (getattr(proc, "stdout", None) or "") or ""
+        first = out.strip().splitlines()[0] if out.strip() else ""
+        ver = (first[:200]).strip() if first else ""
+        if not ver:
+            warnings.append(f"{name}_version_parse_empty")
+            return {"available": False, "version": "", "path": str(path)}
+        return {"available": True, "version": ver, "path": str(path)}
+
+    ffmpeg_i = _probe("ffmpeg")
+    ffprobe_i = _probe("ffprobe")
+    ok = bool(ffmpeg_i.get("available")) and bool(ffprobe_i.get("available"))
+    setup_hint = "" if ok else build_ffmpeg_setup_hint(missing_tools)
+
+    return {
+        "ok": ok,
+        "ffmpeg": ffmpeg_i,
+        "ffprobe": ffprobe_i,
+        "missing_tools": list(missing_tools),
+        "warnings": warnings,
+        "setup_hint": setup_hint,
+    }
 
 
 def _iter_steps(steps: Any) -> Iterator[Tuple[str, Any]]:
@@ -115,12 +192,25 @@ def _classify_step(name: str, step: Any) -> Tuple[str, str, List[str]]:
     return ("WARNING", "Step ohne erkanntes Schema", sw)
 
 
+# BA 21.0e — diese Codes dürfen ein lokales Preview-Ergebnis nicht als FAIL werten (Operator-Idempotenz).
+_LOCAL_PREVIEW_NON_BLOCKING_BLOCKING_REASONS = frozenset(
+    {
+        "preview_with_subtitles_already_exists",
+    }
+)
+
+
+def sanitize_local_preview_blocking_reasons(blocking: Any) -> List[str]:
+    """Filtert bekannte nicht-blockierende blocking_reasons für Verdict und Reports."""
+    return [b for b in _list_str(blocking) if b not in _LOCAL_PREVIEW_NON_BLOCKING_BLOCKING_REASONS]
+
+
 def compute_local_preview_verdict(result: Any) -> str:
     """PASS | WARNING | FAIL — tolerant bei fehlenden Keys."""
     if not isinstance(result, dict):
         return "FAIL"
     ok = bool(result.get("ok"))
-    blocking = _list_str(result.get("blocking_reasons"))
+    blocking = sanitize_local_preview_blocking_reasons(result.get("blocking_reasons"))
     if not ok or blocking:
         return "FAIL"
     top_w = _list_str(result.get("warnings"))
@@ -282,7 +372,7 @@ def build_local_preview_open_me(result: dict) -> str:
     pipe_d = _s(r.get("pipeline_dir")) or "nicht verfügbar"
 
     tw = _list_str(r.get("warnings"))
-    br = _list_str(r.get("blocking_reasons"))
+    br = sanitize_local_preview_blocking_reasons(r.get("blocking_reasons"))
 
     lines: List[str] = [
         "# Local Preview Package",
@@ -416,7 +506,7 @@ def build_local_preview_founder_report(result: dict) -> str:
         lines.append("- *(keine)*")
 
     lines.extend(["", "## Blocking Reasons"])
-    br = _list_str(r.get("blocking_reasons"))
+    br = sanitize_local_preview_blocking_reasons(r.get("blocking_reasons"))
     if br:
         for b in br:
             lines.append(f"- {b}")
@@ -543,7 +633,8 @@ def run_local_preview_pipeline(
                     "preview_with_subtitles": "",
                 },
                 "warnings": warnings,
-                "blocking_reasons": blocking or ["build_subtitles_failed"],
+                "blocking_reasons": sanitize_local_preview_blocking_reasons(blocking)
+                or ["build_subtitles_failed"],
             }
         )
 
@@ -576,7 +667,8 @@ def run_local_preview_pipeline(
                     "preview_with_subtitles": "",
                 },
                 "warnings": warnings,
-                "blocking_reasons": blocking or ["render_clean_failed"],
+                "blocking_reasons": sanitize_local_preview_blocking_reasons(blocking)
+                or ["render_clean_failed"],
             }
         )
 
@@ -590,6 +682,7 @@ def run_local_preview_pipeline(
     )
     warnings.extend(list(step_burn.get("warnings") or []))
     blocking.extend(list(step_burn.get("blocking_reasons") or []))
+    blocking = sanitize_local_preview_blocking_reasons(blocking)
 
     preview_path = str(step_burn.get("output_video_path") or "")
     burn_ok = bool(step_burn.get("ok"))

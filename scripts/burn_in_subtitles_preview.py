@@ -636,10 +636,10 @@ def burn_in_subtitles_preview(
             fallback_used = True
 
     if out_mp4.is_file() and not force:
-        blocking.append("preview_with_subtitles_already_exists")
+        # BA 21.0e — bestehende Preview ist idempotent nutzbar, kein Blocker (Overwrite nur mit --force).
         warnings.append("preview_with_subtitles_already_exists")
         return pack(
-            ok=False,
+            ok=True,
             skipped=False,
             srt_path_str=str(srt_path),
             out_video=str(out_mp4),
@@ -649,7 +649,7 @@ def burn_in_subtitles_preview(
             renderer_used=renderer_used,
             contract_style=style_norm,
             contract_skipped=False,
-            contract_ok_output=False,
+            contract_ok_output=True,
         )
 
     srt_for_ffmpeg = srt_path
