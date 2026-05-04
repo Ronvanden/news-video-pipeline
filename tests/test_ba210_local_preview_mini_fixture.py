@@ -58,7 +58,7 @@ def test_readme_contains_smoke_open_me_and_powershell():
     assert "local_preview_" in md
 
 
-def test_build_mini_fixture_argv(mini_mod, tmp_path):
+def test_build_mini_fixture_argv_no_script_name(mini_mod, tmp_path):
     argv = mini_mod.build_mini_fixture_argv(
         out_root=tmp_path / "out",
         run_id="rid210",
@@ -66,10 +66,14 @@ def test_build_mini_fixture_argv(mini_mod, tmp_path):
         motion_mode="static",
         subtitle_style="classic",
     )
-    assert argv[0] == "run_local_preview_smoke.py"
+    assert "run_local_preview_smoke.py" not in argv
+    assert argv[0] == "--timeline-manifest"
+    assert str(mini_mod._TIMELINE) in argv
+    assert str(mini_mod._NARRATION) in argv
     assert "--print-json" in argv
     assert "--subtitle-style" in argv and "classic" in argv
     assert "mini_timeline_manifest.json" in " ".join(argv)
+    assert "mini_narration.txt" in " ".join(argv)
     assert "rid210" in argv
 
 
@@ -85,6 +89,8 @@ def test_shortcut_main_delegates_without_real_smoke(monkeypatch, mini_mod, tmp_p
     assert rc == 0
     assert len(calls) == 1
     assert calls[0] is not None
+    assert "run_local_preview_smoke.py" not in calls[0]
+    assert calls[0][0] == "--timeline-manifest"
     assert "--run-id" in calls[0]
     i = calls[0].index("--run-id")
     assert calls[0][i + 1] == "deleg210"

@@ -27,9 +27,8 @@ def build_mini_fixture_argv(
     subtitle_style: str = "typewriter",
     extra: Optional[List[str]] = None,
 ) -> List[str]:
-    """Argv für `run_local_preview_smoke.main` (Tests & Shortcut)."""
+    """Argv nur mit Optionen (ohne argv[0]) für `run_local_preview_smoke.main(argv)`."""
     argv: List[str] = [
-        "run_local_preview_smoke.py",
         "--timeline-manifest",
         str(_TIMELINE),
         "--narration-script",
