@@ -83,6 +83,10 @@ def build_local_preview_smoke_summary(result: dict) -> str:
         lines.append(f"Subtitle Quality: {sub_st}")
     if sync_st:
         lines.append(f"Sync Guard: {sync_st}")
+    wc = result.get("warning_classification") if isinstance(result, dict) else None
+    if isinstance(wc, dict) and wc.get("highest"):
+        summ = str(wc.get("summary") or "").strip()
+        lines.append(f"Warning level: {str(wc.get('highest')).upper()}" + (f" ({summ})" if summ else ""))
     lines.extend(
         [
         f"Preview öffnen: {preview}",

@@ -212,6 +212,174 @@ def _collect_local_preview_warnings(result: Any) -> List[str]:
     return out
 
 
+def _gather_local_preview_warnings_for_classification(result: Any) -> List[str]:
+    """
+    BA 21.4 — Alle Warn-Codes für Klassifikation (Top-Level, Steps, Sync Guard,
+    Subtitle Quality, Quality-Checklist-Teilwarnungen), stabil und ohne Duplikate.
+    """
+    if not isinstance(result, dict):
+        return []
+    seen: set[str] = set()
+    out: List[str] = []
+    for w in _collect_local_preview_warnings(result):
+        if w not in seen:
+            seen.add(w)
+            out.append(w)
+    for key in ("sync_guard", "subtitle_quality_check", "quality_checklist"):
+        sub = result.get(key)
+        if isinstance(sub, dict):
+            for w in _list_str(sub.get("warnings")):
+                if w not in seen:
+                    seen.add(w)
+                    out.append(w)
+    return out
+
+
+# BA 21.4 — (prefix, level); längere Prefixe zuerst matchen (sortiert beim Laden).
+_LOCAL_PREVIEW_WARN_CLASS_PREFIXES_RAW: List[Tuple[str, str]] = [
+    # BLOCKING — Pipeline / IO / harte Abbrüche
+    ("quality_checklist_build_failed", "BLOCKING"),
+    ("founder_report_build_failed", "BLOCKING"),
+    ("founder_report_write_failed", "BLOCKING"),
+    ("open_me_build_failed", "BLOCKING"),
+    ("open_me_write_failed", "BLOCKING"),
+    ("subtitle_quality_build_failed", "BLOCKING"),
+    ("sync_guard_build_failed", "BLOCKING"),
+    ("ffmpeg_burnin_failed", "BLOCKING"),
+    ("ffmpeg_missing", "BLOCKING"),
+    ("input_video_missing", "BLOCKING"),
+    ("build_failed", "BLOCKING"),
+    ("burn_failed", "BLOCKING"),
+    ("narration_script_missing", "BLOCKING"),
+    ("narration_body_empty", "BLOCKING"),
+    ("subtitle_audio_path_missing_or_invalid", "BLOCKING"),
+    # WARNING — operative Abweichungen, Sync-Fails, Qualität
+    ("sync_guard_fail", "WARNING"),
+    ("sync_guard_warning", "WARNING"),
+    ("sync_guard_subtitle_span_missing", "WARNING"),
+    ("sync_guard_clean_video_missing", "WARNING"),
+    ("sync_guard_preview_video_missing", "WARNING"),
+    ("sync_guard_clean_vs_timeline_fail", "WARNING"),
+    ("sync_guard_preview_vs_timeline_fail", "WARNING"),
+    ("sync_guard_subtitle_vs_timeline_fail", "WARNING"),
+    ("sync_guard_audio_vs_timeline_fail", "WARNING"),
+    ("sync_guard_clean_vs_timeline_warn", "WARNING"),
+    ("sync_guard_preview_vs_timeline_warn", "WARNING"),
+    ("sync_guard_subtitle_vs_timeline_warn", "WARNING"),
+    ("sync_guard_audio_vs_timeline_warn", "WARNING"),
+    ("sync_guard_preview_vs_clean_warn", "WARNING"),
+    ("sync_guard_timeline_missing", "WARNING"),
+    ("subtitle_quality_fail", "WARNING"),
+    ("subtitle_quality_warning", "WARNING"),
+    ("subtitle_manifest_parse_failed", "WARNING"),
+    ("subtitles_srt_missing", "WARNING"),
+    ("subtitle_transcription_failed_fallback_narration", "WARNING"),
+    ("subtitle_transcription_no_cues_fallback_narration", "WARNING"),
+    ("subtitle_transcription_response_not_object", "WARNING"),
+    ("build_warn", "WARNING"),
+    ("burn_warn", "WARNING"),
+    ("preview_colocation_pipeline_dir_invalid", "WARNING"),
+    ("preview_colocation_source_invalid", "WARNING"),
+    ("preview_colocation_source_missing", "WARNING"),
+    ("preview_colocation_copy_failed", "WARNING"),
+    ("audio_path_set_but_file_missing_silent_render", "WARNING"),
+    ("audio_missing_silent_render", "WARNING"),
+    ("motion_render_failed_fallback_static", "WARNING"),
+    ("legacy_subtitle_path_burnin_used", "WARNING"),
+    ("subtitle_burn_failed_fallback_no_subtitles", "WARNING"),
+    ("subtitle_path_set_but_file_missing_skipped", "WARNING"),
+    ("subtitle_file_empty_skipped", "WARNING"),
+    ("audio_shorter_than_timeline_padded_or_continued", "WARNING"),
+    # CHECK — Verifikation / Probe / übersprungene Vergleiche
+    ("sync_guard_timeline_read_failed", "CHECK"),
+    ("sync_guard_audio_probe_failed", "CHECK"),
+    ("sync_guard_clean_probe_failed", "CHECK"),
+    ("sync_guard_preview_probe_failed", "CHECK"),
+    ("sync_guard_clean_vs_timeline_skipped", "CHECK"),
+    ("sync_guard_preview_vs_timeline_skipped", "CHECK"),
+    ("sync_guard_preview_vs_clean_skipped", "CHECK"),
+    ("sync_guard_subtitle_vs_timeline_skipped", "CHECK"),
+    ("ffprobe_missing_cannot_probe_audio", "CHECK"),
+    ("audio_duration_probe_failed", "CHECK"),
+    ("audio_duration_probe_empty", "CHECK"),
+    ("timeline_manifest_invalid_ignored_for_duration", "CHECK"),
+    ("word_by_word_requires_word_level_timing_not_in_srt_v1", "CHECK"),
+    ("typewriter_v1_contract_only_srt_has_line_timing_only", "CHECK"),
+    ("karaoke_requires_word_timing_srt_v1_line_timing_only", "CHECK"),
+    # INFO — erwartbare Fallbacks / Idempotenz / harmlose Defaults
+    ("preview_with_subtitles_already_exists", "INFO"),
+    ("sync_guard_no_audio_file", "INFO"),
+    ("subtitle_mode_unknown", "INFO"),
+    ("subtitle_source_unknown", "INFO"),
+    ("subtitle_style_unknown", "INFO"),
+    ("subtitle_typewriter_ass_renderer_used", "INFO"),
+    ("subtitle_burnin_safe_style_applied", "INFO"),
+    ("subtitle_srt_wrapped_for_burnin", "INFO"),
+    ("subtitle_style_none_skipped", "INFO"),
+    ("subtitle_style_none_visual_suppressed", "INFO"),
+    ("subtitle_style_none_contract_only", "INFO"),
+    ("subtitle_mode_none_no_cues", "INFO"),
+    ("subtitle_audio_transcription_env_missing_fallback_narration", "INFO"),
+    ("subtitle_style_word_by_word_rendered_as_srt", "INFO"),
+    ("subtitle_style_karaoke_fallback_to_srt_burnin", "INFO"),
+    ("subtitle_typewriter_ass_failed_fallback_srt", "INFO"),
+    ("subtitle_timeline_duration_used", "INFO"),
+    ("subtitle_audio_duration_used", "INFO"),
+    ("subtitle_duration_estimate_used", "INFO"),
+]
+
+_LOCAL_PREVIEW_WARN_CLASS_PREFIXES_SORTED: List[Tuple[str, str]] = sorted(
+    _LOCAL_PREVIEW_WARN_CLASS_PREFIXES_RAW,
+    key=lambda t: len(t[0]),
+    reverse=True,
+)
+
+
+def classify_local_preview_warning(code: str) -> str:
+    """BA 21.4 — INFO | CHECK | WARNING | BLOCKING für einen Warn-String."""
+    c = (_s(code) or "").strip().lower()
+    if not c:
+        return "INFO"
+    base = c.split(":", 1)[0].strip()
+    for prefix, lvl in _LOCAL_PREVIEW_WARN_CLASS_PREFIXES_SORTED:
+        if base == prefix or base.startswith(prefix + "_") or base.startswith(prefix + ":"):
+            return lvl
+    if base.endswith("_version_check_timeout") or base.endswith("_version_check_os_error"):
+        return "CHECK"
+    if base.endswith("_version_check_failed") or base.endswith("_version_parse_empty"):
+        return "CHECK"
+    if "not monotonic" in c or "overlapping cues" in c:
+        return "WARNING"
+    if base.startswith("sync_guard_"):
+        return "CHECK"
+    return "WARNING"
+
+
+def build_local_preview_warning_classification(result: Any) -> Dict[str, Any]:
+    """BA 21.4 — Aggregat: höchste Stufe, Zähler, Items mit Level."""
+    codes = _gather_local_preview_warnings_for_classification(result)
+    items: List[Dict[str, str]] = []
+    counts = {"INFO": 0, "CHECK": 0, "WARNING": 0, "BLOCKING": 0}
+    for code in codes:
+        lvl = classify_local_preview_warning(code)
+        items.append({"code": code, "level": lvl})
+        if lvl in counts:
+            counts[lvl] += 1
+    highest = "INFO"
+    for lvl in ("BLOCKING", "WARNING", "CHECK", "INFO"):
+        if counts.get(lvl, 0) > 0:
+            highest = lvl
+            break
+    bits = [f"{counts[k]} {k}" for k in ("BLOCKING", "WARNING", "CHECK", "INFO") if counts.get(k, 0)]
+    summary = ", ".join(bits) if bits else "keine Warnungen"
+    return {
+        "highest": highest,
+        "counts": counts,
+        "items": items,
+        "summary": summary,
+    }
+
+
 # BA 21.0e — diese Codes dürfen ein lokales Preview-Ergebnis nicht als FAIL werten (Operator-Idempotenz).
 _LOCAL_PREVIEW_NON_BLOCKING_BLOCKING_REASONS = frozenset(
     {
@@ -1720,6 +1888,12 @@ def build_local_preview_open_me(result: dict) -> str:
     else:
         lines.append("- Keine")
 
+    wc = r.get("warning_classification")
+    if isinstance(wc, dict):
+        hi = _s(wc.get("highest")) or "INFO"
+        summ = _s(wc.get("summary")) or ""
+        lines.extend(["", "## Warning Levels (BA 21.4)", f"Höchste Stufe: **{hi}**", summ, ""])
+
     lines.extend(["", "## Blocking Reasons"])
     if br:
         for b in br:
@@ -1855,6 +2029,34 @@ def build_local_preview_founder_report(result: dict) -> str:
             lines.append(f"- {w}")
     else:
         lines.append("- *(keine)*")
+
+    wc = r.get("warning_classification")
+    if isinstance(wc, dict):
+        hi = _s(wc.get("highest")) or "INFO"
+        summ = _s(wc.get("summary")) or ""
+        lines.extend(
+            [
+                "",
+                "## Warning Classification (BA 21.4)",
+                f"Höchste Stufe: **{hi}**",
+                f"Übersicht: {summ}",
+                "",
+            ]
+        )
+        witems = wc.get("items")
+        if isinstance(witems, list) and witems:
+            lines.append("Klassifizierte Codes:")
+            for idx, it in enumerate(witems):
+                if idx >= 40:
+                    lines.append(f"- … ({len(witems) - 40} weitere)")
+                    break
+                if not isinstance(it, dict):
+                    continue
+                cod = _s(it.get("code"))
+                lv = _s(it.get("level"))
+                if cod:
+                    lines.append(f"- [{lv}] `{cod}`")
+            lines.append("")
 
     lines.extend(["", "## Blocking Reasons"])
     br = sanitize_local_preview_blocking_reasons(r.get("blocking_reasons"))
@@ -2004,6 +2206,18 @@ def finalize_local_preview_operator_artifacts(result: dict) -> dict:
             "warnings": _collect_local_preview_warnings(out),
             "blocking_reasons": sanitize_local_preview_blocking_reasons(out.get("blocking_reasons")),
             "next_step": local_preview_next_step_for_verdict("FAIL"),
+        }
+    try:
+        out["warning_classification"] = build_local_preview_warning_classification(out)
+    except Exception:
+        w = _list_str(out.get("warnings"))
+        w.append("warning_classification_build_failed")
+        out["warnings"] = w
+        out["warning_classification"] = {
+            "highest": "WARNING",
+            "counts": {"INFO": 0, "CHECK": 0, "WARNING": 1, "BLOCKING": 0},
+            "items": [{"code": "warning_classification_build_failed", "level": "WARNING"}],
+            "summary": "1 WARNING",
         }
     out = write_local_preview_founder_report(out)
     out = write_local_preview_open_me(out)

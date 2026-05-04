@@ -464,12 +464,15 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 20.11** | **done** | **Local Preview Smoke Command:** **`scripts/run_local_preview_smoke.py`** — ruft **`run_local_preview_pipeline`** auf, kompakte Ausgabe (**Status**, **Preview öffnen**, **Report öffnen**, **Open-Me Datei**, **Nächster Schritt**), optional **`--print-json`**; Exit Codes **PASS 0**, **WARNING 2**, **FAIL 1** (Smoke-Konvention, abweichend von **`run_local_preview_pipeline`** Exit 3 bei Fehler). Tests **`tests/test_ba2011_local_preview_smoke.py`**. |
 | **BA 20.12** | **done** | **Local Preview Artefact Index / OPEN_ME.md:** **`build_local_preview_open_me` / `write_local_preview_open_me`** in **`scripts/run_local_preview_pipeline.py`**; nach Founder Report wird **`OPEN_ME.md`** im Pipeline-Ordner geschrieben (Keys **`open_me_path`**, **`open_me_markdown`**, **`paths[\"open_me\"]`**). Finalisierung **`finalize_local_preview_operator_artifacts`**. Zentrale Pfad-Helfer **`resolve_local_preview_video_path`**, **`resolve_local_preview_report_path`**, **`resolve_local_preview_open_me_path`**. Tests **`tests/test_ba2012_local_preview_open_me.py`**. |
 | **BA 20.13** | **done** | **Local Preview Cleanup / Retention Guard:** **`scripts/cleanup_local_previews.py`** — listet/löscht nur direkte **`local_preview_*`**-Ordner unter **`--out-root`**; Standard **Dry-Run**, **`--apply`** zum Löschen; **`--keep-latest`**, **`--max-delete`**; Symlinks und Nicht-Kinder werden übersprungen; optional **`--print-json`** (ohne **`discovered_paths`**-Ballast). Tests **`tests/test_ba2013_local_preview_cleanup.py`**. |
-| **BA 21** | **planned** | **Local Preview Reality & Quality Loop:** Überbau nach **BA 20.9–20.13** — Übergang von „lokal erzeugbar“ zu „lokal real prüfbar“; Unter-BAs **21.0–21.6**; Details im Abschnitt **BA 21** direkt unterhalb dieser Tabelle. |
+| **BA 21** | **planned** | **Local Preview Reality & Quality Loop:** Überbau nach **BA 20.9–20.13** — Übergang von „lokal erzeugbar“ zu „lokal real prüfbar“; Unter-BAs **21.0–21.7**; Masterplan **BA 21.4–22.x** (Dashboard-Preview-Übergang); Details im Abschnitt **BA 21** und **BA 21.4–22.x** direkt unterhalb dieser Tabelle. |
 | **BA 21.0** | **done** | **Mini E2E Fixture / Real Operator Smoke:** **`fixtures/local_preview_mini/`** (Timeline, Narration, PNGs, README); Shortcut **`scripts/run_local_preview_mini_fixture.py`** delegiert an **`run_local_preview_smoke`**. Tests **`tests/test_ba210_local_preview_mini_fixture.py`**. |
 | **BA 21.0c** | **done** | **Preview Artifact Co-location / Path Alignment:** Nach Burn-in wird **`preview_with_subtitles.mp4`** zusätzlich in **`output/local_preview_<run_id>/`** kopiert; **`paths[\"preview_video\"]`** / **`preview_with_subtitles`** zeigen dort hin, optional **`burnin_preview_source`** für den ursprünglichen Pfad; OPEN_ME, Founder Report und Smoke-Summary nutzen die zentrale Kopie. Tests **`tests/test_ba210c_preview_artifact_colocation.py`**. |
 | **BA 21.0d** | **done** | **Local FFmpeg Preflight / Setup Guard:** **`check_local_ffmpeg_tools`** / **`build_ffmpeg_setup_hint`** in **`scripts/run_local_preview_pipeline.py`**; Mini-Fixture **`scripts/run_local_preview_mini_fixture.py`** prüft standardmäßig **ffmpeg/ffprobe** vor Smoke, klare Ausgabe und Exit **1** bei fehlenden Tools, **`--skip-preflight`** für bewusstes Umgehen. Tests **`tests/test_ba210d_ffmpeg_preflight.py`**. |
 | **BA 21.0e** | **done** | **Idempotent Preview / Existing File:** Bereits vorhandenes **`preview_with_subtitles.mp4`** ist kein Blocker mehr (**`burn_in_subtitles_preview`** liefert **ok** + Warnung); **`sanitize_local_preview_blocking_reasons`** für Verdict/Reports/Pipeline-Aggregat. Tests **`tests/test_ba210e_idempotent_preview_existing.py`**. |
 | **BA 21.1** | **done** | **Preview Quality Checklist:** Artefakt- und Bedienbarkeitsprüfung nach lokalem Preview-Lauf; Ergebnis in **`quality_checklist`**, Abschnitt in **Founder Report** / **OPEN_ME**, optional **Quality:** in Smoke. Tests **`tests/test_ba211_preview_quality_checklist.py`**. |
+| **BA 21.2** | **done** | **Subtitle Timing Quality Check:** Heuristischer Subtitle-/Cue-Check (Manifest, Dauer, Text, Timing); **`subtitle_quality_check`**, Checklist, Founder Report, **OPEN_ME**, Smoke **Subtitle Quality:**. Tests **`tests/test_ba212_subtitle_timing_quality.py`**. |
+| **BA 21.3** | **done** | **Audio/Video Sync Guard:** Grobe Abgleich von Timeline-, Subtitle-, Audio- und Video-Dauern per **ffprobe** (tolerant); **`sync_guard`**, Checklist, Founder Report, **OPEN_ME**, Smoke **Sync Guard:**. Tests **`tests/test_ba213_audio_video_sync_guard.py`**. |
+| **BA 21.4–22.x** | **planned** | **From Local Quality Logic to Dashboard Preview Control:** Masterplan für den Übergang von lokaler Preview-/Quality-Logik (**BA 20/21**) zu einem **Dashboard Preview Control System**; Abschnitt **BA 21.4–22.x** mit Leitprinzipien Founder/Operator/Raw, Unter-BAs **21.4–22.6** und Execution-Regel. |
 | **BA 19.3** | **planned** | **Quality Polish (optional):** Intro/Outro, Lower Thirds, Subtitle-Burn-in, Thumbnail-Export — **nicht** nötig für ersten Proof. |
 | **BA 17.1–17.9** | **planned** | **Media OS / SaaS / Platform Empire Blueprint:** strategische Produktisierungsschicht für White-Label, SaaS Dashboard, API Productization, Licensing, Agency Mode, Marketplace, Investor Readiness, Founder Replacement, Acquisition Funnel und Exit Blueprint. **Blueprint first:** noch keine Runtime-Implementierung, keine SaaS-Billing-/Mandantenpflicht, keine Plattform-Automation. |
 
@@ -500,9 +503,17 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 21.1** | Preview Quality Checklist | **done** | Lokale Artefakt-Checkliste (**`build_local_preview_quality_checklist`**): Preview-Datei, Größe, **OPEN_ME**/Founder-Report, Blocking (sanitized), Warnungen; Einbindung in **`finalize_local_preview_operator_artifacts`**, Founder-Report und **OPEN_ME**; Smoke-Zeile **Quality:**. Tests **`tests/test_ba211_preview_quality_checklist.py`**. |
 | **BA 21.2** | Subtitle Timing Quality Check | **done** | Heuristischer Subtitle-Timing-Quality-Check für lokale Preview-Läufe: prüft Subtitle-Manifest, Cue-Anzahl, Cue-Dauer, Textlänge, Wortanzahl und Timing-Reihenfolge; Ergebnis in **`subtitle_quality_check`**, Einbindung in **`quality_checklist`**, Founder Report, **OPEN_ME** und Smoke-Zeile **Subtitle Quality:**. Tests **`tests/test_ba212_subtitle_timing_quality.py`**. |
 | **BA 21.3** | Audio/Video Sync Guard | **done** | Audio/Video Sync Guard vergleicht grob Timeline-, Subtitle-, Audio-, Clean- und Preview-Dauer, nutzt **ffprobe** tolerant (nur bei vorhandenen Dateien) und schreibt Status in **`sync_guard`**, Quality Checklist (**`sync_guard`**), Founder Report, **OPEN_ME** und Smoke-Zeile **Sync Guard:**. Tests **`tests/test_ba213_audio_video_sync_guard.py`**. |
-| **BA 21.4** | Render Warning Classification | **planned** | Warnungen in kosmetisch, prüfpflichtig und blockierend klassifizieren. |
-| **BA 21.5** | Founder Quality Report Upgrade | **planned** | Founder Report um Quality-Summary und konkrete Repair-Hinweise erweitern. |
-| **BA 21.6** | Local Preview Runbook | **planned** | Kurze Bedienungsdoku: starten, öffnen, prüfen, reparieren, cleanup. |
+| **BA 21.4** | Render Warning Classification | **done** | **`classify_local_preview_warning`**, **`build_local_preview_warning_classification`**, Aggregation aus Top-/Step-Warnungen plus **`sync_guard`** / **`subtitle_quality_check`** / **`quality_checklist`**; Feld **`warning_classification`** in **`finalize_local_preview_operator_artifacts`**; Abschnitte in Founder-Report und **OPEN_ME**; Smoke-Zeile **Warning level:**; Tests **`tests/test_ba214_render_warning_classification.py`**. |
+| **BA 21.5** | Founder Quality Decision Layer | **planned** | Quality-, Subtitle-, Sync- und Warning-Daten in klare Founder-Entscheidungen übersetzen. |
+| **BA 21.6** | Local Preview Runbook | **planned** | Bedienungsdoku für Preview starten, prüfen, reparieren und cleanup. |
+| **BA 21.7** | Local Preview Result Contract Stabilization | **planned** | Ergebnisstruktur für Dashboard-Verbrauch stabilisieren. |
+| **BA 22.0** | Dashboard Local Preview Panel | **planned** | Erster Dashboard-Block für Preview-Status, Pfade und Aktionen. |
+| **BA 22.1** | Dashboard Preview Status Cards | **planned** | PASS/WARNING/FAIL, Quality, Subtitle Quality, Sync Guard, Warning Class, Top Issue und Next Step anzeigen. |
+| **BA 22.2** | Dashboard Preview Video Embed / Open Button | **planned** | Preview-Video im Dashboard anzeigen oder sauber per Button öffnen. |
+| **BA 22.3** | Dashboard Preview Start Button | **planned** | Preview-Lauf aus dem Dashboard starten. |
+| **BA 22.4** | Dashboard Cost Card / Production Estimate | **planned** | Geschätzte Produktionskosten als Founder-/Operator-Karte anzeigen. |
+| **BA 22.5** | Dashboard Human Approval Gate | **planned** | Preview-Freigabe vor finalem Render erfassen. |
+| **BA 22.6** | Final Render Button Preparation | **planned** | Final-Render-Button vorbereiten, abhängig von Quality, Approval und Kostenstatus. |
 
 **Nicht-Ziele BA 21:**
 
@@ -520,6 +531,63 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 - Quality-Warnings sind **verständlich**.
 - Bestehende **Local Preview**-Tests bleiben grün.
 - Keine **Secrets** / **`.env`**.
+
+## BA 21.4–22.x — From Local Quality Logic to Dashboard Preview Control
+
+**Status:** planned
+
+**Ziel:**  
+Der lokale Preview- und Quality-Loop wird von CLI/Output-Ordnern schrittweise in ein Dashboard-basiertes Founder-/Operator-Cockpit überführt.
+
+**Leitprinzip:**
+
+- **Founder Mode** zeigt Entscheidung, Top Issue und nächsten Schritt.
+- **Operator Mode** zeigt Dateien, Checks, Warnings und Reparaturhinweise.
+- **Raw Mode** zeigt JSON, Steps und Debug-Daten.
+- **CLI** bleibt weiterhin nutzbar, auch wenn Dashboard-Funktionen hinzukommen.
+
+**Voraussetzung:**
+
+- **BA 21.1–21.3** liefern Artefakt-, Untertitel- und Sync-Prüfungen.
+- **BA 21.4–21.7** übersetzen diese Informationen in verständliche Entscheidungen und stabile Result-Strukturen.
+- **BA 22.x** bringt diese Informationen ins Dashboard.
+
+**Unter-BAs:**
+
+| BA | Titel | Status | Ziel |
+|----|-------|--------|------|
+| BA 21.4 | Render Warning Classification | done | Local-Preview-Warnings in INFO/CHECK/WARNING/BLOCKING klassifizieren; stabiles **`warning_classification`**-Objekt für Dashboard/Operator. |
+| BA 21.5 | Founder Quality Decision Layer | planned | Quality-, Subtitle-, Sync- und Warning-Daten in klare Founder-Entscheidungen übersetzen. |
+| BA 21.6 | Local Preview Runbook | planned | Bedienungsdoku für Preview starten, prüfen, reparieren und cleanup. |
+| BA 21.7 | Local Preview Result Contract Stabilization | planned | Ergebnisstruktur für Dashboard-Verbrauch stabilisieren. |
+| BA 22.0 | Dashboard Local Preview Panel | planned | Erster Dashboard-Block für Preview-Status, Pfade und Aktionen. |
+| BA 22.1 | Dashboard Preview Status Cards | planned | PASS/WARNING/FAIL, Quality, Subtitle Quality, Sync Guard, Warning Class, Top Issue und Next Step anzeigen. |
+| BA 22.2 | Dashboard Preview Video Embed / Open Button | planned | Preview-Video im Dashboard anzeigen oder sauber per Button öffnen. |
+| BA 22.3 | Dashboard Preview Start Button | planned | Preview-Lauf aus dem Dashboard starten. |
+| BA 22.4 | Dashboard Cost Card / Production Estimate | planned | Geschätzte Produktionskosten als Founder-/Operator-Karte anzeigen. |
+| BA 22.5 | Dashboard Human Approval Gate | planned | Preview-Freigabe vor finalem Render erfassen. |
+| BA 22.6 | Final Render Button Preparation | planned | Final-Render-Button vorbereiten, abhängig von Quality, Approval und Kostenstatus. |
+
+**Nicht-Ziele:**
+
+- Kein sofortiges Full-SaaS-Frontend.
+- Kein YouTube-Upload.
+- Kein Auto-Publishing.
+- Keine Provider-Calls ohne Guard.
+- Kein UI-Polish vor stabiler Funktion.
+- Keine Entfernung der CLI-Workflows.
+
+**Akzeptanz:**
+
+- Local Preview bleibt per CLI bedienbar.
+- Dashboard bekommt klare Founder-/Operator-Sicht.
+- Raw-Daten bleiben für Debugging verfügbar.
+- Jede Unter-BA bleibt einzeln testbar.
+- Keine Secrets/.env.
+- Bestehende Tests bleiben grün.
+
+**Execution-Regel:**  
+Dieser Abschnitt ist eine Landkarte. Die Umsetzung erfolgt strikt einzeln: **1 BA pro Cursor-Durchlauf.** Nach jeder BA: Tests, Difference-only Summary, Stop. Nicht eigenmächtig die nächste BA beginnen.
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 
