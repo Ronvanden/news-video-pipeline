@@ -504,7 +504,7 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 21.2** | Subtitle Timing Quality Check | **done** | Heuristischer Subtitle-Timing-Quality-Check für lokale Preview-Läufe: prüft Subtitle-Manifest, Cue-Anzahl, Cue-Dauer, Textlänge, Wortanzahl und Timing-Reihenfolge; Ergebnis in **`subtitle_quality_check`**, Einbindung in **`quality_checklist`**, Founder Report, **OPEN_ME** und Smoke-Zeile **Subtitle Quality:**. Tests **`tests/test_ba212_subtitle_timing_quality.py`**. |
 | **BA 21.3** | Audio/Video Sync Guard | **done** | Audio/Video Sync Guard vergleicht grob Timeline-, Subtitle-, Audio-, Clean- und Preview-Dauer, nutzt **ffprobe** tolerant (nur bei vorhandenen Dateien) und schreibt Status in **`sync_guard`**, Quality Checklist (**`sync_guard`**), Founder Report, **OPEN_ME** und Smoke-Zeile **Sync Guard:**. Tests **`tests/test_ba213_audio_video_sync_guard.py`**. |
 | **BA 21.4** | Render Warning Classification | **done** | **`classify_local_preview_warning`**, **`build_local_preview_warning_classification`**, Aggregation aus Top-/Step-Warnungen plus **`sync_guard`** / **`subtitle_quality_check`** / **`quality_checklist`**; Feld **`warning_classification`** in **`finalize_local_preview_operator_artifacts`**; Abschnitte in Founder-Report und **OPEN_ME**; Smoke-Zeile **Warning level:**; Tests **`tests/test_ba214_render_warning_classification.py`**. |
-| **BA 21.5** | Founder Quality Decision Layer | **planned** | Quality-, Subtitle-, Sync- und Warning-Daten in klare Founder-Entscheidungen übersetzen. |
+| **BA 21.5** | Founder Quality Decision Layer | **done** | **`build_founder_quality_decision`**: Codes **BLOCK** / **REVIEW_REQUIRED** / **GO_PREVIEW** aus Verdict, Checkliste, Subtitle Quality, Sync Guard und **warning_classification**; Feld **`founder_quality_decision`** in **`finalize_local_preview_operator_artifacts`**; Abschnitte in Founder-Report und **OPEN_ME**; Smoke-Zeile **Founder decision:**; Tests **`tests/test_ba215_founder_quality_decision.py`**. |
 | **BA 21.6** | Local Preview Runbook | **planned** | Bedienungsdoku für Preview starten, prüfen, reparieren und cleanup. |
 | **BA 21.7** | Local Preview Result Contract Stabilization | **planned** | Ergebnisstruktur für Dashboard-Verbrauch stabilisieren. |
 | **BA 22.0** | Dashboard Local Preview Panel | **planned** | Erster Dashboard-Block für Preview-Status, Pfade und Aktionen. |
@@ -557,7 +557,7 @@ Der lokale Preview- und Quality-Loop wird von CLI/Output-Ordnern schrittweise in
 | BA | Titel | Status | Ziel |
 |----|-------|--------|------|
 | BA 21.4 | Render Warning Classification | done | Local-Preview-Warnings in INFO/CHECK/WARNING/BLOCKING klassifizieren; stabiles **`warning_classification`**-Objekt für Dashboard/Operator. |
-| BA 21.5 | Founder Quality Decision Layer | planned | Quality-, Subtitle-, Sync- und Warning-Daten in klare Founder-Entscheidungen übersetzen. |
+| BA 21.5 | Founder Quality Decision Layer | done | Stabiles **`founder_quality_decision`**-Objekt (Top-Thema, nächster Schritt, Signale) für Founder/Dashboard. |
 | BA 21.6 | Local Preview Runbook | planned | Bedienungsdoku für Preview starten, prüfen, reparieren und cleanup. |
 | BA 21.7 | Local Preview Result Contract Stabilization | planned | Ergebnisstruktur für Dashboard-Verbrauch stabilisieren. |
 | BA 22.0 | Dashboard Local Preview Panel | planned | Erster Dashboard-Block für Preview-Status, Pfade und Aktionen. |

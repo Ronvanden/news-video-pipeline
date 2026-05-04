@@ -380,6 +380,130 @@ def build_local_preview_warning_classification(result: Any) -> Dict[str, Any]:
     }
 
 
+def _preview_subpack_status_str(pack: Any) -> str:
+    if not isinstance(pack, dict):
+        return ""
+    return str(pack.get("status") or "").strip().lower()
+
+
+def _pick_founder_quality_top_issue(result: dict, verdict: str) -> str:
+    br = sanitize_local_preview_blocking_reasons(result.get("blocking_reasons"))
+    if br:
+        return f"Blocking: {br[0]}"
+    qc = result.get("quality_checklist")
+    if isinstance(qc, dict):
+        for it in qc.get("items") or []:
+            if isinstance(it, dict) and str(it.get("status", "")).lower() == "fail":
+                lab = _s(it.get("label")) or _s(it.get("id"))
+                return f"Quality-Checkliste: {lab or 'Check fehlgeschlagen'}"
+    sq = result.get("subtitle_quality_check")
+    if isinstance(sq, dict) and _preview_subpack_status_str(sq) == "fail":
+        return _s(sq.get("summary")) or "Subtitle Quality: FAIL"
+    sg = result.get("sync_guard")
+    if isinstance(sg, dict) and _preview_subpack_status_str(sg) == "fail":
+        return _s(sg.get("summary")) or "Sync Guard: FAIL"
+    wc = result.get("warning_classification")
+    if isinstance(wc, dict):
+        for lvl in ("BLOCKING", "WARNING", "CHECK"):
+            for it in wc.get("items") or []:
+                if not isinstance(it, dict):
+                    continue
+                if str(it.get("level") or "").strip().upper() != lvl:
+                    continue
+                c = _s(it.get("code"))
+                if c:
+                    return f"Warnung [{lvl}]: {c}"
+    if verdict == "WARNING":
+        return "Verdict WARNING: Top-Level- oder Step-Warnungen prüfen."
+    if verdict == "FAIL":
+        return "Verdict FAIL: Pipeline ok/blocking prüfen."
+    return "Kein dominanter Einzelpunkt — Preview inhaltlich plausibilisieren."
+
+
+def founder_quality_next_step(decision_code: str) -> str:
+    """Nächster Schritt abgeleitet von der Founder-Entscheidung (BA 21.5)."""
+    c = (decision_code or "").strip().upper()
+    if c == "BLOCK":
+        return local_preview_next_step_for_verdict("FAIL")
+    if c == "REVIEW_REQUIRED":
+        return local_preview_next_step_for_verdict("WARNING")
+    return local_preview_next_step_for_verdict("PASS")
+
+
+def build_founder_quality_decision(result: Any) -> Dict[str, Any]:
+    """
+    BA 21.5 — Übersetzt Verdict, Quality-Checkliste, Subtitle Quality, Sync Guard und
+    Warn-Klassifikation in eine stabile Founder-Entscheidung (Dashboard-tauglich).
+    """
+    r = result if isinstance(result, dict) else {}
+    verdict = compute_local_preview_verdict(r)
+    qc_st = _preview_subpack_status_str(r.get("quality_checklist"))
+    sq_st = _preview_subpack_status_str(r.get("subtitle_quality_check"))
+    sg_st = _preview_subpack_status_str(r.get("sync_guard"))
+    wc = r.get("warning_classification") if isinstance(r.get("warning_classification"), dict) else {}
+    wh = str(wc.get("highest") or "INFO").strip().upper()
+    blocking_eff = sanitize_local_preview_blocking_reasons(r.get("blocking_reasons"))
+    blocking_n = len(blocking_eff)
+
+    block_hard = (
+        verdict == "FAIL"
+        or blocking_n > 0
+        or qc_st == "fail"
+        or sq_st == "fail"
+        or sg_st == "fail"
+        or wh == "BLOCKING"
+    )
+    review_soft = not block_hard and (
+        verdict == "WARNING"
+        or qc_st == "warning"
+        or sq_st == "warning"
+        or sg_st == "warning"
+        or wh in ("WARNING", "CHECK")
+    )
+
+    if block_hard:
+        code = "BLOCK"
+        label = "Nicht freigeben — Blocker, FAIL-Verdict oder kritische Warnstufe."
+    elif review_soft:
+        code = "REVIEW_REQUIRED"
+        label = "Kein harter Blocker — Founder-Review empfohlen (Warnungen oder Prüfpunkte)."
+    else:
+        code = "GO_PREVIEW"
+        label = "Technisch durchweg grün — Preview inhaltlich prüfen."
+
+    top_issue = _pick_founder_quality_top_issue(r, verdict)
+    nxt = founder_quality_next_step(code)
+
+    factors: List[str] = []
+    if verdict != "PASS":
+        factors.append(f"Verdict: {verdict}")
+    if qc_st:
+        factors.append(f"Quality-Checkliste: {qc_st.upper()}")
+    if sq_st:
+        factors.append(f"Subtitle Quality: {sq_st.upper()}")
+    if sg_st:
+        factors.append(f"Sync Guard: {sg_st.upper()}")
+    factors.append(f"Höchste Warnstufe: {wh}")
+
+    sig: Dict[str, Any] = {
+        "verdict": verdict,
+        "quality_checklist": qc_st,
+        "subtitle_quality": sq_st,
+        "sync_guard": sg_st,
+        "warning_level_highest": wh,
+        "blocking_reasons_count": blocking_n,
+    }
+
+    return {
+        "decision_code": code,
+        "decision_label_de": label,
+        "top_issue": top_issue,
+        "next_step": nxt,
+        "signals": sig,
+        "factors_de": factors[:8],
+    }
+
+
 # BA 21.0e — diese Codes dürfen ein lokales Preview-Ergebnis nicht als FAIL werten (Operator-Idempotenz).
 _LOCAL_PREVIEW_NON_BLOCKING_BLOCKING_REASONS = frozenset(
     {
@@ -1866,22 +1990,37 @@ def build_local_preview_open_me(result: dict) -> str:
         "## Status",
         f"Verdict: **{verdict}**",
         "",
-        "## Open First",
-        f"Preview Video: `{preview_v}`",
-        f"Founder Report: `{report_p}`",
-        "",
-        "## What This Is",
-        "Dieser Ordner enthält einen lokalen Preview-Lauf der Video-Pipeline.",
-        "",
-        "## Key Artefacts",
-        f"- Clean Video: `{clean_v}`",
-        f"- Preview Video: `{preview_v}`",
-        f"- Subtitle File: `{sub_f}`",
-        f"- Founder Report: `{report_p}`",
-        f"- Pipeline Folder: `{pipe_d}`",
-        "",
-        "## Warnings",
     ]
+    fq = r.get("founder_quality_decision")
+    if isinstance(fq, dict) and _s(fq.get("decision_code")):
+        lines.extend(
+            [
+                "## Founder Decision (BA 21.5)",
+                f"- **Entscheidung:** `{_s(fq.get('decision_code'))}` — {_s(fq.get('decision_label_de'))}",
+                f"- **Top-Thema:** {_s(fq.get('top_issue'))}",
+                f"- **Nächster Schritt:** {_s(fq.get('next_step'))}",
+                "",
+            ]
+        )
+    lines.extend(
+        [
+            "## Open First",
+            f"Preview Video: `{preview_v}`",
+            f"Founder Report: `{report_p}`",
+            "",
+            "## What This Is",
+            "Dieser Ordner enthält einen lokalen Preview-Lauf der Video-Pipeline.",
+            "",
+            "## Key Artefacts",
+            f"- Clean Video: `{clean_v}`",
+            f"- Preview Video: `{preview_v}`",
+            f"- Subtitle File: `{sub_f}`",
+            f"- Founder Report: `{report_p}`",
+            f"- Pipeline Folder: `{pipe_d}`",
+            "",
+            "## Warnings",
+        ]
+    )
     if tw:
         for w in tw:
             lines.append(f"- {w}")
@@ -1934,7 +2073,13 @@ def build_local_preview_open_me(result: dict) -> str:
             lines.append(f"- Hinweis: {hint2[:200]}")
         lines.append("")
 
-    lines.extend(["", "## Next Step", local_preview_next_step_for_verdict(verdict), ""])
+    fq_ns = r.get("founder_quality_decision")
+    nxt_line = (
+        _s(fq_ns.get("next_step"))
+        if isinstance(fq_ns, dict) and _s(fq_ns.get("next_step"))
+        else local_preview_next_step_for_verdict(verdict)
+    )
+    lines.extend(["", "## Next Step", nxt_line, ""])
     return "\n".join(lines)
 
 
@@ -1999,6 +2144,42 @@ def build_local_preview_founder_report(result: dict) -> str:
         "## Verdict",
         f"Status: **{verdict}**",
         "",
+    ]
+    fq = r.get("founder_quality_decision")
+    if isinstance(fq, dict) and _s(fq.get("decision_code")):
+        sig = fq.get("signals")
+        sig_bits: List[str] = []
+        if isinstance(sig, dict):
+            for k, lab in (
+                ("verdict", "Verdict"),
+                ("quality_checklist", "Quality"),
+                ("subtitle_quality", "Subtitle"),
+                ("sync_guard", "Sync"),
+                ("warning_level_highest", "Warnstufe"),
+            ):
+                v = _s(sig.get(k))
+                if v:
+                    sig_bits.append(f"{lab}={v}")
+        lines.extend(
+            [
+                "## Founder Decision (BA 21.5)",
+                f"- **Entscheidung:** `{_s(fq.get('decision_code'))}` — {_s(fq.get('decision_label_de'))}",
+                f"- **Top-Thema:** {_s(fq.get('top_issue'))}",
+                f"- **Nächster Schritt:** {_s(fq.get('next_step'))}",
+            ]
+        )
+        fac = fq.get("factors_de")
+        if isinstance(fac, list) and fac:
+            lines.append("- **Faktoren:**")
+            for bit in fac[:8]:
+                b = _s(bit)
+                if b:
+                    lines.append(f"  - {b}")
+        if sig_bits:
+            lines.append(f"- **Signale:** {', '.join(sig_bits)}")
+        lines.append("")
+    lines.extend(
+        [
         "## Preview",
         f"Preview erzeugt: **{'ja' if preview_yes else 'nein'}**",
         f"Datei öffnen: `{open_path}`",
@@ -2008,7 +2189,8 @@ def build_local_preview_founder_report(result: dict) -> str:
         f"Pipeline Ordner: `{pipeline_dir}`",
         "",
         "## Steps",
-    ]
+        ],
+    )
     steps_obj = r.get("steps")
     if steps_obj is None or (isinstance(steps_obj, dict) and not steps_obj) or (isinstance(steps_obj, list) and not steps_obj):
         lines.append("- *(keine Step-Daten)*")
@@ -2188,7 +2370,8 @@ def write_local_preview_founder_report(result: dict) -> dict:
 
 def finalize_local_preview_operator_artifacts(result: dict) -> dict:
     """
-    Founder Report (BA 20.10), OPEN_ME (BA 20.12), Quality Checklist (BA 21.1 / 21.2 / 21.3).
+    Founder Report (BA 20.10), OPEN_ME (BA 20.12), Quality Checklist (BA 21.1 / 21.2 / 21.3),
+    Warn-Klassifikation (BA 21.4), Founder-Entscheidung (BA 21.5).
 
     Checklist nach erstem Schreiben von Report/OPEN_ME, dann erneutes Schreiben mit Abschnitt.
     """
@@ -2218,6 +2401,21 @@ def finalize_local_preview_operator_artifacts(result: dict) -> dict:
             "counts": {"INFO": 0, "CHECK": 0, "WARNING": 1, "BLOCKING": 0},
             "items": [{"code": "warning_classification_build_failed", "level": "WARNING"}],
             "summary": "1 WARNING",
+        }
+    try:
+        out["founder_quality_decision"] = build_founder_quality_decision(out)
+    except Exception:
+        w = _list_str(out.get("warnings"))
+        w.append("founder_quality_decision_build_failed")
+        out["warnings"] = w
+        vd = compute_local_preview_verdict(out)
+        out["founder_quality_decision"] = {
+            "decision_code": "REVIEW_REQUIRED",
+            "decision_label_de": "Founder-Entscheidungsschicht fehlgeschlagen — Rohdaten prüfen.",
+            "top_issue": "founder_quality_decision_build_failed",
+            "next_step": local_preview_next_step_for_verdict(vd),
+            "signals": {},
+            "factors_de": [f"Verdict: {vd}"],
         }
     out = write_local_preview_founder_report(out)
     out = write_local_preview_open_me(out)

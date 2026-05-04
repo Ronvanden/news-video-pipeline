@@ -87,6 +87,15 @@ def build_local_preview_smoke_summary(result: dict) -> str:
     if isinstance(wc, dict) and wc.get("highest"):
         summ = str(wc.get("summary") or "").strip()
         lines.append(f"Warning level: {str(wc.get('highest')).upper()}" + (f" ({summ})" if summ else ""))
+    fd = result.get("founder_quality_decision") if isinstance(result, dict) else None
+    if isinstance(fd, dict) and fd.get("decision_code"):
+        ti = str(fd.get("top_issue") or "").strip()
+        if len(ti) > 100:
+            ti = ti[:97] + "..."
+        lines.append(
+            f"Founder decision: {str(fd.get('decision_code')).strip().upper()}"
+            + (f" — {ti}" if ti else "")
+        )
     lines.extend(
         [
         f"Preview öffnen: {preview}",
