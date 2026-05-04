@@ -135,6 +135,16 @@ def compute_local_preview_verdict(result: Any) -> str:
     return "PASS"
 
 
+def local_preview_next_step_for_verdict(verdict: str) -> str:
+    """Kurzer nächster Schritt für Founder/Operator (PASS/WARNING/FAIL)."""
+    v = (verdict or "FAIL").strip().upper()
+    if v == "PASS":
+        return "Öffne die Preview-Datei und prüfe Bild, Ton, Untertitel-Timing."
+    if v == "WARNING":
+        return "Öffne die Preview, prüfe die Warnungen und entscheide, ob ein Repair nötig ist."
+    return "Behebe zuerst die Blocking Reasons und starte den lokalen Preview-Lauf erneut."
+
+
 def build_local_preview_founder_report(result: dict) -> str:
     """BA 20.10 — Markdown-Report für Founder/Operator aus Aggregat-Ergebnis der Preview-Pipeline."""
     verdict = compute_local_preview_verdict(result if isinstance(result, dict) else {})
@@ -195,18 +205,7 @@ def build_local_preview_founder_report(result: dict) -> str:
         lines.append("- *(keine)*")
 
     lines.extend(["", "## Next Step"])
-    if verdict == "PASS":
-        lines.append(
-            "Öffne die Preview-Datei und prüfe Bild, Ton, Untertitel-Timing."
-        )
-    elif verdict == "WARNING":
-        lines.append(
-            "Öffne die Preview, prüfe die Warnungen und entscheide, ob ein Repair nötig ist."
-        )
-    else:
-        lines.append(
-            "Behebe zuerst die Blocking Reasons und starte den lokalen Preview-Lauf erneut."
-        )
+    lines.append(local_preview_next_step_for_verdict(verdict))
     lines.append("")
     return "\n".join(lines)
 
