@@ -1,4 +1,4 @@
-"""BA 20.9 — Ein Kommando: Untertitel bauen → Clean-Video rendern → Burn-in-Preview (lokal, Founder)."""
+"""BA 20.9 / BA 20.10 — Lokale Preview-Pipeline + Founder-Markdown-Report."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import json
 import sys
 import uuid
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -26,6 +26,230 @@ def _load_module(name: str, path: Path) -> Any:
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+def _s(v: Any) -> str:
+    if v is None:
+        return ""
+    return str(v).strip()
+
+
+def _list_str(x: Any) -> List[str]:
+    if x is None:
+        return []
+    if isinstance(x, list):
+        return [str(i) for i in x if i is not None and str(i).strip() != ""]
+    if isinstance(x, (str, int, float, bool)):
+        t = str(x).strip()
+        return [t] if t else []
+    return [str(x)]
+
+
+def _iter_steps(steps: Any) -> Iterator[Tuple[str, Any]]:
+    if steps is None:
+        return
+    if isinstance(steps, dict):
+        for k, v in steps.items():
+            yield str(k), v
+    elif isinstance(steps, list):
+        for i, v in enumerate(steps):
+            yield f"step_{i}", v
+
+
+def _classify_step(name: str, step: Any) -> Tuple[str, str, List[str]]:
+    """Gibt (PASS|WARNING|FAIL|SKIPPED, output_kurz, step_warnings) zurück."""
+    if step is None:
+        return ("SKIPPED", "nicht verfügbar", [])
+    if not isinstance(step, dict):
+        return ("WARNING", _s(step)[:200] or "nicht verfügbar", [])
+    sw = _list_str(step.get("warnings"))
+    n = (name or "").lower()
+
+    if "build" in n:
+        ok_b = bool(step.get("ok"))
+        out = _s(step.get("subtitle_manifest_path")) or _s(step.get("output_dir")) or "nicht verfügbar"
+        if not ok_b:
+            return ("FAIL", out, sw)
+        return ("PASS" if not sw else "WARNING", out, sw)
+
+    if "render" in n:
+        if step.get("video_created") is True:
+            out = _s(step.get("output_path")) or "Video erstellt (Pfad unbekannt)"
+            return ("PASS" if not sw else "WARNING", out, sw)
+        if step.get("video_created") is False:
+            return ("FAIL", _s(step.get("output_path")) or "kein Output", sw)
+        return ("WARNING", "video_created fehlt oder unklar", sw)
+
+    if "burn" in n:
+        if step.get("skipped") is True:
+            return ("SKIPPED", _s(step.get("output_video_path")), sw)
+        if step.get("ok") is False:
+            return ("FAIL", _s(step.get("output_video_path")), sw)
+        if step.get("ok") is True:
+            out = _s(step.get("output_video_path")) or "nicht verfügbar"
+            return ("PASS" if not sw else "WARNING", out, sw)
+        return ("WARNING", "ok fehlt oder unklar", sw)
+
+    if "video_created" in step:
+        if step.get("video_created") is True:
+            out = _s(step.get("output_path")) or "Video erstellt"
+            return ("PASS" if not sw else "WARNING", out, sw)
+        return ("FAIL", _s(step.get("output_path")) or "kein Output", sw)
+
+    if step.get("skipped") is True:
+        return ("SKIPPED", _s(step.get("output_video_path")), sw)
+
+    if "ok" in step:
+        ok_b = bool(step.get("ok"))
+        out = (
+            _s(step.get("subtitle_manifest_path"))
+            or _s(step.get("output_video_path"))
+            or _s(step.get("output_dir"))
+            or "nicht verfügbar"
+        )
+        if not ok_b:
+            return ("FAIL", out, sw)
+        return ("PASS" if not sw else "WARNING", out, sw)
+
+    return ("WARNING", "Step ohne erkanntes Schema", sw)
+
+
+def compute_local_preview_verdict(result: Any) -> str:
+    """PASS | WARNING | FAIL — tolerant bei fehlenden Keys."""
+    if not isinstance(result, dict):
+        return "FAIL"
+    ok = bool(result.get("ok"))
+    blocking = _list_str(result.get("blocking_reasons"))
+    if not ok or blocking:
+        return "FAIL"
+    top_w = _list_str(result.get("warnings"))
+    step_issue = False
+    for _name, step in _iter_steps(result.get("steps")):
+        status, _out, sw = _classify_step(_name, step)
+        if status in ("FAIL", "SKIPPED", "WARNING"):
+            step_issue = True
+        if sw:
+            step_issue = True
+    if top_w or step_issue:
+        return "WARNING"
+    return "PASS"
+
+
+def build_local_preview_founder_report(result: dict) -> str:
+    """BA 20.10 — Markdown-Report für Founder/Operator aus Aggregat-Ergebnis der Preview-Pipeline."""
+    verdict = compute_local_preview_verdict(result if isinstance(result, dict) else {})
+    r = result if isinstance(result, dict) else {}
+    paths = r.get("paths")
+    if not isinstance(paths, dict):
+        paths = {}
+    preview_path = _s(paths.get("preview_with_subtitles"))
+    clean_path = _s(paths.get("clean_video"))
+    open_path = preview_path or clean_path or "nicht verfügbar"
+    preview_yes = bool(preview_path)
+    run_id = _s(r.get("run_id")) or "nicht verfügbar"
+    pipeline_dir = _s(r.get("pipeline_dir")) or "nicht verfügbar"
+
+    lines: List[str] = [
+        "# Local Preview Founder Report",
+        "",
+        "## Verdict",
+        f"Status: **{verdict}**",
+        "",
+        "## Preview",
+        f"Preview erzeugt: **{'ja' if preview_yes else 'nein'}**",
+        f"Datei öffnen: `{open_path}`",
+        "",
+        "## Run",
+        f"Run ID: `{run_id}`",
+        f"Pipeline Ordner: `{pipeline_dir}`",
+        "",
+        "## Steps",
+    ]
+    steps_obj = r.get("steps")
+    if steps_obj is None or (isinstance(steps_obj, dict) and not steps_obj) or (isinstance(steps_obj, list) and not steps_obj):
+        lines.append("- *(keine Step-Daten)*")
+    else:
+        for step_name, step in _iter_steps(steps_obj):
+            status, out, sw = _classify_step(step_name, step)
+            lines.append(f"- **{step_name}**: {status}")
+            lines.append(f"  - output: `{out or 'nicht verfügbar'}`")
+            if sw:
+                lines.append(f"  - warning: {', '.join(sw)}")
+            else:
+                lines.append("  - warning: *(keine)*")
+
+    lines.extend(["", "## Warnings"])
+    tw = _list_str(r.get("warnings"))
+    if tw:
+        for w in tw:
+            lines.append(f"- {w}")
+    else:
+        lines.append("- *(keine)*")
+
+    lines.extend(["", "## Blocking Reasons"])
+    br = _list_str(r.get("blocking_reasons"))
+    if br:
+        for b in br:
+            lines.append(f"- {b}")
+    else:
+        lines.append("- *(keine)*")
+
+    lines.extend(["", "## Next Step"])
+    if verdict == "PASS":
+        lines.append(
+            "Öffne die Preview-Datei und prüfe Bild, Ton, Untertitel-Timing."
+        )
+    elif verdict == "WARNING":
+        lines.append(
+            "Öffne die Preview, prüfe die Warnungen und entscheide, ob ein Repair nötig ist."
+        )
+    else:
+        lines.append(
+            "Behebe zuerst die Blocking Reasons und starte den lokalen Preview-Lauf erneut."
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def write_local_preview_founder_report(result: dict) -> dict:
+    """
+    Ergänzt result um report_markdown; schreibt optional local_preview_report.md unter pipeline_dir.
+    Bei Schreibfehler: Warnung founder_report_write_failed, kein Crash.
+    """
+    if not isinstance(result, dict):
+        result = {}
+    out = dict(result)
+    paths = dict(out.get("paths") or {})
+    out["paths"] = paths
+    try:
+        md = build_local_preview_founder_report(out)
+    except Exception:
+        md = (
+            "# Local Preview Founder Report\n\n"
+            "## Verdict\nStatus: **FAIL**\n\n"
+            "(Report konnte nicht aufgebaut werden — Rohdaten prüfen.)\n"
+        )
+        w = _list_str(out.get("warnings"))
+        w.append("founder_report_build_failed")
+        out["warnings"] = w
+    out["report_markdown"] = md
+
+    pd = _s(out.get("pipeline_dir"))
+    if not pd:
+        return out
+
+    try:
+        rp = Path(pd) / "local_preview_report.md"
+        rp.parent.mkdir(parents=True, exist_ok=True)
+        rp.write_text(md, encoding="utf-8")
+        report_path = str(rp.resolve())
+        paths["founder_report"] = report_path
+        out["report_path"] = report_path
+    except OSError:
+        w = _list_str(out.get("warnings"))
+        w.append("founder_report_write_failed")
+        out["warnings"] = w
+    return out
 
 
 def run_local_preview_pipeline(
@@ -67,6 +291,9 @@ def run_local_preview_pipeline(
     r_fn = render_final_story_video_fn or render_mod.render_final_story_video
     u_fn = burn_in_subtitles_preview_fn or burn_mod.burn_in_subtitles_preview
 
+    def _finalize(raw: Dict[str, Any]) -> Dict[str, Any]:
+        return write_local_preview_founder_report(raw)
+
     step_build = b_fn(
         Path(narration_script).resolve(),
         timeline_manifest_path=Path(timeline_manifest).resolve(),
@@ -81,19 +308,21 @@ def run_local_preview_pipeline(
     blocking.extend(list(step_build.get("blocking_reasons") or []))
 
     if not step_build.get("ok"):
-        return {
-            "ok": False,
-            "run_id": rid,
-            "pipeline_dir": str(pipeline_dir),
-            "steps": {"build_subtitles": step_build, "render_clean": None, "burnin_preview": None},
-            "paths": {
-                "subtitle_manifest": step_build.get("subtitle_manifest_path") or "",
-                "clean_video": "",
-                "preview_with_subtitles": "",
-            },
-            "warnings": warnings,
-            "blocking_reasons": blocking or ["build_subtitles_failed"],
-        }
+        return _finalize(
+            {
+                "ok": False,
+                "run_id": rid,
+                "pipeline_dir": str(pipeline_dir),
+                "steps": {"build_subtitles": step_build, "render_clean": None, "burnin_preview": None},
+                "paths": {
+                    "subtitle_manifest": step_build.get("subtitle_manifest_path") or "",
+                    "clean_video": "",
+                    "preview_with_subtitles": "",
+                },
+                "warnings": warnings,
+                "blocking_reasons": blocking or ["build_subtitles_failed"],
+            }
+        )
 
     sub_man = Path(str(step_build["subtitle_manifest_path"])).resolve()
 
@@ -112,19 +341,21 @@ def run_local_preview_pipeline(
     blocking.extend(list(step_render.get("blocking_reasons") or []))
 
     if not step_render.get("video_created"):
-        return {
-            "ok": False,
-            "run_id": rid,
-            "pipeline_dir": str(pipeline_dir),
-            "steps": {"build_subtitles": step_build, "render_clean": step_render, "burnin_preview": None},
-            "paths": {
-                "subtitle_manifest": str(sub_man),
-                "clean_video": str(clean_video),
-                "preview_with_subtitles": "",
-            },
-            "warnings": warnings,
-            "blocking_reasons": blocking or ["render_clean_failed"],
-        }
+        return _finalize(
+            {
+                "ok": False,
+                "run_id": rid,
+                "pipeline_dir": str(pipeline_dir),
+                "steps": {"build_subtitles": step_build, "render_clean": step_render, "burnin_preview": None},
+                "paths": {
+                    "subtitle_manifest": str(sub_man),
+                    "clean_video": str(clean_video),
+                    "preview_with_subtitles": "",
+                },
+                "warnings": warnings,
+                "blocking_reasons": blocking or ["render_clean_failed"],
+            }
+        )
 
     step_burn = u_fn(
         clean_video,
@@ -142,28 +373,30 @@ def run_local_preview_pipeline(
     skipped = bool(step_burn.get("skipped"))
     overall_ok = burn_ok and (skipped or bool(preview_path))
 
-    return {
-        "ok": overall_ok and not blocking,
-        "run_id": rid,
-        "pipeline_dir": str(pipeline_dir),
-        "steps": {
-            "build_subtitles": step_build,
-            "render_clean": step_render,
-            "burnin_preview": step_burn,
-        },
-        "paths": {
-            "subtitle_manifest": str(sub_man),
-            "clean_video": str(clean_video.resolve()) if clean_video.is_file() else str(clean_video),
-            "preview_with_subtitles": preview_path,
-        },
-        "warnings": warnings,
-        "blocking_reasons": blocking,
-    }
+    return _finalize(
+        {
+            "ok": overall_ok and not blocking,
+            "run_id": rid,
+            "pipeline_dir": str(pipeline_dir),
+            "steps": {
+                "build_subtitles": step_build,
+                "render_clean": step_render,
+                "burnin_preview": step_burn,
+            },
+            "paths": {
+                "subtitle_manifest": str(sub_man),
+                "clean_video": str(clean_video.resolve()) if clean_video.is_file() else str(clean_video),
+                "preview_with_subtitles": preview_path,
+            },
+            "warnings": warnings,
+            "blocking_reasons": blocking,
+        }
+    )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="BA 20.9 — Lokale Preview-Pipeline: Untertitel → clean MP4 → Burn-in-Preview (ein Aufruf)."
+        description="BA 20.9 / BA 20.10 — Lokale Preview-Pipeline + optional Founder-Markdown-Report."
     )
     parser.add_argument("--timeline-manifest", type=Path, required=True, dest="timeline_manifest")
     parser.add_argument("--narration-script", type=Path, required=True, dest="narration_script")
@@ -201,6 +434,12 @@ def main() -> int:
         dest="force_burn",
         help="Weiter an burn_in_subtitles_preview --force",
     )
+    parser.add_argument(
+        "--print-report",
+        action="store_true",
+        dest="print_report",
+        help="Nach dem JSON den Markdown-Founder-Report (BA 20.10) auf stdout ausgeben",
+    )
     args = parser.parse_args()
 
     meta = run_local_preview_pipeline(
@@ -215,7 +454,11 @@ def main() -> int:
         audio_path=args.audio_path,
         force_burn=bool(args.force_burn),
     )
+    md = meta.pop("report_markdown", None)
     print(json.dumps(meta, ensure_ascii=False, indent=2))
+    if args.print_report and md:
+        print("\n---\n")
+        print(md, end="" if str(md).endswith("\n") else "\n")
     return 0 if meta.get("ok") else 3
 
 
