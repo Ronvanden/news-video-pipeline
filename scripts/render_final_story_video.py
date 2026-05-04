@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -52,6 +53,45 @@ def which_ffmpeg() -> Optional[str]:
 
 def which_ffprobe() -> Optional[str]:
     return shutil.which("ffprobe")
+
+
+def _ba207_write_render_output_manifest(
+    manifest_path: Path,
+    *,
+    ok: bool,
+    run_id: str,
+    clean_video_path: str,
+    clean_video_role: str,
+    subtitle_burnin_video_path: str,
+    subtitle_sidecar_srt_path: str,
+    subtitle_sidecar_ass_path: str,
+    subtitle_delivery_mode: str,
+    subtitle_style: str,
+    renderer_used: str,
+    warnings: List[str],
+    blocking_reasons: List[str],
+) -> Optional[str]:
+    """BA 20.7 — Contract-Datei unter output/render_<run_id>/ (V1, kein Orchestrierungs-Flow)."""
+    doc: Dict[str, Any] = {
+        "ok": ok,
+        "run_id": run_id,
+        "clean_video_path": clean_video_path,
+        "clean_video_role": clean_video_role,
+        "subtitle_burnin_video_path": subtitle_burnin_video_path,
+        "subtitle_sidecar_srt_path": subtitle_sidecar_srt_path,
+        "subtitle_sidecar_ass_path": subtitle_sidecar_ass_path,
+        "subtitle_delivery_mode": subtitle_delivery_mode,
+        "subtitle_style": subtitle_style,
+        "renderer_used": renderer_used,
+        "warnings": list(warnings),
+        "blocking_reasons": list(blocking_reasons),
+    }
+    try:
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+        return str(manifest_path.resolve())
+    except OSError:
+        return None
 
 
 def load_timeline_manifest(path: Path) -> Dict[str, Any]:
@@ -467,6 +507,70 @@ def _run_ffmpeg_basic_motion(
     return True, warnings, blocking
 
 
+def _ba207_render_manifest_payload(
+    *,
+    video_created: bool,
+    output_path_str: str,
+    burned: bool,
+    sub_file: Optional[Path],
+    use_sub: bool,
+    warns: List[str],
+    blocks: List[str],
+) -> Dict[str, Any]:
+    """Felder für render_output_manifest.json (BA 20.7)."""
+    out_res = ""
+    if output_path_str and video_created:
+        try:
+            out_res = str(Path(output_path_str).resolve())
+        except OSError:
+            out_res = output_path_str
+    side_srt = str(sub_file.resolve()) if sub_file else ""
+    if video_created and burned:
+        return {
+            "ok": True,
+            "clean_video_path": "",
+            "clean_video_role": "",
+            "subtitle_burnin_video_path": out_res,
+            "subtitle_sidecar_srt_path": side_srt,
+            "subtitle_sidecar_ass_path": "",
+            "subtitle_delivery_mode": "both" if side_srt else "burn_in",
+            "subtitle_style": "classic",
+            "renderer_used": "srt_burnin",
+            "warnings": list(warns),
+            "blocking_reasons": list(blocks),
+        }
+    if video_created:
+        delivery = "none"
+        if use_sub and side_srt and not burned:
+            delivery = "sidecar_srt"
+        return {
+            "ok": True,
+            "clean_video_path": out_res,
+            "clean_video_role": "clean_video",
+            "subtitle_burnin_video_path": "",
+            "subtitle_sidecar_srt_path": side_srt,
+            "subtitle_sidecar_ass_path": "",
+            "subtitle_delivery_mode": delivery,
+            "subtitle_style": "classic" if use_sub else "none",
+            "renderer_used": "none",
+            "warnings": list(warns),
+            "blocking_reasons": list(blocks),
+        }
+    return {
+        "ok": False,
+        "clean_video_path": "",
+        "clean_video_role": "",
+        "subtitle_burnin_video_path": "",
+        "subtitle_sidecar_srt_path": side_srt,
+        "subtitle_sidecar_ass_path": "",
+        "subtitle_delivery_mode": "none",
+        "subtitle_style": "none",
+        "renderer_used": "none",
+        "warnings": list(warns),
+        "blocking_reasons": list(blocks),
+    }
+
+
 def render_final_story_video(
     timeline_path: Path,
     *,
@@ -475,25 +579,68 @@ def render_final_story_video(
     subtitle_path: Optional[Path] = None,
     ffmpeg_bin: Optional[str] = None,
     ffprobe_bin: Optional[str] = None,
+    run_id: Optional[str] = None,
+    write_output_manifest: bool = False,
+    manifest_root: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """
     concat demuxer (static) oder Motion+xfade (basic) → scale/pad 1920x1080 → H.264 + optional AAC.
     Ohne Audio: stumm (warnings audio_missing_silent_render).
     BA 20.5: optional Untertitel-Burn-in (--subtitle-path), bei Fehler erneuter Lauf ohne Untertitel.
+    BA 20.7: Primärausgabe ist **clean** ohne --subtitle-path; --subtitle-path = Legacy-Inline-Burn-in
+    (Warnung legacy_subtitle_path_burnin_used). Optional render_output_manifest.json bei write_output_manifest.
     """
     warnings: List[str] = []
     blocking: List[str] = []
     ffprobe = ffprobe_bin or which_ffprobe()
     sub_req = (str(subtitle_path).strip() if subtitle_path is not None else "") or ""
+    rid = (str(run_id).strip() if run_id is not None else "") or str(uuid.uuid4())
+    man_root = Path(manifest_root).resolve() if manifest_root is not None else (ROOT / "output")
+    manifest_path = man_root / f"render_{rid}" / "render_output_manifest.json"
+    sub_file: Optional[Path] = None
+    use_sub = False
 
     motion_eff, mw = _normalize_motion_mode(motion_mode)
     warnings.extend(mw)
+    if sub_req:
+        warnings.append("legacy_subtitle_path_burnin_used")
 
     def _sub_meta() -> Dict[str, Any]:
         return {
             "subtitle_path_requested": sub_req or None,
             "subtitles_burned": False,
         }
+
+    def _merge_207(r: Dict[str, Any], *, video_created: bool, burned: bool) -> Dict[str, Any]:
+        r["run_id"] = rid
+        if write_output_manifest:
+            pay = _ba207_render_manifest_payload(
+                video_created=video_created,
+                output_path_str=str(r.get("output_path") or ""),
+                burned=burned,
+                sub_file=sub_file,
+                use_sub=use_sub,
+                warns=list(r.get("warnings") or []),
+                blocks=list(r.get("blocking_reasons") or []),
+            )
+            mp = _ba207_write_render_output_manifest(
+                manifest_path,
+                ok=bool(pay["ok"]),
+                run_id=rid,
+                clean_video_path=str(pay["clean_video_path"]),
+                clean_video_role=str(pay["clean_video_role"]),
+                subtitle_burnin_video_path=str(pay["subtitle_burnin_video_path"]),
+                subtitle_sidecar_srt_path=str(pay["subtitle_sidecar_srt_path"]),
+                subtitle_sidecar_ass_path=str(pay["subtitle_sidecar_ass_path"]),
+                subtitle_delivery_mode=str(pay["subtitle_delivery_mode"]),
+                subtitle_style=str(pay["subtitle_style"]),
+                renderer_used=str(pay["renderer_used"]),
+                warnings=list(pay["warnings"]),
+                blocking_reasons=list(pay["blocking_reasons"]),
+            )
+            if mp:
+                r["render_output_manifest_path"] = mp
+        return r
 
     try:
         tl = load_timeline_manifest(timeline_path)
@@ -508,7 +655,7 @@ def render_final_story_video(
             "blocking_reasons": ["timeline_manifest_invalid_or_missing"],
         }
         r.update(_sub_meta())
-        return r
+        return _merge_207(r, video_created=False, burned=False)
 
     scenes = tl.get("scenes") or []
     if not isinstance(scenes, list) or not scenes:
@@ -522,7 +669,7 @@ def render_final_story_video(
             "blocking_reasons": ["timeline_scenes_empty"],
         }
         r.update(_sub_meta())
-        return r
+        return _merge_207(r, video_created=False, burned=False)
 
     n_scenes = len(scenes)
     ffmpeg = ffmpeg_bin if ffmpeg_bin is not None else which_ffmpeg()
@@ -537,7 +684,7 @@ def render_final_story_video(
             "blocking_reasons": ["ffmpeg_missing"],
         }
         r.update(_sub_meta())
-        return r
+        return _merge_207(r, video_created=False, burned=False)
 
     assets_dir = Path(str(tl.get("assets_directory") or ""))
     if not assets_dir.is_dir():
@@ -551,7 +698,7 @@ def render_final_story_video(
             "blocking_reasons": ["assets_directory_missing"],
         }
         r.update(_sub_meta())
-        return r
+        return _merge_207(r, video_created=False, burned=False)
 
     for sc in scenes:
         ip = assets_dir / str(sc.get("image_path") or "")
@@ -566,7 +713,7 @@ def render_final_story_video(
                 "blocking_reasons": [f"missing_image:{sc.get('image_path')}"],
             }
             r.update(_sub_meta())
-            return r
+            return _merge_207(r, video_created=False, burned=False)
 
     audio_path = (tl.get("audio_path") or "").strip()
     audio_file: Optional[Path] = Path(audio_path) if audio_path else None
@@ -580,7 +727,7 @@ def render_final_story_video(
 
     output_video.parent.mkdir(parents=True, exist_ok=True)
 
-    sub_file: Optional[Path] = None
+    sub_file = None
     if subtitle_path is not None and str(subtitle_path).strip():
         sp = Path(str(subtitle_path).strip())
         if not sp.is_file():
@@ -594,6 +741,7 @@ def render_final_story_video(
     burned_subtitles = False
     used_motion = motion_eff == "basic"
     ok = False
+    blocking: List[str] = []
     sub_tries = [True, False] if use_sub else [False]
 
     if motion_eff == "basic":
@@ -663,13 +811,13 @@ def render_final_story_video(
             "subtitle_path_requested": sub_req or None,
             "subtitles_burned": False,
         }
-        return r
+        return _merge_207(r, video_created=False, burned=False)
 
     dur: Optional[float] = None
     if ffprobe:
         dur, pw = _probe_video_duration(output_video, ffprobe)
         warnings.extend(pw)
-    return {
+    r_ok: Dict[str, Any] = {
         "video_created": True,
         "output_path": str(output_video.resolve()),
         "duration_seconds": dur,
@@ -681,10 +829,14 @@ def render_final_story_video(
         "subtitle_path_requested": sub_req or None,
         "subtitles_burned": burned_subtitles,
     }
+    return _merge_207(r_ok, video_created=True, burned=burned_subtitles)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="BA 19.2 / BA 20.4 / BA 20.5 — timeline_manifest → MP4 (ffmpeg)")
+    parser = argparse.ArgumentParser(
+        description="BA 19.2 / BA 20.4 / BA 20.5 / BA 20.7 — timeline_manifest → MP4 (ffmpeg); "
+        "Burn-in nur optional via --subtitle-path (Legacy); BA 20.7 Manifest unter output/render_<run_id>/"
+    )
     parser.add_argument("--timeline-manifest", type=Path, required=True, dest="timeline_manifest")
     parser.add_argument(
         "--output",
@@ -704,7 +856,14 @@ def main() -> int:
         type=Path,
         default=None,
         dest="subtitle_path",
-        help="BA 20.5: SRT-Datei (z. B. output/subtitles_<id>/subtitles.srt) ins Video brennen",
+        help="BA 20.5 (Legacy): SRT ins **gleiche** Output-MP4 brennen — BA 20.7 empfiehlt clean render + "
+        "separaten Schritt burn_in_subtitles_preview.py statt Default-Burn-in",
+    )
+    parser.add_argument(
+        "--run-id",
+        default="",
+        dest="run_id",
+        help="BA 20.7: Ordner output/render_<run_id>/ für render_output_manifest.json (Default: UUID)",
     )
     args = parser.parse_args()
 
@@ -713,6 +872,8 @@ def main() -> int:
         output_video=args.output,
         motion_mode=args.motion_mode,
         subtitle_path=args.subtitle_path,
+        run_id=(args.run_id or "").strip() or None,
+        write_output_manifest=True,
     )
     print(json.dumps(meta, ensure_ascii=False, indent=2))
     return 0 if meta.get("video_created") else 4

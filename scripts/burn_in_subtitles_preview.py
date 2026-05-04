@@ -27,6 +27,30 @@ _INPUT_SUSPECT_BURNIN_SUBSTRINGS = (
 )
 
 
+def _write_burnin_output_manifest_json(out_dir: Path, meta: Dict[str, Any]) -> Optional[str]:
+    """BA 20.7 — burnin_output_manifest.json nach erfolgreichem Lauf (ok True)."""
+    p = out_dir / "burnin_output_manifest.json"
+    body = {
+        "ok": True,
+        "clean_input_video_path": meta.get("input_video") or "",
+        "subtitle_burnin_video_path": meta.get("output_video_path") or "",
+        "subtitle_delivery_mode": meta.get("subtitle_delivery_mode") or "none",
+        "subtitle_style": meta.get("subtitle_style") or "none",
+        "renderer_used": meta.get("renderer_used") or "none",
+        "ass_subtitle_path": meta.get("ass_subtitle_path") or "",
+        "subtitles_srt_path": meta.get("subtitles_srt_path") or "",
+        "input_video_role": meta.get("input_video_role") or "clean_candidate",
+        "clean_video_required": bool(meta.get("clean_video_required")),
+        "warnings": list(meta.get("warnings") or []),
+    }
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(body, ensure_ascii=False, indent=2), encoding="utf-8")
+        return str(p.resolve())
+    except OSError:
+        return None
+
+
 def _classify_input_video_role(path: Path) -> Tuple[str, List[str]]:
     """Pfad/Dateiname → clean_candidate oder possibly_burned + ggf. Warnung."""
     warns: List[str] = []
@@ -454,6 +478,10 @@ def burn_in_subtitles_preview(
             "blocking_reasons": list(blocking),
         }
         base.update(_render_contract(contract_style, contract_skipped, contract_ok_output))
+        if base.get("ok") is True:
+            mp = _write_burnin_output_manifest_json(out_dir, base)
+            if mp:
+                base["burnin_output_manifest_path"] = mp
         return base
 
     try:
