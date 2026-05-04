@@ -6,6 +6,7 @@ import argparse
 import importlib.util
 import json
 import re
+import time
 import shutil
 import subprocess
 import sys
@@ -546,6 +547,189 @@ def local_preview_next_step_for_verdict(verdict: str) -> str:
     if v == "WARNING":
         return "Öffne die Preview, prüfe die Warnungen und entscheide, ob ein Repair nötig ist."
     return "Behebe zuerst die Blocking Reasons und starte den lokalen Preview-Lauf erneut."
+
+
+# BA 21.7 — stabiler JSON-/Dashboard-Contract (kanonische Top-Level-Keys + paths-Untermenge)
+LOCAL_PREVIEW_RESULT_CONTRACT_ID = "local_preview_result_v1"
+LOCAL_PREVIEW_RESULT_SCHEMA_VERSION = 1
+LOCAL_PREVIEW_RESULT_PATH_KEYS: Tuple[str, ...] = (
+    "subtitle_manifest",
+    "clean_video",
+    "preview_with_subtitles",
+    "preview_video",
+    "burnin_preview_source",
+    "timeline_manifest",
+    "audio_path",
+    "founder_report",
+    "open_me",
+    "subtitles_srt_path",
+)
+
+
+def apply_local_preview_result_contract(result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    BA 21.7 — Ergänzt fehlende kanonische Felder; setzt ``result_contract`` und ``verdict``.
+
+    Arbeitet in-place auf ``result``; gibt dasselbe Dict zurück (Dashboard/JSON kann Keys fest erwarten).
+    """
+    if not isinstance(result, dict):
+        raise TypeError("apply_local_preview_result_contract expects dict")
+    out = result
+
+    out.setdefault("ok", False)
+    out.setdefault("run_id", "")
+    out.setdefault("pipeline_dir", "")
+
+    out["warnings"] = _list_str(out.get("warnings"))
+    out["blocking_reasons"] = sanitize_local_preview_blocking_reasons(out.get("blocking_reasons"))
+
+    steps = out.get("steps")
+    if not isinstance(steps, dict):
+        steps = {}
+        out["steps"] = steps
+    for sk in ("build_subtitles", "render_clean", "burnin_preview"):
+        if sk not in steps:
+            steps[sk] = None
+
+    paths = out.get("paths")
+    if not isinstance(paths, dict):
+        paths = {}
+        out["paths"] = paths
+    for pk in LOCAL_PREVIEW_RESULT_PATH_KEYS:
+        if pk not in paths:
+            paths[pk] = ""
+
+    if not isinstance(out.get("quality_checklist"), dict):
+        out["quality_checklist"] = {
+            "status": "fail",
+            "items": [],
+            "warnings": _collect_local_preview_warnings(out),
+            "blocking_reasons": list(out.get("blocking_reasons") or []),
+            "next_step": local_preview_next_step_for_verdict("FAIL"),
+        }
+    if not isinstance(out.get("subtitle_quality_check"), dict):
+        out["subtitle_quality_check"] = {
+            "status": "fail",
+            "items": [],
+            "warnings": [],
+            "blocking_reasons": [],
+            "summary": "",
+            "manifest_path": "",
+            "cue_source": "",
+            "cue_count": 0,
+        }
+    if not isinstance(out.get("sync_guard"), dict):
+        out["sync_guard"] = {
+            "status": "fail",
+            "items": [],
+            "durations": {},
+            "warnings": [],
+            "blocking_reasons": [],
+            "summary": "",
+        }
+    if not isinstance(out.get("warning_classification"), dict):
+        out["warning_classification"] = {
+            "highest": "CHECK",
+            "counts": {"INFO": 0, "CHECK": 0, "WARNING": 0, "BLOCKING": 0},
+            "items": [],
+            "summary": "",
+        }
+    if not isinstance(out.get("founder_quality_decision"), dict):
+        vd_fb = compute_local_preview_verdict(out)
+        out["founder_quality_decision"] = {
+            "decision_code": "REVIEW_REQUIRED",
+            "decision_label_de": "Vorschau-Ergebnis unvollständig (Contract-Backfill).",
+            "top_issue": "founder_quality_decision_missing",
+            "next_step": local_preview_next_step_for_verdict(vd_fb),
+            "signals": {},
+            "factors_de": [f"Verdict: {vd_fb}"],
+        }
+
+    out["verdict"] = compute_local_preview_verdict(out)
+    out["result_contract"] = {
+        "id": LOCAL_PREVIEW_RESULT_CONTRACT_ID,
+        "schema_version": LOCAL_PREVIEW_RESULT_SCHEMA_VERSION,
+    }
+    return out
+
+
+# BA 22.1 — kompaktes JSON im Pipeline-Ordner für Dashboard-Status-Karten (ohne steps-Blobs)
+LOCAL_PREVIEW_DASHBOARD_JSON_NAME = "local_preview_result.json"
+_LOCAL_PREVIEW_SNAPSHOT_LIST_CAP = 40
+
+
+def build_local_preview_dashboard_snapshot(result: dict) -> Dict[str, Any]:
+    """Kleines persistierbares Objekt für GET Panel / Status-Karten (kein report_markdown, keine steps)."""
+    r = result if isinstance(result, dict) else {}
+    paths_in = r.get("paths") if isinstance(r.get("paths"), dict) else {}
+    paths_out: Dict[str, str] = {}
+    for k in LOCAL_PREVIEW_RESULT_PATH_KEYS:
+        paths_out[k] = _s(paths_in.get(k))
+
+    qc = r.get("quality_checklist") if isinstance(r.get("quality_checklist"), dict) else {}
+    sq = r.get("subtitle_quality_check") if isinstance(r.get("subtitle_quality_check"), dict) else {}
+    sg = r.get("sync_guard") if isinstance(r.get("sync_guard"), dict) else {}
+    wc = r.get("warning_classification") if isinstance(r.get("warning_classification"), dict) else {}
+    fq = r.get("founder_quality_decision") if isinstance(r.get("founder_quality_decision"), dict) else {}
+    rc = r.get("result_contract") if isinstance(r.get("result_contract"), dict) else {}
+
+    ws = _list_str(r.get("warnings"))[:_LOCAL_PREVIEW_SNAPSHOT_LIST_CAP]
+    br = sanitize_local_preview_blocking_reasons(r.get("blocking_reasons"))[:_LOCAL_PREVIEW_SNAPSHOT_LIST_CAP]
+
+    return {
+        "snapshot_version": "local_preview_dashboard_snapshot_v1",
+        "saved_at_epoch": time.time(),
+        "result_contract": dict(rc) if rc else {"id": LOCAL_PREVIEW_RESULT_CONTRACT_ID, "schema_version": LOCAL_PREVIEW_RESULT_SCHEMA_VERSION},
+        "ok": bool(r.get("ok")),
+        "verdict": _s(r.get("verdict")) or compute_local_preview_verdict(r),
+        "run_id": _s(r.get("run_id")),
+        "pipeline_dir": _s(r.get("pipeline_dir")),
+        "paths": paths_out,
+        "quality_checklist": {"status": _s(qc.get("status")).lower() or "fail"},
+        "subtitle_quality_check": {
+            "status": _s(sq.get("status")).lower() or "fail",
+            "summary": (_s(sq.get("summary")))[:400],
+        },
+        "sync_guard": {
+            "status": _s(sg.get("status")).lower() or "fail",
+            "summary": (_s(sg.get("summary")))[:400],
+        },
+        "warning_classification": {
+            "highest": _s(wc.get("highest")).upper() or "CHECK",
+            "summary": (_s(wc.get("summary")))[:400],
+        },
+        "founder_quality_decision": {
+            "decision_code": _s(fq.get("decision_code")).upper() or "REVIEW_REQUIRED",
+            "top_issue": (_s(fq.get("top_issue")))[:500],
+            "next_step": (_s(fq.get("next_step")))[:800],
+        },
+        "warnings": ws,
+        "blocking_reasons": br,
+    }
+
+
+def write_local_preview_dashboard_result_json(result: dict) -> None:
+    """Schreibt ``local_preview_result.json`` unter ``pipeline_dir`` (Fehler → Warnung, kein Crash)."""
+    if not isinstance(result, dict):
+        return
+    pd = _s(result.get("pipeline_dir"))
+    if not pd:
+        return
+    try:
+        dest = Path(pd).resolve() / LOCAL_PREVIEW_DASHBOARD_JSON_NAME
+    except OSError:
+        w = _list_str(result.get("warnings"))
+        w.append("local_preview_dashboard_json_path_invalid")
+        result["warnings"] = w
+        return
+    try:
+        snap = build_local_preview_dashboard_snapshot(result)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(json.dumps(snap, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        w = _list_str(result.get("warnings"))
+        w.append("local_preview_dashboard_json_write_failed")
+        result["warnings"] = w
 
 
 # Gemeinsame Pfad-Logik (BA 20.11 Smoke, BA 20.12 OPEN_ME, Founder Report; BA 21.0c Reihenfolge)
@@ -2419,6 +2603,8 @@ def finalize_local_preview_operator_artifacts(result: dict) -> dict:
         }
     out = write_local_preview_founder_report(out)
     out = write_local_preview_open_me(out)
+    out = apply_local_preview_result_contract(out)
+    write_local_preview_dashboard_result_json(out)
     return out
 
 

@@ -56,6 +56,7 @@ Optional: `--out-root`, `--run-id`, `--print-json` (werden an den Smoke-Lauf dur
 
 ## Hinweise
 
+- Vollständiges Operator-Runbook (**BA 21.6**): [docs/runbooks/local_preview_runbook.md](../../docs/runbooks/local_preview_runbook.md).
 - Ohne funktionierendes **ffmpeg** / fehlende Bilder: **Warnings** oder **FAIL** — siehe Smoke-Status und Founder Report.
 - Keine **Secrets** / keine **`.env`** nötig für diesen Mini-Lauf (Narration-Modus, kein Audio-Transkript).
 - Alte Preview-Ordner: `python scripts/cleanup_local_previews.py --out-root output` (Dry-Run).

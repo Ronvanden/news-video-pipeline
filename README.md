@@ -4,7 +4,7 @@
 
 Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL oder einem YouTube-Link ein strukturiertes YouTube-Skript erzeugt. Fokus liegt auf einer sicheren, modularen Pipeline mit optionaler LLM-Unterstützung und stabiler Fallback-Logik.
 
-**Planung:** Phasen, Status und Akzeptanzkriterien für die gesamte Pipeline stehen in [PIPELINE_PLAN.md](PIPELINE_PLAN.md). **Prompt-Governance:** [docs/PROMPT_OPERATING_SYSTEM.md](docs/PROMPT_OPERATING_SYSTEM.md) und [docs/PROMPT_PATTERNS.md](docs/PROMPT_PATTERNS.md). **Betrieb:** [OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md). **Gold-Referenzpfad (Produktion):** [GOLD_PRODUCTION_STANDARD.md](GOLD_PRODUCTION_STANDARD.md). Gelöste und dokumentierte Vorfälle: [ISSUES_LOG.md](ISSUES_LOG.md). Vorlage für neue Module: [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md).
+**Planung:** Phasen, Status und Akzeptanzkriterien für die gesamte Pipeline stehen in [PIPELINE_PLAN.md](PIPELINE_PLAN.md). **Prompt-Governance:** [docs/PROMPT_OPERATING_SYSTEM.md](docs/PROMPT_OPERATING_SYSTEM.md) und [docs/PROMPT_PATTERNS.md](docs/PROMPT_PATTERNS.md). **Betrieb:** [OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md). **Local Preview (CLI, Artefakte, Cleanup):** [docs/runbooks/local_preview_runbook.md](docs/runbooks/local_preview_runbook.md). **Gold-Referenzpfad (Produktion):** [GOLD_PRODUCTION_STANDARD.md](GOLD_PRODUCTION_STANDARD.md). Gelöste und dokumentierte Vorfälle: [ISSUES_LOG.md](ISSUES_LOG.md). Vorlage für neue Module: [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md).
 
 ## 2. Aktueller MVP-Status
 
