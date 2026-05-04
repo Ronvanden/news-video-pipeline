@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from typing import Any, Dict
 
@@ -19,6 +20,19 @@ def preview_mod():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+def _min_subtitle_manifest(tmp_path: Path, tag: str) -> Path:
+    d = tmp_path / f"sub2012_{tag}"
+    d.mkdir(parents=True, exist_ok=True)
+    srt = d / "cues.srt"
+    srt.write_text(
+        "1\n00:00:00,000 --> 00:00:02,000\nA.\n\n2\n00:00:02,100 --> 00:00:04,000\nB.\n",
+        encoding="utf-8",
+    )
+    m = d / "subtitle_manifest.json"
+    m.write_text(json.dumps({"subtitles_srt_path": str(srt)}), encoding="utf-8")
+    return m
 
 
 def _base_ok() -> Dict[str, Any]:
@@ -120,7 +134,7 @@ def test_finalize_writes_both_artifacts(preview_mod, tmp_path):
     nar = tmp_path / "nar.txt"
     tl.write_text("{}", encoding="utf-8")
     nar.write_text("b", encoding="utf-8")
-    sub_m = tmp_path / "sm.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "fin")
 
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
@@ -165,7 +179,7 @@ def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod):
     nar = tmp_path / "n.txt"
     tl.write_text("{}", encoding="utf-8")
     nar.write_text("b", encoding="utf-8")
-    sub_m = tmp_path / "s.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "sm2012")
 
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
@@ -201,3 +215,6 @@ def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod):
     assert "Open-Me Datei:" in s
     assert "OPEN_ME.md" in s
     assert "Quality:" in s
+    assert "Subtitle Quality:" in s
+    om_txt = (Path(meta["pipeline_dir"]) / "OPEN_ME.md").read_text(encoding="utf-8")
+    assert "## Subtitle Quality" in om_txt

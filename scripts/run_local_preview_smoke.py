@@ -64,6 +64,10 @@ def build_local_preview_smoke_summary(result: dict) -> str:
     q_status = ""
     if isinstance(qc, dict) and qc.get("status"):
         q_status = str(qc.get("status")).strip().upper()
+    sq = result.get("subtitle_quality_check") if isinstance(result, dict) else None
+    sub_st = ""
+    if isinstance(sq, dict) and sq.get("status"):
+        sub_st = str(sq.get("status")).strip().upper()
     lines = [
         "Local Preview Smoke",
         "",
@@ -71,6 +75,8 @@ def build_local_preview_smoke_summary(result: dict) -> str:
     ]
     if q_status:
         lines.append(f"Quality: {q_status}")
+    if sub_st:
+        lines.append(f"Subtitle Quality: {sub_st}")
     lines.extend(
         [
         f"Preview öffnen: {preview}",

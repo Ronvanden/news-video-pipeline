@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from typing import Any, Dict
 
@@ -39,6 +40,18 @@ def _touch(p: Path, content: bytes = b"x") -> str:
     return str(p.resolve())
 
 
+def _write_min_subtitle_manifest(base: Path, srt_body: str) -> str:
+    base.mkdir(parents=True, exist_ok=True)
+    srt = base / "subtitles.srt"
+    srt.write_text(srt_body, encoding="utf-8")
+    man = base / "subtitle_manifest.json"
+    man.write_text(
+        json.dumps({"subtitles_srt_path": str(srt), "subtitle_count": srt_body.count("-->")}),
+        encoding="utf-8",
+    )
+    return str(man.resolve())
+
+
 def test_quality_pass_all_artifacts(preview_mod, tmp_path):
     pv = tmp_path / "pv.mp4"
     rp = tmp_path / "local_preview_report.md"
@@ -46,6 +59,10 @@ def test_quality_pass_all_artifacts(preview_mod, tmp_path):
     _touch(pv, b"abc")
     _touch(rp, b"# r")
     _touch(om, b"# o")
+    sm = _write_min_subtitle_manifest(
+        tmp_path / "sub_pass",
+        "1\n00:00:00,000 --> 00:00:02,000\nShort one.\n\n2\n00:00:02,100 --> 00:00:04,000\nShort two.\n",
+    )
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
@@ -54,6 +71,7 @@ def test_quality_pass_all_artifacts(preview_mod, tmp_path):
             "preview_with_subtitles": str(pv),
             "founder_report": str(rp),
             "open_me": str(om),
+            "subtitle_manifest": sm,
         },
         "report_path": str(rp),
         "open_me_path": str(om),
@@ -66,6 +84,7 @@ def test_quality_pass_all_artifacts(preview_mod, tmp_path):
         "preview_video_non_empty",
         "founder_report_exists",
         "open_me_exists",
+        "subtitle_quality",
         "blocking_reasons_clear",
         "warnings_present",
     }
@@ -78,11 +97,20 @@ def test_quality_warning_when_warnings_present(preview_mod, tmp_path):
     _touch(pv, b"ab")
     _touch(rp, b"#")
     _touch(om, b"#")
+    sm = _write_min_subtitle_manifest(
+        tmp_path / "sub_warn",
+        "1\n00:00:00,000 --> 00:00:02,000\nA.\n\n2\n00:00:02,100 --> 00:00:04,000\nB.\n",
+    )
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": ["some_warn"],
         "blocking_reasons": [],
-        "paths": {"preview_with_subtitles": str(pv), "founder_report": str(rp), "open_me": str(om)},
+        "paths": {
+            "preview_with_subtitles": str(pv),
+            "founder_report": str(rp),
+            "open_me": str(om),
+            "subtitle_manifest": sm,
+        },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
@@ -97,11 +125,20 @@ def test_quality_fail_missing_preview(preview_mod, tmp_path):
     om = tmp_path / "OPEN_ME.md"
     _touch(rp)
     _touch(om)
+    sm = _write_min_subtitle_manifest(
+        tmp_path / "sub_miss",
+        "1\n00:00:00,000 --> 00:00:01,000\nOk.\n",
+    )
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
         "blocking_reasons": [],
-        "paths": {"preview_with_subtitles": str(tmp_path / "missing.mp4"), "founder_report": str(rp), "open_me": str(om)},
+        "paths": {
+            "preview_with_subtitles": str(tmp_path / "missing.mp4"),
+            "founder_report": str(rp),
+            "open_me": str(om),
+            "subtitle_manifest": sm,
+        },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
@@ -118,11 +155,17 @@ def test_quality_fail_preview_zero_bytes(preview_mod, tmp_path):
     _touch(pv, b"")
     _touch(rp)
     _touch(om)
+    sm = _write_min_subtitle_manifest(tmp_path / "sub_zero", "1\n00:00:00,000 --> 00:00:01,000\nX.\n")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
         "blocking_reasons": [],
-        "paths": {"preview_with_subtitles": str(pv), "founder_report": str(rp), "open_me": str(om)},
+        "paths": {
+            "preview_with_subtitles": str(pv),
+            "founder_report": str(rp),
+            "open_me": str(om),
+            "subtitle_manifest": sm,
+        },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
@@ -139,11 +182,17 @@ def test_quality_fail_real_blocking(preview_mod, tmp_path):
     _touch(pv, b"a")
     _touch(rp)
     _touch(om)
+    sm = _write_min_subtitle_manifest(tmp_path / "sub_block", "1\n00:00:00,000 --> 00:00:01,000\nY.\n")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
         "blocking_reasons": ["ffmpeg_missing"],
-        "paths": {"preview_with_subtitles": str(pv), "founder_report": str(rp), "open_me": str(om)},
+        "paths": {
+            "preview_with_subtitles": str(pv),
+            "founder_report": str(rp),
+            "open_me": str(om),
+            "subtitle_manifest": sm,
+        },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
@@ -160,11 +209,17 @@ def test_quality_non_blocking_blocking_does_not_fail_checklist(preview_mod, tmp_
     _touch(pv, b"a")
     _touch(rp)
     _touch(om)
+    sm = _write_min_subtitle_manifest(tmp_path / "sub_nb", "1\n00:00:00,000 --> 00:00:01,000\nZ.\n")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
         "blocking_reasons": ["preview_with_subtitles_already_exists"],
-        "paths": {"preview_with_subtitles": str(pv), "founder_report": str(rp), "open_me": str(om)},
+        "paths": {
+            "preview_with_subtitles": str(pv),
+            "founder_report": str(rp),
+            "open_me": str(om),
+            "subtitle_manifest": sm,
+        },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
@@ -179,7 +234,13 @@ def test_finalize_writes_quality_checklist(preview_mod, tmp_path):
     nar = tmp_path / "n.txt"
     tl.write_text("{}", encoding="utf-8")
     nar.write_text("b", encoding="utf-8")
-    sub_m = tmp_path / "sm.json"
+    sub_d = tmp_path / "sub211fin"
+    sub_m = Path(
+        _write_min_subtitle_manifest(
+            sub_d,
+            "1\n00:00:00,000 --> 00:00:02,000\nOne.\n\n2\n00:00:02,100 --> 00:00:04,000\nTwo.\n",
+        )
+    )
 
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
@@ -213,11 +274,15 @@ def test_finalize_writes_quality_checklist(preview_mod, tmp_path):
     )
     assert isinstance(meta.get("quality_checklist"), dict)
     assert meta["quality_checklist"].get("status") in ("pass", "warning", "fail")
+    assert any(it.get("id") == "subtitle_quality" for it in (meta["quality_checklist"].get("items") or []))
+    assert isinstance(meta.get("subtitle_quality_check"), dict)
     pdir = Path(meta["pipeline_dir"])
     rep = (pdir / "local_preview_report.md").read_text(encoding="utf-8")
     assert "## Quality Checklist" in rep
+    assert "## Subtitle Quality" in rep
     om = (pdir / "OPEN_ME.md").read_text(encoding="utf-8")
     assert "## Quality Checklist" in om
+    assert "## Subtitle Quality" in om
 
 
 def test_smoke_summary_includes_quality_line(smoke_mod, preview_mod):
@@ -230,7 +295,9 @@ def test_smoke_summary_includes_quality_line(smoke_mod, preview_mod):
         "report_path": "/tmp/r.md",
         "open_me_path": "/tmp/o.md",
         "quality_checklist": {"status": "warning"},
+        "subtitle_quality_check": {"status": "warning"},
     }
     smoke_mod._pipeline_mod = preview_mod
     s = smoke_mod.build_local_preview_smoke_summary(r)
     assert "Quality: WARNING" in s
+    assert "Subtitle Quality: WARNING" in s

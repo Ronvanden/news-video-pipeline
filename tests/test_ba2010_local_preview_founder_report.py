@@ -22,6 +22,19 @@ def preview_mod():
     return mod
 
 
+def _min_subtitle_manifest(tmp_path: Path, tag: str) -> Path:
+    d = tmp_path / f"sub2010_{tag}"
+    d.mkdir(parents=True, exist_ok=True)
+    srt = d / "cues.srt"
+    srt.write_text(
+        "1\n00:00:00,000 --> 00:00:02,000\nA.\n\n2\n00:00:02,100 --> 00:00:04,000\nB.\n",
+        encoding="utf-8",
+    )
+    m = d / "subtitle_manifest.json"
+    m.write_text(json.dumps({"subtitles_srt_path": str(srt)}), encoding="utf-8")
+    return m
+
+
 def _pass_result(preview_path: str = "/tmp/preview.mp4") -> Dict[str, Any]:
     return {
         "ok": True,
@@ -142,7 +155,7 @@ def test_run_pipeline_writes_report_file(preview_mod, tmp_path):
     nar = tmp_path / "nar.txt"
     tl.write_text("{}", encoding="utf-8")
     nar.write_text("body", encoding="utf-8")
-    sub_m = tmp_path / "sm.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "wr")
 
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
@@ -177,7 +190,9 @@ def test_run_pipeline_writes_report_file(preview_mod, tmp_path):
     pdir = Path(meta["pipeline_dir"])
     assert (pdir / "local_preview_report.md").is_file()
     assert (pdir / "OPEN_ME.md").is_file()
-    assert "## Quality Checklist" in (pdir / "local_preview_report.md").read_text(encoding="utf-8")
+    rep_txt = (pdir / "local_preview_report.md").read_text(encoding="utf-8")
+    assert "## Quality Checklist" in rep_txt
+    assert "## Subtitle Quality" in rep_txt
     assert meta.get("report_path")
     assert meta.get("open_me_path")
     assert "report_markdown" in meta
@@ -192,7 +207,7 @@ def test_main_json_excludes_report_markdown_but_has_report_path(preview_mod, tmp
     nar = tmp_path / "n.txt"
     tl.write_text("{}", encoding="utf-8")
     nar.write_text("z", encoding="utf-8")
-    sub_m = tmp_path / "s.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "cli")
 
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
@@ -251,7 +266,7 @@ def test_main_print_report_stdout(preview_mod, tmp_path, capsys, monkeypatch):
     nar = tmp_path / "n2.txt"
     tl.write_text("{}", encoding="utf-8")
     nar.write_text("z", encoding="utf-8")
-    sub_m = tmp_path / "s2.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "pr")
 
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -390,6 +391,437 @@ def _quality_checklist_status_to_verdict(st: str) -> str:
     return {"pass": "PASS", "warning": "WARNING", "fail": "FAIL"}.get((st or "fail").lower().strip(), "FAIL")
 
 
+# BA 21.2 — heuristische Subtitle-Timing-/Lesbarkeits-Schwellen (lokal, kein ffmpeg)
+_SUBTITLE_Q_MAX_WORDS = 12
+_SUBTITLE_Q_MAX_CHARS = 80
+_SUBTITLE_Q_MIN_DUR = 0.25
+_SUBTITLE_Q_MAX_DUR = 8.0
+_SUBTITLE_Q_HIGH_CUE_COUNT = 200
+_SRT_TS_LINE_Q = re.compile(
+    r"^\s*(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})\s*-->\s*(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})\s*$"
+)
+
+
+def _srt_hmsf_to_seconds_q(h: str, m: str, s: str, f: str) -> float:
+    return int(h) * 3600 + int(m) * 60 + int(s) + int(f) / 1000.0
+
+
+def _parse_srt_cues_simple(content: str) -> List[Dict[str, Any]]:
+    raw = (content or "").replace("\r\n", "\n").replace("\r", "\n")
+    stripped = raw.strip()
+    if not stripped:
+        return []
+    cues: List[Dict[str, Any]] = []
+    for block in re.split(r"\n\s*\n", stripped):
+        lines = [ln for ln in block.split("\n") if ln is not None]
+        if not lines:
+            continue
+        tli = 1 if lines[0].strip().isdigit() else 0
+        if tli >= len(lines):
+            continue
+        m = _SRT_TS_LINE_Q.match((lines[tli] or "").strip())
+        if not m:
+            continue
+        t0 = _srt_hmsf_to_seconds_q(m.group(1), m.group(2), m.group(3), m.group(4))
+        t1 = _srt_hmsf_to_seconds_q(m.group(5), m.group(6), m.group(7), m.group(8))
+        text = " ".join(x.strip() for x in lines[tli + 1 :] if x.strip())
+        dur = t1 - t0
+        if dur < 0:
+            t1 = t0
+            dur = 0.0
+        cues.append({"start": float(t0), "end": float(t1), "text": text, "duration": float(max(t1 - t0, 0.0))})
+    return cues
+
+
+def _resolve_subtitle_manifest_path(result: dict, paths: Dict[str, Any]) -> str:
+    for k in ("subtitle_manifest", "subtitle_manifest_path", "subtitle_path", "subtitle_file", "subtitles"):
+        p = _s(paths.get(k))
+        if p:
+            return p
+    steps = result.get("steps")
+    if isinstance(steps, dict):
+        b = steps.get("build_subtitles")
+        if isinstance(b, dict):
+            p = _s(b.get("subtitle_manifest_path"))
+            if p:
+                return p
+    return ""
+
+
+def _cue_list_from_manifest_doc(doc: Dict[str, Any], manifest_path: Path) -> Tuple[List[Dict[str, Any]], str]:
+    """Cues aus Manifest-Listenfeldern oder referenziertem SRT."""
+    for key in ("cues", "subtitles", "items", "entries"):
+        raw = doc.get(key)
+        if not isinstance(raw, list) or not raw:
+            continue
+        out: List[Dict[str, Any]] = []
+        for obj in raw:
+            if not isinstance(obj, dict):
+                continue
+            text = _s(obj.get("text") or obj.get("body") or obj.get("content"))
+            s = obj.get("start_seconds", obj.get("start"))
+            e = obj.get("end_seconds", obj.get("end"))
+            try:
+                t0 = float(s)
+                t1 = float(e)
+            except (TypeError, ValueError):
+                continue
+            out.append({"start": t0, "end": t1, "text": text, "duration": max(t1 - t0, 0.0)})
+        if out:
+            return out, f"manifest.{key}"
+    srt_rel = _s(doc.get("subtitles_srt_path"))
+    if srt_rel:
+        srt_p = Path(srt_rel)
+        if not srt_p.is_absolute():
+            srt_p = (manifest_path.parent / srt_p).resolve()
+        try:
+            if srt_p.is_file():
+                return _parse_srt_cues_simple(srt_p.read_text(encoding="utf-8", errors="replace")), str(srt_p)
+        except OSError:
+            return [], str(srt_p)
+    return [], ""
+
+
+def build_local_preview_subtitle_quality_check(result: dict) -> Dict[str, Any]:
+    """BA 21.2 — Heuristischer Subtitle-/Cue-Check (Manifest + SRT, tolerant)."""
+    r = result if isinstance(result, dict) else {}
+    paths = r.get("paths")
+    if not isinstance(paths, dict):
+        paths = {}
+    items: List[Dict[str, Any]] = []
+    manifest_path_str = _resolve_subtitle_manifest_path(r, paths)
+    mp = _safe_operator_path(manifest_path_str)
+    doc: Dict[str, Any] = {}
+    parse_err = ""
+
+    if not manifest_path_str or mp is None or not mp.is_file():
+        items.append(
+            {
+                "id": "subtitle_manifest_exists",
+                "label": "Subtitle manifest exists",
+                "status": "fail",
+                "detail": "path missing or file not found",
+                "path": manifest_path_str,
+            }
+        )
+        for rest_id, lab in (
+            ("subtitle_manifest_valid_json", "Subtitle manifest valid JSON"),
+            ("subtitle_cues_present", "Subtitle cues present"),
+            ("subtitle_cue_count_reasonable", "Subtitle cue count reasonable"),
+            ("subtitle_cue_duration_valid", "Subtitle cue duration valid"),
+            ("subtitle_cue_text_length_reasonable", "Subtitle cue text length reasonable"),
+            ("subtitle_cue_word_count_reasonable", "Subtitle cue word count reasonable"),
+            ("subtitle_cue_timing_order", "Subtitle cue timing order"),
+        ):
+            items.append(
+                {"id": rest_id, "label": lab, "status": "fail", "detail": "no manifest", "path": manifest_path_str}
+            )
+        summary = "subtitle manifest missing"
+        return {
+            "status": "fail",
+            "items": items,
+            "warnings": ["subtitle_quality_manifest_missing"],
+            "blocking_reasons": [],
+            "summary": summary,
+            "manifest_path": manifest_path_str,
+            "cue_source": "",
+            "cue_count": 0,
+        }
+
+    items.append(
+        {
+            "id": "subtitle_manifest_exists",
+            "label": "Subtitle manifest exists",
+            "status": "pass",
+            "detail": "file present",
+            "path": manifest_path_str,
+        }
+    )
+
+    try:
+        doc = json.loads(mp.read_text(encoding="utf-8", errors="replace"))
+        if not isinstance(doc, dict):
+            raise ValueError("not_object")
+    except (OSError, json.JSONDecodeError, ValueError) as ex:
+        parse_err = str(type(ex).__name__)
+        items.append(
+            {
+                "id": "subtitle_manifest_valid_json",
+                "label": "Subtitle manifest valid JSON",
+                "status": "fail",
+                "detail": parse_err or "parse error",
+                "path": manifest_path_str,
+            }
+        )
+        for rest_id, lab in (
+            ("subtitle_cues_present", "Subtitle cues present"),
+            ("subtitle_cue_count_reasonable", "Subtitle cue count reasonable"),
+            ("subtitle_cue_duration_valid", "Subtitle cue duration valid"),
+            ("subtitle_cue_text_length_reasonable", "Subtitle cue text length reasonable"),
+            ("subtitle_cue_word_count_reasonable", "Subtitle cue word count reasonable"),
+            ("subtitle_cue_timing_order", "Subtitle cue timing order"),
+        ):
+            items.append(
+                {"id": rest_id, "label": lab, "status": "fail", "detail": "invalid manifest", "path": manifest_path_str}
+            )
+        return {
+            "status": "fail",
+            "items": items,
+            "warnings": ["subtitle_quality_manifest_invalid_json"],
+            "blocking_reasons": [],
+            "summary": "subtitle manifest JSON invalid",
+            "manifest_path": manifest_path_str,
+            "cue_source": "",
+            "cue_count": 0,
+        }
+
+    items.append(
+        {
+            "id": "subtitle_manifest_valid_json",
+            "label": "Subtitle manifest valid JSON",
+            "status": "pass",
+            "detail": "",
+            "path": manifest_path_str,
+        }
+    )
+
+    cues, cue_src = _cue_list_from_manifest_doc(doc, mp)
+    if not cues:
+        items.append(
+            {
+                "id": "subtitle_cues_present",
+                "label": "Subtitle cues present",
+                "status": "fail",
+                "detail": "no cues in manifest lists or empty/unreadable SRT",
+                "path": cue_src or manifest_path_str,
+            }
+        )
+        for rest_id, lab in (
+            ("subtitle_cue_count_reasonable", "Subtitle cue count reasonable"),
+            ("subtitle_cue_duration_valid", "Subtitle cue duration valid"),
+            ("subtitle_cue_text_length_reasonable", "Subtitle cue text length reasonable"),
+            ("subtitle_cue_word_count_reasonable", "Subtitle cue word count reasonable"),
+            ("subtitle_cue_timing_order", "Subtitle cue timing order"),
+        ):
+            items.append(
+                {"id": rest_id, "label": lab, "status": "fail", "detail": "no cues", "path": cue_src or manifest_path_str}
+            )
+        return {
+            "status": "fail",
+            "items": items,
+            "warnings": ["subtitle_quality_no_cues"],
+            "blocking_reasons": [],
+            "summary": "no subtitle cues",
+            "manifest_path": manifest_path_str,
+            "cue_source": cue_src,
+            "cue_count": 0,
+        }
+
+    items.append(
+        {
+            "id": "subtitle_cues_present",
+            "label": "Subtitle cues present",
+            "status": "pass",
+            "detail": f"{len(cues)} cue(s)",
+            "path": cue_src or manifest_path_str,
+        }
+    )
+
+    n_cues = len(cues)
+    if n_cues > _SUBTITLE_Q_HIGH_CUE_COUNT:
+        items.append(
+            {
+                "id": "subtitle_cue_count_reasonable",
+                "label": "Subtitle cue count reasonable",
+                "status": "warning",
+                "detail": f"{n_cues} cues (threshold {_SUBTITLE_Q_HIGH_CUE_COUNT})",
+                "path": "",
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "subtitle_cue_count_reasonable",
+                "label": "Subtitle cue count reasonable",
+                "status": "pass",
+                "detail": f"{n_cues} cues",
+                "path": "",
+            }
+        )
+
+    dur_fail = False
+    dur_warn = False
+    dur_notes: List[str] = []
+    for i, c in enumerate(cues):
+        st = float(c.get("start", 0.0))
+        en = float(c.get("end", 0.0))
+        dur = float(c.get("duration", max(en - st, 0.0)))
+        if en <= st or dur < 0:
+            dur_fail = True
+            dur_notes.append(f"cue#{i + 1}: end<=start or negative duration")
+        elif dur == 0.0:
+            dur_fail = True
+            dur_notes.append(f"cue#{i + 1}: zero duration")
+        if dur < _SUBTITLE_Q_MIN_DUR and dur > 0 and en > st:
+            dur_warn = True
+            dur_notes.append(f"cue#{i + 1}: very short ({dur:.2f}s)")
+        if dur > _SUBTITLE_Q_MAX_DUR:
+            dur_warn = True
+            dur_notes.append(f"cue#{i + 1}: very long ({dur:.2f}s)")
+
+    if dur_fail:
+        items.append(
+            {
+                "id": "subtitle_cue_duration_valid",
+                "label": "Subtitle cue duration valid",
+                "status": "fail",
+                "detail": "; ".join(dur_notes[:3]) + ("…" if len(dur_notes) > 3 else ""),
+                "path": "",
+            }
+        )
+    elif dur_warn:
+        items.append(
+            {
+                "id": "subtitle_cue_duration_valid",
+                "label": "Subtitle cue duration valid",
+                "status": "warning",
+                "detail": "; ".join(dur_notes[:3]) + ("…" if len(dur_notes) > 3 else ""),
+                "path": "",
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "subtitle_cue_duration_valid",
+                "label": "Subtitle cue duration valid",
+                "status": "pass",
+                "detail": "durations in range",
+                "path": "",
+            }
+        )
+
+    long_chars = 0
+    long_words = 0
+    for c in cues:
+        t = _s(c.get("text"))
+        if len(t) > _SUBTITLE_Q_MAX_CHARS:
+            long_chars += 1
+        if len(t.split()) > _SUBTITLE_Q_MAX_WORDS:
+            long_words += 1
+
+    if long_chars:
+        items.append(
+            {
+                "id": "subtitle_cue_text_length_reasonable",
+                "label": "Subtitle cue text length reasonable",
+                "status": "warning",
+                "detail": f"{long_chars} cue(s) exceed {_SUBTITLE_Q_MAX_CHARS} chars",
+                "path": "",
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "subtitle_cue_text_length_reasonable",
+                "label": "Subtitle cue text length reasonable",
+                "status": "pass",
+                "detail": f"max {_SUBTITLE_Q_MAX_CHARS} chars ok",
+                "path": "",
+            }
+        )
+
+    if long_words:
+        items.append(
+            {
+                "id": "subtitle_cue_word_count_reasonable",
+                "label": "Subtitle cue word count reasonable",
+                "status": "warning",
+                "detail": f"{long_words} cue(s) exceed {_SUBTITLE_Q_MAX_WORDS} words",
+                "path": "",
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "subtitle_cue_word_count_reasonable",
+                "label": "Subtitle cue word count reasonable",
+                "status": "pass",
+                "detail": f"max {_SUBTITLE_Q_MAX_WORDS} words ok",
+                "path": "",
+            }
+        )
+
+    order_warn: List[str] = []
+    for i in range(len(cues) - 1):
+        if float(cues[i + 1].get("start", 0.0)) + 1e-6 < float(cues[i].get("start", 0.0)):
+            order_warn.append("starts not monotonic in file order")
+            break
+    sorted_cues = sorted(cues, key=lambda x: float(x.get("start", 0.0)))
+    for i in range(len(sorted_cues) - 1):
+        a = sorted_cues[i]
+        b = sorted_cues[i + 1]
+        if float(a.get("end", 0.0)) > float(b.get("start", 0.0)) + 0.05:
+            order_warn.append("overlapping cues")
+            break
+    if order_warn:
+        items.append(
+            {
+                "id": "subtitle_cue_timing_order",
+                "label": "Subtitle cue timing order",
+                "status": "warning",
+                "detail": "; ".join(dict.fromkeys(order_warn)),
+                "path": "",
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "subtitle_cue_timing_order",
+                "label": "Subtitle cue timing order",
+                "status": "pass",
+                "detail": "order ok",
+                "path": "",
+            }
+        )
+
+    has_fail = any(str(it.get("status", "")).lower() == "fail" for it in items)
+    has_warn = any(str(it.get("status", "")).lower() == "warning" for it in items)
+    if has_fail:
+        st = "fail"
+    elif has_warn:
+        st = "warning"
+    else:
+        st = "pass"
+
+    sw: List[str] = []
+    if st == "fail":
+        sw.append("subtitle_quality_fail")
+    elif st == "warning":
+        sw.append("subtitle_quality_warning")
+
+    summary_parts = [f"{n_cues} cues", f"status={st}"]
+    if long_words:
+        summary_parts.append(f"{long_words} long-word cues")
+    if long_chars:
+        summary_parts.append(f"{long_chars} long-text cues")
+    if order_warn:
+        summary_parts.extend(list(dict.fromkeys(order_warn)))
+    if dur_notes and st != "pass":
+        summary_parts.append(dur_notes[0])
+    summary = "; ".join(summary_parts)[:240]
+
+    return {
+        "status": st,
+        "items": items,
+        "warnings": sw,
+        "blocking_reasons": [],
+        "summary": summary,
+        "manifest_path": manifest_path_str,
+        "cue_source": cue_src,
+        "cue_count": n_cues,
+    }
+
+
 def build_local_preview_quality_checklist(result: dict) -> Dict[str, Any]:
     """BA 21.1 — Lokale Artefakt-/Bedienbarkeits-Checkliste (keine Video-Pixel-Analyse)."""
     r = result if isinstance(result, dict) else {}
@@ -399,6 +831,21 @@ def build_local_preview_quality_checklist(result: dict) -> Dict[str, Any]:
     items: List[Dict[str, Any]] = []
     agg_warnings = _collect_local_preview_warnings(r)
     blocking_eff = sanitize_local_preview_blocking_reasons(r.get("blocking_reasons"))
+
+    try:
+        sq = build_local_preview_subtitle_quality_check(r)
+    except Exception:
+        sq = {
+            "status": "fail",
+            "items": [],
+            "warnings": ["subtitle_quality_build_failed"],
+            "blocking_reasons": [],
+            "summary": "subtitle quality check error",
+            "manifest_path": "",
+            "cue_source": "",
+            "cue_count": 0,
+        }
+    r["subtitle_quality_check"] = sq
 
     preview_path = resolve_local_preview_video_path(paths)
     pp = _safe_operator_path(preview_path)
@@ -519,6 +966,16 @@ def build_local_preview_quality_checklist(result: dict) -> Dict[str, Any]:
                 "path": omp,
             }
         )
+
+    items.append(
+        {
+            "id": "subtitle_quality",
+            "label": "Subtitle quality",
+            "status": str(sq.get("status", "fail")).lower(),
+            "detail": (_s(sq.get("summary")) or "")[:220],
+            "path": _s(sq.get("manifest_path") or ""),
+        }
+    )
 
     if not blocking_eff:
         items.append(
@@ -648,6 +1105,15 @@ def build_local_preview_open_me(result: dict) -> str:
             lines.append(f"- [{tag}] {lab}")
         lines.append("")
 
+    sq = r.get("subtitle_quality_check")
+    if isinstance(sq, dict) and sq.get("status"):
+        lines.extend(["", "## Subtitle Quality"])
+        lines.append(f"- Status: {str(sq.get('status')).upper()}")
+        hint = _s(sq.get("summary"))
+        if hint:
+            lines.append(f"- Hinweis: {hint[:200]}")
+        lines.append("")
+
     lines.extend(["", "## Next Step", local_preview_next_step_for_verdict(verdict), ""])
     return "\n".join(lines)
 
@@ -768,6 +1234,28 @@ def build_local_preview_founder_report(result: dict) -> str:
             lines.append(f"- [{tag}] {lab}{mid}")
         lines.append("")
 
+    sq = r.get("subtitle_quality_check")
+    if isinstance(sq, dict) and sq.get("status"):
+        lines.extend(["", "## Subtitle Quality"])
+        lines.append(f"- Status: **{str(sq.get('status')).upper()}**")
+        ssum = _s(sq.get("summary"))
+        if ssum:
+            lines.append(f"- Summary: {ssum}")
+        shown = 0
+        for it in sq.get("items") or []:
+            if shown >= 5:
+                break
+            if not isinstance(it, dict):
+                continue
+            if str(it.get("status", "")).lower() == "pass":
+                continue
+            tag = str(it.get("status", "fail")).upper()
+            lab = _s(it.get("label")) or _s(it.get("id"))
+            det = _s(it.get("detail"))
+            lines.append(f"- [{tag}] {lab}" + (f" — {det}" if det else ""))
+            shown += 1
+        lines.append("")
+
     lines.extend(["", "## Next Step"])
     lines.append(local_preview_next_step_for_verdict(verdict))
     lines.append("")
@@ -817,7 +1305,7 @@ def write_local_preview_founder_report(result: dict) -> dict:
 
 def finalize_local_preview_operator_artifacts(result: dict) -> dict:
     """
-    Founder Report (BA 20.10), OPEN_ME (BA 20.12), Quality Checklist (BA 21.1).
+    Founder Report (BA 20.10), OPEN_ME (BA 20.12), Quality Checklist (BA 21.1 / 21.2).
 
     Checklist nach erstem Schreiben von Report/OPEN_ME, dann erneutes Schreiben mit Abschnitt.
     """

@@ -23,13 +23,26 @@ def preview_mod():
     return mod
 
 
+def _min_subtitle_manifest(tmp_path: Path, tag: str) -> Path:
+    d = tmp_path / f"sub209_{tag}"
+    d.mkdir(parents=True, exist_ok=True)
+    srt = d / "cues.srt"
+    srt.write_text(
+        "1\n00:00:00,000 --> 00:00:02,000\nA.\n\n2\n00:00:02,100 --> 00:00:04,000\nB.\n",
+        encoding="utf-8",
+    )
+    m = d / "subtitle_manifest.json"
+    m.write_text(json.dumps({"subtitles_srt_path": str(srt)}), encoding="utf-8")
+    return m
+
+
 def test_pipeline_calls_build_render_burn_in_order(preview_mod, tmp_path):
     order: List[str] = []
     tl = tmp_path / "tl.json"
     nar = tmp_path / "nar.txt"
     tl.write_text("{}", encoding="utf-8")
     nar.write_text("body", encoding="utf-8")
-    sub_m = tmp_path / "sub_manifest.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "order")
 
     def fake_build(
         narration_script_path: Path,
@@ -157,7 +170,7 @@ def test_stops_after_build_failure(preview_mod, tmp_path):
 
 def test_stops_after_render_failure(preview_mod, tmp_path):
     order: List[str] = []
-    sub_m = tmp_path / "m.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "rendfail")
 
     def fake_build(*_a, **_k):
         order.append("build")
@@ -186,7 +199,7 @@ def test_stops_after_render_failure(preview_mod, tmp_path):
 
 
 def test_burn_skipped_style_none_still_ok(preview_mod, tmp_path):
-    sub_m = tmp_path / "m.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "burnskip")
 
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
@@ -221,7 +234,7 @@ def test_main_prints_json_and_exit_zero_on_ok(preview_mod, tmp_path, capsys, mon
     nar = tmp_path / "n2.txt"
     tl.write_text("{}", encoding="utf-8")
     nar.write_text("x", encoding="utf-8")
-    sub_m = tmp_path / "sm.json"
+    sub_m = _min_subtitle_manifest(tmp_path, "main209")
 
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
