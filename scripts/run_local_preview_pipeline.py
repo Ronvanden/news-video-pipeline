@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import shutil
 import sys
 import uuid
 from pathlib import Path
@@ -145,13 +146,13 @@ def local_preview_next_step_for_verdict(verdict: str) -> str:
     return "Behebe zuerst die Blocking Reasons und starte den lokalen Preview-Lauf erneut."
 
 
-# Gemeinsame Pfad-Logik (BA 20.11 Smoke, BA 20.12 OPEN_ME, Founder Report)
+# Gemeinsame Pfad-Logik (BA 20.11 Smoke, BA 20.12 OPEN_ME, Founder Report; BA 21.0c Reihenfolge)
 _PREVIEW_VIDEO_PATH_KEYS = (
     "preview_video",
+    "preview_with_subtitles",
     "subtitled_preview",
     "burned_in_preview",
     "final_preview",
-    "preview_with_subtitles",
 )
 
 
@@ -164,6 +165,80 @@ def resolve_local_preview_video_path(paths: Any) -> str:
         if p:
             return p
     return _s(paths.get("clean_video"))
+
+
+def colocate_local_preview_video(result: dict) -> dict:
+    """
+    BA 21.0c — Kopiert preview_with_subtitles.mp4 ins pipeline_dir-Paket (ohne Quelle zu löschen).
+
+    Setzt paths[\"preview_with_subtitles\"] und paths[\"preview_video\"] bevorzugt auf die
+    zentrale Kopie; paths[\"burnin_preview_source\"] hält optional den ursprünglichen Burn-in-Pfad.
+    Fehler oder fehlende Quelle: Warnung, kein Crash; Quelle == Ziel: kein Copy.
+    """
+    if not isinstance(result, dict):
+        return {}
+    out = dict(result)
+    paths = dict(out.get("paths") or {})
+    out["paths"] = paths
+
+    pd_str = _s(out.get("pipeline_dir"))
+    if not pd_str:
+        return out
+
+    try:
+        pipeline_dir = Path(pd_str).resolve()
+    except OSError:
+        w = _list_str(out.get("warnings"))
+        w.append("preview_colocation_pipeline_dir_invalid")
+        out["warnings"] = w
+        return out
+
+    src_str = _s(paths.get("preview_with_subtitles"))
+    if not src_str and isinstance(out.get("steps"), dict):
+        st = out["steps"].get("burnin_preview")
+        if isinstance(st, dict):
+            src_str = _s(st.get("output_video_path"))
+
+    if not src_str:
+        return out
+
+    try:
+        src = Path(src_str).resolve()
+    except OSError:
+        w = _list_str(out.get("warnings"))
+        w.append("preview_colocation_source_invalid")
+        out["warnings"] = w
+        return out
+
+    dest = (pipeline_dir / "preview_with_subtitles.mp4").resolve()
+
+    if not src.is_file():
+        w = _list_str(out.get("warnings"))
+        w.append("preview_colocation_source_missing")
+        out["warnings"] = w
+        return out
+
+    if src != dest:
+        paths.setdefault("burnin_preview_source", str(src))
+
+    if src == dest:
+        paths["preview_with_subtitles"] = str(dest)
+        paths["preview_video"] = str(dest)
+        return out
+
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+    except OSError:
+        w = _list_str(out.get("warnings"))
+        w.append("preview_colocation_copy_failed")
+        out["warnings"] = w
+        return out
+
+    paths["burnin_preview_source"] = paths.get("burnin_preview_source") or str(src)
+    paths["preview_with_subtitles"] = str(dest)
+    paths["preview_video"] = str(dest)
+    return out
 
 
 def resolve_local_preview_report_path(result: Any) -> str:
@@ -521,25 +596,24 @@ def run_local_preview_pipeline(
     skipped = bool(step_burn.get("skipped"))
     overall_ok = burn_ok and (skipped or bool(preview_path))
 
-    return _finalize(
-        {
-            "ok": overall_ok and not blocking,
-            "run_id": rid,
-            "pipeline_dir": str(pipeline_dir),
-            "steps": {
-                "build_subtitles": step_build,
-                "render_clean": step_render,
-                "burnin_preview": step_burn,
-            },
-            "paths": {
-                "subtitle_manifest": str(sub_man),
-                "clean_video": str(clean_video.resolve()) if clean_video.is_file() else str(clean_video),
-                "preview_with_subtitles": preview_path,
-            },
-            "warnings": warnings,
-            "blocking_reasons": blocking,
-        }
-    )
+    raw_result: Dict[str, Any] = {
+        "ok": overall_ok and not blocking,
+        "run_id": rid,
+        "pipeline_dir": str(pipeline_dir),
+        "steps": {
+            "build_subtitles": step_build,
+            "render_clean": step_render,
+            "burnin_preview": step_burn,
+        },
+        "paths": {
+            "subtitle_manifest": str(sub_man),
+            "clean_video": str(clean_video.resolve()) if clean_video.is_file() else str(clean_video),
+            "preview_with_subtitles": preview_path,
+        },
+        "warnings": warnings,
+        "blocking_reasons": blocking,
+    }
+    return _finalize(colocate_local_preview_video(raw_result))
 
 
 def main() -> int:

@@ -92,10 +92,12 @@ def test_pipeline_calls_build_render_burn_in_order(preview_mod, tmp_path):
         order.append("burn")
         assert run_id == "ba209rid"
         assert subtitle_manifest.resolve() == sub_m.resolve()
+        burn_out = tmp_path / "preview.mp4"
+        burn_out.write_bytes(b"pv")
         return {
             "ok": True,
             "skipped": False,
-            "output_video_path": str(tmp_path / "preview.mp4"),
+            "output_video_path": str(burn_out),
             "warnings": ["burn_warn"],
             "blocking_reasons": [],
         }
@@ -113,7 +115,12 @@ def test_pipeline_calls_build_render_burn_in_order(preview_mod, tmp_path):
     assert meta["ok"] is True
     assert meta["run_id"] == "ba209rid"
     assert "build_warn" in meta["warnings"] and "burn_warn" in meta["warnings"]
-    assert meta["paths"]["preview_with_subtitles"]
+    piped = Path(meta["pipeline_dir"])
+    central = piped / "preview_with_subtitles.mp4"
+    assert central.is_file()
+    assert Path(meta["paths"]["preview_with_subtitles"]) == central.resolve()
+    assert meta["paths"]["preview_video"] == meta["paths"]["preview_with_subtitles"]
+    assert Path(meta["paths"]["burnin_preview_source"]) == (tmp_path / "preview.mp4").resolve()
     assert "local_preview_ba209rid" in meta["pipeline_dir"]
 
 
@@ -221,10 +228,12 @@ def test_main_prints_json_and_exit_zero_on_ok(preview_mod, tmp_path, capsys, mon
         return {"video_created": True, "warnings": [], "blocking_reasons": []}
 
     def fake_burn(*_a, **_k):
+        outp = tmp_path / "out.mp4"
+        outp.write_bytes(b"o")
         return {
             "ok": True,
             "skipped": False,
-            "output_video_path": str(tmp_path / "out.mp4"),
+            "output_video_path": str(outp),
             "warnings": [],
             "blocking_reasons": [],
         }
