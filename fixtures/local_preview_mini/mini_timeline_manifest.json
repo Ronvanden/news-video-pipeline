@@ -1,0 +1,42 @@
+{
+  "run_id": "mini_fixture",
+  "assets_directory": "fixtures/local_preview_mini/assets",
+  "audio_path": "",
+  "total_scenes": 3,
+  "estimated_duration_seconds": 6,
+  "scenes": [
+    {
+      "scene_number": 1,
+      "image_path": "scene_001.png",
+      "duration_seconds": 2,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 0
+    },
+    {
+      "scene_number": 2,
+      "image_path": "scene_002.png",
+      "duration_seconds": 2,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 1
+    },
+    {
+      "scene_number": 3,
+      "image_path": "scene_003.png",
+      "duration_seconds": 2,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 2
+    }
+  ]
+}

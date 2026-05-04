@@ -464,8 +464,55 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 20.11** | **done** | **Local Preview Smoke Command:** **`scripts/run_local_preview_smoke.py`** — ruft **`run_local_preview_pipeline`** auf, kompakte Ausgabe (**Status**, **Preview öffnen**, **Report öffnen**, **Open-Me Datei**, **Nächster Schritt**), optional **`--print-json`**; Exit Codes **PASS 0**, **WARNING 2**, **FAIL 1** (Smoke-Konvention, abweichend von **`run_local_preview_pipeline`** Exit 3 bei Fehler). Tests **`tests/test_ba2011_local_preview_smoke.py`**. |
 | **BA 20.12** | **done** | **Local Preview Artefact Index / OPEN_ME.md:** **`build_local_preview_open_me` / `write_local_preview_open_me`** in **`scripts/run_local_preview_pipeline.py`**; nach Founder Report wird **`OPEN_ME.md`** im Pipeline-Ordner geschrieben (Keys **`open_me_path`**, **`open_me_markdown`**, **`paths[\"open_me\"]`**). Finalisierung **`finalize_local_preview_operator_artifacts`**. Zentrale Pfad-Helfer **`resolve_local_preview_video_path`**, **`resolve_local_preview_report_path`**, **`resolve_local_preview_open_me_path`**. Tests **`tests/test_ba2012_local_preview_open_me.py`**. |
 | **BA 20.13** | **done** | **Local Preview Cleanup / Retention Guard:** **`scripts/cleanup_local_previews.py`** — listet/löscht nur direkte **`local_preview_*`**-Ordner unter **`--out-root`**; Standard **Dry-Run**, **`--apply`** zum Löschen; **`--keep-latest`**, **`--max-delete`**; Symlinks und Nicht-Kinder werden übersprungen; optional **`--print-json`** (ohne **`discovered_paths`**-Ballast). Tests **`tests/test_ba2013_local_preview_cleanup.py`**. |
+| **BA 21** | **planned** | **Local Preview Reality & Quality Loop:** Überbau nach **BA 20.9–20.13** — Übergang von „lokal erzeugbar“ zu „lokal real prüfbar“; Unter-BAs **21.0–21.6**; Details im Abschnitt **BA 21** direkt unterhalb dieser Tabelle. |
+| **BA 21.0** | **done** | **Mini E2E Fixture / Real Operator Smoke:** **`fixtures/local_preview_mini/`** (Timeline, Narration, PNGs, README); Shortcut **`scripts/run_local_preview_mini_fixture.py`** delegiert an **`run_local_preview_smoke`**. Tests **`tests/test_ba210_local_preview_mini_fixture.py`**. |
 | **BA 19.3** | **planned** | **Quality Polish (optional):** Intro/Outro, Lower Thirds, Subtitle-Burn-in, Thumbnail-Export — **nicht** nötig für ersten Proof. |
 | **BA 17.1–17.9** | **planned** | **Media OS / SaaS / Platform Empire Blueprint:** strategische Produktisierungsschicht für White-Label, SaaS Dashboard, API Productization, Licensing, Agency Mode, Marketplace, Investor Readiness, Founder Replacement, Acquisition Funnel und Exit Blueprint. **Blueprint first:** noch keine Runtime-Implementierung, keine SaaS-Billing-/Mandantenpflicht, keine Plattform-Automation. |
+
+### BA 21 — Local Preview Reality & Quality Loop (**planned**)
+
+**Hinweis:** **BA 21** baut auf **BA 20.9–20.13** auf und ist der Übergang von „lokal erzeugbar“ zu „lokal real prüfbar“.
+
+**Status:** **planned** (Gesamtblock)
+
+**Ziel:** Nach dem **Local Preview Operator Block** soll der lokale Preview-Lauf nicht nur Dateien erzeugen, sondern **real bedienbar** und **qualitativ prüfbar** werden.
+
+**Leitfrage:** Kann ein Founder/Operator mit einem **kleinen echten Beispiel-Lauf** lokal prüfen:
+
+- Wird ein Preview-Ordner erzeugt?
+- Sind Preview, Report und **OPEN_ME** vorhanden?
+- Sind Bild/Ton/Untertitel grob plausibel?
+- Sind Warnungen verständlich klassifiziert?
+- Gibt es eine klare nächste Handlung?
+
+**Unter-BAs:**
+
+| BA | Titel | Status | Ziel |
+|----|-------|--------|------|
+| **BA 21.0** | Mini E2E Fixture / Real Operator Smoke | **done** | **`fixtures/local_preview_mini/`** + **`scripts/run_local_preview_mini_fixture.py`**: reproduzierbarer Mini-Lauf, dokumentierte Smoke-/PowerShell-Befehle, Tests **`tests/test_ba210_local_preview_mini_fixture.py`**. |
+| **BA 21.1** | Preview Quality Checklist | **planned** | Strukturierte Checkliste für Bild, Ton, Untertitel, Dateipfade und Bedienbarkeit. |
+| **BA 21.2** | Subtitle Timing Quality Check | **planned** | Heuristische Prüfung auf zu lange Cues, zu kurze Abstände, Lesbarkeit und Timing-Warnungen. |
+| **BA 21.3** | Audio/Video Sync Guard | **planned** | Grobe Plausibilitätsprüfung von Audio-Dauer, Timeline-Dauer und Preview-Dauer. |
+| **BA 21.4** | Render Warning Classification | **planned** | Warnungen in kosmetisch, prüfpflichtig und blockierend klassifizieren. |
+| **BA 21.5** | Founder Quality Report Upgrade | **planned** | Founder Report um Quality-Summary und konkrete Repair-Hinweise erweitern. |
+| **BA 21.6** | Local Preview Runbook | **planned** | Kurze Bedienungsdoku: starten, öffnen, prüfen, reparieren, cleanup. |
+
+**Nicht-Ziele BA 21:**
+
+- Kein Cloud/GCP.
+- Keine Provider-Calls.
+- Kein Upload/Publishing.
+- Kein großes Frontend.
+- Kein perfektes Produktionsvideo erzwingen.
+- Keine Änderung an bestehenden **API-Verträgen**.
+
+**Akzeptanz für den Gesamtblock:**
+
+- Lokaler Mini-Lauf ist **reproduzierbar**.
+- Operator bekommt **klare Dateien** und **klare Entscheidung**.
+- Quality-Warnings sind **verständlich**.
+- Bestehende **Local Preview**-Tests bleiben grün.
+- Keine **Secrets** / **`.env`**.
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 

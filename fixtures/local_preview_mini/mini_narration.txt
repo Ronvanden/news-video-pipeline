@@ -1,0 +1,13 @@
+# Local Preview Mini — Narration (Demo, keine echten Nachrichten)
+
+Dies ist ein lokaler Mini-Preview-Test der Video-Pipeline. Er prüft, ob aus einer
+kurzen Timeline und diesem Text Untertitel entstehen und ob anschließend ein
+cleanes Video sowie eine Preview mit eingebrannten Untertiteln gebaut werden können.
+
+Der Ablauf nutzt nur kleine Platzhalter-Bilder und bewusst keinen separaten
+Audiotrack. Wenn ffmpeg oder Bilddateien fehlen, erscheinen Warnungen — das ist
+erwartbar und kein Produktionsfehler.
+
+Zum Abschluss solltest du OPEN_ME.md und den Founder Report im Ordner
+local_preview_<run_id> öffnen und die Pfade aus der Smoke-Zusammenfassung
+gegenprüfen.
