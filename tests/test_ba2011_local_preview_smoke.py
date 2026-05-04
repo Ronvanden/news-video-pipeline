@@ -86,7 +86,12 @@ def test_summary_pass_contains_fields(smoke_mod, pipeline_mod):
     assert "Status: PASS" in s
     assert "Preview öffnen: /out/p.mp4" in s
     assert "Report öffnen: /out/l/local_preview_report.md" in s
+    assert "Open-Me Datei:" in s
+    assert "Open-Me Datei: nicht verfügbar" in s
     assert "Untertitel-Timing" in s
+    r["open_me_path"] = "/out/l/OPEN_ME.md"
+    s2 = smoke_mod.build_local_preview_smoke_summary(r)
+    assert "Open-Me Datei: /out/l/OPEN_ME.md" in s2
 
 
 def test_summary_warning_next_step(smoke_mod):
@@ -134,6 +139,10 @@ def test_main_exit_codes_with_fake_pipeline(smoke_mod, tmp_path, monkeypatch, pi
     nar.write_text("b", encoding="utf-8")
 
     class FakePl:
+        resolve_local_preview_video_path = staticmethod(pipeline_mod.resolve_local_preview_video_path)
+        resolve_local_preview_report_path = staticmethod(pipeline_mod.resolve_local_preview_report_path)
+        resolve_local_preview_open_me_path = staticmethod(pipeline_mod.resolve_local_preview_open_me_path)
+
         def compute_local_preview_verdict(self, r):
             return self.verdict
 
@@ -183,6 +192,10 @@ def test_main_print_json_contains_meta(smoke_mod, tmp_path, monkeypatch, pipelin
 
     class FakePl:
         verdict = "PASS"
+
+        resolve_local_preview_video_path = staticmethod(pipeline_mod.resolve_local_preview_video_path)
+        resolve_local_preview_report_path = staticmethod(pipeline_mod.resolve_local_preview_report_path)
+        resolve_local_preview_open_me_path = staticmethod(pipeline_mod.resolve_local_preview_open_me_path)
 
         def compute_local_preview_verdict(self, r):
             return self.verdict

@@ -36,43 +36,13 @@ def _pipeline() -> Any:
     return _pipeline_mod
 
 
-def _s(v: Any) -> str:
-    if v is None:
-        return ""
-    return str(v).strip()
-
-
-# Reihenfolge: erweiterbare Keys, dann BA-20.9-Standard, zuletzt clean als Fallback
-_SMOKE_PREVIEW_KEYS = (
-    "preview_video",
-    "subtitled_preview",
-    "burned_in_preview",
-    "final_preview",
-    "preview_with_subtitles",
-)
-
-
 def resolve_local_preview_smoke_video_path(paths: Any) -> str:
-    """Ersten nicht-leeren Vorschau-Pfad aus paths liefern, sonst clean_video, sonst leer."""
-    if not isinstance(paths, dict):
-        return ""
-    for k in _SMOKE_PREVIEW_KEYS:
-        p = _s(paths.get(k))
-        if p:
-            return p
-    return _s(paths.get("clean_video"))
+    """Delegiert an run_local_preview_pipeline (eine zentrale Pfad-Logik)."""
+    return _pipeline().resolve_local_preview_video_path(paths)
 
 
 def resolve_local_preview_smoke_report_path(result: Any) -> str:
-    if not isinstance(result, dict):
-        return ""
-    rp = _s(result.get("report_path"))
-    if rp:
-        return rp
-    paths = result.get("paths")
-    if isinstance(paths, dict):
-        return _s(paths.get("founder_report"))
-    return ""
+    return _pipeline().resolve_local_preview_report_path(result)
 
 
 def build_local_preview_smoke_summary(result: dict) -> str:
@@ -86,6 +56,9 @@ def build_local_preview_smoke_summary(result: dict) -> str:
     report = resolve_local_preview_smoke_report_path(result if isinstance(result, dict) else {})
     if not report:
         report = "nicht verfügbar"
+    open_me = pl.resolve_local_preview_open_me_path(result if isinstance(result, dict) else {})
+    if not open_me:
+        open_me = "nicht verfügbar"
     nxt = pl.local_preview_next_step_for_verdict(verdict)
     lines = [
         "Local Preview Smoke",
@@ -93,6 +66,7 @@ def build_local_preview_smoke_summary(result: dict) -> str:
         f"Status: {verdict}",
         f"Preview öffnen: {preview}",
         f"Report öffnen: {report}",
+        f"Open-Me Datei: {open_me}",
         f"Nächster Schritt: {nxt}",
         "",
     ]

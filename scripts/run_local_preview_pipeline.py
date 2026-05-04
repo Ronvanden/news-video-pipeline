@@ -145,6 +145,150 @@ def local_preview_next_step_for_verdict(verdict: str) -> str:
     return "Behebe zuerst die Blocking Reasons und starte den lokalen Preview-Lauf erneut."
 
 
+# Gemeinsame Pfad-Logik (BA 20.11 Smoke, BA 20.12 OPEN_ME, Founder Report)
+_PREVIEW_VIDEO_PATH_KEYS = (
+    "preview_video",
+    "subtitled_preview",
+    "burned_in_preview",
+    "final_preview",
+    "preview_with_subtitles",
+)
+
+
+def resolve_local_preview_video_path(paths: Any) -> str:
+    """Ersten nicht-leeren Vorschau-Pfad aus paths, sonst clean_video, sonst leer."""
+    if not isinstance(paths, dict):
+        return ""
+    for k in _PREVIEW_VIDEO_PATH_KEYS:
+        p = _s(paths.get(k))
+        if p:
+            return p
+    return _s(paths.get("clean_video"))
+
+
+def resolve_local_preview_report_path(result: Any) -> str:
+    """Founder-Report-Pfad: report_path oder paths[\"founder_report\"]."""
+    if not isinstance(result, dict):
+        return ""
+    rp = _s(result.get("report_path"))
+    if rp:
+        return rp
+    paths = result.get("paths")
+    if isinstance(paths, dict):
+        return _s(paths.get("founder_report"))
+    return ""
+
+
+def resolve_local_preview_open_me_path(result: Any) -> str:
+    """OPEN_ME.md-Pfad: open_me_path oder paths[\"open_me\"]."""
+    if not isinstance(result, dict):
+        return ""
+    o = _s(result.get("open_me_path"))
+    if o:
+        return o
+    paths = result.get("paths")
+    if isinstance(paths, dict):
+        return _s(paths.get("open_me"))
+    return ""
+
+
+def build_local_preview_open_me(result: dict) -> str:
+    """BA 20.12 — Kurzer Einstieg für den Preview-Ordner (OPEN_ME.md)."""
+    verdict = compute_local_preview_verdict(result if isinstance(result, dict) else {})
+    r = result if isinstance(result, dict) else {}
+    paths = r.get("paths")
+    if not isinstance(paths, dict):
+        paths = {}
+
+    preview_v = resolve_local_preview_video_path(paths) or "nicht verfügbar"
+    report_p = resolve_local_preview_report_path(r) or "nicht verfügbar"
+    clean_v = _s(paths.get("clean_video")) or "nicht verfügbar"
+    sub_f = _s(paths.get("subtitles_srt_path")) or _s(paths.get("subtitle_manifest")) or "nicht verfügbar"
+    pipe_d = _s(r.get("pipeline_dir")) or "nicht verfügbar"
+
+    tw = _list_str(r.get("warnings"))
+    br = _list_str(r.get("blocking_reasons"))
+
+    lines: List[str] = [
+        "# Local Preview Package",
+        "",
+        "## Status",
+        f"Verdict: **{verdict}**",
+        "",
+        "## Open First",
+        f"Preview Video: `{preview_v}`",
+        f"Founder Report: `{report_p}`",
+        "",
+        "## What This Is",
+        "Dieser Ordner enthält einen lokalen Preview-Lauf der Video-Pipeline.",
+        "",
+        "## Key Artefacts",
+        f"- Clean Video: `{clean_v}`",
+        f"- Preview Video: `{preview_v}`",
+        f"- Subtitle File: `{sub_f}`",
+        f"- Founder Report: `{report_p}`",
+        f"- Pipeline Folder: `{pipe_d}`",
+        "",
+        "## Warnings",
+    ]
+    if tw:
+        for w in tw:
+            lines.append(f"- {w}")
+    else:
+        lines.append("- Keine")
+
+    lines.extend(["", "## Blocking Reasons"])
+    if br:
+        for b in br:
+            lines.append(f"- {b}")
+    else:
+        lines.append("- Keine")
+
+    lines.extend(["", "## Next Step", local_preview_next_step_for_verdict(verdict), ""])
+    return "\n".join(lines)
+
+
+def write_local_preview_open_me(result: dict) -> dict:
+    """
+    Setzt open_me_markdown; schreibt optional OPEN_ME.md unter pipeline_dir.
+    Bei Fehler: open_me_build_failed / open_me_write_failed, kein Crash.
+    """
+    if not isinstance(result, dict):
+        result = {}
+    out = dict(result)
+    paths = dict(out.get("paths") or {})
+    out["paths"] = paths
+    try:
+        md = build_local_preview_open_me(out)
+    except Exception:
+        md = (
+            "# Local Preview Package\n\n"
+            "## Status\nVerdict: **FAIL**\n\n"
+            "(OPEN_ME konnte nicht aufgebaut werden — Rohresultat prüfen.)\n"
+        )
+        w = _list_str(out.get("warnings"))
+        w.append("open_me_build_failed")
+        out["warnings"] = w
+    out["open_me_markdown"] = md
+
+    pd = _s(out.get("pipeline_dir"))
+    if not pd:
+        return out
+
+    try:
+        op = Path(pd) / "OPEN_ME.md"
+        op.parent.mkdir(parents=True, exist_ok=True)
+        op.write_text(md, encoding="utf-8")
+        omp = str(op.resolve())
+        out["open_me_path"] = omp
+        paths["open_me"] = omp
+    except OSError:
+        w = _list_str(out.get("warnings"))
+        w.append("open_me_write_failed")
+        out["warnings"] = w
+    return out
+
+
 def build_local_preview_founder_report(result: dict) -> str:
     """BA 20.10 — Markdown-Report für Founder/Operator aus Aggregat-Ergebnis der Preview-Pipeline."""
     verdict = compute_local_preview_verdict(result if isinstance(result, dict) else {})
@@ -152,7 +296,7 @@ def build_local_preview_founder_report(result: dict) -> str:
     paths = r.get("paths")
     if not isinstance(paths, dict):
         paths = {}
-    preview_path = _s(paths.get("preview_with_subtitles"))
+    preview_path = resolve_local_preview_video_path(paths)
     clean_path = _s(paths.get("clean_video"))
     open_path = preview_path or clean_path or "nicht verfügbar"
     preview_yes = bool(preview_path)
@@ -251,6 +395,11 @@ def write_local_preview_founder_report(result: dict) -> dict:
     return out
 
 
+def finalize_local_preview_operator_artifacts(result: dict) -> dict:
+    """Founder Report (BA 20.10) dann OPEN_ME (BA 20.12), ein Rückgabe-Dict."""
+    return write_local_preview_open_me(write_local_preview_founder_report(result))
+
+
 def run_local_preview_pipeline(
     timeline_manifest: Path,
     narration_script: Path,
@@ -291,7 +440,7 @@ def run_local_preview_pipeline(
     u_fn = burn_in_subtitles_preview_fn or burn_mod.burn_in_subtitles_preview
 
     def _finalize(raw: Dict[str, Any]) -> Dict[str, Any]:
-        return write_local_preview_founder_report(raw)
+        return finalize_local_preview_operator_artifacts(raw)
 
     step_build = b_fn(
         Path(narration_script).resolve(),

@@ -170,8 +170,12 @@ def test_run_pipeline_writes_report_file(preview_mod, tmp_path):
     )
     pdir = Path(meta["pipeline_dir"])
     assert (pdir / "local_preview_report.md").is_file()
+    assert (pdir / "OPEN_ME.md").is_file()
     assert meta.get("report_path")
+    assert meta.get("open_me_path")
     assert "report_markdown" in meta
+    assert "open_me_markdown" in meta
+    assert "Local Preview Package" in (pdir / "OPEN_ME.md").read_text(encoding="utf-8")
 
 
 def test_main_json_excludes_report_markdown_but_has_report_path(preview_mod, tmp_path, capsys, monkeypatch):
