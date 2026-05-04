@@ -154,7 +154,11 @@ def test_pipeline_fake_burn_idempotent_no_blocking_in_result(preview_mod, tmp_pa
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
 
-    def fake_render(*_a, **_k):
+    def fake_render(*_a, **kw):
+        ov = kw.get("output_video")
+        if ov is not None:
+            Path(ov).parent.mkdir(parents=True, exist_ok=True)
+            Path(ov).write_bytes(b"cv")
         return {"video_created": True, "warnings": [], "blocking_reasons": []}
 
     def fake_burn(*_a, **_k):

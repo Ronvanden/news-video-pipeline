@@ -80,10 +80,12 @@ def test_summary_pass_contains_fields(smoke_mod, pipeline_mod):
             "render_clean": {"video_created": True, "output_path": "/out/c.mp4", "warnings": []},
             "burnin_preview": {"ok": True, "skipped": False, "output_video_path": "/out/p.mp4", "warnings": []},
         },
+        "quality_checklist": {"status": "pass"},
     }
     s = smoke_mod.build_local_preview_smoke_summary(r)
     assert "Local Preview Smoke" in s
     assert "Status: PASS" in s
+    assert "Quality: PASS" in s
     assert "Preview öffnen: /out/p.mp4" in s
     assert "Report öffnen: /out/l/local_preview_report.md" in s
     assert "Open-Me Datei:" in s

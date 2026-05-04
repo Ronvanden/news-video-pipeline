@@ -170,14 +170,20 @@ def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod):
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
 
-    def fake_render(*_a, **_k):
+    def fake_render(*_a, **kw):
+        ov = kw.get("output_video")
+        if ov is not None:
+            Path(ov).parent.mkdir(parents=True, exist_ok=True)
+            Path(ov).write_bytes(b"cv")
         return {"video_created": True, "warnings": [], "blocking_reasons": []}
 
     def fake_burn(*_a, **_k):
+        p = tmp_path / "pv2012.mp4"
+        p.write_bytes(b"pv")
         return {
             "ok": True,
             "skipped": False,
-            "output_video_path": str(tmp_path / "pv.mp4"),
+            "output_video_path": str(p),
             "warnings": [],
             "blocking_reasons": [],
         }
@@ -194,3 +200,4 @@ def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod):
     s = sm.build_local_preview_smoke_summary(meta)
     assert "Open-Me Datei:" in s
     assert "OPEN_ME.md" in s
+    assert "Quality:" in s

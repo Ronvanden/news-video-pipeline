@@ -192,6 +192,25 @@ def _classify_step(name: str, step: Any) -> Tuple[str, str, List[str]]:
     return ("WARNING", "Step ohne erkanntes Schema", sw)
 
 
+def _collect_local_preview_warnings(result: Any) -> List[str]:
+    """Top-Level- und Step-Warnungen zusammenführen (Reihenfolge, ohne Duplikate)."""
+    if not isinstance(result, dict):
+        return []
+    seen: set[str] = set()
+    out: List[str] = []
+    for w in _list_str(result.get("warnings")):
+        if w not in seen:
+            seen.add(w)
+            out.append(w)
+    for _name, step in _iter_steps(result.get("steps")):
+        if isinstance(step, dict):
+            for w in _list_str(step.get("warnings")):
+                if w not in seen:
+                    seen.add(w)
+                    out.append(w)
+    return out
+
+
 # BA 21.0e — diese Codes dürfen ein lokales Preview-Ergebnis nicht als FAIL werten (Operator-Idempotenz).
 _LOCAL_PREVIEW_NON_BLOCKING_BLOCKING_REASONS = frozenset(
     {
@@ -357,6 +376,215 @@ def resolve_local_preview_open_me_path(result: Any) -> str:
     return ""
 
 
+def _safe_operator_path(p: Any) -> Optional[Path]:
+    t = _s(p)
+    if not t:
+        return None
+    try:
+        return Path(t)
+    except (TypeError, ValueError):
+        return None
+
+
+def _quality_checklist_status_to_verdict(st: str) -> str:
+    return {"pass": "PASS", "warning": "WARNING", "fail": "FAIL"}.get((st or "fail").lower().strip(), "FAIL")
+
+
+def build_local_preview_quality_checklist(result: dict) -> Dict[str, Any]:
+    """BA 21.1 — Lokale Artefakt-/Bedienbarkeits-Checkliste (keine Video-Pixel-Analyse)."""
+    r = result if isinstance(result, dict) else {}
+    paths = r.get("paths")
+    if not isinstance(paths, dict):
+        paths = {}
+    items: List[Dict[str, Any]] = []
+    agg_warnings = _collect_local_preview_warnings(r)
+    blocking_eff = sanitize_local_preview_blocking_reasons(r.get("blocking_reasons"))
+
+    preview_path = resolve_local_preview_video_path(paths)
+    pp = _safe_operator_path(preview_path)
+    preview_exists = pp is not None and pp.is_file()
+    size_b: Optional[int] = None
+    stat_err = False
+    if preview_exists and pp is not None:
+        try:
+            size_b = int(pp.stat().st_size)
+        except OSError:
+            stat_err = True
+            size_b = None
+
+    if preview_exists:
+        items.append(
+            {
+                "id": "preview_video_exists",
+                "label": "Preview video exists",
+                "status": "pass",
+                "detail": "file present",
+                "path": preview_path,
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "preview_video_exists",
+                "label": "Preview video exists",
+                "status": "fail",
+                "detail": "missing or not a file",
+                "path": preview_path,
+            }
+        )
+
+    if not preview_exists:
+        items.append(
+            {
+                "id": "preview_video_non_empty",
+                "label": "Preview video non-empty",
+                "status": "fail",
+                "detail": "no preview file",
+                "path": preview_path,
+            }
+        )
+    elif stat_err:
+        items.append(
+            {
+                "id": "preview_video_non_empty",
+                "label": "Preview video non-empty",
+                "status": "warning",
+                "detail": "could not stat file",
+                "path": preview_path,
+            }
+        )
+    elif (size_b or 0) == 0:
+        items.append(
+            {
+                "id": "preview_video_non_empty",
+                "label": "Preview video non-empty",
+                "status": "fail",
+                "detail": "file is 0 bytes",
+                "path": preview_path,
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "preview_video_non_empty",
+                "label": "Preview video non-empty",
+                "status": "pass",
+                "detail": f"{size_b} bytes",
+                "path": preview_path,
+            }
+        )
+
+    frp = resolve_local_preview_report_path(r) or _s(paths.get("founder_report"))
+    fr = _safe_operator_path(frp)
+    if fr is not None and fr.is_file():
+        items.append(
+            {
+                "id": "founder_report_exists",
+                "label": "Founder report exists",
+                "status": "pass",
+                "detail": "",
+                "path": frp,
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "founder_report_exists",
+                "label": "Founder report exists",
+                "status": "fail",
+                "detail": "missing or not a file",
+                "path": frp,
+            }
+        )
+
+    omp = resolve_local_preview_open_me_path(r) or _s(paths.get("open_me"))
+    om = _safe_operator_path(omp)
+    if om is not None and om.is_file():
+        items.append(
+            {
+                "id": "open_me_exists",
+                "label": "OPEN_ME exists",
+                "status": "pass",
+                "detail": "",
+                "path": omp,
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "open_me_exists",
+                "label": "OPEN_ME exists",
+                "status": "fail",
+                "detail": "missing or not a file",
+                "path": omp,
+            }
+        )
+
+    if not blocking_eff:
+        items.append(
+            {
+                "id": "blocking_reasons_clear",
+                "label": "Blocking reasons clear",
+                "status": "pass",
+                "detail": "no blocking reasons after sanitize",
+                "path": "",
+            }
+        )
+    else:
+        tail = ", ".join(blocking_eff[:5])
+        if len(blocking_eff) > 5:
+            tail += "…"
+        items.append(
+            {
+                "id": "blocking_reasons_clear",
+                "label": "Blocking reasons clear",
+                "status": "fail",
+                "detail": tail,
+                "path": "",
+            }
+        )
+
+    if agg_warnings:
+        items.append(
+            {
+                "id": "warnings_present",
+                "label": "Warnings present",
+                "status": "warning",
+                "detail": f"{len(agg_warnings)} warning(s)",
+                "path": "",
+            }
+        )
+    else:
+        items.append(
+            {
+                "id": "warnings_present",
+                "label": "Warnings present",
+                "status": "pass",
+                "detail": "no warnings",
+                "path": "",
+            }
+        )
+
+    has_fail = any(str(it.get("status", "")).lower() == "fail" for it in items)
+    has_warn = any(str(it.get("status", "")).lower() == "warning" for it in items)
+    if has_fail:
+        overall = "fail"
+    elif has_warn:
+        overall = "warning"
+    else:
+        overall = "pass"
+
+    nxt = local_preview_next_step_for_verdict(_quality_checklist_status_to_verdict(overall))
+
+    return {
+        "status": overall,
+        "items": items,
+        "warnings": list(agg_warnings),
+        "blocking_reasons": list(blocking_eff),
+        "next_step": nxt,
+    }
+
+
 def build_local_preview_open_me(result: dict) -> str:
     """BA 20.12 — Kurzer Einstieg für den Preview-Ordner (OPEN_ME.md)."""
     verdict = compute_local_preview_verdict(result if isinstance(result, dict) else {})
@@ -408,6 +636,17 @@ def build_local_preview_open_me(result: dict) -> str:
             lines.append(f"- {b}")
     else:
         lines.append("- Keine")
+
+    qc = r.get("quality_checklist")
+    if isinstance(qc, dict) and qc.get("items"):
+        lines.extend(["", "## Quality Checklist"])
+        for it in qc.get("items") or []:
+            if not isinstance(it, dict):
+                continue
+            tag = str(it.get("status", "fail")).upper()
+            lab = _s(it.get("label")) or _s(it.get("id"))
+            lines.append(f"- [{tag}] {lab}")
+        lines.append("")
 
     lines.extend(["", "## Next Step", local_preview_next_step_for_verdict(verdict), ""])
     return "\n".join(lines)
@@ -513,6 +752,22 @@ def build_local_preview_founder_report(result: dict) -> str:
     else:
         lines.append("- *(keine)*")
 
+    qc = r.get("quality_checklist")
+    if isinstance(qc, dict) and qc.get("items"):
+        lines.extend(["", "## Quality Checklist"])
+        for it in qc.get("items") or []:
+            if not isinstance(it, dict):
+                continue
+            tag = str(it.get("status", "fail")).upper()
+            lab = _s(it.get("label")) or _s(it.get("id"))
+            det = _s(it.get("detail"))
+            pth = _s(it.get("path"))
+            mid = f" — {det}" if det else ""
+            if pth:
+                mid = f"{mid} (`{pth}`)" if mid else f" (`{pth}`)"
+            lines.append(f"- [{tag}] {lab}{mid}")
+        lines.append("")
+
     lines.extend(["", "## Next Step"])
     lines.append(local_preview_next_step_for_verdict(verdict))
     lines.append("")
@@ -561,8 +816,29 @@ def write_local_preview_founder_report(result: dict) -> dict:
 
 
 def finalize_local_preview_operator_artifacts(result: dict) -> dict:
-    """Founder Report (BA 20.10) dann OPEN_ME (BA 20.12), ein Rückgabe-Dict."""
-    return write_local_preview_open_me(write_local_preview_founder_report(result))
+    """
+    Founder Report (BA 20.10), OPEN_ME (BA 20.12), Quality Checklist (BA 21.1).
+
+    Checklist nach erstem Schreiben von Report/OPEN_ME, dann erneutes Schreiben mit Abschnitt.
+    """
+    out = write_local_preview_founder_report(result)
+    out = write_local_preview_open_me(out)
+    try:
+        out["quality_checklist"] = build_local_preview_quality_checklist(out)
+    except Exception:
+        w = _list_str(out.get("warnings"))
+        w.append("quality_checklist_build_failed")
+        out["warnings"] = w
+        out["quality_checklist"] = {
+            "status": "fail",
+            "items": [],
+            "warnings": _collect_local_preview_warnings(out),
+            "blocking_reasons": sanitize_local_preview_blocking_reasons(out.get("blocking_reasons")),
+            "next_step": local_preview_next_step_for_verdict("FAIL"),
+        }
+    out = write_local_preview_founder_report(out)
+    out = write_local_preview_open_me(out)
+    return out
 
 
 def run_local_preview_pipeline(

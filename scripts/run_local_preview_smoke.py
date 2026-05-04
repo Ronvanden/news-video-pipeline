@@ -60,16 +60,26 @@ def build_local_preview_smoke_summary(result: dict) -> str:
     if not open_me:
         open_me = "nicht verfügbar"
     nxt = pl.local_preview_next_step_for_verdict(verdict)
+    qc = result.get("quality_checklist") if isinstance(result, dict) else None
+    q_status = ""
+    if isinstance(qc, dict) and qc.get("status"):
+        q_status = str(qc.get("status")).strip().upper()
     lines = [
         "Local Preview Smoke",
         "",
         f"Status: {verdict}",
+    ]
+    if q_status:
+        lines.append(f"Quality: {q_status}")
+    lines.extend(
+        [
         f"Preview öffnen: {preview}",
         f"Report öffnen: {report}",
         f"Open-Me Datei: {open_me}",
         f"Nächster Schritt: {nxt}",
         "",
-    ]
+        ]
+    )
     return "\n".join(lines)
 
 

@@ -72,6 +72,8 @@ def test_pipeline_calls_build_render_burn_in_order(preview_mod, tmp_path):
         assert run_id == "ba209rid"
         assert "local_preview_ba209rid" in str(output_video)
         assert str(output_video).replace("\\", "/").endswith("clean_video.mp4")
+        output_video.parent.mkdir(parents=True, exist_ok=True)
+        output_video.write_bytes(b"cv")
         return {
             "video_created": True,
             "warnings": [],
@@ -224,7 +226,11 @@ def test_main_prints_json_and_exit_zero_on_ok(preview_mod, tmp_path, capsys, mon
     def fake_build(*_a, **_k):
         return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
 
-    def fake_render(*_a, **_k):
+    def fake_render(*_a, **kw):
+        ov = kw.get("output_video")
+        if ov is not None:
+            Path(ov).parent.mkdir(parents=True, exist_ok=True)
+            Path(ov).write_bytes(b"cv")
         return {"video_created": True, "warnings": [], "blocking_reasons": []}
 
     def fake_burn(*_a, **_k):
