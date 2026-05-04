@@ -36,13 +36,15 @@ def _min_subtitle_manifest(tmp_path: Path, tag: str) -> Path:
     return m
 
 
-def test_pipeline_calls_build_render_burn_in_order(preview_mod, tmp_path):
+def test_pipeline_calls_build_render_burn_in_order(preview_mod, tmp_path, monkeypatch):
     order: List[str] = []
     tl = tmp_path / "tl.json"
     nar = tmp_path / "nar.txt"
-    tl.write_text("{}", encoding="utf-8")
+    tl.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
     nar.write_text("body", encoding="utf-8")
     sub_m = _min_subtitle_manifest(tmp_path, "order")
+    aud_stub = tmp_path / "a209.wav"
+    aud_stub.write_bytes(b"\0")
 
     def fake_build(
         narration_script_path: Path,
@@ -63,6 +65,7 @@ def test_pipeline_calls_build_render_burn_in_order(preview_mod, tmp_path):
         return {
             "ok": True,
             "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(aud_stub),
             "warnings": ["build_warn"],
             "blocking_reasons": [],
         }
@@ -117,6 +120,8 @@ def test_pipeline_calls_build_render_burn_in_order(preview_mod, tmp_path):
             "blocking_reasons": [],
         }
 
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
+
     meta = preview_mod.run_local_preview_pipeline(
         tl,
         nar,
@@ -168,13 +173,21 @@ def test_stops_after_build_failure(preview_mod, tmp_path):
     assert "missing" in meta["blocking_reasons"]
 
 
-def test_stops_after_render_failure(preview_mod, tmp_path):
+def test_stops_after_render_failure(preview_mod, tmp_path, monkeypatch):
     order: List[str] = []
     sub_m = _min_subtitle_manifest(tmp_path, "rendfail")
+    aud_stub = tmp_path / "a209rf.wav"
+    aud_stub.write_bytes(b"\0")
 
     def fake_build(*_a, **_k):
         order.append("build")
-        return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
+        return {
+            "ok": True,
+            "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(aud_stub),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
 
     def fake_render(*_a, **_k):
         order.append("render")
@@ -184,8 +197,13 @@ def test_stops_after_render_failure(preview_mod, tmp_path):
         order.append("burn")
         raise AssertionError("burn should not run")
 
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
+    tlf = tmp_path / "t_rf.json"
+    tlf.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
+    (tmp_path / "n.txt").write_text("n", encoding="utf-8")
+
     meta = preview_mod.run_local_preview_pipeline(
-        tmp_path / "t.json",
+        tlf,
         tmp_path / "n.txt",
         out_root=tmp_path,
         run_id="y",
@@ -198,11 +216,21 @@ def test_stops_after_render_failure(preview_mod, tmp_path):
     assert meta["steps"]["burnin_preview"] is None
 
 
-def test_burn_skipped_style_none_still_ok(preview_mod, tmp_path):
+def test_burn_skipped_style_none_still_ok(preview_mod, tmp_path, monkeypatch):
     sub_m = _min_subtitle_manifest(tmp_path, "burnskip")
+    aud_stub = tmp_path / "a209z.wav"
+    aud_stub.write_bytes(b"\0")
+    (tmp_path / "t.json").write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
+    (tmp_path / "n.txt").write_text("n", encoding="utf-8")
 
     def fake_build(*_a, **_k):
-        return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
+        return {
+            "ok": True,
+            "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(aud_stub),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
 
     def fake_render(*_a, **_k):
         return {"video_created": True, "warnings": [], "blocking_reasons": []}
@@ -215,6 +243,8 @@ def test_burn_skipped_style_none_still_ok(preview_mod, tmp_path):
             "warnings": ["subtitle_style_none_skipped"],
             "blocking_reasons": [],
         }
+
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
 
     meta = preview_mod.run_local_preview_pipeline(
         tmp_path / "t.json",
@@ -232,12 +262,20 @@ def test_burn_skipped_style_none_still_ok(preview_mod, tmp_path):
 def test_main_prints_json_and_exit_zero_on_ok(preview_mod, tmp_path, capsys, monkeypatch):
     tl = tmp_path / "tl2.json"
     nar = tmp_path / "n2.txt"
-    tl.write_text("{}", encoding="utf-8")
+    tl.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
     nar.write_text("x", encoding="utf-8")
     sub_m = _min_subtitle_manifest(tmp_path, "main209")
+    aud_stub = tmp_path / "a209main.wav"
+    aud_stub.write_bytes(b"\0")
 
     def fake_build(*_a, **_k):
-        return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
+        return {
+            "ok": True,
+            "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(aud_stub),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
 
     def fake_render(*_a, **kw):
         ov = kw.get("output_video")
@@ -270,6 +308,7 @@ def test_main_prints_json_and_exit_zero_on_ok(preview_mod, tmp_path, capsys, mon
         )
 
     monkeypatch.setattr(preview_mod, "run_local_preview_pipeline", wrapped)
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
     monkeypatch.setattr(
         sys,
         "argv",

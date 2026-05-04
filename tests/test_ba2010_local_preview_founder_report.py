@@ -150,15 +150,23 @@ def test_write_failure_adds_warning_no_crash(preview_mod, tmp_path, monkeypatch)
     assert "report_markdown" in out
 
 
-def test_run_pipeline_writes_report_file(preview_mod, tmp_path):
+def test_run_pipeline_writes_report_file(preview_mod, tmp_path, monkeypatch):
     tl = tmp_path / "tl.json"
     nar = tmp_path / "nar.txt"
-    tl.write_text("{}", encoding="utf-8")
+    tl.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
     nar.write_text("body", encoding="utf-8")
     sub_m = _min_subtitle_manifest(tmp_path, "wr")
+    stub_aud = tmp_path / "stub2010.wav"
+    stub_aud.write_bytes(b"\0")
 
     def fake_build(*_a, **_k):
-        return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
+        return {
+            "ok": True,
+            "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(stub_aud),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
 
     def fake_render(*_a, **kw):
         ov = kw.get("output_video")
@@ -178,6 +186,8 @@ def test_run_pipeline_writes_report_file(preview_mod, tmp_path):
             "blocking_reasons": [],
         }
 
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
+
     meta = preview_mod.run_local_preview_pipeline(
         tl,
         nar,
@@ -193,6 +203,7 @@ def test_run_pipeline_writes_report_file(preview_mod, tmp_path):
     rep_txt = (pdir / "local_preview_report.md").read_text(encoding="utf-8")
     assert "## Quality Checklist" in rep_txt
     assert "## Subtitle Quality" in rep_txt
+    assert "## Sync Guard" in rep_txt
     assert meta.get("report_path")
     assert meta.get("open_me_path")
     assert "report_markdown" in meta
@@ -205,12 +216,20 @@ def test_main_json_excludes_report_markdown_but_has_report_path(preview_mod, tmp
 
     tl = tmp_path / "t.json"
     nar = tmp_path / "n.txt"
-    tl.write_text("{}", encoding="utf-8")
+    tl.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
     nar.write_text("z", encoding="utf-8")
     sub_m = _min_subtitle_manifest(tmp_path, "cli")
+    aud_stub = tmp_path / "a_cli.wav"
+    aud_stub.write_bytes(b"\0")
 
     def fake_build(*_a, **_k):
-        return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
+        return {
+            "ok": True,
+            "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(aud_stub),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
 
     def fake_render(*_a, **_k):
         return {"video_created": True, "warnings": [], "blocking_reasons": []}
@@ -237,6 +256,7 @@ def test_main_json_excludes_report_markdown_but_has_report_path(preview_mod, tmp
         )
 
     monkeypatch.setattr(preview_mod, "run_local_preview_pipeline", wrapped)
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
     monkeypatch.setattr(
         sys,
         "argv",
@@ -264,12 +284,20 @@ def test_main_print_report_stdout(preview_mod, tmp_path, capsys, monkeypatch):
 
     tl = tmp_path / "t2.json"
     nar = tmp_path / "n2.txt"
-    tl.write_text("{}", encoding="utf-8")
+    tl.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
     nar.write_text("z", encoding="utf-8")
     sub_m = _min_subtitle_manifest(tmp_path, "pr")
+    aud_stub = tmp_path / "a_pr.wav"
+    aud_stub.write_bytes(b"\0")
 
     def fake_build(*_a, **_k):
-        return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
+        return {
+            "ok": True,
+            "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(aud_stub),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
 
     def fake_render(*_a, **_k):
         return {"video_created": True, "warnings": [], "blocking_reasons": []}
@@ -296,6 +324,7 @@ def test_main_print_report_stdout(preview_mod, tmp_path, capsys, monkeypatch):
         )
 
     monkeypatch.setattr(preview_mod, "run_local_preview_pipeline", wrapped)
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
     monkeypatch.setattr(
         sys,
         "argv",

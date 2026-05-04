@@ -64,6 +64,22 @@ def _write_json_manifest(base: Path, doc: Dict[str, Any]) -> str:
     return str(man.resolve())
 
 
+def _write_timeline_est(tmp_path: Path, seconds: float) -> str:
+    p = tmp_path / "tl212.json"
+    p.write_text(json.dumps({"estimated_duration_seconds": seconds}), encoding="utf-8")
+    return str(p.resolve())
+
+
+def _dummy_audio(tmp_path: Path) -> str:
+    p = tmp_path / "a212.wav"
+    p.write_bytes(b"\0")
+    return str(p.resolve())
+
+
+def _probe_flat(sec: float):
+    return lambda _p: (sec, None)
+
+
 def test_subtitle_pass_srt_short_cues(preview_mod, tmp_path):
     sm = _write_srt_manifest(
         tmp_path / "sq_pass",
@@ -197,6 +213,9 @@ def test_quality_checklist_contains_subtitle_item(preview_mod, tmp_path):
     )
     paths = _touch_artifacts(tmp_path)
     paths["subtitle_manifest"] = sm
+    paths["timeline_manifest"] = _write_timeline_est(tmp_path, 2.0)
+    paths["clean_video"] = paths["preview_with_subtitles"]
+    paths["audio_path"] = _dummy_audio(tmp_path)
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
@@ -206,7 +225,7 @@ def test_quality_checklist_contains_subtitle_item(preview_mod, tmp_path):
         "open_me_path": paths["open_me"],
         "steps": {},
     }
-    qc = preview_mod.build_local_preview_quality_checklist(r)
+    qc = preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(2.0))
     assert any(it.get("id") == "subtitle_quality" for it in qc["items"])
     assert r.get("subtitle_quality_check") is not None
 
@@ -215,20 +234,28 @@ def test_founder_report_has_subtitle_section(preview_mod, tmp_path):
     sm = _write_srt_manifest(tmp_path / "fr", "1\n00:00:00,000 --> 00:00:02,000\nX.\n")
     paths = _touch_artifacts(tmp_path)
     paths["subtitle_manifest"] = sm
+    paths["timeline_manifest"] = _write_timeline_est(tmp_path, 2.0)
+    paths["clean_video"] = paths["preview_with_subtitles"]
+    paths["audio_path"] = _dummy_audio(tmp_path)
     r: Dict[str, Any] = {"ok": True, "warnings": [], "blocking_reasons": [], "paths": paths, "steps": {}}
-    preview_mod.build_local_preview_quality_checklist(r)
+    preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(2.0))
     md = preview_mod.build_local_preview_founder_report(r)
     assert "## Subtitle Quality" in md
+    assert "## Sync Guard" in md
 
 
 def test_open_me_has_subtitle_section(preview_mod, tmp_path):
     sm = _write_srt_manifest(tmp_path / "om", "1\n00:00:00,000 --> 00:00:02,000\nY.\n")
     paths = _touch_artifacts(tmp_path)
     paths["subtitle_manifest"] = sm
+    paths["timeline_manifest"] = _write_timeline_est(tmp_path, 2.0)
+    paths["clean_video"] = paths["preview_with_subtitles"]
+    paths["audio_path"] = _dummy_audio(tmp_path)
     r: Dict[str, Any] = {"ok": True, "warnings": [], "blocking_reasons": [], "paths": paths, "steps": {}}
-    preview_mod.build_local_preview_quality_checklist(r)
+    preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(2.0))
     md = preview_mod.build_local_preview_open_me(r)
     assert "## Subtitle Quality" in md
+    assert "## Sync Guard" in md
 
 
 def test_smoke_summary_subtitle_line(smoke_mod, preview_mod):

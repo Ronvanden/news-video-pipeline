@@ -129,15 +129,23 @@ def test_write_open_me_oserror_warning(preview_mod, tmp_path, monkeypatch):
     assert "open_me_markdown" in out
 
 
-def test_finalize_writes_both_artifacts(preview_mod, tmp_path):
+def test_finalize_writes_both_artifacts(preview_mod, tmp_path, monkeypatch):
     tl = tmp_path / "tl.json"
     nar = tmp_path / "nar.txt"
-    tl.write_text("{}", encoding="utf-8")
+    tl.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
     nar.write_text("b", encoding="utf-8")
     sub_m = _min_subtitle_manifest(tmp_path, "fin")
+    aud_stub = tmp_path / "a2012fin.wav"
+    aud_stub.write_bytes(b"\0")
 
     def fake_build(*_a, **_k):
-        return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
+        return {
+            "ok": True,
+            "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(aud_stub),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
 
     def fake_render(*_a, **_k):
         return {"video_created": True, "output_path": str(tmp_path / "c.mp4"), "warnings": [], "blocking_reasons": []}
@@ -150,6 +158,8 @@ def test_finalize_writes_both_artifacts(preview_mod, tmp_path):
             "warnings": [],
             "blocking_reasons": [],
         }
+
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
 
     meta = preview_mod.run_local_preview_pipeline(
         tl,
@@ -165,7 +175,7 @@ def test_finalize_writes_both_artifacts(preview_mod, tmp_path):
     assert (pdir / "OPEN_ME.md").is_file()
 
 
-def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod):
+def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod, monkeypatch):
     """Smoke-Zeile Open-Me nach echtem Pipeline-Modul-Lauf mit Mocks."""
     import importlib.util
 
@@ -177,12 +187,20 @@ def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod):
 
     tl = tmp_path / "t.json"
     nar = tmp_path / "n.txt"
-    tl.write_text("{}", encoding="utf-8")
+    tl.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
     nar.write_text("b", encoding="utf-8")
     sub_m = _min_subtitle_manifest(tmp_path, "sm2012")
+    aud_stub = tmp_path / "a2012sm.wav"
+    aud_stub.write_bytes(b"\0")
 
     def fake_build(*_a, **_k):
-        return {"ok": True, "subtitle_manifest_path": str(sub_m), "warnings": [], "blocking_reasons": []}
+        return {
+            "ok": True,
+            "subtitle_manifest_path": str(sub_m),
+            "audio_path": str(aud_stub),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
 
     def fake_render(*_a, **kw):
         ov = kw.get("output_video")
@@ -202,6 +220,8 @@ def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod):
             "blocking_reasons": [],
         }
 
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
+
     meta = preview_mod.run_local_preview_pipeline(
         tl,
         nar,
@@ -216,5 +236,7 @@ def test_smoke_summary_shows_open_me_after_pipeline(tmp_path, preview_mod):
     assert "OPEN_ME.md" in s
     assert "Quality:" in s
     assert "Subtitle Quality:" in s
+    assert "Sync Guard:" in s
     om_txt = (Path(meta["pipeline_dir"]) / "OPEN_ME.md").read_text(encoding="utf-8")
     assert "## Subtitle Quality" in om_txt
+    assert "## Sync Guard" in om_txt

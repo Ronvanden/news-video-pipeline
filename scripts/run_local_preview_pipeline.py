@@ -397,6 +397,16 @@ _SUBTITLE_Q_MAX_CHARS = 80
 _SUBTITLE_Q_MIN_DUR = 0.25
 _SUBTITLE_Q_MAX_DUR = 8.0
 _SUBTITLE_Q_HIGH_CUE_COUNT = 200
+
+# BA 21.3 — grobe Sync-/Dauer-Schwellen (lokal, ffprobe nur bei vorhandenen Dateien)
+_SYNC_V_TL_PASS_ABS = 0.75
+_SYNC_V_TL_PASS_PCT = 0.10
+_SYNC_V_TL_WARN_ABS = 2.0
+_SYNC_V_TL_WARN_PCT = 0.25
+_SYNC_SUB_TL_WARN_PCT = 0.35
+_SYNC_PREVIEW_CLEAN_PASS_ABS = 0.5
+_SYNC_PREVIEW_CLEAN_PASS_PCT = 0.10
+
 _SRT_TS_LINE_Q = re.compile(
     r"^\s*(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})\s*-->\s*(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})\s*$"
 )
@@ -480,6 +490,602 @@ def _cue_list_from_manifest_doc(doc: Dict[str, Any], manifest_path: Path) -> Tup
         except OSError:
             return [], str(srt_p)
     return [], ""
+
+
+def _probe_media_duration_seconds(
+    path: Path,
+    *,
+    _run: Any = None,
+    _which: Optional[Callable[[str], Optional[str]]] = None,
+    _timeout_sec: float = 5.0,
+) -> Tuple[Optional[float], Optional[str]]:
+    """
+    Liest Medien-Dauer per ffprobe (format=duration). Kein Crash nach außen.
+    `_run` / `_which` nur für Tests injizieren.
+    """
+    run_fn = subprocess.run if _run is None else _run
+    which_fn = shutil.which if _which is None else _which
+    try:
+        p = path.resolve()
+    except OSError:
+        return None, "path_resolve_failed"
+    if not p.is_file():
+        return None, "file_missing"
+    ffprobe = which_fn("ffprobe")
+    if not ffprobe:
+        return None, "ffprobe_not_found"
+    cmd = [
+        ffprobe,
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
+        str(p),
+    ]
+    try:
+        proc = run_fn(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=_timeout_sec,
+        )
+    except subprocess.TimeoutExpired:
+        return None, "ffprobe_timeout"
+    except OSError:
+        return None, "ffprobe_os_error"
+    if getattr(proc, "returncode", 1) != 0:
+        return None, "ffprobe_nonzero_exit"
+    raw = (getattr(proc, "stdout", None) or "").strip()
+    if not raw or raw == "N/A":
+        return None, "duration_empty"
+    try:
+        return float(raw), None
+    except ValueError:
+        return None, "duration_parse_failed"
+
+
+def _resolve_timeline_manifest_path_for_sync(result: dict, paths: Dict[str, Any]) -> str:
+    for k in ("timeline_manifest", "timeline_manifest_path", "timeline_path"):
+        p = _s(paths.get(k))
+        if p:
+            return p
+    steps = result.get("steps")
+    if isinstance(steps, dict):
+        rr = steps.get("render_clean")
+        if isinstance(rr, dict):
+            p = _s(rr.get("timeline_manifest_path") or rr.get("timeline_path"))
+            if p:
+                return p
+    sm = _resolve_subtitle_manifest_path(result, paths)
+    smp = _safe_operator_path(sm)
+    if smp is not None and smp.is_file():
+        try:
+            d = json.loads(smp.read_text(encoding="utf-8", errors="replace"))
+            if isinstance(d, dict):
+                rel = _s(d.get("timeline_manifest"))
+                if rel:
+                    pth = Path(rel)
+                    if not pth.is_absolute():
+                        pth = (smp.parent / pth).resolve()
+                    if pth.is_file():
+                        return str(pth)
+        except (OSError, json.JSONDecodeError, ValueError, TypeError):
+            pass
+    return ""
+
+
+def _sync_timeline_duration_seconds(doc: Dict[str, Any]) -> float:
+    for key in ("total_duration_seconds", "estimated_total_duration_seconds", "estimated_duration_seconds"):
+        v = doc.get(key)
+        if v is not None:
+            try:
+                x = float(v)
+                if x > 0.001:
+                    return x
+            except (TypeError, ValueError):
+                pass
+    tl = doc.get("timeline")
+    if isinstance(tl, list) and tl:
+        s = 0.0
+        for seg in tl:
+            if not isinstance(seg, dict):
+                continue
+            got = False
+            for dk in ("duration_seconds", "estimated_duration_seconds", "duration"):
+                v = seg.get(dk)
+                if v is not None:
+                    try:
+                        s += max(0.0, float(v))
+                        got = True
+                        break
+                    except (TypeError, ValueError):
+                        pass
+            if not got:
+                s += 0.0
+        if s > 0.001:
+            return s
+    scenes = doc.get("scenes")
+    if isinstance(scenes, list) and scenes:
+        s = 0.0
+        for sc in scenes:
+            if not isinstance(sc, dict):
+                continue
+            d = sc.get("duration_seconds")
+            if d is None:
+                d = sc.get("estimated_duration_seconds")
+            try:
+                if d is not None:
+                    s += max(0.0, float(d))
+            except (TypeError, ValueError):
+                pass
+        if s > 0.001:
+            return s
+    return 0.0
+
+
+def _sync_resolve_audio_path(paths: Dict[str, Any], tl_doc: Optional[Dict[str, Any]], tl_file: Optional[Path]) -> str:
+    ap = _s(paths.get("audio_path"))
+    if ap:
+        return ap
+    if not isinstance(tl_doc, dict):
+        return ""
+    rel = _s(tl_doc.get("audio_path") or tl_doc.get("narration_audio_path"))
+    if not rel:
+        return ""
+    p = Path(rel)
+    if p.is_file():
+        return str(p.resolve())
+    if tl_file is not None:
+        try:
+            cand = (tl_file.parent / rel).resolve()
+            if cand.is_file():
+                return str(cand)
+        except OSError:
+            pass
+    return ""
+
+
+def _sync_subtitle_span_seconds(result: dict, paths: Dict[str, Any]) -> Optional[float]:
+    mp_str = _resolve_subtitle_manifest_path(result, paths)
+    mp = _safe_operator_path(mp_str)
+    if mp is None or not mp.is_file():
+        return None
+    try:
+        doc = json.loads(mp.read_text(encoding="utf-8", errors="replace"))
+        if not isinstance(doc, dict):
+            return None
+        cues, _src = _cue_list_from_manifest_doc(doc, mp)
+        if not cues:
+            return None
+        return max(float(c.get("end", 0.0)) for c in cues)
+    except (OSError, json.JSONDecodeError, ValueError, TypeError):
+        return None
+
+
+def _sync_merge_item_status(*parts: str) -> str:
+    if any(p == "fail" for p in parts):
+        return "fail"
+    if any(p == "warning" for p in parts):
+        return "warning"
+    return "pass"
+
+
+def _sync_classify_video_vs_timeline(abs_delta: float, timeline_ref: float) -> str:
+    if timeline_ref <= 0:
+        return "warning"
+    pct = abs_delta / timeline_ref
+    if abs_delta <= _SYNC_V_TL_PASS_ABS or pct <= _SYNC_V_TL_PASS_PCT:
+        return "pass"
+    if abs_delta <= _SYNC_V_TL_WARN_ABS or pct <= _SYNC_V_TL_WARN_PCT:
+        return "warning"
+    return "fail"
+
+
+def _sync_classify_subtitle_vs_timeline(abs_delta: float, timeline_ref: float) -> str:
+    if timeline_ref <= 0:
+        return "warning"
+    pct = abs_delta / timeline_ref
+    if abs_delta <= _SYNC_V_TL_PASS_ABS or pct <= _SYNC_V_TL_PASS_PCT:
+        return "pass"
+    if pct <= _SYNC_SUB_TL_WARN_PCT:
+        return "warning"
+    return "fail"
+
+
+def _sync_classify_preview_vs_clean(abs_delta: float, clean_ref: float) -> str:
+    if clean_ref <= 0:
+        return "warning"
+    pct = abs_delta / clean_ref
+    if abs_delta <= _SYNC_PREVIEW_CLEAN_PASS_ABS or pct <= _SYNC_PREVIEW_CLEAN_PASS_PCT:
+        return "pass"
+    return "warning"
+
+
+def build_local_preview_sync_guard(
+    result: dict,
+    *,
+    _probe: Optional[Callable[[Path], Tuple[Optional[float], Optional[str]]]] = None,
+) -> Dict[str, Any]:
+    """BA 21.3 — Grobe Dauer-/Sync-Prüfung (Timeline, Untertitel, Audio, Videos); ffprobe optional injizierbar."""
+    r = result if isinstance(result, dict) else {}
+    paths = r.get("paths")
+    if not isinstance(paths, dict):
+        paths = {}
+
+    probe_fn = _probe if _probe is not None else (lambda pth: _probe_media_duration_seconds(pth))
+
+    def _it(
+        iid: str,
+        label: str,
+        status: str,
+        detail: str,
+        value_seconds: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        o: Dict[str, Any] = {
+            "id": iid,
+            "label": label,
+            "status": status,
+            "detail": detail,
+        }
+        if value_seconds is not None:
+            o["value_seconds"] = float(value_seconds)
+        return o
+
+    items: List[Dict[str, Any]] = []
+    sw: List[str] = []
+    tl_path_str = _resolve_timeline_manifest_path_for_sync(r, paths)
+    tl_file = _safe_operator_path(tl_path_str)
+    tl_doc: Optional[Dict[str, Any]] = None
+    tl_sec: Optional[float] = None
+    if tl_path_str and tl_file is not None and tl_file.is_file():
+        try:
+            raw_tl = json.loads(tl_file.read_text(encoding="utf-8", errors="replace"))
+            if isinstance(raw_tl, dict):
+                tl_doc = raw_tl
+                tnum = _sync_timeline_duration_seconds(raw_tl)
+                tl_sec = tnum if tnum > 0.001 else None
+        except (OSError, json.JSONDecodeError, ValueError, TypeError):
+            sw.append("sync_guard_timeline_read_failed")
+    if tl_sec is not None:
+        items.append(
+            _it(
+                "timeline_duration_available",
+                "Timeline duration available",
+                "pass",
+                f"from manifest ({tl_path_str})",
+                tl_sec,
+            )
+        )
+    else:
+        items.append(
+            _it(
+                "timeline_duration_available",
+                "Timeline duration available",
+                "warning",
+                "no usable timeline duration",
+                None,
+            )
+        )
+        sw.append("sync_guard_timeline_missing")
+
+    sub_span = _sync_subtitle_span_seconds(r, paths)
+    if sub_span is not None and sub_span > 0:
+        items.append(
+            _it(
+                "subtitle_duration_available",
+                "Subtitle duration available",
+                "pass",
+                "max cue end",
+                sub_span,
+            )
+        )
+    else:
+        items.append(
+            _it(
+                "subtitle_duration_available",
+                "Subtitle duration available",
+                "warning",
+                "could not derive subtitle span",
+                None,
+            )
+        )
+        sw.append("sync_guard_subtitle_span_missing")
+
+    audio_path_str = _sync_resolve_audio_path(paths, tl_doc, tl_file)
+    ap = _safe_operator_path(audio_path_str)
+    audio_sec: Optional[float] = None
+    if not audio_path_str or ap is None or not ap.is_file():
+        items.append(
+            _it(
+                "audio_duration_available",
+                "Audio duration available",
+                "warning",
+                "no audio file (silent render possible)",
+                None,
+            )
+        )
+        sw.append("sync_guard_no_audio_file")
+    else:
+        ad, ad_err = probe_fn(ap)
+        audio_sec = ad
+        if audio_sec is not None and audio_sec > 0:
+            items.append(
+                _it(
+                    "audio_duration_available",
+                    "Audio duration available",
+                    "pass",
+                    "ffprobe ok" if not ad_err else f"ffprobe: {ad_err}",
+                    audio_sec,
+                )
+            )
+        else:
+            items.append(
+                _it(
+                    "audio_duration_available",
+                    "Audio duration available",
+                    "warning",
+                    ad_err or "ffprobe failed",
+                    None,
+                )
+            )
+            sw.append("sync_guard_audio_probe_failed")
+
+    clean_str = _s(paths.get("clean_video"))
+    preview_str = resolve_local_preview_video_path(paths) or _s(paths.get("preview_with_subtitles"))
+    cv = _safe_operator_path(clean_str)
+    pv = _safe_operator_path(preview_str)
+    clean_sec: Optional[float] = None
+    preview_sec: Optional[float] = None
+
+    if cv is not None and cv.is_file():
+        cd, cd_err = probe_fn(cv)
+        clean_sec = cd
+        if clean_sec is not None and clean_sec > 0:
+            items.append(
+                _it(
+                    "clean_video_duration_available",
+                    "Clean video duration available",
+                    "pass",
+                    "ffprobe ok" if not cd_err else f"note: {cd_err}",
+                    clean_sec,
+                )
+            )
+        else:
+            items.append(
+                _it(
+                    "clean_video_duration_available",
+                    "Clean video duration available",
+                    "warning",
+                    cd_err or "ffprobe failed",
+                    None,
+                )
+            )
+            sw.append("sync_guard_clean_probe_failed")
+    else:
+        items.append(
+            _it(
+                "clean_video_duration_available",
+                "Clean video duration available",
+                "warning",
+                "clean video missing",
+                None,
+            )
+        )
+        sw.append("sync_guard_clean_video_missing")
+
+    if pv is not None and pv.is_file():
+        pdur, pd_err = probe_fn(pv)
+        preview_sec = pdur
+        if preview_sec is not None and preview_sec > 0:
+            items.append(
+                _it(
+                    "preview_video_duration_available",
+                    "Preview video duration available",
+                    "pass",
+                    "ffprobe ok" if not pd_err else f"note: {pd_err}",
+                    preview_sec,
+                )
+            )
+        else:
+            items.append(
+                _it(
+                    "preview_video_duration_available",
+                    "Preview video duration available",
+                    "warning",
+                    pd_err or "ffprobe failed",
+                    None,
+                )
+            )
+            sw.append("sync_guard_preview_probe_failed")
+    else:
+        items.append(
+            _it(
+                "preview_video_duration_available",
+                "Preview video duration available",
+                "warning",
+                "preview video missing",
+                None,
+            )
+        )
+        sw.append("sync_guard_preview_video_missing")
+
+    tl_ref = float(tl_sec) if tl_sec is not None else 0.0
+
+    if tl_sec is not None and clean_sec is not None:
+        st = _sync_classify_video_vs_timeline(abs(clean_sec - tl_ref), tl_ref)
+        items.append(
+            _it(
+                "clean_video_vs_timeline",
+                "Clean video vs timeline",
+                st,
+                f"clean {clean_sec:.2f}s vs timeline {tl_ref:.2f}s",
+                abs(clean_sec - tl_ref),
+            )
+        )
+        if st == "fail":
+            sw.append("sync_guard_clean_vs_timeline_fail")
+        elif st == "warning":
+            sw.append("sync_guard_clean_vs_timeline_warn")
+    else:
+        items.append(
+            _it(
+                "clean_video_vs_timeline",
+                "Clean video vs timeline",
+                "warning",
+                "insufficient data for comparison",
+                None,
+            )
+        )
+        sw.append("sync_guard_clean_vs_timeline_skipped")
+
+    if tl_sec is not None and preview_sec is not None:
+        st = _sync_classify_video_vs_timeline(abs(preview_sec - tl_ref), tl_ref)
+        items.append(
+            _it(
+                "preview_video_vs_timeline",
+                "Preview video vs timeline",
+                st,
+                f"preview {preview_sec:.2f}s vs timeline {tl_ref:.2f}s",
+                abs(preview_sec - tl_ref),
+            )
+        )
+        if st == "fail":
+            sw.append("sync_guard_preview_vs_timeline_fail")
+        elif st == "warning":
+            sw.append("sync_guard_preview_vs_timeline_warn")
+    else:
+        items.append(
+            _it(
+                "preview_video_vs_timeline",
+                "Preview video vs timeline",
+                "warning",
+                "insufficient data for comparison",
+                None,
+            )
+        )
+        sw.append("sync_guard_preview_vs_timeline_skipped")
+
+    if clean_sec is not None and preview_sec is not None:
+        st = _sync_classify_preview_vs_clean(abs(preview_sec - clean_sec), clean_sec)
+        items.append(
+            _it(
+                "preview_vs_clean_video",
+                "Preview vs clean video",
+                st,
+                f"preview {preview_sec:.2f}s vs clean {clean_sec:.2f}s",
+                abs(preview_sec - clean_sec),
+            )
+        )
+        if st == "warning":
+            sw.append("sync_guard_preview_vs_clean_warn")
+    else:
+        items.append(
+            _it(
+                "preview_vs_clean_video",
+                "Preview vs clean video",
+                "warning",
+                "insufficient data for comparison",
+                None,
+            )
+        )
+        sw.append("sync_guard_preview_vs_clean_skipped")
+
+    if tl_sec is not None and sub_span is not None:
+        st = _sync_classify_subtitle_vs_timeline(abs(sub_span - tl_ref), tl_ref)
+        items.append(
+            _it(
+                "subtitle_vs_timeline",
+                "Subtitle vs timeline",
+                st,
+                f"subtitle end {sub_span:.2f}s vs timeline {tl_ref:.2f}s",
+                abs(sub_span - tl_ref),
+            )
+        )
+        if st == "fail":
+            sw.append("sync_guard_subtitle_vs_timeline_fail")
+        elif st == "warning":
+            sw.append("sync_guard_subtitle_vs_timeline_warn")
+    else:
+        items.append(
+            _it(
+                "subtitle_vs_timeline",
+                "Subtitle vs timeline",
+                "warning",
+                "insufficient data for comparison",
+                None,
+            )
+        )
+        sw.append("sync_guard_subtitle_vs_timeline_skipped")
+
+    if tl_sec is None:
+        ast = "warning"
+        adetail = "no timeline baseline"
+    elif audio_sec is None:
+        ast = "pass"
+        adetail = "no audio file; comparison skipped"
+    else:
+        ast = _sync_classify_video_vs_timeline(abs(audio_sec - tl_ref), tl_ref)
+        adetail = f"audio {audio_sec:.2f}s vs timeline {tl_ref:.2f}s"
+    items.append(
+        _it(
+            "audio_vs_timeline",
+            "Audio vs timeline",
+            ast,
+            adetail,
+            abs(audio_sec - tl_ref) if (audio_sec is not None and tl_sec is not None) else None,
+        )
+    )
+    if ast == "fail":
+        sw.append("sync_guard_audio_vs_timeline_fail")
+    elif ast == "warning":
+        sw.append("sync_guard_audio_vs_timeline_warn")
+
+    _merge_ids = frozenset(
+        {
+            "timeline_duration_available",
+            "clean_video_vs_timeline",
+            "preview_video_vs_timeline",
+            "preview_vs_clean_video",
+            "subtitle_vs_timeline",
+            "audio_vs_timeline",
+        }
+    )
+    st_core = [str(it.get("status", "pass")).lower() for it in items if it.get("id") in _merge_ids]
+    st_all = _sync_merge_item_status(*st_core) if st_core else "pass"
+    if st_all == "fail":
+        sw.append("sync_guard_fail")
+    elif st_all == "warning":
+        sw.append("sync_guard_warning")
+
+    summary_bits = [f"status={st_all}"]
+    if tl_sec is not None:
+        summary_bits.append(f"tl={tl_sec:.1f}s")
+    if sub_span is not None:
+        summary_bits.append(f"sub={sub_span:.1f}s")
+    if audio_sec is not None:
+        summary_bits.append(f"aud={audio_sec:.1f}s")
+    if clean_sec is not None:
+        summary_bits.append(f"clean={clean_sec:.1f}s")
+    if preview_sec is not None:
+        summary_bits.append(f"pv={preview_sec:.1f}s")
+    summary = "; ".join(summary_bits)[:240]
+
+    return {
+        "status": st_all,
+        "items": items,
+        "durations": {
+            "timeline_seconds": tl_sec,
+            "subtitle_seconds": sub_span,
+            "audio_seconds": audio_sec,
+            "clean_video_seconds": clean_sec,
+            "preview_video_seconds": preview_sec,
+        },
+        "warnings": list(dict.fromkeys(sw)),
+        "blocking_reasons": [],
+        "summary": summary,
+    }
 
 
 def build_local_preview_subtitle_quality_check(result: dict) -> Dict[str, Any]:
@@ -822,7 +1428,11 @@ def build_local_preview_subtitle_quality_check(result: dict) -> Dict[str, Any]:
     }
 
 
-def build_local_preview_quality_checklist(result: dict) -> Dict[str, Any]:
+def build_local_preview_quality_checklist(
+    result: dict,
+    *,
+    _sync_guard_probe: Optional[Callable[[Path], Tuple[Optional[float], Optional[str]]]] = None,
+) -> Dict[str, Any]:
     """BA 21.1 — Lokale Artefakt-/Bedienbarkeits-Checkliste (keine Video-Pixel-Analyse)."""
     r = result if isinstance(result, dict) else {}
     paths = r.get("paths")
@@ -846,6 +1456,19 @@ def build_local_preview_quality_checklist(result: dict) -> Dict[str, Any]:
             "cue_count": 0,
         }
     r["subtitle_quality_check"] = sq
+
+    try:
+        sg = build_local_preview_sync_guard(r, _probe=_sync_guard_probe)
+    except Exception:
+        sg = {
+            "status": "fail",
+            "items": [],
+            "durations": {},
+            "warnings": ["sync_guard_build_failed"],
+            "blocking_reasons": [],
+            "summary": "sync guard error",
+        }
+    r["sync_guard"] = sg
 
     preview_path = resolve_local_preview_video_path(paths)
     pp = _safe_operator_path(preview_path)
@@ -974,6 +1597,16 @@ def build_local_preview_quality_checklist(result: dict) -> Dict[str, Any]:
             "status": str(sq.get("status", "fail")).lower(),
             "detail": (_s(sq.get("summary")) or "")[:220],
             "path": _s(sq.get("manifest_path") or ""),
+        }
+    )
+
+    items.append(
+        {
+            "id": "sync_guard",
+            "label": "Audio/video sync",
+            "status": str(sg.get("status", "fail")).lower(),
+            "detail": (_s(sg.get("summary")) or "")[:220],
+            "path": "",
         }
     )
 
@@ -1112,6 +1745,19 @@ def build_local_preview_open_me(result: dict) -> str:
         hint = _s(sq.get("summary"))
         if hint:
             lines.append(f"- Hinweis: {hint[:200]}")
+        lines.append("")
+
+    sg = r.get("sync_guard")
+    if isinstance(sg, dict) and sg.get("status"):
+        lines.extend(["", "## Sync Guard"])
+        lines.append(f"- Status: {str(sg.get('status')).upper()}")
+        dur = sg.get("durations") if isinstance(sg.get("durations"), dict) else {}
+        aud = dur.get("audio_seconds")
+        hint2 = _s(sg.get("summary"))
+        if not isinstance(aud, (int, float)):
+            lines.append("- Hinweis: Kein Audio vorhanden; Silent Render verwendet.")
+        elif hint2:
+            lines.append(f"- Hinweis: {hint2[:200]}")
         lines.append("")
 
     lines.extend(["", "## Next Step", local_preview_next_step_for_verdict(verdict), ""])
@@ -1256,6 +1902,41 @@ def build_local_preview_founder_report(result: dict) -> str:
             shown += 1
         lines.append("")
 
+    sg = r.get("sync_guard")
+    if isinstance(sg, dict) and sg.get("status"):
+        lines.extend(["", "## Sync Guard"])
+        lines.append(f"Status: **{str(sg.get('status')).upper()}**")
+        dur = sg.get("durations") if isinstance(sg.get("durations"), dict) else {}
+        tl = dur.get("timeline_seconds")
+        sub = dur.get("subtitle_seconds")
+        aud = dur.get("audio_seconds")
+        cl = dur.get("clean_video_seconds")
+        pv = dur.get("preview_video_seconds")
+        lines.append(f"- Timeline: {tl:.1f}s" if isinstance(tl, (int, float)) else "- Timeline: nicht verfügbar")
+        lines.append(f"- Subtitle: {sub:.1f}s" if isinstance(sub, (int, float)) else "- Subtitle: nicht verfügbar")
+        lines.append(f"- Audio: {aud:.1f}s" if isinstance(aud, (int, float)) else "- Audio: nicht verfügbar")
+        lines.append(f"- Clean: {cl:.1f}s" if isinstance(cl, (int, float)) else "- Clean: nicht verfügbar")
+        lines.append(f"- Preview: {pv:.1f}s" if isinstance(pv, (int, float)) else "- Preview: nicht verfügbar")
+        ssum2 = _s(sg.get("summary"))
+        if not isinstance(aud, (int, float)):
+            lines.append("- Hinweis: Kein Audio vorhanden; Silent Render verwendet.")
+        elif ssum2:
+            lines.append(f"- Hinweis: {ssum2[:220]}")
+        shown_g = 0
+        for it in sg.get("items") or []:
+            if shown_g >= 5:
+                break
+            if not isinstance(it, dict):
+                continue
+            if str(it.get("status", "")).lower() == "pass":
+                continue
+            tag = str(it.get("status", "fail")).upper()
+            lab = _s(it.get("label")) or _s(it.get("id"))
+            det = _s(it.get("detail"))
+            lines.append(f"- [{tag}] {lab}" + (f" — {det}" if det else ""))
+            shown_g += 1
+        lines.append("")
+
     lines.extend(["", "## Next Step"])
     lines.append(local_preview_next_step_for_verdict(verdict))
     lines.append("")
@@ -1305,7 +1986,7 @@ def write_local_preview_founder_report(result: dict) -> dict:
 
 def finalize_local_preview_operator_artifacts(result: dict) -> dict:
     """
-    Founder Report (BA 20.10), OPEN_ME (BA 20.12), Quality Checklist (BA 21.1 / 21.2).
+    Founder Report (BA 20.10), OPEN_ME (BA 20.12), Quality Checklist (BA 21.1 / 21.2 / 21.3).
 
     Checklist nach erstem Schreiben von Report/OPEN_ME, dann erneutes Schreiben mit Abschnitt.
     """
@@ -1356,6 +2037,7 @@ def run_local_preview_pipeline(
     pipeline_dir = out_root_p / f"local_preview_{rid}"
     pipeline_dir.mkdir(parents=True, exist_ok=True)
     clean_video = pipeline_dir / "clean_video.mp4"
+    tl_path_resolved = str(Path(timeline_manifest).resolve())
 
     warnings: List[str] = []
     blocking: List[str] = []
@@ -1395,6 +2077,12 @@ def run_local_preview_pipeline(
                     "subtitle_manifest": step_build.get("subtitle_manifest_path") or "",
                     "clean_video": "",
                     "preview_with_subtitles": "",
+                    "timeline_manifest": tl_path_resolved,
+                    "audio_path": (
+                        str(Path(audio_path).resolve())
+                        if audio_path
+                        else _s(step_build.get("audio_path"))
+                    ),
                 },
                 "warnings": warnings,
                 "blocking_reasons": sanitize_local_preview_blocking_reasons(blocking)
@@ -1429,6 +2117,8 @@ def run_local_preview_pipeline(
                     "subtitle_manifest": str(sub_man),
                     "clean_video": str(clean_video),
                     "preview_with_subtitles": "",
+                    "timeline_manifest": tl_path_resolved,
+                    "audio_path": _s(step_build.get("audio_path")),
                 },
                 "warnings": warnings,
                 "blocking_reasons": sanitize_local_preview_blocking_reasons(blocking)
@@ -1466,6 +2156,8 @@ def run_local_preview_pipeline(
             "subtitle_manifest": str(sub_man),
             "clean_video": str(clean_video.resolve()) if clean_video.is_file() else str(clean_video),
             "preview_with_subtitles": preview_path,
+            "timeline_manifest": tl_path_resolved,
+            "audio_path": _s(step_build.get("audio_path")),
         },
         "warnings": warnings,
         "blocking_reasons": blocking,

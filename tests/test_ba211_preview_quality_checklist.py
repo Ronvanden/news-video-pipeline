@@ -52,6 +52,22 @@ def _write_min_subtitle_manifest(base: Path, srt_body: str) -> str:
     return str(man.resolve())
 
 
+def _write_timeline_est(tmp_path: Path, tag: str, seconds: float) -> str:
+    p = tmp_path / f"tl_{tag}.json"
+    p.write_text(json.dumps({"estimated_duration_seconds": seconds}), encoding="utf-8")
+    return str(p.resolve())
+
+
+def _dummy_audio(tmp_path: Path, tag: str) -> str:
+    p = tmp_path / f"aud_{tag}.wav"
+    p.write_bytes(b"\0")
+    return str(p.resolve())
+
+
+def _probe_flat(sec: float):
+    return lambda _p: (sec, None)
+
+
 def test_quality_pass_all_artifacts(preview_mod, tmp_path):
     pv = tmp_path / "pv.mp4"
     rp = tmp_path / "local_preview_report.md"
@@ -63,6 +79,8 @@ def test_quality_pass_all_artifacts(preview_mod, tmp_path):
         tmp_path / "sub_pass",
         "1\n00:00:00,000 --> 00:00:02,000\nShort one.\n\n2\n00:00:02,100 --> 00:00:04,000\nShort two.\n",
     )
+    tl = _write_timeline_est(tmp_path, "pass", 4.0)
+    aud = _dummy_audio(tmp_path, "pass")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
@@ -72,12 +90,15 @@ def test_quality_pass_all_artifacts(preview_mod, tmp_path):
             "founder_report": str(rp),
             "open_me": str(om),
             "subtitle_manifest": sm,
+            "timeline_manifest": tl,
+            "clean_video": str(pv),
+            "audio_path": aud,
         },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
     }
-    qc = preview_mod.build_local_preview_quality_checklist(r)
+    qc = preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(4.0))
     assert qc["status"] == "pass"
     assert {it["id"] for it in qc["items"]} == {
         "preview_video_exists",
@@ -85,6 +106,7 @@ def test_quality_pass_all_artifacts(preview_mod, tmp_path):
         "founder_report_exists",
         "open_me_exists",
         "subtitle_quality",
+        "sync_guard",
         "blocking_reasons_clear",
         "warnings_present",
     }
@@ -101,6 +123,8 @@ def test_quality_warning_when_warnings_present(preview_mod, tmp_path):
         tmp_path / "sub_warn",
         "1\n00:00:00,000 --> 00:00:02,000\nA.\n\n2\n00:00:02,100 --> 00:00:04,000\nB.\n",
     )
+    tl = _write_timeline_est(tmp_path, "warn", 4.0)
+    aud = _dummy_audio(tmp_path, "warn")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": ["some_warn"],
@@ -110,12 +134,15 @@ def test_quality_warning_when_warnings_present(preview_mod, tmp_path):
             "founder_report": str(rp),
             "open_me": str(om),
             "subtitle_manifest": sm,
+            "timeline_manifest": tl,
+            "clean_video": str(pv),
+            "audio_path": aud,
         },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
     }
-    qc = preview_mod.build_local_preview_quality_checklist(r)
+    qc = preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(4.0))
     assert qc["status"] == "warning"
     assert any(it["id"] == "warnings_present" and it["status"] == "warning" for it in qc["items"])
 
@@ -129,6 +156,8 @@ def test_quality_fail_missing_preview(preview_mod, tmp_path):
         tmp_path / "sub_miss",
         "1\n00:00:00,000 --> 00:00:01,000\nOk.\n",
     )
+    tl = _write_timeline_est(tmp_path, "miss", 1.0)
+    aud = _dummy_audio(tmp_path, "miss")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
@@ -138,12 +167,15 @@ def test_quality_fail_missing_preview(preview_mod, tmp_path):
             "founder_report": str(rp),
             "open_me": str(om),
             "subtitle_manifest": sm,
+            "timeline_manifest": tl,
+            "clean_video": str(tmp_path / "missing.mp4"),
+            "audio_path": aud,
         },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
     }
-    qc = preview_mod.build_local_preview_quality_checklist(r)
+    qc = preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(1.0))
     assert qc["status"] == "fail"
     assert any(it["id"] == "preview_video_exists" and it["status"] == "fail" for it in qc["items"])
 
@@ -156,6 +188,8 @@ def test_quality_fail_preview_zero_bytes(preview_mod, tmp_path):
     _touch(rp)
     _touch(om)
     sm = _write_min_subtitle_manifest(tmp_path / "sub_zero", "1\n00:00:00,000 --> 00:00:01,000\nX.\n")
+    tl = _write_timeline_est(tmp_path, "zero", 1.0)
+    aud = _dummy_audio(tmp_path, "zero")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
@@ -165,12 +199,15 @@ def test_quality_fail_preview_zero_bytes(preview_mod, tmp_path):
             "founder_report": str(rp),
             "open_me": str(om),
             "subtitle_manifest": sm,
+            "timeline_manifest": tl,
+            "clean_video": str(pv),
+            "audio_path": aud,
         },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
     }
-    qc = preview_mod.build_local_preview_quality_checklist(r)
+    qc = preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(1.0))
     assert qc["status"] == "fail"
     assert any(it["id"] == "preview_video_non_empty" and it["status"] == "fail" for it in qc["items"])
 
@@ -183,6 +220,8 @@ def test_quality_fail_real_blocking(preview_mod, tmp_path):
     _touch(rp)
     _touch(om)
     sm = _write_min_subtitle_manifest(tmp_path / "sub_block", "1\n00:00:00,000 --> 00:00:01,000\nY.\n")
+    tl = _write_timeline_est(tmp_path, "block", 1.0)
+    aud = _dummy_audio(tmp_path, "block")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
@@ -192,12 +231,15 @@ def test_quality_fail_real_blocking(preview_mod, tmp_path):
             "founder_report": str(rp),
             "open_me": str(om),
             "subtitle_manifest": sm,
+            "timeline_manifest": tl,
+            "clean_video": str(pv),
+            "audio_path": aud,
         },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
     }
-    qc = preview_mod.build_local_preview_quality_checklist(r)
+    qc = preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(1.0))
     assert qc["status"] == "fail"
     assert any(it["id"] == "blocking_reasons_clear" and it["status"] == "fail" for it in qc["items"])
 
@@ -210,6 +252,8 @@ def test_quality_non_blocking_blocking_does_not_fail_checklist(preview_mod, tmp_
     _touch(rp)
     _touch(om)
     sm = _write_min_subtitle_manifest(tmp_path / "sub_nb", "1\n00:00:00,000 --> 00:00:01,000\nZ.\n")
+    tl = _write_timeline_est(tmp_path, "nb", 1.0)
+    aud = _dummy_audio(tmp_path, "nb")
     r: Dict[str, Any] = {
         "ok": True,
         "warnings": [],
@@ -219,20 +263,23 @@ def test_quality_non_blocking_blocking_does_not_fail_checklist(preview_mod, tmp_
             "founder_report": str(rp),
             "open_me": str(om),
             "subtitle_manifest": sm,
+            "timeline_manifest": tl,
+            "clean_video": str(pv),
+            "audio_path": aud,
         },
         "report_path": str(rp),
         "open_me_path": str(om),
         "steps": {},
     }
-    qc = preview_mod.build_local_preview_quality_checklist(r)
+    qc = preview_mod.build_local_preview_quality_checklist(r, _sync_guard_probe=_probe_flat(1.0))
     assert qc["status"] == "pass"
     assert any(it["id"] == "blocking_reasons_clear" and it["status"] == "pass" for it in qc["items"])
 
 
-def test_finalize_writes_quality_checklist(preview_mod, tmp_path):
+def test_finalize_writes_quality_checklist(preview_mod, tmp_path, monkeypatch):
     tl = tmp_path / "tl.json"
     nar = tmp_path / "n.txt"
-    tl.write_text("{}", encoding="utf-8")
+    tl.write_text(json.dumps({"estimated_duration_seconds": 4.0}), encoding="utf-8")
     nar.write_text("b", encoding="utf-8")
     sub_d = tmp_path / "sub211fin"
     sub_m = Path(
@@ -263,6 +310,8 @@ def test_finalize_writes_quality_checklist(preview_mod, tmp_path):
             "blocking_reasons": [],
         }
 
+    monkeypatch.setattr(preview_mod, "_probe_media_duration_seconds", lambda p, **kw: (4.0, None))
+
     meta = preview_mod.run_local_preview_pipeline(
         tl,
         nar,
@@ -275,14 +324,18 @@ def test_finalize_writes_quality_checklist(preview_mod, tmp_path):
     assert isinstance(meta.get("quality_checklist"), dict)
     assert meta["quality_checklist"].get("status") in ("pass", "warning", "fail")
     assert any(it.get("id") == "subtitle_quality" for it in (meta["quality_checklist"].get("items") or []))
+    assert any(it.get("id") == "sync_guard" for it in (meta["quality_checklist"].get("items") or []))
     assert isinstance(meta.get("subtitle_quality_check"), dict)
+    assert isinstance(meta.get("sync_guard"), dict)
     pdir = Path(meta["pipeline_dir"])
     rep = (pdir / "local_preview_report.md").read_text(encoding="utf-8")
     assert "## Quality Checklist" in rep
     assert "## Subtitle Quality" in rep
+    assert "## Sync Guard" in rep
     om = (pdir / "OPEN_ME.md").read_text(encoding="utf-8")
     assert "## Quality Checklist" in om
     assert "## Subtitle Quality" in om
+    assert "## Sync Guard" in om
 
 
 def test_smoke_summary_includes_quality_line(smoke_mod, preview_mod):
@@ -296,8 +349,10 @@ def test_smoke_summary_includes_quality_line(smoke_mod, preview_mod):
         "open_me_path": "/tmp/o.md",
         "quality_checklist": {"status": "warning"},
         "subtitle_quality_check": {"status": "warning"},
+        "sync_guard": {"status": "warning"},
     }
     smoke_mod._pipeline_mod = preview_mod
     s = smoke_mod.build_local_preview_smoke_summary(r)
     assert "Quality: WARNING" in s
     assert "Subtitle Quality: WARNING" in s
+    assert "Sync Guard: WARNING" in s
