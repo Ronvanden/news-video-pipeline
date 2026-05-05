@@ -615,8 +615,8 @@ Aus einem **geprüften** und **freigegebenen** Local-Preview-Run soll später ei
 | **BA 24.0** | Final Render Execution Plan | **done** | Final-Render-Workflow, Gates, Inputs, Outputs und Fehlerlogik dokumentieren. |
 | BA 24.1 | Final Render Contract | done | Stabiles Result-Schema für `final_render_result.json` definieren. |
 | BA 24.2 | Final Render Dry-Run Endpoint | done | Dashboard-/Backend-Route, die Final Render readiness simuliert, ohne Video zu erzeugen. |
-| BA 24.3 | Final Render Execution Script | planned | Lokales Script, das aus freigegebenem Preview-Paket einen finalen Export erzeugt. |
-| BA 24.4 | Final Render Dashboard Action | planned | Dashboard-Button triggert echten Final Render kontrolliert. |
+| BA 24.3 | Final Render Execution Script | done | Lokales Script, das aus freigegebenem Preview-Paket einen finalen Export erzeugt. |
+| BA 24.4 | Final Render Dashboard Action | done | Dashboard-Button triggert echten Final Render kontrolliert. |
 | BA 24.5 | Final Render Report / OPEN_ME Update | planned | Report und OPEN_ME um finalen Export, Status und Pfade erweitern. |
 | BA 24.6 | Final Render Error Recovery | planned | Fehlerfälle, Retry und idempotentes Verhalten absichern. |
 
@@ -690,6 +690,67 @@ Kein Input aus `.env`, keine externen Provider-Calls, keine Cloud/GCP.
 - Final-Render-Flow ist **vor** Umsetzung klar dokumentiert (Gates, Inputs, Outputs, Fehlerlogik, Idempotenz).
 - BA 24.1–24.6 sind als kleine, testbare Schritte definiert.
 - Bestehende Dashboard-/Preview-Logik bleibt unverändert.
+
+## BA 24.x — Local Final Render MVP Freeze Plan
+
+**Status:** active / frozen scope
+
+**Ziel:**  
+Der lokale MVP-Flow soll jetzt abgeschlossen werden, **ohne** neue Zwischen-BAs einzuschieben.
+
+**MVP-Ziel (Operator im Dashboard):**
+
+1. Preview erstellen
+2. Preview ansehen
+3. Quality/Warnings/Founder Decision prüfen
+4. Preview freigeben
+5. Final Render starten
+6. Finales Video im Output-Ordner finden
+7. Final Render Report / OPEN_ME lesen
+
+**Verbindlicher Restplan:**
+
+| BA | Titel | Status | Ziel |
+|----|-------|--------|------|
+| BA 24.3 | Final Render Execution Script | **done** | Lokales Script erzeugt aus freigegebenem Preview-Paket ein `final_render_<run_id>`-Paket mit `final_video.mp4`. |
+| BA 24.4 | Dashboard Final Render Action | planned | Dashboard-Button startet kontrolliert den Final Render. |
+| BA 24.5 | Final Render Report / OPEN_ME Update | planned | Finales Paket erhält klare Bedienungsdateien und Report. |
+| BA 24.6 | Final Render Error Recovery / Idempotenz | planned | Retry, existing-file handling, force/overwrite und Fehlerausgaben stabilisieren. |
+
+**Scope Freeze:**  
+Bis BA 24.6 werden **keine** neuen Feature-BAs eingeschoben. Erlaubt sind nur:
+
+- Bugfixes
+- Testfixes
+- kleine Doku-Korrekturen
+- Sicherheitsfixes
+
+**Nicht-Ziele bis Abschluss BA 24.6:**
+
+- kein YouTube Upload
+- kein Scheduling
+- kein neues Dashboard-Redesign
+- keine neue Cost-Engine
+- keine neuen Provider-Integrationen
+- keine neuen Quality-Layer außer Bugfix
+- kein SaaS/User-System
+- kein UI-Polish über notwendige Bedienbarkeit hinaus
+
+**Definition of Done für Local Final Render MVP:**
+
+- Preview kann im Dashboard erzeugt werden.
+- Preview ist im Dashboard sichtbar/öffnbar.
+- Quality/Warning/Founder Decision sichtbar.
+- Human Approval funktioniert.
+- Final Render kann gestartet werden.
+- `final_video.mp4` wird erzeugt.
+- `final_render_result.json` wird geschrieben.
+- `FINAL_OPEN_ME.md` oder finaler Report erklärt den Output.
+- Tests sind grün.
+- CLI bleibt nutzbar.
+
+**Execution-Regel:**  
+Nach BA 24.6 wird der MVP-Block geschlossen. Erst danach wird entschieden, ob der nächste Block Publishing, Dashboard Polish oder Provider-Integration ist.
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 

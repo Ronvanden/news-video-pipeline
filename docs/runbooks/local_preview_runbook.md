@@ -119,6 +119,32 @@ Hinweis: **BA 24.1** definiert den `final_render_result.json` Contract; die tats
 
 Hinweis: **BA 24.2** ergänzt einen read-only Dry-Run-Endpunkt, der Final-Render-Readiness prüft und einen Contract baut, aber **keine Dateien schreibt** und **kein Video erzeugt**.
 
+### 3.x Final Render lokal ausführen (BA 24.3)
+
+V1 erzeugt ein lokales Final-Render-Paket, indem die freigegebene Preview als `final_video.mp4` kopiert wird (kein neuer ffmpeg-Render):
+
+```bash
+python scripts/run_final_render.py --run-id mini_e2e
+```
+
+Optionen:
+
+- `--out-root output`
+- `--force` (überschreibt bestehendes `final_video.mp4`)
+- `--print-json` (gibt Ergebniscontract als JSON aus)
+
+Hinweis: Wenn der Run nicht **ready** ist (Approval/Costs/Gates), beendet das Skript mit Exit-Code **2** und schreibt nichts.
+
+### 3.x Final Render im Dashboard starten (BA 24.4)
+
+Wenn der Final-Render-Status **ready** ist, kann der Operator im Dashboard auf **„Finales Video erstellen“** klicken.
+
+Ergebnis liegt danach unter:
+
+- `output/final_render_<run_id>/final_video.mp4`
+- `output/final_render_<run_id>/final_render_result.json`
+- `output/final_render_<run_id>/FINAL_OPEN_ME.md`
+
 ---
 
 ## 5. Typische Probleme und Reparatur

@@ -29,6 +29,7 @@ from app.founder_dashboard.local_preview_panel import (
     build_approval_gate_from_run,
     validate_local_preview_run_id,
 )
+from scripts.run_final_render import run_final_render_for_local_preview
 
 router = APIRouter(tags=["founder-dashboard"])
 
@@ -356,6 +357,30 @@ async def founder_local_preview_final_render_dry_run(run_id: str) -> dict:
     return res
 
 
+class LocalPreviewFinalRenderRunRequest(BaseModel):
+    force: bool = False
+
+    model_config = {"extra": "forbid"}
+
+
+@router.post("/founder/dashboard/local-preview/final-render/run/{run_id}")
+async def founder_local_preview_final_render_run(run_id: str, req: LocalPreviewFinalRenderRunRequest) -> dict:
+    """BA 24.4 — startet lokalen Final Render (V1: copy preview)."""
+    if not validate_local_preview_run_id(run_id):
+        raise HTTPException(status_code=422, detail="invalid run_id")
+    out_root = default_local_preview_out_root()
+    res = await run_in_threadpool(
+        run_final_render_for_local_preview,
+        run_id=run_id,
+        out_root=out_root,
+        force=bool(req.force),
+    )
+    if not isinstance(res, dict):
+        return {"ok": False, "run_id": run_id, "status": "failed", "message": "unexpected result"}
+    # Consistent: not-ready -> 200 ok=false for UI
+    return res
+
+
 @router.get("/founder/dashboard/config")
 async def founder_dashboard_config() -> dict:
     """Statische Meta-Infos für Ops/Integrationstests (keine Secrets)."""
@@ -378,6 +403,10 @@ async def founder_dashboard_config() -> dict:
         "local_preview_final_render_dry_run_relative": {
             "method": "POST",
             "path": "/founder/dashboard/local-preview/final-render/dry-run/{run_id}",
+        },
+        "local_preview_final_render_run_relative": {
+            "method": "POST",
+            "path": "/founder/dashboard/local-preview/final-render/run/{run_id}",
         },
         "local_preview_file_relative": {
             "method": "GET",

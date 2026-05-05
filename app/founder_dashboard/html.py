@@ -551,6 +551,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
         <div class="lp-section" id="lp-final-render">
           <h3 class="subh">Final Render</h3>
           <span class="muted" style="display:none">Final Render (BA 22.6)</span>
+          <span class="muted" style="display:none">Final Render ist vorbereitet. Die Ausführung folgt in einer späteren BA.</span>
           <div id="lp-final-render-card" class="lp-final-render-card" aria-live="polite"></div>
         </div>
       </div>
@@ -3380,8 +3381,44 @@ try {
     btn.id = "lp-btn-final-render";
     btn.textContent = String(gate.label || "Finales Video erstellen");
     btn.disabled = !(gate.button_enabled === true);
-    btn.addEventListener("click", function() {
-      msg.textContent = "Final Render ist vorbereitet. Die Ausführung folgt in einer späteren BA.";
+    btn.addEventListener("click", async function() {
+      if (btn.disabled) return;
+      msg.textContent = "Final Render läuft…";
+      msg.classList.remove("intake-status-err", "intake-status-success");
+      btn.disabled = true;
+      btn.classList.add("is-loading");
+      try {
+        if (!lpLatestRunId) throw new Error("Kein run_id gefunden.");
+        const r = await fetch(
+          "/founder/dashboard/local-preview/final-render/run/" + encodeURIComponent(lpLatestRunId),
+          { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ force: false }) }
+        );
+        let j = null;
+        try { j = await r.json(); } catch (eJson) {}
+        if (!r.ok || !j) {
+          msg.textContent = "Final Render fehlgeschlagen: HTTP " + r.status;
+          msg.classList.add("intake-status-err");
+          return;
+        }
+        if (j.ok === true) {
+          if (j.status === "completed") msg.textContent = "Final Render abgeschlossen.";
+          else if (j.status === "skipped_existing") msg.textContent = "Final Render existiert bereits.";
+          else msg.textContent = "Final Render: " + (j.status || "ok");
+          msg.classList.add("intake-status-success");
+        } else {
+          msg.textContent = "Final Render gesperrt: " + (j.message || (j.status || "locked"));
+          msg.classList.add("intake-status-err");
+        }
+        try {
+          await fdLoadLocalPreviewPanel();
+        } catch (eReload) {}
+      } catch (e) {
+        msg.textContent = "Final Render fehlgeschlagen: " + String(e && e.message ? e.message : e);
+        msg.classList.add("intake-status-err");
+      } finally {
+        btn.classList.remove("is-loading");
+        btn.disabled = false;
+      }
     });
     container.appendChild(btn);
   }
