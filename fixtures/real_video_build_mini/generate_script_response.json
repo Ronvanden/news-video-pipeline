@@ -1,0 +1,22 @@
+{
+  "title": "Mini-Testskript (BA 25.2)",
+  "hook": "Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+  "chapters": [
+    {
+      "title": "Kapitel 1: Einstieg",
+      "content": "Wir zeigen, wie ein Story-Text in Szenen zerlegt wird."
+    },
+    {
+      "title": "Kapitel 2: Struktur",
+      "content": "Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann."
+    },
+    {
+      "title": "Kapitel 3: Abschluss",
+      "content": "Am Ende entsteht ein scene_asset_pack.json, das der Real Video Build Orchestrator direkt nutzen kann."
+    }
+  ],
+  "full_script": "Hook: Das ist ein kurzer Testtext.\n\nKapitel 1: Einstieg.\nWir zeigen, wie ein Story-Text in Szenen zerlegt wird.\n\nKapitel 2: Struktur.\nJede Szene erhält eine Narration.\n\nKapitel 3: Abschluss.\nAm Ende entsteht ein Pack für den lokalen Build.",
+  "sources": [],
+  "warnings": []
+}
+

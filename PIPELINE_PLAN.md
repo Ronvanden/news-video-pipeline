@@ -619,6 +619,12 @@ Aus einem **geprüften** und **freigegebenen** Local-Preview-Run soll später ei
 | BA 24.4 | Final Render Dashboard Action | done | Dashboard-Button triggert echten Final Render kontrolliert. |
 | BA 24.5 | Final Render Report / OPEN_ME Update | done | Report und OPEN_ME um finalen Export, Status und Pfade erweitern. |
 | BA 24.6 | Final Render Error Recovery | done | Fehlerfälle, Retry und idempotentes Verhalten absichern. |
+| BA 25.0 | Real Video Build Wiring Map | done | Dokumentiert die bestehende Script-Kette (Inputs/Outputs/Placeholder) und die fehlende Verkabelung. |
+| BA 25.1 | Real Video Build Orchestrator CLI | **done** | `scripts/run_real_video_build.py` verbindet Asset Runner / Timeline / Voiceover-Smoke / Render / Subtitles / Burn-in mit **einer** `run_id` zu `output/real_build_<run_id>/real_video_build_result.json`. Kein URL-Input, kein Final Render. |
+| BA 25.2 | Script/Story-Pack Input Adapter | **done** | Script/Story-Pack Input Adapter wandelt `GenerateScriptResponse`/Story-Pack in ein Orchestrator-kompatibles `scene_asset_pack.json` und stellt echten Narrationstext für den Real Video Build bereit. |
+| BA 25.3 | URL-to-Script Bridge | planned | Nutzt /generate-script oder YouTube-Script als Input für den Video-Build. |
+| BA 25.4 | Real Local Preview Run | planned | Erzeugt ein echtes local_preview_<run_id> aus realem Script (statt fixtures). |
+| BA 25.5 | URL-to-Final-Video Smoke | planned | End-to-End lokal: URL → preview_with_subtitles.mp4 → final_video.mp4 (ohne Publishing). |
 
 ### BA 24.0 — Final Render Execution Plan (**done**)
 
@@ -751,6 +757,31 @@ Bis BA 24.6 werden **keine** neuen Feature-BAs eingeschoben. Erlaubt sind nur:
 
 **Execution-Regel:**  
 Nach BA 24.6 wird der MVP-Block geschlossen (**Local Final Render MVP: completed**). Erst danach wird entschieden, ob der nächste Block Publishing, Dashboard Polish oder Provider-Integration ist.
+
+## BA 25 — Real URL/Script-to-Local-Video Build
+
+**Status:** planned
+
+**Ziel:** Vom echten Script/Story-Pack (oder URL) zu einem lokal gespeicherten Video — Preview + Final-Package — **ohne** Upload/Publishing, **ohne** Provider-Zwang. Schließt die Verkabelungslücke zwischen vorhandenen Einzel-Scripts (BA 18.2 / 19 / 20 / 21 / 24) zu einem nutzbaren End-to-End-Lauf.
+
+**Abgrenzung:**
+
+- **BA 25** ist **nicht** Phase 9 (Video Packaging) und **nicht** Phase 10 (Publishing).
+- **BA 25** baut **nicht** den Story-Engine-Kern aus (das bleibt BA 9.x).
+- **BA 25** ändert **keine** Verträge (`GenerateScriptResponse`, `local_preview_result`, `final_render_result`).
+
+**Unter-BAs:**
+
+| BA | Titel | Status | Ziel |
+|----|-------|--------|------|
+| BA 25.0 | Real Video Build Wiring Map | **done** | Bestehende Script-Kette (Inputs/Outputs/Placeholder) und fehlende Verkabelung dokumentiert in [`docs/runbooks/real_video_build_wiring_map.md`](docs/runbooks/real_video_build_wiring_map.md). |
+| BA 25.1 | Real Video Build Orchestrator CLI | **done** | [`scripts/run_real_video_build.py`](scripts/run_real_video_build.py) verbindet vorhandene Build-Scripts mit **einer** `run_id` zu einem `output/real_build_<run_id>/real_video_build_result.json`-Indexpaket; Steps: Asset Runner → Voiceover-Smoke → Timeline (mit `audio_path`) → Clean Render → Subtitles → Burn-in. Kein URL-Input, kein TTS-Live, kein Final Render. Tests `tests/test_ba251_real_video_build_orchestrator.py`. |
+| BA 25.2 | Script/Story-Pack Input Adapter | **done** | Script/Story-Pack Input Adapter wandelt `GenerateScriptResponse`/Story-Pack in ein Orchestrator-kompatibles `scene_asset_pack.json` und stellt echten Narrationstext für den Real Video Build bereit. |
+| BA 25.3 | URL-to-Script Bridge | planned | Nutzt `/generate-script` oder YouTube-Script als Input für den Video-Build. |
+| BA 25.4 | Real Local Preview Run | planned | Erzeugt ein echtes `local_preview_<run_id>` aus realem Script (statt Fixtures). |
+| BA 25.5 | URL-to-Final-Video Smoke | planned | End-to-End lokal: URL → `preview_with_subtitles.mp4` → `final_video.mp4` (ohne Publishing). |
+
+**Akzeptanz BA 25.0:** Wiring Map dokumentiert für jeden vorhandenen Schritt (1–9) Input/Output, kennzeichnet Placeholder-/Smoke-/Copy-V1-Punkte und nennt konkrete Verkabelungslücken sowie den kürzesten realen Local-MVP-Pfad (2–3 Min. zuerst, später 10 Min.). Keine Code-Änderungen.
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 
