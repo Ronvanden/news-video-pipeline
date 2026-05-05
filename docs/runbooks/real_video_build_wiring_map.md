@@ -98,6 +98,7 @@ Ziel: erst **2–3 Minuten** stabil, dann Richtung **10 Minuten** skalieren.
 | BA 25.3 | URL-to-Script Bridge | **done** | Lokale CLI nimmt Artikel-/YouTube-URL und schreibt eine `GenerateScriptResponse`‑kompatible JSON; kein Render, kein Orchestrator‑Lauf. |
 | BA 25.4 | Real Local Preview Run | **done** | Lokale CLI verdrahtet `generate_script_response.json` → BA 25.2 Adapter → BA 25.1 Orchestrator und schreibt ein Aggregat unter `output/real_local_preview_<run_id>/`. |
 | BA 25.5 | URL-to-Final-Video Smoke | **done** | End‑to‑End lokal: URL → `preview_with_subtitles.mp4` → `final_video.mp4` (ohne Publishing). |
+| BA 25.6 | URL-to-Final-Video Smoke Hardening | **done** | Stabiler Result-Contract, Auto-Approve-Transparenz, `--no-auto-approve`, strukturierte `failure_stage`, Idempotenz-Anzeige (`skipped_existing`), Operator-`URL_TO_FINAL_VIDEO_OPEN_ME.md`. **Local URL-to-Final-Video MVP: completed.** |
 
 ## BA 25.5 — URL-to-Final-Video Smoke (**done**)
 
@@ -118,12 +119,50 @@ python scripts/run_ba_25_5_url_to_final_video_smoke.py \
 
 ### Output (additiv)
 
-- `output/url_to_final_video_<run_id>/url_to_final_video_result.json` (BA 25.5 Result-Index)
+- `output/url_to_final_video_<run_id>/url_to_final_video_result.json` (BA 25.5/25.6 Result-Index, Schema `ba_25_6_url_to_final_video_result_v1`)
+- `output/url_to_final_video_<run_id>/URL_TO_FINAL_VIDEO_OPEN_ME.md` (Operator-Hinweis, u. a. Auto-Approve)
 - `output/url_script_<run_id>/generate_script_response.json` (BA 25.3)
 - `output/real_local_preview_<run_id>/real_local_preview_result.json` (BA 25.4 Aggregat)
 - `output/subtitle_burnin_<run_id>/preview_with_subtitles.mp4` (Preview-Video aus Real-Build)
 - `output/local_preview_<run_id>/...` (Smoke-only Adapter-Paket für BA 24.x Gates)
 - `output/final_render_<run_id>/final_video.mp4` (BA 24.3 Final Render Copy‑V1)
+
+## BA 25.6 — URL-to-Final-Video Smoke Hardening (**done**)
+
+### Offizieller MVP-Smoke-Befehl
+
+```bash
+python scripts/run_ba_25_5_url_to_final_video_smoke.py \
+  --url "https://example.com" \
+  --run-id mein_smoke \
+  --out-dir output \
+  --print-json
+```
+
+### Auto-Approve (Default)
+
+- Standard: Der Runner schreibt ein **Smoke/Dev**-`human_approval.json` (`auto_approved`, `smoke_dev_flow`), damit BA 24.3 die Gates passieren und `final_video.mp4` erzeugt wird.
+- Result: `auto_approved: true`, Warnung `ba25_6_auto_approved_for_smoke_dev_only`, `metadata.approval_note` erklärt den Dev-Kontext.
+
+### `--no-auto-approve`
+
+- Es wird **kein** `human_approval.json` geschrieben; **kein** Aufruf von Final Render.
+- Result: `status: blocked`, `failure_stage: human_approval_gate`, `blocking_reasons` enthält `human_approval_required_before_final_render`, `final_video_path` leer.
+
+### Output-Ordner und finales Video
+
+- Sammelordner: `output/url_to_final_video_<run_id>/`
+- Finales Video: `output/final_render_<run_id>/final_video.mp4`
+- Idempotenz: Wenn `final_video.mp4` bereits **>0 Byte** existiert, meldet BA 24.3 `skipped_existing` (im Result als `status` durchgereicht); mit `--force` neu kopieren.
+
+### Bekannte Grenzen (unverändert)
+
+- Placeholder-Bilder / Smoke-Audio im Default; kein Publishing, kein Upload, keine neuen Provider-Pflichten in diesem MVP.
+
+### Reality-Smoke (manuell)
+
+- Erwartung bei gültiger URL und lokalem Tooling: `ok: true`, `status: completed` oder `skipped_existing`, `final_video_path` gesetzt, Datei **>0 Byte**.
+- Für maschinenlesbares JSON ggf. Logs umleiten (`stderr`), falls die Python-Logging-Konfiguration Meldungen vor das JSON schreibt.
 
 ## BA 25.2 — Script/Story-Pack Input Adapter (**done**)
 

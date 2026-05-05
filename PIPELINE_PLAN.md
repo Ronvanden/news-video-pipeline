@@ -625,7 +625,8 @@ Aus einem **geprüften** und **freigegebenen** Local-Preview-Run soll später ei
 | BA 25.3 | URL-to-Script Bridge | **done** | URL-to-Script Bridge erzeugt aus Artikel-/YouTube-URLs eine lokale `GenerateScriptResponse`-kompatible JSON-Datei für den BA-25.2-Adapter; kein Render, kein Publishing. |
 | BA 25.4 | Real Local Preview Run | **done** | `scripts/run_ba_25_4_local_preview.py` verbindet `generate_script_response.json` (BA 25.3) → BA 25.2 Adapter → BA 25.1 Orchestrator zu `output/real_local_preview_<run_id>/` mit `scene_asset_pack.json`, `real_video_build_result.json` und `preview_with_subtitles.mp4`. Keine neuen Provider-Calls, keine Vertragsänderung. |
 | BA 25.5 | URL-to-Final-Video Smoke | **done** | End-to-End lokal: URL → preview_with_subtitles.mp4 → final_video.mp4 (ohne Publishing). |
-| BA 25.6 | URL-to-Final-Video Smoke Hardening | next | Stabilisierung/Idempotenz/Operator-Warnings für den URL→Final-Video Smoke-Lauf (ohne Publishing, ohne neue Provider). |
+| BA 25.6 | URL-to-Final-Video Smoke Hardening | **done** | Stabilisierung/Idempotenz/strukturierte Fehler/Operator-OPEN_ME für `run_ba_25_5_url_to_final_video_smoke.py`; Auto-Approve klar gekennzeichnet; `--no-auto-approve` ohne Final Render. **Local URL-to-Final-Video MVP: completed.** |
+| BA 26.0 | Publishing Package Plan | **planned** | Geplanter nächster Block: Veröffentlichungs-Paket (ohne Umsetzung in BA 25.6). |
 
 ### BA 24.0 — Final Render Execution Plan (**done**)
 
@@ -781,7 +782,10 @@ Nach BA 24.6 wird der MVP-Block geschlossen (**Local Final Render MVP: completed
 | BA 25.3 | URL-to-Script Bridge | **done** | [`scripts/run_url_to_script_bridge.py`](scripts/run_url_to_script_bridge.py) nimmt Artikel-/YouTube-URL und schreibt `output/url_script_<run_id>/generate_script_response.json` (kompatibel mit BA-25.2-Adapter); kein Render, kein Final Render, kein Orchestrator-Lauf, kein Publishing. Tests `tests/test_ba253_url_to_script_bridge.py`. |
 | BA 25.4 | Real Local Preview Run | **done** | [`scripts/run_ba_25_4_local_preview.py`](scripts/run_ba_25_4_local_preview.py) nimmt `generate_script_response.json` (z. B. aus BA 25.3) und verdrahtet BA 25.2 Adapter → BA 25.1 Orchestrator zu `output/real_local_preview_<run_id>/` mit `scene_asset_pack.json`, Verweis auf `real_video_build_result.json` und `preview_with_subtitles.mp4`. Keine Vertragsänderung an `GenerateScriptResponse`/`scene_asset_pack.json`/`real_video_build_result.json`. Tests `tests/test_ba254_local_preview_run.py`. |
 | BA 25.5 | URL-to-Final-Video Smoke | **done** | End-to-End lokal: URL → `preview_with_subtitles.mp4` → `final_video.mp4` (ohne Publishing). |
-| BA 25.6 | URL-to-Final-Video Smoke Hardening | next | Stabilisierung/Idempotenz/Operator-Warnings für den URL→Final-Video Smoke-Lauf (ohne Publishing, ohne neue Provider). |
+| BA 25.6 | URL-to-Final-Video Smoke Hardening | **done** | Result-Contract `ba_25_6_url_to_final_video_result_v1`, Pfad-Felder, `failure_stage`, Reality-Smoke-Doku; `--no-auto-approve` blockiert Final Render. **Local URL-to-Final-Video MVP: completed.** |
+| BA 26.0 | Publishing Package Plan | **planned** | Nächster empfohlener Macro-Schritt (nicht Teil von BA 25.x). |
+
+**Local URL-to-Final-Video MVP:** Abgeschlossen mit **BA 25.6** (Smoke-Runner + Tests + Runbook; kein Publishing, kein Upload in diesem MVP).
 
 **Akzeptanz BA 25.0:** Wiring Map dokumentiert für jeden vorhandenen Schritt (1–9) Input/Output, kennzeichnet Placeholder-/Smoke-/Copy-V1-Punkte und nennt konkrete Verkabelungslücken sowie den kürzesten realen Local-MVP-Pfad (2–3 Min. zuerst, später 10 Min.). Keine Code-Änderungen.
 
