@@ -3349,6 +3349,32 @@ try {
     msg.textContent = "";
     container.appendChild(msg);
 
+    var dry = document.createElement("button");
+    dry.type = "button";
+    dry.id = "lp-btn-final-render-dry-run";
+    dry.textContent = "Dry-Run prüfen";
+    dry.addEventListener("click", async function() {
+      msg.textContent = "Dry-Run läuft…";
+      msg.classList.remove("intake-status-err", "intake-status-success");
+      try {
+        if (!lpLatestRunId) throw new Error("Kein run_id gefunden.");
+        const r = await fetch("/founder/dashboard/local-preview/final-render/dry-run/" + encodeURIComponent(lpLatestRunId), { method: "POST" });
+        let j = null;
+        try { j = await r.json(); } catch (eJson) {}
+        if (!r.ok || !j || j.ok !== true) {
+          msg.textContent = "Dry-Run: " + (j && j.message ? j.message : ("HTTP " + r.status));
+          msg.classList.add("intake-status-err");
+          return;
+        }
+        msg.textContent = (j.message || "Dry-Run ok") + " (status: " + (j.status || "?") + ")";
+        msg.classList.add("intake-status-success");
+      } catch (e) {
+        msg.textContent = "Dry-Run: " + String(e && e.message ? e.message : e);
+        msg.classList.add("intake-status-err");
+      }
+    });
+    container.appendChild(dry);
+
     var btn = document.createElement("button");
     btn.type = "button";
     btn.id = "lp-btn-final-render";

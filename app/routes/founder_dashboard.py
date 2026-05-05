@@ -14,6 +14,7 @@ from starlette.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from app.founder_dashboard.html import get_founder_dashboard_html
+from app.founder_dashboard.final_render_dry_run import build_final_render_dry_run_for_local_preview
 from app.founder_dashboard.local_preview_panel import (
     build_local_preview_panel_payload,
     default_local_preview_out_root,
@@ -339,6 +340,22 @@ async def founder_local_preview_revoke_approval(run_id: str, req: LocalPreviewAp
     return {"ok": True, "run_id": run_id, "approval_gate": gate2, "message": "revoked"}
 
 
+@router.post("/founder/dashboard/local-preview/final-render/dry-run/{run_id}")
+async def founder_local_preview_final_render_dry_run(run_id: str) -> dict:
+    """BA 24.2 — read-only Dry-Run: prüft Gates + baut Final-Render-Contract (keine Dateien)."""
+    if not validate_local_preview_run_id(run_id):
+        raise HTTPException(status_code=422, detail="invalid run_id")
+    out_root = default_local_preview_out_root()
+    res = await run_in_threadpool(build_final_render_dry_run_for_local_preview, run_id=run_id, out_root=out_root)
+    if not res.get("ok"):
+        # missing run dir -> 404; alles andere -> 400
+        msg = str(res.get("message") or "dry-run failed")
+        if "not found" in msg:
+            raise HTTPException(status_code=404, detail=msg)
+        raise HTTPException(status_code=400, detail=msg)
+    return res
+
+
 @router.get("/founder/dashboard/config")
 async def founder_dashboard_config() -> dict:
     """Statische Meta-Infos für Ops/Integrationstests (keine Secrets)."""
@@ -357,6 +374,10 @@ async def founder_dashboard_config() -> dict:
         "local_preview_revoke_approval_relative": {
             "method": "POST",
             "path": "/founder/dashboard/local-preview/revoke-approval/{run_id}",
+        },
+        "local_preview_final_render_dry_run_relative": {
+            "method": "POST",
+            "path": "/founder/dashboard/local-preview/final-render/dry-run/{run_id}",
         },
         "local_preview_file_relative": {
             "method": "GET",

@@ -113,6 +113,12 @@ Programmatische Nachbearbeitung nur in Ausnahmefällen: **`apply_local_preview_r
 
 **Dashboard (BA 22.0–23.0):** Mit laufender FastAPI-App liefert **GET `/founder/dashboard/local-preview/panel`** eine read-only-Übersicht der Ordner **`local_preview_*`** unter dem Repository-**`output/`** (Artefakt-Flags, keine Dateiinhalte). **BA 22.1** ergänzt **Status-Karten** aus **`local_preview_result.json`**, falls vorhanden; ohne diese Datei (ältere Läufe) zeigen die Karten **UNKNOWN**. **BA 22.2** erlaubt das Öffnen/Einbetten von Preview, Report, OPEN_ME und JSON nur über **GET `/founder/dashboard/local-preview/file/{run_id}/{filename}`** (Whitelist, kein Zugriff außerhalb des jeweiligen **`local_preview_*`**-Ordners). **BA 22.3** ergänzt im Dashboard einen Operator-Button „Preview erstellen“, der den festen Mini-Fixture-Run startet (mit Preflight) und danach das Panel aktualisiert. **BA 22.4** zeigt eine Kostenkarte (Cost/Production Estimate), sofern im `local_preview_result.json` Kostendaten vorhanden sind; sonst Status **UNKNOWN** mit Hinweis. **BA 22.5** ergänzt ein Human-Approval-Gate (Approve/Revoke) für lokale Runs; es löst **keinen** Final Render aus. **BA 22.6** zeigt eine Final-Render-Readiness (ready/locked/blocked/unknown) und einen vorbereiteten Button; die tatsächliche Final-Render-Ausführung folgt später. **BA 23.0** ordnet den Local-Preview-Bereich im Dashboard in Founder Summary, Actions, Diagnostics, Approval, Final Render und Recent Runs. Die Seite **GET `/founder/dashboard`** lädt das Panel per `fetch` im Browser; der **CLI-Flow** bleibt unverändert nutzbar.
 
+Hinweis: **Final Render** ist ab **BA 24.x** geplant (siehe `PIPELINE_PLAN.md`). In **BA 22.6** ist der Button nur vorbereitet; echte Ausführung folgt erst in der Final-Render-Execution-Layer.
+
+Hinweis: **BA 24.1** definiert den `final_render_result.json` Contract; die tatsächliche Ausführung kommt später (BA 24.3/24.4).
+
+Hinweis: **BA 24.2** ergänzt einen read-only Dry-Run-Endpunkt, der Final-Render-Readiness prüft und einen Contract baut, aber **keine Dateien schreibt** und **kein Video erzeugt**.
+
 ---
 
 ## 5. Typische Probleme und Reparatur

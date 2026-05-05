@@ -591,6 +591,106 @@ Der lokale Preview- und Quality-Loop wird von CLI/Output-Ordnern schrittweise in
 **Execution-Regel:**  
 Dieser Abschnitt ist eine Landkarte. Die Umsetzung erfolgt strikt einzeln: **1 BA pro Cursor-Durchlauf.** Nach jeder BA: Tests, Difference-only Summary, Stop. Nicht eigenmächtig die nächste BA beginnen.
 
+## BA 24 — Final Render Execution Layer
+
+**Status:** planned
+
+**Ziel:**  
+Aus einem **geprüften** und **freigegebenen** Local-Preview-Run soll später ein **finaler Video-Export** erzeugt werden. BA 24 definiert den kontrollierten Übergang **Preview → Final Render** (lokal, ohne Upload).
+
+**Leitprinzip:** Kein Final Render ohne:
+
+- vorhandene Preview-Datei
+- Quality nicht **FAIL**
+- Founder Decision nicht **BLOCK**
+- Human Approval **approved**
+- Cost Status nicht **OVER_BUDGET** (oder später bewusst per Override freigegeben)
+- klare Output-Pfade
+- klare Fehler- und Wiederholungslogik (idempotent)
+
+**Unter-BAs:**
+
+| BA | Titel | Status | Ziel |
+|----|-------|--------|------|
+| **BA 24.0** | Final Render Execution Plan | **done** | Final-Render-Workflow, Gates, Inputs, Outputs und Fehlerlogik dokumentieren. |
+| BA 24.1 | Final Render Contract | done | Stabiles Result-Schema für `final_render_result.json` definieren. |
+| BA 24.2 | Final Render Dry-Run Endpoint | done | Dashboard-/Backend-Route, die Final Render readiness simuliert, ohne Video zu erzeugen. |
+| BA 24.3 | Final Render Execution Script | planned | Lokales Script, das aus freigegebenem Preview-Paket einen finalen Export erzeugt. |
+| BA 24.4 | Final Render Dashboard Action | planned | Dashboard-Button triggert echten Final Render kontrolliert. |
+| BA 24.5 | Final Render Report / OPEN_ME Update | planned | Report und OPEN_ME um finalen Export, Status und Pfade erweitern. |
+| BA 24.6 | Final Render Error Recovery | planned | Fehlerfälle, Retry und idempotentes Verhalten absichern. |
+
+### BA 24.0 — Final Render Execution Plan (**done**)
+
+**Was löst später der Klick auf „Finales Video erstellen“ aus?**  
+Ein lokaler, kontrollierter Final-Render-Flow, der **nur** auf einem vorhandenen `output/local_preview_<run_id>/`-Paket arbeitet und alle Gates strikt prüft, bevor Render/Export ausgeführt wird (Umsetzung erst BA 24.3/24.4).
+
+#### Voraussetzungen (Gates)
+
+- **Run-Ordner:** `output/local_preview_<run_id>/`
+- **Required artefacts (mindestens):**
+  - `preview_with_subtitles.mp4` **oder** `preview_video.mp4` (Dashboard-Link genügt; Datei muss existieren)
+  - `local_preview_result.json`
+  - `local_preview_report.md`
+  - `OPEN_ME.md`
+  - `human_approval.json` mit `status == "approved"`
+- **Required states:**
+  - `verdict != FAIL`
+  - `quality_checklist.status != fail`
+  - `founder_quality_decision.decision_code != BLOCK`
+  - `cost_card.status != OVER_BUDGET` (oder später explizites Override)
+  - `final_render_gate.status == ready` (Dashboard-Aggregatregel aus BA 22.6)
+
+**Blocker-Logik (klassisch):**
+
+- Fehlende Preview → **BLOCK**
+- Missing approval → **LOCKED**
+- Quality FAIL / Founder BLOCK / Verdict FAIL → **BLOCK**
+- Cost OVER_BUDGET → **LOCKED** („review required“)
+
+#### Inputs (Quelle der Wahrheit)
+
+- **Preview-Paket:** `output/local_preview_<run_id>/` (Artefakte + Report + Approval)
+- **Contract/Result:** `local_preview_result.json` als strukturierte Basis (Paths/Warnings/Blocking)
+- **Optional später:** Export-/Manifestdaten, falls im Preview-Run bereits vorhanden und referenziert
+
+Kein Input aus `.env`, keine externen Provider-Calls, keine Cloud/GCP.
+
+#### Geplante Outputs (Final Render Package)
+
+- `output/final_render_<run_id>/final_video.mp4`
+- `output/final_render_<run_id>/final_render_result.json`
+- `output/final_render_<run_id>/FINAL_OPEN_ME.md`
+- Optional (später, falls sinnvoll):
+  - `output/final_render_<run_id>/export_manifest.json`
+  - `output/final_render_<run_id>/final_quality_report.md`
+
+#### Idempotenz / Wiederholung
+
+- Existiert `final_video.mp4` bereits: **nicht blind überschreiben**.
+- Default: **idempotent** (return „already exists“ + Pfade).
+- Overwrite/force nur später per **explizitem Flag** (nicht BA 24.0).
+
+#### Fehlerverhalten
+
+- Fehler werden in `final_render_result.json` strukturiert erfasst (ab BA 24.1).
+- Dashboard zeigt „locked/blocked“ + reason; keine globalen JS-Crashes.
+- Ein fehlgeschlagener Lauf hinterlässt ein nachvollziehbares Paket (Result + Hinweise), ohne Output-Verzeichnis zu „verschmutzen“.
+
+#### Explizite Nicht-Ziele BA 24.0
+
+- Kein echter Render / kein ffmpeg-Lauf
+- Kein Upload / kein Publishing / kein YouTube Scheduling
+- Keine Provider-Calls / keine Billing-Integration
+- Keine neuen UI-Flows außer Dokumentation
+- Keine Änderung an bestehenden Core-API-Verträgen
+
+**Akzeptanz:**
+
+- Final-Render-Flow ist **vor** Umsetzung klar dokumentiert (Gates, Inputs, Outputs, Fehlerlogik, Idempotenz).
+- BA 24.1–24.6 sind als kleine, testbare Schritte definiert.
+- Bestehende Dashboard-/Preview-Logik bleibt unverändert.
+
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 
 **Ziel:** Reproduzierbares **Story-Planning** statt isolierter Einzelprompts — Backend-first, modular, erweiterbar um weitere JSON-Templates.
