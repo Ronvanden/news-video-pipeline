@@ -97,7 +97,33 @@ Ziel: erst **2–3 Minuten** stabil, dann Richtung **10 Minuten** skalieren.
 | BA 25.2 | Script/Story-Pack Input Adapter | **done** | Adapter nimmt `GenerateScriptResponse` **oder** Story‑Pack‑JSON und erzeugt ein Orchestrator‑kompatibles `scene_asset_pack.json` (lokal, ohne URL‑Input). |
 | BA 25.3 | URL-to-Script Bridge | **done** | Lokale CLI nimmt Artikel-/YouTube-URL und schreibt eine `GenerateScriptResponse`‑kompatible JSON; kein Render, kein Orchestrator‑Lauf. |
 | BA 25.4 | Real Local Preview Run | **done** | Lokale CLI verdrahtet `generate_script_response.json` → BA 25.2 Adapter → BA 25.1 Orchestrator und schreibt ein Aggregat unter `output/real_local_preview_<run_id>/`. |
-| BA 25.5 | URL-to-Final-Video Smoke | next | End‑to‑End lokal: URL → `final_video.mp4` (noch ohne Publishing). |
+| BA 25.5 | URL-to-Final-Video Smoke | **done** | End‑to‑End lokal: URL → `preview_with_subtitles.mp4` → `final_video.mp4` (ohne Publishing). |
+
+## BA 25.5 — URL-to-Final-Video Smoke (**done**)
+
+### One-Command Runner (lokal)
+
+```bash
+python scripts/run_ba_25_5_url_to_final_video_smoke.py \
+  --url "https://example.com/article" \
+  --run-id real_mini_001 \
+  --out-dir output \
+  --duration-minutes 3 \
+  --asset-mode placeholder \
+  --voice-mode smoke \
+  --motion-mode static \
+  --subtitle-style typewriter \
+  --print-json
+```
+
+### Output (additiv)
+
+- `output/url_to_final_video_<run_id>/url_to_final_video_result.json` (BA 25.5 Result-Index)
+- `output/url_script_<run_id>/generate_script_response.json` (BA 25.3)
+- `output/real_local_preview_<run_id>/real_local_preview_result.json` (BA 25.4 Aggregat)
+- `output/subtitle_burnin_<run_id>/preview_with_subtitles.mp4` (Preview-Video aus Real-Build)
+- `output/local_preview_<run_id>/...` (Smoke-only Adapter-Paket für BA 24.x Gates)
+- `output/final_render_<run_id>/final_video.mp4` (BA 24.3 Final Render Copy‑V1)
 
 ## BA 25.2 — Script/Story-Pack Input Adapter (**done**)
 

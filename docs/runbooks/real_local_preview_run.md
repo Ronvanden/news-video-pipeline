@@ -69,3 +69,11 @@ Tests `tests/test_ba254_local_preview_run.py` simulieren den BA-25.1-Orchestrato
 - Kein YouTube-Upload, kein Scheduling, kein Dashboard-Redesign.
 - Keine Änderung an `GenerateScriptResponse`, `scene_asset_pack.json` oder `real_video_build_result.json`.
 - Keine `.env`-Inhalte werden gelesen oder geloggt.
+
+## Nächster Schritt (BA 25.5)
+
+Wenn du aus einer URL **bis zum finalen lokalen Video** gehen willst (Smoke, ohne Publishing), nutze:
+
+```bash
+python scripts/run_ba_25_5_url_to_final_video_smoke.py --url "https://example.com/article" --run-id real_mini_001 --print-json
+```
