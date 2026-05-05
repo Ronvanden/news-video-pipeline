@@ -498,10 +498,14 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   </section>
 
   <section class="panel" id="panel-ba22-local-preview" aria-labelledby="lp-panel-h">
-    <h2 id="lp-panel-h">Local Preview (BA 22.0 / BA 22.1 / BA 22.2)</h2>
+    <h2 id="lp-panel-h">Local Preview (BA 22.0 / BA 22.1 / BA 22.2 / BA 22.3)</h2>
     <p class="muted" id="lp-panel-status">Lade Panel…</p>
     <div id="lp-panel-body" style="display:none">
       <p class="muted" id="lp-out-root"></p>
+      <div class="actions" style="margin:0.35rem 0 0.35rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
+        <button type="button" class="primary" id="lp-btn-run-mini" data-label="Preview erstellen">Preview erstellen</button>
+        <span class="muted" id="lp-run-status" aria-live="polite" style="font-size:0.82rem"></span>
+      </div>
       <h3 class="subh">Status (Verdict / Quality / Founder)</h3>
       <div id="lp-latest-cards" aria-live="polite"></div>
       <p class="lp-top-issue" id="lp-top-issue" style="display:none"></p>
@@ -2991,7 +2995,8 @@ try {
     toolbarEl.appendChild(tu);
     if (urls.preview_url) {
       var v = document.createElement("video");
-      v.setAttribute("controls", "controls");
+      v.controls = true;
+      v.muted = true;
       v.setAttribute("preload", "metadata");
       v.setAttribute("playsinline", "");
       v.className = "lp-preview-video";
@@ -3014,7 +3019,10 @@ try {
     if (!container) return;
     container.innerHTML = "";
     if (!cards) {
-      container.innerHTML = "<p class=\"muted\">Noch kein Local Preview Run gefunden.</p>";
+      var emptyRun = document.createElement("p");
+      emptyRun.className = "muted";
+      emptyRun.textContent = "Noch kein Local Preview Run gefunden.";
+      container.appendChild(emptyRun);
       return;
     }
     var defs = [
@@ -3030,7 +3038,14 @@ try {
     defs.forEach(function(pair) {
       var c = document.createElement("div");
       c.className = "lp-card";
-      c.innerHTML = "<span class=\"lp-card-l\">" + pair[0] + "</span><span class=\"lp-card-v\">" + pair[1] + "</span>";
+      var sl = document.createElement("span");
+      sl.className = "lp-card-l";
+      sl.textContent = pair[0];
+      var sv = document.createElement("span");
+      sv.className = "lp-card-v";
+      sv.textContent = pair[1];
+      c.appendChild(sl);
+      c.appendChild(sv);
       wrap.appendChild(c);
     });
     container.appendChild(wrap);
@@ -3067,119 +3082,179 @@ try {
         + " · Läufe: " + ((data.runs && data.runs.length) || 0);
       st.classList.remove("intake-status-err");
       rootEl.textContent = "out_root: " + (data.out_root || "") + (data.out_root_exists ? "" : " (nicht lesbar)");
-      var latest = data.latest_status_cards;
-      if (!latest && data.runs && data.runs.length) {
-        latest = data.runs[0].status_cards || null;
-      }
-      if (cardsEl) {
-        if (!(data.runs && data.runs.length)) {
-          lpRenderStatusCards(cardsEl, null);
-        } else {
-          lpRenderStatusCards(cardsEl, latest);
+      try {
+        var latest = data.latest_status_cards;
+        if (!latest && data.runs && data.runs.length) {
+          latest = data.runs[0].status_cards || null;
         }
-      }
-      if (tiEl && nsEl) {
-        if (latest && latest.top_issue) {
-          tiEl.style.display = "block";
-          tiEl.textContent = "Top issue: " + latest.top_issue;
-        } else {
-          tiEl.style.display = "none";
-        }
-        if (latest && latest.next_step) {
-          nsEl.style.display = "block";
-          nsEl.textContent = "Next step: " + latest.next_step;
-        } else {
-          nsEl.style.display = "none";
-        }
-      }
-      var latestUrls = data.latest_file_urls || {};
-      if ((!latestUrls.preview_url && !latestUrls.report_url) && data.runs && data.runs.length) {
-        latestUrls = data.runs[0].file_urls || latestUrls;
-      }
-      if (tbPrev && vidWrap) {
-        lpRenderPreviewArtifacts(tbPrev, vidWrap, latestUrls);
-      }
-      actEl.innerHTML = "";
-      (data.actions || []).forEach(function(a) {
-        var wrap = document.createElement("div");
-        wrap.className = "lp-act";
-        var h = document.createElement("h4");
-        h.textContent = (a.label_de || a.id || "Aktion");
-        wrap.appendChild(h);
-        if (a.kind === "shell" && a.example) {
-          var pre = document.createElement("pre");
-          pre.className = "out";
-          pre.textContent = a.example;
-          wrap.appendChild(pre);
-        } else if (a.kind === "doc" && a.path) {
-          var p = document.createElement("p");
-          p.className = "muted";
-          p.style.margin = "0";
-          p.textContent = "Repo: " + a.path;
-          wrap.appendChild(p);
-        }
-        actEl.appendChild(wrap);
-      });
-      runsEl.innerHTML = "";
-      if (!(data.runs && data.runs.length)) {
-        var empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = "Keine local_preview_* Ordner gefunden.";
-        runsEl.appendChild(empty);
-      } else {
-        var tbl = document.createElement("table");
-        tbl.className = "data";
-        tbl.innerHTML = "<thead><tr><th>run_id</th><th>Verdict</th><th>Quality</th><th>Founder decision</th><th>Warning level</th><th>OPEN_ME</th><th>Report</th><th>Preview MP4</th><th>Aktionen</th></tr></thead><tbody></tbody>";
-        var tb = tbl.querySelector("tbody");
-        data.runs.forEach(function(run) {
-          var ar = run.artifacts || {};
-          var sc = run.status_cards || {};
-          var fu = run.file_urls || {};
-          var tr = document.createElement("tr");
-          function tdText(val) {
-            var d = document.createElement("td");
-            d.textContent = val;
-            return d;
+        if (cardsEl) {
+          if (!(data.runs && data.runs.length)) {
+            lpRenderStatusCards(cardsEl, null);
+          } else {
+            lpRenderStatusCards(cardsEl, latest);
           }
-          tr.appendChild(tdText(run.run_id || ""));
-          tr.appendChild(tdText(sc.verdict || "UNKNOWN"));
-          tr.appendChild(tdText(sc.quality || "UNKNOWN"));
-          tr.appendChild(tdText(sc.founder_decision || "UNKNOWN"));
-          tr.appendChild(tdText(sc.warning_level || "UNKNOWN"));
-          tr.appendChild(tdText(ar.open_me ? "ja" : "nein"));
-          tr.appendChild(tdText(ar.founder_report ? "ja" : "nein"));
-          tr.appendChild(tdText(ar.preview_with_subtitles ? "ja" : "nein"));
-          var act = document.createElement("td");
-          function addAct(label, u) {
-            if (!u) return;
-            var a = document.createElement("a");
-            a.href = u;
-            a.textContent = label;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            a.style.marginRight = "0.35rem";
-            a.style.fontSize = "0.72rem";
-            act.appendChild(a);
+        }
+        if (tiEl && nsEl) {
+          if (latest && latest.top_issue) {
+            tiEl.style.display = "block";
+            tiEl.textContent = "Top issue: " + latest.top_issue;
+          } else {
+            tiEl.style.display = "none";
           }
-          addAct("Preview", fu.preview_url);
-          addAct("Report", fu.report_url);
-          addAct("OPEN_ME", fu.open_me_url);
-          addAct("JSON", fu.result_json_url);
-          if (!act.textContent.trim()) {
-            var sp = document.createElement("span");
-            sp.className = "muted";
-            sp.textContent = "—";
-            act.appendChild(sp);
+          if (latest && latest.next_step) {
+            nsEl.style.display = "block";
+            nsEl.textContent = "Next step: " + latest.next_step;
+          } else {
+            nsEl.style.display = "none";
           }
-          tr.appendChild(act);
-          tb.appendChild(tr);
+        }
+        var latestUrls = data.latest_file_urls || {};
+        if ((!latestUrls.preview_url && !latestUrls.report_url) && data.runs && data.runs.length) {
+          latestUrls = data.runs[0].file_urls || latestUrls;
+        }
+        if (tbPrev && vidWrap) {
+          lpRenderPreviewArtifacts(tbPrev, vidWrap, latestUrls);
+        }
+        actEl.innerHTML = "";
+        (data.actions || []).forEach(function(a) {
+          var wrap = document.createElement("div");
+          wrap.className = "lp-act";
+          var h = document.createElement("h4");
+          h.textContent = (a.label_de || a.id || "Aktion");
+          wrap.appendChild(h);
+          if (a.kind === "shell" && a.example) {
+            var pre = document.createElement("pre");
+            pre.className = "out";
+            pre.textContent = a.example;
+            wrap.appendChild(pre);
+          } else if (a.kind === "doc" && a.path) {
+            var p = document.createElement("p");
+            p.className = "muted";
+            p.style.margin = "0";
+            p.textContent = "Repo: " + a.path;
+            wrap.appendChild(p);
+          }
+          actEl.appendChild(wrap);
         });
-        runsEl.appendChild(tbl);
+        runsEl.innerHTML = "";
+        if (!(data.runs && data.runs.length)) {
+          var empty = document.createElement("p");
+          empty.className = "muted";
+          empty.textContent = "Keine local_preview_* Ordner gefunden.";
+          runsEl.appendChild(empty);
+        } else {
+          var tbl = document.createElement("table");
+          tbl.className = "data";
+          tbl.innerHTML = "<thead><tr><th>run_id</th><th>Verdict</th><th>Quality</th><th>Founder decision</th><th>Warning level</th><th>OPEN_ME</th><th>Report</th><th>Preview MP4</th><th>Aktionen</th></tr></thead><tbody></tbody>";
+          var tb = tbl.querySelector("tbody");
+          data.runs.forEach(function(run) {
+            var ar = run.artifacts || {};
+            var sc = run.status_cards || {};
+            var fu = run.file_urls || {};
+            var tr = document.createElement("tr");
+            function tdText(val) {
+              var d = document.createElement("td");
+              d.textContent = val;
+              return d;
+            }
+            tr.appendChild(tdText(run.run_id || ""));
+            tr.appendChild(tdText(sc.verdict || "UNKNOWN"));
+            tr.appendChild(tdText(sc.quality || "UNKNOWN"));
+            tr.appendChild(tdText(sc.founder_decision || "UNKNOWN"));
+            tr.appendChild(tdText(sc.warning_level || "UNKNOWN"));
+            tr.appendChild(tdText(ar.open_me ? "ja" : "nein"));
+            tr.appendChild(tdText(ar.founder_report ? "ja" : "nein"));
+            tr.appendChild(tdText(ar.preview_with_subtitles ? "ja" : "nein"));
+            var act = document.createElement("td");
+            function addAct(label, u) {
+              if (!u) return;
+              var a = document.createElement("a");
+              a.href = u;
+              a.textContent = label;
+              a.target = "_blank";
+              a.rel = "noopener noreferrer";
+              a.style.marginRight = "0.35rem";
+              a.style.fontSize = "0.72rem";
+              act.appendChild(a);
+            }
+            addAct("Preview", fu.preview_url);
+            addAct("Report", fu.report_url);
+            addAct("OPEN_ME", fu.open_me_url);
+            addAct("JSON", fu.result_json_url);
+            if (!act.textContent.trim()) {
+              var sp = document.createElement("span");
+              sp.className = "muted";
+              sp.textContent = "—";
+              act.appendChild(sp);
+            }
+            tr.appendChild(act);
+            tb.appendChild(tr);
+          });
+          runsEl.appendChild(tbl);
+        }
+      } catch (renderErr) {
+        if (st) {
+          st.textContent = "Local Preview (Render): " + (renderErr && renderErr.message ? renderErr.message : String(renderErr));
+          st.classList.add("intake-status-err");
+        }
       }
       body.style.display = "block";
     } catch (e) {
       st.textContent = "Local Preview Panel: " + (e && e.message ? e.message : String(e));
       st.classList.add("intake-status-err");
+    }
+  }
+
+  async function fdRunLocalPreviewMiniFixture() {
+    var btn = document.getElementById("lp-btn-run-mini");
+    var st = document.getElementById("lp-run-status");
+    if (!btn || !st) return;
+    var label = btn.getAttribute("data-label") || btn.textContent || "Preview erstellen";
+    btn.setAttribute("data-label", label);
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    btn.classList.remove("is-success", "is-error");
+    btn.textContent = "Preview läuft…";
+    st.textContent = "";
+    st.classList.remove("intake-status-err", "intake-status-success", "intake-status-info");
+    try {
+      if (isKillSwitchActive()) throw new Error("Kill Switch aktiv — Preview-Start blockiert.");
+      const r = await fetch("/founder/dashboard/local-preview/run-mini-fixture", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ run_id: "mini_e2e", force_burn: false, skip_preflight: false })
+      });
+      let j = null;
+      try { j = await r.json(); } catch (eJson) {}
+      if (!r.ok) {
+        st.textContent = "Preview-Start: HTTP " + r.status;
+        st.classList.add("intake-status-err");
+        return;
+      }
+      if (!j || j.ok !== true) {
+        var msg = (j && j.message) ? j.message : "Preview-Start fehlgeschlagen.";
+        var hint = (j && j.preflight && j.preflight.setup_hint) ? String(j.preflight.setup_hint) : "";
+        st.textContent = msg + (hint ? (" " + hint) : "");
+        st.classList.add("intake-status-err");
+        return;
+      }
+      st.textContent = "Preview-Lauf abgeschlossen. Panel wird aktualisiert…";
+      st.classList.add("intake-status-success");
+      try {
+        await fdLoadLocalPreviewPanel();
+        st.textContent = "Preview-Lauf abgeschlossen. Panel aktualisiert.";
+      } catch (eReload) {
+        st.textContent = "Preview-Lauf abgeschlossen, aber Panel konnte nicht aktualisiert werden.";
+        st.classList.remove("intake-status-success");
+        st.classList.add("intake-status-err");
+      }
+    } catch (e) {
+      st.textContent = "Preview-Start: " + String(e && e.message ? e.message : e);
+      st.classList.add("intake-status-err");
+    } finally {
+      btn.textContent = label;
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
     }
   }
 
@@ -3439,6 +3514,12 @@ try {
   updatePqBadge();
   refreshOperatorClarity();
   fdLoadLocalPreviewPanel();
+    var lpBtn = document.getElementById("lp-btn-run-mini");
+    if (lpBtn) {
+      lpBtn.addEventListener("click", async function() {
+        try { await fdRunLocalPreviewMiniFixture(); } catch (eLp) {}
+      });
+    }
   }
 
   if (document.readyState === "loading") {

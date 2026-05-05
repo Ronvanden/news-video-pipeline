@@ -132,6 +132,15 @@ def test_dashboard_html_has_preview_strings():
     assert "lp-preview-video-wrap" in t
 
 
+def test_dashboard_js_no_broken_innerhtml_class_muted():
+    """Escapierte Anführungszeichen in innerHTML-Strings brachen JS (Unexpected identifier 'muted')."""
+    client = TestClient(app)
+    t = client.get("/founder/dashboard").text
+    assert 'innerHTML = "<p class="' not in t
+    assert "v.muted = true" in t
+    assert "v.controls = true" in t
+
+
 def test_config_lists_file_route():
     client = TestClient(app)
     j = client.get("/founder/dashboard/config").json()
