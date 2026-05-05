@@ -95,9 +95,9 @@ Ziel: erst **2–3 Minuten** stabil, dann Richtung **10 Minuten** skalieren.
 |---|---|---|---|
 | BA 25.1 | Real Video Build Orchestrator CLI | **done** | Verbindet vorhandene Scripts zu **einem** Run (kein Provider‑Zwang; Placeholder/Smoke erlaubt). |
 | BA 25.2 | Script/Story-Pack Input Adapter | **done** | Adapter nimmt `GenerateScriptResponse` **oder** Story‑Pack‑JSON und erzeugt ein Orchestrator‑kompatibles `scene_asset_pack.json` (lokal, ohne URL‑Input). |
-| BA 25.3 | URL-to-Script Bridge | planned | Nutzt `/generate-script` oder YouTube‑Skript als Input‑Quelle für 25.2/25.1. |
-| BA 25.4 | Real Local Preview Run | planned | Erzeugt echtes Preview‑Paket aus realem Script (statt fixtures). |
-| BA 25.5 | URL-to-Final-Video Smoke | planned | End‑to‑End lokal: URL → `final_video.mp4` (noch ohne Publishing). |
+| BA 25.3 | URL-to-Script Bridge | **done** | Lokale CLI nimmt Artikel-/YouTube-URL und schreibt eine `GenerateScriptResponse`‑kompatible JSON; kein Render, kein Orchestrator‑Lauf. |
+| BA 25.4 | Real Local Preview Run | **done** | Lokale CLI verdrahtet `generate_script_response.json` → BA 25.2 Adapter → BA 25.1 Orchestrator und schreibt ein Aggregat unter `output/real_local_preview_<run_id>/`. |
+| BA 25.5 | URL-to-Final-Video Smoke | next | End‑to‑End lokal: URL → `final_video.mp4` (noch ohne Publishing). |
 
 ## BA 25.2 — Script/Story-Pack Input Adapter (**done**)
 
@@ -197,4 +197,117 @@ output/real_build_real_mini_001/
 ### Nächster Schritt: BA 25.2
 
 Adapter, der einen `GenerateScriptResponse` (oder Story-Pack) in einen `ProductionPromptPlan` oder direkt in ein `scene_asset_pack.json` übersetzt, damit echte Story-Inhalte statt minimaler Visual-Prompt-Narration in den Build laufen.
+
+## BA 25.3 — URL-to-Script Bridge (**done**)
+
+### Scope
+
+- **Input**: einzelne URL (Artikel oder YouTube).
+- **Output**: lokale Datei `output/url_script_<run_id>/generate_script_response.json`, kompatibel mit dem BA-25.2-Adapter.
+- **Kein** Render, **kein** Final Render, **kein** Publishing/Upload.
+- **Kein** Orchestrator-Lauf — BA 25.3 stoppt nach dem Script-Output.
+- **Keine** neuen Provider-Calls erzwingen (nur die bestehende `app.utils`-Logik).
+
+### CLI
+
+```bash
+python scripts/run_url_to_script_bridge.py \
+  --url "https://example.com/article" \
+  --run-id url_test_001 \
+  --target-language de \
+  --duration-minutes 10 \
+  --source-type auto \
+  --out-root output \
+  --print-json
+```
+
+Pflicht: `--url`, `--run-id` (regex `^[A-Za-z0-9_-]{1,80}$`).
+Optional: `--target-language` (Default `de`), `--duration-minutes` (Default `10`), `--source-type` (`auto` | `article` | `youtube`, Default `auto`), `--out-root` (Default `output`), `--print-json`, `--no-open-me`.
+
+### Source-Type-Erkennung
+
+- `auto`: Hosts `youtube.com` / `youtu.be` / `m.youtube.com` / `music.youtube.com` → `youtube`, sonst `article`.
+- `article` / `youtube`: erzwingt den jeweiligen Pfad unabhängig vom Host.
+
+### Outputs
+
+- `output/url_script_<run_id>/generate_script_response.json` — enthält die sechs `GenerateScriptResponse`-Pflichtfelder (`title`, `hook`, `chapters`, `full_script`, `sources`, `warnings`) und zusätzliche Bridge-Metadaten (`run_id`, `source_url`, `source_type`, `target_language`, `duration_minutes`, `created_at_epoch`).
+- `output/url_script_<run_id>/URL_SCRIPT_OPEN_ME.md` (optional, Default an).
+
+### Exit-Codes
+
+| Code | Bedeutung |
+|------|-----------|
+| 0 | success — Datei geschrieben |
+| 1 | generation failed (z. B. leere Article-Extraktion, leeres YouTube-Transcript) |
+| 3 | invalid input (run_id ungültig, URL nicht http(s), source_type nicht erlaubt, duration ≤ 0) |
+
+### Adapter-Bridge
+
+- `scripts/adapt_script_to_scene_asset_pack.py --input output/url_script_<run_id>/generate_script_response.json --output output/scene_asset_pack_<run_id>/scene_asset_pack.json --run-id <run_id>` führt den BA-25.2-Adapter direkt auf der Bridge-Datei aus.
+- BA 25.4 baut darauf auf.
+
+### Grenzen BA 25.3
+
+- Kein automatischer Aufruf von `scripts/run_real_video_build.py`, kein Asset Runner, kein Voiceover.
+- Kein YouTube-Upload, kein Final Render, kein Dashboard.
+- Keine Geheimnisse aus `.env` lesen; bestehende Fallback-Logik aus `app.utils` greift unverändert.
+
+## BA 25.4 — Real Local Preview Run (**done**)
+
+### Scope
+
+- **Input**: lokales `generate_script_response.json` (BA 25.3 Output) **oder** ein einfacher Story-Pack-JSON.
+- **Output**: `output/real_local_preview_<run_id>/` mit
+  - `scene_asset_pack.json` (BA 25.2 Adapter-Ausgabe)
+  - `real_local_preview_result.json` (Aggregat, Schema `real_local_preview_result_v1`)
+  - `REAL_LOCAL_PREVIEW_OPEN_ME.md` (Operator-Hilfe)
+  - Pfadverweise auf `output/real_build_<run_id>/real_video_build_result.json` und auf `output/subtitle_burnin_<run_id>/preview_with_subtitles.mp4` (Indexpaket-Charakter, kein Container).
+- **Vertrag**: `GenerateScriptResponse`, `scene_asset_pack.json` und `real_video_build_result.json` bleiben unverändert (BA-25.x-Governance).
+
+### Wiring
+
+```text
+generate_script_response.json
+  → app/real_video_build/script_input_adapter.py
+      build_scene_asset_pack_from_generate_script_response()  # BA 25.2
+  → output/real_local_preview_<run_id>/scene_asset_pack.json
+  → scripts/run_real_video_build.py
+      run_real_video_build()                                  # BA 25.1
+  → output/real_build_<run_id>/real_video_build_result.json
+  → output/subtitle_burnin_<run_id>/preview_with_subtitles.mp4
+```
+
+### CLI
+
+```bash
+python scripts/run_ba_25_4_local_preview.py \
+  --script-json output/url_script_<run_id>/generate_script_response.json \
+  --run-id real_preview_001 \
+  --asset-mode placeholder \
+  --voice-mode smoke \
+  --motion-mode static \
+  --subtitle-style typewriter \
+  --print-json
+```
+
+Pflicht: `--script-json`, `--run-id` (regex `^[A-Za-z0-9_-]{1,80}$`).
+Optional: `--out-root` (Default `output`), `--asset-mode` (`placeholder` | `live`), `--voice-mode` (nur `smoke` in BA 25.4), `--motion-mode` (`static` | `basic`), `--subtitle-style`, `--subtitle-mode`, `--force`, `--print-json`, `--no-open-me`.
+
+### Exit-Codes
+
+| Code | Bedeutung |
+|------|-----------|
+| 0 | `completed` (Preview-Datei existiert) |
+| 1 | `failed` (Orchestrator-Fehler oder Schreibfehler) |
+| 2 | `blocked` (z. B. fehlendes ffmpeg, Preview fehlt) |
+| 3 | `invalid input` (run_id ungültig, script-json fehlt/ungültig) |
+
+### Grenzen BA 25.4
+
+- **Kein** URL-Input — der gehört zu BA 25.3.
+- **Kein** Final Render — bleibt bestehender BA 24.x-Flow (`scripts/run_final_render.py`).
+- **Kein** YouTube-Upload, **kein** Scheduling, **kein** Dashboard-Redesign.
+- **Kein** TTS-Live-Zwang, **kein** Leonardo-Live-Zwang, **keine** neue Cost Engine.
+- BA 25.4 bricht **keinen** bestehenden Vertrag (`GenerateScriptResponse`, `scene_asset_pack.json`, `real_video_build_result.json`).
 
