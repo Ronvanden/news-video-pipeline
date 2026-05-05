@@ -10,14 +10,23 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
+from starlette.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from app.founder_dashboard.html import get_founder_dashboard_html
 from app.founder_dashboard.local_preview_panel import (
     build_local_preview_panel_payload,
     default_local_preview_out_root,
+    now_iso_utc,
+    load_local_preview_human_approval,
     local_preview_file_media_type,
+    local_preview_safe_resolve_run_dir,
     local_preview_safe_resolve_file,
+    load_local_preview_saved_result,
+    build_file_urls_for_run,
+    build_status_cards_from_saved_result,
+    build_approval_gate_from_run,
+    validate_local_preview_run_id,
 )
 
 router = APIRouter(tags=["founder-dashboard"])
@@ -119,6 +128,11 @@ class LocalPreviewRunMiniFixtureRequest(BaseModel):
     run_id: str = Field(default="mini_e2e", min_length=1, max_length=80)
     force_burn: bool = False
     skip_preflight: bool = False
+
+    model_config = {"extra": "forbid"}
+
+class LocalPreviewApprovalNoteRequest(BaseModel):
+    note: str = Field(default="", max_length=400)
 
     model_config = {"extra": "forbid"}
 
@@ -238,6 +252,93 @@ async def founder_local_preview_run_mini_fixture(req: LocalPreviewRunMiniFixture
     }
 
 
+def _build_approval_gate_for_run_dir(run_dir: Path, run_id: str) -> Dict[str, Any]:
+    saved = load_local_preview_saved_result(run_dir)
+    scards = build_status_cards_from_saved_result(saved)
+    urls = build_file_urls_for_run(run_dir, run_id)
+    appr = load_local_preview_human_approval(run_dir)
+    return build_approval_gate_from_run(run_id=run_id, status_cards=scards, file_urls=urls, approval_doc=appr)
+
+
+@router.post("/founder/dashboard/local-preview/approve/{run_id}")
+async def founder_local_preview_approve(run_id: str, req: LocalPreviewApprovalNoteRequest) -> dict:
+    """BA 22.5 — schreibt `human_approval.json` (approved), nur unter output/local_preview_<run_id>/."""
+    if not validate_local_preview_run_id(run_id):
+        raise HTTPException(status_code=422, detail="invalid run_id")
+    out_root = default_local_preview_out_root()
+    run_dir = local_preview_safe_resolve_run_dir(out_root, run_id)
+    if run_dir is None:
+        raise HTTPException(status_code=404, detail="run not found")
+
+    gate = await run_in_threadpool(_build_approval_gate_for_run_dir, run_dir, run_id)
+    if not gate.get("actions", {}).get("approve_enabled"):
+        return JSONResponse(
+            status_code=409,
+            content={
+                "ok": False,
+                "run_id": run_id,
+                "approval_gate": gate,
+                "message": gate.get("reason") or "not eligible",
+            },
+        )
+
+    def _write():
+        doc = {
+            "schema_version": "local_preview_human_approval_v1",
+            "run_id": run_id,
+            "status": "approved",
+            "approved_at": now_iso_utc(),
+            "approved_by": "local_operator",
+            "note": (req.note or "").strip(),
+            "source": "dashboard",
+        }
+        (run_dir / "human_approval.json").write_text(
+            __import__("json").dumps(doc, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+    await run_in_threadpool(_write)
+    gate2 = await run_in_threadpool(_build_approval_gate_for_run_dir, run_dir, run_id)
+    return {"ok": True, "run_id": run_id, "approval_gate": gate2, "message": "approved"}
+
+
+@router.post("/founder/dashboard/local-preview/revoke-approval/{run_id}")
+async def founder_local_preview_revoke_approval(run_id: str, req: LocalPreviewApprovalNoteRequest) -> dict:
+    """BA 22.5 — schreibt `human_approval.json` (revoked)."""
+    if not validate_local_preview_run_id(run_id):
+        raise HTTPException(status_code=422, detail="invalid run_id")
+    out_root = default_local_preview_out_root()
+    run_dir = local_preview_safe_resolve_run_dir(out_root, run_id)
+    if run_dir is None:
+        raise HTTPException(status_code=404, detail="run not found")
+
+    gate = await run_in_threadpool(_build_approval_gate_for_run_dir, run_dir, run_id)
+    if not gate.get("actions", {}).get("revoke_enabled"):
+        return JSONResponse(
+            status_code=409,
+            content={"ok": False, "run_id": run_id, "approval_gate": gate, "message": "revoke not allowed"},
+        )
+
+    def _write():
+        doc = {
+            "schema_version": "local_preview_human_approval_v1",
+            "run_id": run_id,
+            "status": "revoked",
+            "approved_at": now_iso_utc(),
+            "approved_by": "local_operator",
+            "note": (req.note or "").strip(),
+            "source": "dashboard",
+        }
+        (run_dir / "human_approval.json").write_text(
+            __import__("json").dumps(doc, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+    await run_in_threadpool(_write)
+    gate2 = await run_in_threadpool(_build_approval_gate_for_run_dir, run_dir, run_id)
+    return {"ok": True, "run_id": run_id, "approval_gate": gate2, "message": "revoked"}
+
+
 @router.get("/founder/dashboard/config")
 async def founder_dashboard_config() -> dict:
     """Statische Meta-Infos für Ops/Integrationstests (keine Secrets)."""
@@ -248,6 +349,14 @@ async def founder_dashboard_config() -> dict:
         "local_preview_run_mini_fixture_relative": {
             "method": "POST",
             "path": "/founder/dashboard/local-preview/run-mini-fixture",
+        },
+        "local_preview_approve_relative": {
+            "method": "POST",
+            "path": "/founder/dashboard/local-preview/approve/{run_id}",
+        },
+        "local_preview_revoke_approval_relative": {
+            "method": "POST",
+            "path": "/founder/dashboard/local-preview/revoke-approval/{run_id}",
         },
         "local_preview_file_relative": {
             "method": "GET",

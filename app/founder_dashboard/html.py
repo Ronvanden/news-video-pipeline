@@ -508,6 +508,10 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       </div>
       <h3 class="subh">Kosten-Schätzung (BA 22.4)</h3>
       <div id="lp-cost-card" class="lp-cost-card" aria-live="polite"></div>
+      <h3 class="subh">Human Approval (BA 22.5)</h3>
+      <div id="lp-approval-card" class="lp-approval-card" aria-live="polite"></div>
+      <h3 class="subh">Final Render (BA 22.6)</h3>
+      <div id="lp-final-render-card" class="lp-final-render-card" aria-live="polite"></div>
       <h3 class="subh">Status (Verdict / Quality / Founder)</h3>
       <div id="lp-latest-cards" aria-live="polite"></div>
       <p class="lp-top-issue" id="lp-top-issue" style="display:none"></p>
@@ -3114,6 +3118,207 @@ try {
     container.appendChild(hint);
   }
 
+  let lpLatestRunId = "";
+
+  function lpRenderApprovalGate(container, gate, runId) {
+    if (!container) return;
+    container.innerHTML = "";
+    gate = gate || {};
+    runId = String(runId || "");
+    var st = document.createElement("div");
+    st.className = "lp-cost-row";
+    var k1 = document.createElement("span");
+    k1.className = "lp-cost-k";
+    k1.textContent = "Status";
+    var v1 = document.createElement("span");
+    v1.className = "lp-cost-v";
+    v1.textContent = (gate.status || "not_approved");
+    st.appendChild(k1);
+    st.appendChild(v1);
+    container.appendChild(st);
+
+    var r2 = document.createElement("div");
+    r2.className = "lp-cost-row";
+    var k2 = document.createElement("span");
+    k2.className = "lp-cost-k";
+    k2.textContent = "Eligible";
+    var v2 = document.createElement("span");
+    v2.className = "lp-cost-v";
+    v2.textContent = gate.eligible ? "ja" : "nein";
+    r2.appendChild(k2);
+    r2.appendChild(v2);
+    container.appendChild(r2);
+
+    if (gate.reason) {
+      var p = document.createElement("p");
+      p.className = "muted";
+      p.style.marginTop = "0.25rem";
+      p.textContent = String(gate.reason);
+      container.appendChild(p);
+    }
+    if (gate.approved_at || gate.approved_by) {
+      var meta = document.createElement("p");
+      meta.className = "muted";
+      meta.style.margin = "0.25rem 0 0";
+      meta.textContent = "Approved: " + (gate.approved_at || "—") + " · by " + (gate.approved_by || "—");
+      container.appendChild(meta);
+    }
+    if (gate.note) {
+      var note = document.createElement("p");
+      note.className = "muted";
+      note.style.margin = "0.25rem 0 0";
+      note.textContent = "Note: " + String(gate.note);
+      container.appendChild(note);
+    }
+
+    var msg = document.createElement("p");
+    msg.className = "muted";
+    msg.id = "lp-approval-msg";
+    msg.style.margin = "0.3rem 0 0";
+    msg.textContent = "";
+    container.appendChild(msg);
+
+    var row = document.createElement("div");
+    row.className = "actions";
+    row.style.marginTop = "0.35rem";
+    row.style.display = "flex";
+    row.style.flexWrap = "wrap";
+    row.style.gap = "0.5rem";
+
+    var bA = document.createElement("button");
+    bA.type = "button";
+    bA.id = "lp-btn-approve";
+    bA.textContent = "Preview freigeben";
+    bA.disabled = !(gate.actions && gate.actions.approve_enabled) || !runId;
+
+    var bR = document.createElement("button");
+    bR.type = "button";
+    bR.id = "lp-btn-revoke";
+    bR.textContent = "Freigabe zurückziehen";
+    bR.disabled = !(gate.actions && gate.actions.revoke_enabled) || !runId;
+
+    row.appendChild(bA);
+    row.appendChild(bR);
+    container.appendChild(row);
+
+    bA.addEventListener("click", async function() {
+      await fdLocalPreviewApprovalAction("approve", runId, bA, msg);
+    });
+    bR.addEventListener("click", async function() {
+      await fdLocalPreviewApprovalAction("revoke", runId, bR, msg);
+    });
+  }
+
+  async function fdLocalPreviewApprovalAction(kind, runId, btn, msgEl) {
+    runId = String(runId || "");
+    if (!runId) return;
+    if (!btn || !msgEl) return;
+    var label = btn.textContent || "";
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    msgEl.textContent = "";
+    msgEl.classList.remove("intake-status-err", "intake-status-success");
+    try {
+      if (isKillSwitchActive()) throw new Error("Kill Switch aktiv — Approval blockiert.");
+      var url = kind === "revoke"
+        ? ("/founder/dashboard/local-preview/revoke-approval/" + encodeURIComponent(runId))
+        : ("/founder/dashboard/local-preview/approve/" + encodeURIComponent(runId));
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ note: "" })
+      });
+      let j = null;
+      try { j = await r.json(); } catch (eJson) {}
+      if (!r.ok || !j || j.ok !== true) {
+        var m = (j && j.message) ? j.message : ("HTTP " + r.status);
+        msgEl.textContent = "Approval: " + m;
+        msgEl.classList.add("intake-status-err");
+        return;
+      }
+      msgEl.textContent = "Approval gespeichert. Panel wird aktualisiert…";
+      msgEl.classList.add("intake-status-success");
+      try {
+        await fdLoadLocalPreviewPanel();
+        msgEl.textContent = "Approval gespeichert. Panel aktualisiert.";
+      } catch (eReload) {
+        msgEl.textContent = "Approval gespeichert, aber Panel konnte nicht aktualisiert werden.";
+        msgEl.classList.remove("intake-status-success");
+        msgEl.classList.add("intake-status-err");
+      }
+    } catch (e) {
+      msgEl.textContent = "Approval: " + String(e && e.message ? e.message : e);
+      msgEl.classList.add("intake-status-err");
+    } finally {
+      btn.textContent = label;
+      btn.classList.remove("is-loading");
+      btn.disabled = false;
+    }
+  }
+
+  function lpRenderFinalRenderGate(container, gate) {
+    if (!container) return;
+    container.innerHTML = "";
+    gate = gate || {};
+
+    function row(label, val) {
+      var r = document.createElement("div");
+      r.className = "lp-cost-row";
+      var k = document.createElement("span");
+      k.className = "lp-cost-k";
+      k.textContent = label;
+      var v = document.createElement("span");
+      v.className = "lp-cost-v";
+      v.textContent = val;
+      r.appendChild(k);
+      r.appendChild(v);
+      container.appendChild(r);
+    }
+
+    row("Status", String(gate.status || "unknown"));
+    if (gate.reason) {
+      var p = document.createElement("p");
+      p.className = "muted";
+      p.style.marginTop = "0.25rem";
+      p.textContent = String(gate.reason);
+      container.appendChild(p);
+    }
+
+    var reqs = (gate.requirements && Array.isArray(gate.requirements)) ? gate.requirements : [];
+    if (reqs.length) {
+      var ul = document.createElement("ul");
+      ul.style.margin = "0.35rem 0 0";
+      ul.style.paddingLeft = "1.15rem";
+      reqs.forEach(function(rq) {
+        var li = document.createElement("li");
+        var id = String(rq.id || "");
+        var lbl = String(rq.label || id);
+        var st = String(rq.status || "unknown");
+        var det = String(rq.detail || "");
+        li.textContent = lbl + ": " + st + (det ? (" (" + det + ")") : "");
+        ul.appendChild(li);
+      });
+      container.appendChild(ul);
+    }
+
+    var msg = document.createElement("p");
+    msg.className = "muted";
+    msg.id = "lp-final-render-msg";
+    msg.style.margin = "0.3rem 0 0";
+    msg.textContent = "";
+    container.appendChild(msg);
+
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "lp-btn-final-render";
+    btn.textContent = String(gate.label || "Finales Video erstellen");
+    btn.disabled = !(gate.button_enabled === true);
+    btn.addEventListener("click", function() {
+      msg.textContent = "Final Render ist vorbereitet. Die Ausführung folgt in einer späteren BA.";
+    });
+    container.appendChild(btn);
+  }
+
   async function fdLoadLocalPreviewPanel() {
     var st = document.getElementById("lp-panel-status");
     var body = document.getElementById("lp-panel-body");
@@ -3122,6 +3327,8 @@ try {
     var runsEl = document.getElementById("lp-runs-wrap");
     var cardsEl = document.getElementById("lp-latest-cards");
     var costEl = document.getElementById("lp-cost-card");
+    var apprEl = document.getElementById("lp-approval-card");
+    var frEl = document.getElementById("lp-final-render-card");
     var tiEl = document.getElementById("lp-top-issue");
     var nsEl = document.getElementById("lp-next-step");
     var tbPrev = document.getElementById("lp-preview-toolbar");
@@ -3144,6 +3351,17 @@ try {
           var cc = data.latest_cost_card;
           if (!cc && data.runs && data.runs.length) cc = data.runs[0].cost_card || null;
           lpRenderCostCard(costEl, cc || null);
+        }
+        if (apprEl) {
+          lpLatestRunId = (data.runs && data.runs.length && data.runs[0].run_id) ? String(data.runs[0].run_id) : "";
+          var ag = data.latest_approval_gate;
+          if (!ag && data.runs && data.runs.length) ag = data.runs[0].approval_gate || null;
+          lpRenderApprovalGate(apprEl, ag || null, lpLatestRunId);
+        }
+        if (frEl) {
+          var fg = data.latest_final_render_gate;
+          if (!fg && data.runs && data.runs.length) fg = data.runs[0].final_render_gate || null;
+          lpRenderFinalRenderGate(frEl, fg || null);
         }
         var latest = data.latest_status_cards;
         if (!latest && data.runs && data.runs.length) {

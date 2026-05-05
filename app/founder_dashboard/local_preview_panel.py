@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import quote
@@ -28,6 +29,9 @@ _PF_STATUSES = frozenset({"pass", "warning", "fail"})
 _WARN_LEVELS = frozenset({"INFO", "CHECK", "WARNING", "BLOCKING"})
 _FOUNDER_CODES = frozenset({"GO_PREVIEW", "REVIEW_REQUIRED", "BLOCK"})
 _VERDICTS = frozenset({"PASS", "WARNING", "FAIL"})
+
+_APPROVAL_SCHEMA_V1 = "local_preview_human_approval_v1"
+_APPROVAL_FILENAME = "human_approval.json"
 
 
 def default_local_preview_out_root() -> Path:
@@ -108,6 +112,29 @@ def local_preview_safe_resolve_file(out_root: Path, run_id: str, filename: str) 
     return resolved
 
 
+def local_preview_safe_resolve_run_dir(out_root: Path, run_id: str) -> Optional[Path]:
+    """BA 22.5 — sicherer Run-Ordner unter out_root/local_preview_<run_id>/ (kein Symlink)."""
+    if not validate_local_preview_run_id(run_id):
+        return None
+    try:
+        root = out_root.resolve()
+    except OSError:
+        return None
+    run_dir = root / f"{_LOCAL_PREVIEW_DIR_PREFIX}{run_id}"
+    try:
+        run_res = run_dir.resolve()
+    except OSError:
+        return None
+    if run_res.is_symlink() or not run_res.is_dir():
+        return None
+    try:
+        if run_res.parent.resolve() != root:
+            return None
+    except OSError:
+        return None
+    return run_res
+
+
 def build_file_urls_for_run(run_dir: Path, run_id: str) -> Dict[str, str]:
     """BA 22.2 — Dashboard-URLs nur wenn Datei physisch (ohne Symlink) vorhanden."""
     empty = {"preview_url": "", "report_url": "", "open_me_url": "", "result_json_url": ""}
@@ -179,6 +206,197 @@ def load_local_preview_saved_result(run_dir: Path) -> Optional[Dict[str, Any]]:
         if data:
             return data
     return None
+
+
+def now_iso_utc() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def load_local_preview_human_approval(run_dir: Path) -> Optional[Dict[str, Any]]:
+    """BA 22.5 — liest `human_approval.json` aus dem Run-Ordner (optional, tolerant)."""
+    try:
+        p = (run_dir / _APPROVAL_FILENAME).resolve()
+    except OSError:
+        return None
+    try:
+        if p.is_symlink() or not p.is_file():
+            return None
+    except OSError:
+        return None
+    return _read_json_file(p)
+
+
+def build_approval_gate_from_run(
+    *,
+    run_id: str,
+    status_cards: Dict[str, Any],
+    file_urls: Dict[str, str],
+    approval_doc: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    BA 22.5 — Approval Gate (Eligibility + Status + Actions) rein aus Dashboard-Infos.
+    Keine Final-Render-Aktion hier.
+    """
+    verdict = str((status_cards or {}).get("verdict") or "UNKNOWN").strip().upper()
+    quality = str((status_cards or {}).get("quality") or "UNKNOWN").strip().upper()
+    founder = str((status_cards or {}).get("founder_decision") or "UNKNOWN").strip().upper()
+    has_preview = bool((file_urls or {}).get("preview_url"))
+
+    status = "not_approved"
+    approved_at = ""
+    approved_by = ""
+    note = ""
+    if isinstance(approval_doc, dict) and approval_doc:
+        if str(approval_doc.get("schema_version") or "").strip() == _APPROVAL_SCHEMA_V1:
+            st = str(approval_doc.get("status") or "").strip().lower()
+            if st in ("approved", "not_approved", "revoked", "blocked"):
+                status = st
+            approved_at = str(approval_doc.get("approved_at") or "").strip()
+            approved_by = str(approval_doc.get("approved_by") or "").strip()
+            note = str(approval_doc.get("note") or "").strip()
+
+    eligible = True
+    reason = ""
+    approve_enabled = True
+    revoke_enabled = False
+
+    if not has_preview:
+        eligible = False
+        approve_enabled = False
+        reason = "Keine Preview-Datei gefunden — zuerst Preview erzeugen."
+    elif verdict == "FAIL" or quality == "FAIL" or founder == "BLOCK":
+        eligible = False
+        approve_enabled = False
+        status = "blocked"
+        reason = "Blocking: Verdict/Quality/Founder blockiert — kein Approve möglich."
+    elif founder == "REVIEW_REQUIRED" or verdict == "WARNING" or quality == "WARNING":
+        eligible = True
+        reason = "Preview requires review before final render."
+
+    if status == "approved":
+        revoke_enabled = True
+        approve_enabled = False
+    elif status == "revoked":
+        revoke_enabled = False
+        # approve bleibt möglich, wenn eligible
+        approve_enabled = bool(eligible)
+    elif status == "blocked":
+        revoke_enabled = False
+        approve_enabled = False
+
+    if not eligible and status not in ("approved", "blocked"):
+        # Default-Status bei Ineligibility ohne gespeicherte Entscheidung
+        status = "not_approved"
+
+    return {
+        "status": status,
+        "eligible": bool(eligible),
+        "reason": reason,
+        "approved_at": approved_at,
+        "approved_by": approved_by,
+        "note": note,
+        "actions": {
+            "approve_enabled": bool(approve_enabled),
+            "revoke_enabled": bool(revoke_enabled),
+        },
+    }
+
+
+def build_final_render_gate_from_run(
+    *,
+    status_cards: Dict[str, Any],
+    file_urls: Dict[str, str],
+    cost_card: Dict[str, Any],
+    approval_gate: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    BA 22.6 — Final Render Button Preparation:
+    Nur Readiness/Reasons/Requirements, keine Ausführung.
+    """
+    has_contract = bool((status_cards or {}).get("contract_present") is True)
+    has_preview = bool((file_urls or {}).get("preview_url"))
+    verdict = str((status_cards or {}).get("verdict") or "UNKNOWN").strip().upper()
+    quality = str((status_cards or {}).get("quality") or "UNKNOWN").strip().upper()
+    founder = str((status_cards or {}).get("founder_decision") or "UNKNOWN").strip().upper()
+    appr_status = str((approval_gate or {}).get("status") or "not_approved").strip().lower()
+    cost_status = str((cost_card or {}).get("status") or "UNKNOWN").strip().upper()
+
+    reqs: List[Dict[str, Any]] = []
+
+    def add_req(rid: str, label: str, ok: Optional[bool], detail: str = "") -> None:
+        st = "unknown" if ok is None else ("pass" if ok else "fail")
+        reqs.append({"id": rid, "label": label, "status": st, "detail": detail})
+
+    add_req("preview_available", "Preview available", True if has_preview else False, "")
+    add_req("verdict_not_fail", "Verdict not FAIL", None if verdict == "UNKNOWN" else verdict != "FAIL", f"verdict={verdict}")
+    add_req("quality_not_fail", "Quality not FAIL", None if quality == "UNKNOWN" else quality != "FAIL", f"quality={quality}")
+    add_req(
+        "founder_not_block",
+        "Founder decision not BLOCK",
+        None if founder == "UNKNOWN" else founder != "BLOCK",
+        f"founder={founder}",
+    )
+    add_req("human_approved", "Human approval approved", True if appr_status == "approved" else False, f"approval={appr_status}")
+    add_req(
+        "cost_not_over_budget",
+        "Cost not OVER_BUDGET",
+        None if cost_status == "UNKNOWN" else cost_status != "OVER_BUDGET",
+        f"cost={cost_status}",
+    )
+
+    label = "Finales Video erstellen"
+    if not has_contract:
+        return {
+            "status": "unknown",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Kein Contract/Snapshot vorhanden — Readiness unbekannt.",
+            "requirements": reqs,
+        }
+
+    # harte Blocker
+    if not has_preview:
+        return {
+            "status": "blocked",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Preview fehlt — Final Render gesperrt.",
+            "requirements": reqs,
+        }
+    if verdict == "FAIL" or quality == "FAIL" or founder == "BLOCK":
+        return {
+            "status": "blocked",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Blocking: Verdict/Quality/Founder blockiert — Final Render gesperrt.",
+            "requirements": reqs,
+        }
+
+    # weiche Locks
+    if appr_status != "approved":
+        return {
+            "status": "locked",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Human Approval fehlt — Final Render gesperrt, bis approved.",
+            "requirements": reqs,
+        }
+    if cost_status == "OVER_BUDGET":
+        return {
+            "status": "locked",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Cost is over budget; review required.",
+            "requirements": reqs,
+        }
+
+    return {
+        "status": "ready",
+        "button_enabled": True,
+        "label": label,
+        "reason": "Bereit (BA 22.6: Button ist vorbereitet, Ausführung folgt später).",
+        "requirements": reqs,
+    }
 
 
 def _norm_pf(v: Any) -> str:
@@ -475,17 +693,33 @@ def build_run_rows_payload(rows: List[Tuple[float, str, Path]], *, limit: int = 
             mtime = 0.0
         arts = _artifact_flags(path)
         saved = load_local_preview_saved_result(path)
+        scards = build_status_cards_from_saved_result(saved)
         file_urls = build_file_urls_for_run(path, rid)
         cost_card = build_cost_card_from_saved_result(saved)
+        approval_doc = load_local_preview_human_approval(path)
+        approval_gate = build_approval_gate_from_run(
+            run_id=rid,
+            status_cards=scards,
+            file_urls=file_urls,
+            approval_doc=approval_doc,
+        )
+        final_render_gate = build_final_render_gate_from_run(
+            status_cards=scards,
+            file_urls=file_urls,
+            cost_card=cost_card,
+            approval_gate=approval_gate,
+        )
         row: Dict[str, Any] = {
             "dir_name": name,
             "run_id": rid,
             "path": p_res,
             "mtime_epoch": mtime,
             "artifacts": arts,
-            "status_cards": build_status_cards_from_saved_result(saved),
+            "status_cards": scards,
             "file_urls": file_urls,
             "cost_card": cost_card,
+            "approval_gate": approval_gate,
+            "final_render_gate": final_render_gate,
         }
         out.append(row)
     return out
@@ -536,8 +770,22 @@ def build_local_preview_panel_payload(
         latest_status_cards = dict(runs[0].get("status_cards") or {})
         latest_file_urls = dict(runs[0].get("file_urls") or latest_file_urls)
         latest_cost_card = dict(runs[0].get("cost_card") or {})
+        latest_approval_gate = dict(runs[0].get("approval_gate") or {})
+        latest_final_render_gate = dict(runs[0].get("final_render_gate") or {})
     else:
         latest_cost_card = build_cost_card_from_saved_result(None)
+        latest_approval_gate = build_approval_gate_from_run(
+            run_id="",
+            status_cards=build_status_cards_from_saved_result(None),
+            file_urls={"preview_url": "", "report_url": "", "open_me_url": "", "result_json_url": ""},
+            approval_doc=None,
+        )
+        latest_final_render_gate = build_final_render_gate_from_run(
+            status_cards=build_status_cards_from_saved_result(None),
+            file_urls={"preview_url": "", "report_url": "", "open_me_url": "", "result_json_url": ""},
+            cost_card=latest_cost_card,
+            approval_gate=latest_approval_gate,
+        )
 
     actions: List[Dict[str, Any]] = [
         {
@@ -569,6 +817,8 @@ def build_local_preview_panel_payload(
         "latest_status_cards": latest_status_cards,
         "latest_file_urls": latest_file_urls,
         "latest_cost_card": latest_cost_card,
+        "latest_approval_gate": latest_approval_gate,
+        "latest_final_render_gate": latest_final_render_gate,
         "actions": actions,
         "warnings": warnings,
     }
