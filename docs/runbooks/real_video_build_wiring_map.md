@@ -100,6 +100,17 @@ Ziel: erst **2–3 Minuten** stabil, dann Richtung **10 Minuten** skalieren.
 | BA 25.5 | URL-to-Final-Video Smoke | **done** | End‑to‑End lokal: URL → `preview_with_subtitles.mp4` → `final_video.mp4` (ohne Publishing). |
 | BA 25.6 | URL-to-Final-Video Smoke Hardening | **done** | Stabiler Result-Contract, Auto-Approve-Transparenz, `--no-auto-approve`, strukturierte `failure_stage`, Idempotenz-Anzeige (`skipped_existing`), Operator-`URL_TO_FINAL_VIDEO_OPEN_ME.md`. **Local URL-to-Final-Video MVP: completed.** |
 
+**Nach BA 25.6:** Der Local URL-to-Final-Video MVP ist abgeschlossen. **BA 26 — Real Content Live Smoke** (siehe [PIPELINE_PLAN.md](../../PIPELINE_PLAN.md), **BA 26.0 Scope Freeze**, Status **done**): zuerst **Leonardo Live** für echte Bilder, **echte Artikel-URL**, Ausgabe **lokal** (`final_video.mp4`). **Video-Clips:** separater Entscheid — **Spike Runway vs. Google Veo**, danach **nur ein** Video-Provider-Connector (nicht parallel). **Sora** nicht als Primärpfad. **Kein** Upload/Publishing/YouTube.
+
+### BA 26 — Live Provider Smoke (geplant) / Ist-Stand
+
+- **Leonardo Live (erster Bildpfad):** `scripts/run_asset_runner.py` (`--mode live`, u. a. `LEONARDO_API_KEY`, optional Endpoint/Model-ID). Durchreichen via **`--asset-mode live`** (BA 25.1 / BA 25.4 / URL-to-Final-Smoke).
+- **Video-Provider:** **BA 26.2** (`scripts/runway_image_to_video_smoke.py`) erzeugt **einen** lokalen Runway-Testclip (bei `RUNWAY_API_KEY`) — **ohne** Timeline-/Render-Integration. **Google Veo** bleibt Kandidat; Vergleich/Connector-Wahl in **BA 26.3** — **nicht** beide Video-Provider parallel einbauen.
+- **Sora:** **nicht** als Primär-Connector priorisiert (Scope Freeze).
+- **Kling:** `app/production_connectors/kling_connector.py` nur **Dry-Run**; nicht Teil der BA-26-Video-Wahl.
+- **Render:** `render_final_story_video.py` = **Stillimages** + optional ffmpeg-**basic** — echte Provider-Clips erst nach **BA 26.4** (Ingest) / **26.5** (Smoke mit Clips).
+- **Lücke:** Video-Gen-API + Ingest/Timeline für Clips; bis dahin **BA 26.1** = Artikel-URL + **Leonardo** + bestehender Still-Render bis `final_video.mp4`.
+
 ## BA 25.5 — URL-to-Final-Video Smoke (**done**)
 
 ### One-Command Runner (lokal)

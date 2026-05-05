@@ -626,7 +626,8 @@ Aus einem **geprüften** und **freigegebenen** Local-Preview-Run soll später ei
 | BA 25.4 | Real Local Preview Run | **done** | `scripts/run_ba_25_4_local_preview.py` verbindet `generate_script_response.json` (BA 25.3) → BA 25.2 Adapter → BA 25.1 Orchestrator zu `output/real_local_preview_<run_id>/` mit `scene_asset_pack.json`, `real_video_build_result.json` und `preview_with_subtitles.mp4`. Keine neuen Provider-Calls, keine Vertragsänderung. |
 | BA 25.5 | URL-to-Final-Video Smoke | **done** | End-to-End lokal: URL → preview_with_subtitles.mp4 → final_video.mp4 (ohne Publishing). |
 | BA 25.6 | URL-to-Final-Video Smoke Hardening | **done** | Stabilisierung/Idempotenz/strukturierte Fehler/Operator-OPEN_ME für `run_ba_25_5_url_to_final_video_smoke.py`; Auto-Approve klar gekennzeichnet; `--no-auto-approve` ohne Final Render. **Local URL-to-Final-Video MVP: completed.** |
-| BA 26.0 | Publishing Package Plan | **planned** | Geplanter nächster Block: Veröffentlichungs-Paket (ohne Umsetzung in BA 25.6). |
+| BA 26.0 | Live Smoke Scope Freeze | **done** | Scope festgezurrt: echte Artikel-URL, Leonardo Live-Bilder, Video-Provider-Spike Runway vs. Google Veo (ein Provider), kein Sora-Primärpfad; lokal 2–3 Min., kein Upload. Details: **BA 26.0** unter Abschnitt **BA 26**. |
+| BA 26.2 | Runway Image-to-Video Smoke | **done** | Isolierter lokaler Testclip: `scripts/runway_image_to_video_smoke.py`, `RUNWAY_API_KEY`; keine Pipeline-Integration. |
 
 ### BA 24.0 — Final Render Execution Plan (**done**)
 
@@ -783,11 +784,96 @@ Nach BA 24.6 wird der MVP-Block geschlossen (**Local Final Render MVP: completed
 | BA 25.4 | Real Local Preview Run | **done** | [`scripts/run_ba_25_4_local_preview.py`](scripts/run_ba_25_4_local_preview.py) nimmt `generate_script_response.json` (z. B. aus BA 25.3) und verdrahtet BA 25.2 Adapter → BA 25.1 Orchestrator zu `output/real_local_preview_<run_id>/` mit `scene_asset_pack.json`, Verweis auf `real_video_build_result.json` und `preview_with_subtitles.mp4`. Keine Vertragsänderung an `GenerateScriptResponse`/`scene_asset_pack.json`/`real_video_build_result.json`. Tests `tests/test_ba254_local_preview_run.py`. |
 | BA 25.5 | URL-to-Final-Video Smoke | **done** | End-to-End lokal: URL → `preview_with_subtitles.mp4` → `final_video.mp4` (ohne Publishing). |
 | BA 25.6 | URL-to-Final-Video Smoke Hardening | **done** | Result-Contract `ba_25_6_url_to_final_video_result_v1`, Pfad-Felder, `failure_stage`, Reality-Smoke-Doku; `--no-auto-approve` blockiert Final Render. **Local URL-to-Final-Video MVP: completed.** |
-| BA 26.0 | Publishing Package Plan | **planned** | Nächster empfohlener Macro-Schritt (nicht Teil von BA 25.x). |
 
 **Local URL-to-Final-Video MVP:** Abgeschlossen mit **BA 25.6** (Smoke-Runner + Tests + Runbook; kein Publishing, kein Upload in diesem MVP).
 
 **Akzeptanz BA 25.0:** Wiring Map dokumentiert für jeden vorhandenen Schritt (1–9) Input/Output, kennzeichnet Placeholder-/Smoke-/Copy-V1-Punkte und nennt konkrete Verkabelungslücken sowie den kürzesten realen Local-MVP-Pfad (2–3 Min. zuerst, später 10 Min.). Keine Code-Änderungen.
+
+## BA 26 — Real Content Live Smoke
+
+**Status:** geplant — **BA 26.0 abgeschlossen** (Scope Freeze dokumentiert); Umsetzung **BA 26.1ff.** ausstehend.
+
+**Ziel (Gesamtbild):**  
+Nach **BA 25.6** wird der Flow mit **echten Inhalten und angeschlossenen Provider-Assets** getestet. **Erster Bildpfad:** **Leonardo Live Images** (`run_asset_runner` / `--asset-mode live`, sofern Key und Live-Modus gesetzt). **Video-Clips:** nicht parallel mehrere Anbieter — zuerst **Provider-Spike Runway vs. Google Veo**, dann **ein** ausgewählter Connector. **Sora** wird **nicht** als Primär-Connector priorisiert (Anbieter-Doku: Videos-API deprecated/auslaufend). **Voice:** zunächst Smoke bzw. vorhandene/manuelle Audio-Option; echte Provider-TTS später separat. Output bleibt **lokal** (`final_video.mp4`). **Kein** YouTube-Upload, **kein** Publishing.
+
+**Leitentscheidung:**  
+Nach **BA 25.6** werden **keine** weiteren internen Komfort-, Dashboard-, Cost-, Report- oder Quality-BAs eingeschoben, außer **echte Bugfixes**. Nächster inhaltlicher Block: **Real Content Live Smoke** gemäß **BA 26.0** Scope Freeze.
+
+**Ist-Stand im Repository (Dokumentation, kein Runtime-Test):**
+
+| Thema | Stand |
+|-------|--------|
+| **Leonardo Live (Bilder)** | **Ausführbar:** `scripts/run_asset_runner.py` mit `--mode live` nutzt u. a. `LEONARDO_API_KEY` (Pflicht für Live), optional `LEONARDO_API_ENDPOINT`, optional `LEONARDO_MODEL_ID`. Ohne Key: Fallback Placeholder mit Warnungen. Zusätzlich `app/production_connectors/leonardo_live_connector.py` (HTTP mit Guard; Dry-Run möglich). |
+| **Runway (Video-Clips)** | **BA 26.2 Smoke-Skript:** `scripts/runway_image_to_video_smoke.py` — optional ein lokaler MP4 aus Bild+Prompt bei `RUNWAY_API_KEY`; **keine** Timeline-/Pipeline-Anbindung. |
+| **Google Veo (Video-Clips)** | **Nicht angebunden**; Abgleich mit Runway-Ergebnis in **BA 26.3** vor Connector-Wahl. |
+| **Sora** | **Nicht als Primärpfad** geplant (Scope Freeze). |
+| **Kling** | `app/production_connectors/kling_connector.py` **Dry-Run only**; nicht Teil der BA-26-Video-Entscheidung. |
+| **`run_real_video_build` / BA 25.4** | Verarbeitet **Leonardo-Live-PNGs** bei `asset_mode=live`; Timeline/Render aktuell **Bildpfade** im `asset_manifest.json`. |
+| **Render** | `render_final_story_video.py`: **Stillimages** + optional ffmpeg-**basic**/**static** — **kein** Provider-Clip-Import bis **BA 26.4ff.** |
+| **provider_configs / Guards** | Primär Produktions-/Dashboard-Pfade; lokaler Asset-Runner prüft Leonardo-ENV direkt (`run_asset_runner._live_env_ready`). |
+| **Outputs bei Live-Bildern** | `output/generated_assets_<run_id>/scene_XXX.png`, `asset_manifest.json` u. a. mit `generation_mode` `leonardo_live` / gemischt bei `--max-assets`-Cap. |
+
+**Lücke für echte Video-Clips in der Hauptpipeline:** **BA 26.2** liefert nur einen **isolierten** Runway-Testclip; **BA 26.3** Provider-Entscheidung (Veo vs. Runway), **BA 26.4** Ingest, **BA 26.5** Smoke mit Clips in der Kette. Bis dahin: **BA 26.1** = echte Artikel-URL + **Leonardo** + bestehender Render bis `final_video.mp4`.
+
+### BA 26.0 — Live Smoke Scope Freeze
+
+**Status:** **done**
+
+**Ziel:**  
+Den ersten echten Live-Test klar begrenzen: **echte Artikel-URL**, **lokale** Video-Erzeugung, **Leonardo Live-Bilder**, **später ein ausgewählter** Video-Provider (nach Spike), **kein** Upload.
+
+**Festgelegter Scope:**
+
+- **Quelle:** echte Artikel-URL  
+- **Dauer:** zuerst **2–3 Minuten**  
+- **Bilder:** **Leonardo Live Images**, sofern `LEONARDO_API_KEY` gesetzt und Live-Modus aktiv ist  
+- **Videos:** noch **nicht** angebunden; **Provider-Spike Runway vs. Google Veo** (nur **ein** Provider wird danach umgesetzt)  
+- **Sora:** **nicht** als Primärpfad  
+- **Voice:** zunächst **Smoke** oder vorhandene/manuelle Audio-Option; echte Voice **später separat**  
+- **Output:** lokales **`final_video.mp4`**  
+- **Kein** Publishing / **kein** YouTube-Upload  
+
+**Provider-Entscheidung:**
+
+| Provider | Rolle | Status | Entscheidung |
+|----------|------|--------|--------------|
+| Leonardo | Live Images | vorhanden/anschließbar | erster Bildpfad |
+| Runway | Video Clips | Kandidat | gegen Veo prüfen |
+| Google Veo | Video Clips | Kandidat | gegen Runway prüfen |
+| Sora | Video Clips | nicht primär | nicht als Pipeline-Connector priorisieren |
+
+**Neue BA-26-Reihenfolge:**
+
+| BA | Titel | Status | Ziel |
+|----|-------|--------|------|
+| BA 26.0 | Live Smoke Scope Freeze | **done** | Scope festlegen: echte Artikel-URL, Leonardo-Bilder, Video-Provider-Spike, lokal, kein Upload. |
+| BA 26.1 | Real Article URL + Leonardo Image Smoke | planned | Echte Artikel-URL mit Leonardo Live-Bildern bis lokales `final_video.mp4` testen. |
+| BA 26.2 | Runway Image-to-Video Smoke | **done** | `scripts/runway_image_to_video_smoke.py`: optional mit `RUNWAY_API_KEY` ein kurzer lokaler MP4 aus Bild+Prompt; **keine** Pipeline-Integration, **kein** Upload. |
+| BA 26.3 | Selected Video Provider Connector | planned | **Vor** Implementierung: Runway-Spike vs. **Google Veo** (API, Kosten, Output) abgleichen; **einen** Video-Provider als kontrollierten Connector anbinden. |
+| BA 26.4 | Real Clip Asset Ingest | planned | Provider-Clips als lokale Assets speichern und in Timeline/Render nutzbar machen. |
+| BA 26.5 | 2–3 Min Real Video Smoke with Clips | planned | Echte Quelle + Bilder + erste Clips bis lokales `final_video.mp4` testen. |
+| BA 26.6 | 5-Minute Local Video Smoke | planned | Dauer erhöhen und Stabilität prüfen. |
+| BA 26.7 | 10-Minute Local Video Smoke | planned | Zieltest: ca. 10 Minuten lokales `final_video.mp4`. |
+
+**Nicht-Ziele (Scope Freeze / gesamte BA 26):**
+
+- Kein YouTube-Upload  
+- Kein Publishing  
+- Kein Scheduling  
+- Kein Dashboard-Redesign  
+- **Kein** paralleler Einbau **mehrerer** Video-Provider  
+- **Kein** Sora-Primärconnector  
+- Kein Auto-Publishing  
+- Kein neuer Quality-Layer / Approval- / Cost- / SaaS-Schwerpunkt vor dem Live-Smoke-Fokus  
+
+**Definition of Done BA 26.0:**
+
+- Scope ist dokumentiert.  
+- Provider-Richtung ist dokumentiert (Leonardo zuerst; Video **Runway vs. Veo**, ein Provider; **Sora** nicht primär).  
+- **BA 26.1–26.7** sind als Reihenfolge festgelegt.  
+- **Keine** Code-Änderungen.  
+
+**Definition of Done für BA 26 (Gesamtabnahme, nach Umsetzung von 26.1ff.):** Eine echte Quelle verarbeitet; **Leonardo Live** im Smoke-Pfad genutzt oder dokumentiert blockiert; nach Clip-Integration (**26.5**): `final_video.mp4` lokal, abspielbar, klare Warnungen in Result/Report; **26.6/26.7** für Längen-Stabilität.
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 
