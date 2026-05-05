@@ -506,6 +506,8 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
         <button type="button" class="primary" id="lp-btn-run-mini" data-label="Preview erstellen">Preview erstellen</button>
         <span class="muted" id="lp-run-status" aria-live="polite" style="font-size:0.82rem"></span>
       </div>
+      <h3 class="subh">Kosten-Schätzung (BA 22.4)</h3>
+      <div id="lp-cost-card" class="lp-cost-card" aria-live="polite"></div>
       <h3 class="subh">Status (Verdict / Quality / Founder)</h3>
       <div id="lp-latest-cards" aria-live="polite"></div>
       <p class="lp-top-issue" id="lp-top-issue" style="display:none"></p>
@@ -3058,6 +3060,60 @@ try {
     }
   }
 
+  function lpFmtEur(v) {
+    if (v === null || v === undefined) return "—";
+    if (typeof v !== "number") {
+      try { v = Number(v); } catch (e) { return "—"; }
+    }
+    if (!isFinite(v)) return "—";
+    return (Math.round(v * 100) / 100).toFixed(2) + " €";
+  }
+
+  function lpRenderCostCard(container, cost) {
+    if (!container) return;
+    container.innerHTML = "";
+    cost = cost || {};
+    var st = document.createElement("div");
+    st.className = "lp-cost-row";
+    var s1 = document.createElement("span");
+    s1.className = "lp-cost-k";
+    s1.textContent = "Status";
+    var s2 = document.createElement("span");
+    s2.className = "lp-cost-v";
+    s2.textContent = (cost.status || "UNKNOWN");
+    st.appendChild(s1);
+    st.appendChild(s2);
+    container.appendChild(st);
+
+    function addLine(label, val) {
+      var r = document.createElement("div");
+      r.className = "lp-cost-row";
+      var k = document.createElement("span");
+      k.className = "lp-cost-k";
+      k.textContent = label;
+      var v = document.createElement("span");
+      v.className = "lp-cost-v";
+      v.textContent = val;
+      r.appendChild(k);
+      r.appendChild(v);
+      container.appendChild(r);
+    }
+
+    var total = cost.actual_total_eur != null ? cost.actual_total_eur : cost.estimated_total_eur;
+    addLine("Gesamt", lpFmtEur(total));
+    var bd = cost.breakdown || {};
+    addLine("Voice", lpFmtEur(bd.voice_eur));
+    addLine("Assets", lpFmtEur(bd.assets_eur));
+    addLine("Render", lpFmtEur(bd.render_eur));
+    addLine("Puffer", lpFmtEur(bd.buffer_eur));
+
+    var hint = document.createElement("p");
+    hint.className = "muted";
+    hint.style.marginTop = "0.35rem";
+    hint.textContent = (cost.hint || "");
+    container.appendChild(hint);
+  }
+
   async function fdLoadLocalPreviewPanel() {
     var st = document.getElementById("lp-panel-status");
     var body = document.getElementById("lp-panel-body");
@@ -3065,6 +3121,7 @@ try {
     var actEl = document.getElementById("lp-actions");
     var runsEl = document.getElementById("lp-runs-wrap");
     var cardsEl = document.getElementById("lp-latest-cards");
+    var costEl = document.getElementById("lp-cost-card");
     var tiEl = document.getElementById("lp-top-issue");
     var nsEl = document.getElementById("lp-next-step");
     var tbPrev = document.getElementById("lp-preview-toolbar");
@@ -3083,6 +3140,11 @@ try {
       st.classList.remove("intake-status-err");
       rootEl.textContent = "out_root: " + (data.out_root || "") + (data.out_root_exists ? "" : " (nicht lesbar)");
       try {
+        if (costEl) {
+          var cc = data.latest_cost_card;
+          if (!cc && data.runs && data.runs.length) cc = data.runs[0].cost_card || null;
+          lpRenderCostCard(costEl, cc || null);
+        }
         var latest = data.latest_status_cards;
         if (!latest && data.runs && data.runs.length) {
           latest = data.runs[0].status_cards || null;

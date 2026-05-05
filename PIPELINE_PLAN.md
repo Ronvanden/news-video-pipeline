@@ -511,7 +511,7 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 22.1** | Dashboard Preview Status Cards | **done** | Status-Karten + Tabellenspalten im Founder-Dashboard (**GET `/founder/dashboard`**, Panel **GET `/founder/dashboard/local-preview/panel`** mit ``status_cards`` / ``latest_status_cards``); optional **`local_preview_result.json`** (Snapshot) wird bei Pipeline-Finalize geschrieben (**`scripts/run_local_preview_pipeline.py`**). Tests **`tests/test_ba221_dashboard_preview_status_cards.py`**. |
 | **BA 22.2** | Dashboard Preview Video Embed / Open Button | **done** | **GET `/founder/dashboard/local-preview/file/{run_id}/{filename}`** (Whitelist, nur unter Repo-**`output/local_preview_*`**, keine Symlinks); Panel **`file_urls`** / **`latest_file_urls`**; Dashboard: **`<video controls>`** + Links Preview/Report/OPEN_ME/JSON. Tests **`tests/test_ba222_dashboard_preview_video_embed.py`**. |
 | **BA 22.3** | Dashboard Preview Start Button | **done** | Preview-Lauf aus dem Dashboard starten. |
-| **BA 22.4** | Dashboard Cost Card / Production Estimate | **planned** | Geschätzte Produktionskosten als Founder-/Operator-Karte anzeigen. |
+| **BA 22.4** | Dashboard Cost Card / Production Estimate | **done** | Geschätzte Produktionskosten als Founder-/Operator-Karte anzeigen. |
 | **BA 22.5** | Dashboard Human Approval Gate | **planned** | Preview-Freigabe vor finalem Render erfassen. |
 | **BA 22.6** | Final Render Button Preparation | **planned** | Final-Render-Button vorbereiten, abhängig von Quality, Approval und Kostenstatus. |
 
@@ -564,7 +564,7 @@ Der lokale Preview- und Quality-Loop wird von CLI/Output-Ordnern schrittweise in
 | BA 22.1 | Dashboard Preview Status Cards | done | Status-Karten aus Snapshot/Contract-JSON; alte Runs ohne JSON → UNKNOWN; Tests **`tests/test_ba221_dashboard_preview_status_cards.py`**. |
 | BA 22.2 | Dashboard Preview Video Embed / Open Button | done | Sichere File-Route + Video-Embed/Open-Links im Founder-Dashboard; Tests **`tests/test_ba222_dashboard_preview_video_embed.py`**. |
 | BA 22.3 | Dashboard Preview Start Button | done | Preview-Lauf aus dem Dashboard starten. |
-| BA 22.4 | Dashboard Cost Card / Production Estimate | planned | Geschätzte Produktionskosten als Founder-/Operator-Karte anzeigen. |
+| BA 22.4 | Dashboard Cost Card / Production Estimate | done | Geschätzte Produktionskosten als Founder-/Operator-Karte anzeigen. |
 | BA 22.5 | Dashboard Human Approval Gate | planned | Preview-Freigabe vor finalem Render erfassen. |
 | BA 22.6 | Final Render Button Preparation | planned | Final-Render-Button vorbereiten, abhängig von Quality, Approval und Kostenstatus. |
 

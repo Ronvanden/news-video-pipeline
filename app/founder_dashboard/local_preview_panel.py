@@ -272,6 +272,154 @@ def build_status_cards_from_saved_result(data: Optional[Dict[str, Any]]) -> Dict
     }
 
 
+def _to_float_or_none(v: Any) -> Optional[float]:
+    if v is None:
+        return None
+    if isinstance(v, (int, float)) and not isinstance(v, bool):
+        return float(v)
+    try:
+        s = str(v).strip()
+        if not s:
+            return None
+        return float(s)
+    except (TypeError, ValueError):
+        return None
+
+
+def _get_cost_obj(data: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not isinstance(data, dict) or not data:
+        return None
+    # bevorzugt: strukturiertes costs-Objekt falls vorhanden (keine Erfindung)
+    for k in (
+        "production_cost_estimate",
+        "production_costs",
+        "cost_summary",
+        "estimated_costs",
+        "cost_projection",
+        "cost_projection_v1",
+    ):
+        v = data.get(k)
+        if isinstance(v, dict) and v:
+            return v
+    return None
+
+
+def build_cost_card_from_saved_result(data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    BA 22.4 — Kostencard aus vorhandenem local_preview_result.json-Subset.
+    Fallback: UNKNOWN / unavailable (keine fake-genauen Zahlen).
+    """
+    hint_missing = "Noch keine Kostenschätzung für diesen lokalen Preview-Lauf vorhanden."
+    base = {
+        "status": "UNKNOWN",
+        "mode": "unavailable",
+        "estimated_total_eur": None,
+        "actual_total_eur": None,
+        "breakdown": {
+            "voice_eur": None,
+            "assets_eur": None,
+            "render_eur": None,
+            "buffer_eur": None,
+        },
+        "hint": hint_missing,
+    }
+    if not isinstance(data, dict) or not data:
+        return dict(base)
+
+    obj = _get_cost_obj(data)
+    # auch tolerieren: flache Keys im Result
+    estimated_total = None
+    actual_total = None
+    over_budget = False
+    variance = None
+    step_breakdown: Dict[str, Any] = {}
+
+    if isinstance(obj, dict):
+        estimated_total = _to_float_or_none(
+            obj.get("estimated_total_eur")
+            or obj.get("estimated_total_cost")
+            or obj.get("estimated_total")
+        )
+        actual_total = _to_float_or_none(
+            obj.get("actual_total_eur") or obj.get("actual_total_cost") or obj.get("actual_total")
+        )
+        variance = _to_float_or_none(obj.get("cost_variance") or obj.get("variance_eur"))
+        over_budget = bool(obj.get("over_budget_flag") or obj.get("over_budget") or obj.get("over_budget_flag") is True)
+        sb = obj.get("step_cost_breakdown") or obj.get("breakdown") or {}
+        if isinstance(sb, dict):
+            step_breakdown = dict(sb)
+
+    if estimated_total is None:
+        estimated_total = _to_float_or_none(data.get("estimated_total_eur"))
+    if actual_total is None:
+        actual_total = _to_float_or_none(data.get("actual_total_eur"))
+    if not over_budget and isinstance(data.get("over_budget_flag"), bool):
+        over_budget = bool(data.get("over_budget_flag"))
+    if variance is None:
+        variance = _to_float_or_none(data.get("cost_variance"))
+    if not step_breakdown and isinstance(data.get("step_cost_breakdown"), dict):
+        step_breakdown = dict(data.get("step_cost_breakdown") or {})
+
+    # Breakdown mapping (nur wenn vorhanden)
+    voice = _to_float_or_none(step_breakdown.get("voice") or step_breakdown.get("voice_eur"))
+    # Assets: image + video (und optional thumbnail) aus vorhandenem breakdown
+    img = _to_float_or_none(step_breakdown.get("image") or step_breakdown.get("image_eur"))
+    vid = _to_float_or_none(step_breakdown.get("video") or step_breakdown.get("video_eur"))
+    thumb = _to_float_or_none(step_breakdown.get("thumbnail") or step_breakdown.get("thumbnail_eur"))
+    assets = None
+    parts = [p for p in (img, vid, thumb) if isinstance(p, (int, float))]
+    if parts:
+        assets = float(sum(parts))
+
+    buffer_v = _to_float_or_none(step_breakdown.get("buffer") or step_breakdown.get("buffer_eur"))
+
+    # Render/cloud: für lokalen Preview i. d. R. unbekannt → nur übernehmen, wenn vorhanden
+    render_v = _to_float_or_none(step_breakdown.get("render") or step_breakdown.get("render_eur"))
+
+    mode = "unavailable"
+    if actual_total is not None:
+        mode = "actual"
+    elif estimated_total is not None:
+        mode = "estimate"
+
+    status = "UNKNOWN"
+    if over_budget:
+        status = "OVER_BUDGET"
+    elif estimated_total is not None or actual_total is not None:
+        status = "OK"
+
+    # CHECK heuristik: deutliche Varianz oder costs-warnings vorhanden
+    if status == "OK":
+        warns = data.get("warnings") if isinstance(data.get("warnings"), list) else []
+        has_cost_warn = any(isinstance(w, str) and ("[costs:" in w or "Kosten-" in w) for w in warns)
+        if has_cost_warn or (isinstance(variance, (int, float)) and abs(float(variance)) >= 0.05):
+            status = "CHECK"
+
+    hint = ""
+    if mode == "unavailable":
+        hint = hint_missing
+    else:
+        hint = "Kosten sind " + ("Istwerte." if mode == "actual" else "Schätzung (heuristisch).")
+
+    out = dict(base)
+    out.update(
+        {
+            "status": status,
+            "mode": mode,
+            "estimated_total_eur": estimated_total,
+            "actual_total_eur": actual_total,
+            "breakdown": {
+                "voice_eur": voice,
+                "assets_eur": assets,
+                "render_eur": render_v,
+                "buffer_eur": buffer_v,
+            },
+            "hint": hint,
+        }
+    )
+    return out
+
+
 def _scan_run_dirs(out_root: Path) -> Tuple[List[Tuple[float, str, Path]], List[str]]:
     """Direkte Kinder ``local_preview_*``, keine Symlinks; absteigend nach mtime."""
     warnings: List[str] = []
@@ -328,6 +476,7 @@ def build_run_rows_payload(rows: List[Tuple[float, str, Path]], *, limit: int = 
         arts = _artifact_flags(path)
         saved = load_local_preview_saved_result(path)
         file_urls = build_file_urls_for_run(path, rid)
+        cost_card = build_cost_card_from_saved_result(saved)
         row: Dict[str, Any] = {
             "dir_name": name,
             "run_id": rid,
@@ -336,6 +485,7 @@ def build_run_rows_payload(rows: List[Tuple[float, str, Path]], *, limit: int = 
             "artifacts": arts,
             "status_cards": build_status_cards_from_saved_result(saved),
             "file_urls": file_urls,
+            "cost_card": cost_card,
         }
         out.append(row)
     return out
@@ -385,6 +535,9 @@ def build_local_preview_panel_payload(
     if runs:
         latest_status_cards = dict(runs[0].get("status_cards") or {})
         latest_file_urls = dict(runs[0].get("file_urls") or latest_file_urls)
+        latest_cost_card = dict(runs[0].get("cost_card") or {})
+    else:
+        latest_cost_card = build_cost_card_from_saved_result(None)
 
     actions: List[Dict[str, Any]] = [
         {
@@ -415,6 +568,7 @@ def build_local_preview_panel_payload(
         "runs": runs,
         "latest_status_cards": latest_status_cards,
         "latest_file_urls": latest_file_urls,
+        "latest_cost_card": latest_cost_card,
         "actions": actions,
         "warnings": warnings,
     }
