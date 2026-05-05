@@ -617,8 +617,8 @@ Aus einem **geprüften** und **freigegebenen** Local-Preview-Run soll später ei
 | BA 24.2 | Final Render Dry-Run Endpoint | done | Dashboard-/Backend-Route, die Final Render readiness simuliert, ohne Video zu erzeugen. |
 | BA 24.3 | Final Render Execution Script | done | Lokales Script, das aus freigegebenem Preview-Paket einen finalen Export erzeugt. |
 | BA 24.4 | Final Render Dashboard Action | done | Dashboard-Button triggert echten Final Render kontrolliert. |
-| BA 24.5 | Final Render Report / OPEN_ME Update | planned | Report und OPEN_ME um finalen Export, Status und Pfade erweitern. |
-| BA 24.6 | Final Render Error Recovery | planned | Fehlerfälle, Retry und idempotentes Verhalten absichern. |
+| BA 24.5 | Final Render Report / OPEN_ME Update | done | Report und OPEN_ME um finalen Export, Status und Pfade erweitern. |
+| BA 24.6 | Final Render Error Recovery | done | Fehlerfälle, Retry und idempotentes Verhalten absichern. |
 
 ### BA 24.0 — Final Render Execution Plan (**done**)
 
@@ -714,8 +714,8 @@ Der lokale MVP-Flow soll jetzt abgeschlossen werden, **ohne** neue Zwischen-BAs 
 |----|-------|--------|------|
 | BA 24.3 | Final Render Execution Script | **done** | Lokales Script erzeugt aus freigegebenem Preview-Paket ein `final_render_<run_id>`-Paket mit `final_video.mp4`. |
 | BA 24.4 | Dashboard Final Render Action | planned | Dashboard-Button startet kontrolliert den Final Render. |
-| BA 24.5 | Final Render Report / OPEN_ME Update | planned | Finales Paket erhält klare Bedienungsdateien und Report. |
-| BA 24.6 | Final Render Error Recovery / Idempotenz | planned | Retry, existing-file handling, force/overwrite und Fehlerausgaben stabilisieren. |
+| BA 24.5 | Final Render Report / OPEN_ME Update | done | Finales Paket erhält klare Bedienungsdateien und Report. |
+| BA 24.6 | Final Render Error Recovery / Idempotenz | done | Retry, existing-file handling, force/overwrite und Fehlerausgaben stabilisieren. |
 
 **Scope Freeze:**  
 Bis BA 24.6 werden **keine** neuen Feature-BAs eingeschoben. Erlaubt sind nur:
@@ -750,7 +750,7 @@ Bis BA 24.6 werden **keine** neuen Feature-BAs eingeschoben. Erlaubt sind nur:
 - CLI bleibt nutzbar.
 
 **Execution-Regel:**  
-Nach BA 24.6 wird der MVP-Block geschlossen. Erst danach wird entschieden, ob der nächste Block Publishing, Dashboard Polish oder Provider-Integration ist.
+Nach BA 24.6 wird der MVP-Block geschlossen (**Local Final Render MVP: completed**). Erst danach wird entschieden, ob der nächste Block Publishing, Dashboard Polish oder Provider-Integration ist.
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 

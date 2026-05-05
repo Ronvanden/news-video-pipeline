@@ -135,6 +135,11 @@ Optionen:
 
 Hinweis: Wenn der Run nicht **ready** ist (Approval/Costs/Gates), beendet das Skript mit Exit-Code **2** und schreibt nichts.
 
+Idempotenz/Recovery (BA 24.6):
+
+- Wenn `final_video.mp4` bereits existiert und **>0 Byte** ist, ist das Ergebnis **`skipped_existing`** (Reports/Result/OPEN_ME werden aktualisiert).
+- Wenn `final_video.mp4` existiert aber **0 Byte** ist: starte mit **`--force`** neu oder lösche die leere Datei.
+
 ### 3.x Final Render im Dashboard starten (BA 24.4)
 
 Wenn der Final-Render-Status **ready** ist, kann der Operator im Dashboard auf **„Finales Video erstellen“** klicken.
@@ -144,6 +149,7 @@ Ergebnis liegt danach unter:
 - `output/final_render_<run_id>/final_video.mp4`
 - `output/final_render_<run_id>/final_render_result.json`
 - `output/final_render_<run_id>/FINAL_OPEN_ME.md`
+- `output/final_render_<run_id>/final_render_report.md`
 
 ---
 
