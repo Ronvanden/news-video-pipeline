@@ -514,6 +514,7 @@ Diese Achse liefert **wiedererkennbare Video-/Erzählformate** (Hooks, Kapitello
 | **BA 22.4** | Dashboard Cost Card / Production Estimate | **done** | Geschätzte Produktionskosten als Founder-/Operator-Karte anzeigen. |
 | **BA 22.5** | Dashboard Human Approval Gate | **done** | Preview-Freigabe vor finalem Render erfassen. |
 | **BA 22.6** | Final Render Button Preparation | **done** | Final-Render-Button vorbereiten, abhängig von Quality, Approval und Kostenstatus. |
+| **BA 23.0** | Dashboard Local Preview UX Polish / Control Review | **done** | Local Preview Bereich im Dashboard gliedern (Founder Summary, Aktionen, Diagnostics, Approval, Final Render Readiness, Recent Runs) und Labels/Fehlertexte beruhigen — ohne neue Produktionslogik. |
 
 **Nicht-Ziele BA 21:**
 
@@ -567,6 +568,7 @@ Der lokale Preview- und Quality-Loop wird von CLI/Output-Ordnern schrittweise in
 | BA 22.4 | Dashboard Cost Card / Production Estimate | done | Geschätzte Produktionskosten als Founder-/Operator-Karte anzeigen. |
 | BA 22.5 | Dashboard Human Approval Gate | done | Preview-Freigabe vor finalem Render erfassen. |
 | BA 22.6 | Final Render Button Preparation | done | Final-Render-Button vorbereiten, abhängig von Quality, Approval und Kostenstatus. |
+| BA 23.0 | Dashboard Local Preview UX Polish / Control Review | done | Local Preview Bereich im Dashboard gliedern und Labels/Fehlertexte beruhigen — ohne neue Produktionslogik. |
 
 **Nicht-Ziele:**
 

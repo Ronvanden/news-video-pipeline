@@ -76,6 +76,18 @@ main { padding: 1rem 1.25rem 2rem; max-width: 1200px; margin: 0 auto; }
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.lp-section {
+  border: 1px solid rgba(45, 58, 77, 0.65);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-top: 0.6rem;
+  background: rgba(15, 20, 25, 0.25);
+}
+.lp-section .subh { margin-top: 0; }
+.lp-grid-2 { display: grid; gap: 0.75rem; }
+@media (min-width: 900px) { .lp-grid-2 { grid-template-columns: 1.1fr 0.9fr; } }
+.lp-inline-actions { display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
+.lp-hint { margin: 0.2rem 0 0; font-size: 0.82rem; color: var(--muted); }
 .subh { margin-top: 1rem; }
 label { display: block; margin-bottom: 0.35rem; color: var(--muted); font-size: 0.8rem; }
 input[type="text"], input[type="number"], textarea, select {
@@ -498,31 +510,60 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   </section>
 
   <section class="panel" id="panel-ba22-local-preview" aria-labelledby="lp-panel-h">
-    <h2 id="lp-panel-h">Local Preview (BA 22.0 / BA 22.1 / BA 22.2 / BA 22.3)</h2>
+    <h2 id="lp-panel-h">Local Preview (BA 22.0–22.6) · Founder Summary · Operator Controls</h2>
     <p class="muted" id="lp-panel-status">Lade Panel…</p>
     <div id="lp-panel-body" style="display:none">
       <p class="muted" id="lp-out-root"></p>
-      <div class="actions" style="margin:0.35rem 0 0.35rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
-        <button type="button" class="primary" id="lp-btn-run-mini" data-label="Preview erstellen">Preview erstellen</button>
-        <span class="muted" id="lp-run-status" aria-live="polite" style="font-size:0.82rem"></span>
+
+      <div class="lp-section" id="lp-founder-summary">
+        <h3 class="subh">Founder Summary (Verdict / Quality / Founder decision)</h3>
+        <div id="lp-latest-cards" aria-live="polite"></div>
+        <p class="lp-top-issue" id="lp-top-issue" style="display:none"></p>
+        <p class="lp-next-step" id="lp-next-step" style="display:none"></p>
       </div>
-      <h3 class="subh">Kosten-Schätzung (BA 22.4)</h3>
-      <div id="lp-cost-card" class="lp-cost-card" aria-live="polite"></div>
-      <h3 class="subh">Human Approval (BA 22.5)</h3>
-      <div id="lp-approval-card" class="lp-approval-card" aria-live="polite"></div>
-      <h3 class="subh">Final Render (BA 22.6)</h3>
-      <div id="lp-final-render-card" class="lp-final-render-card" aria-live="polite"></div>
-      <h3 class="subh">Status (Verdict / Quality / Founder)</h3>
-      <div id="lp-latest-cards" aria-live="polite"></div>
-      <p class="lp-top-issue" id="lp-top-issue" style="display:none"></p>
-      <p class="lp-next-step" id="lp-next-step" style="display:none"></p>
-      <h3 class="subh">Preview & Artefakte (BA 22.2)</h3>
-      <div id="lp-preview-toolbar" class="lp-preview-btns" aria-label="Preview Artefakte"></div>
-      <div id="lp-preview-video-wrap" class="lp-preview-video-wrap"></div>
-      <h3 class="subh">Operator-Aktionen</h3>
-      <div id="lp-actions" class="lp-action-list"></div>
-      <h3 class="subh">Letzte Läufe unter output/</h3>
-      <div id="lp-runs-wrap"></div>
+
+      <div class="lp-grid-2">
+        <div class="lp-section" id="lp-preview-actions">
+          <h3 class="subh">Preview Actions</h3>
+          <div class="lp-inline-actions">
+            <button type="button" class="primary" id="lp-btn-run-mini" data-label="Preview erstellen">Preview erstellen</button>
+            <span class="muted" id="lp-run-status" aria-live="polite" style="font-size:0.82rem"></span>
+          </div>
+          <p class="lp-hint">Danach: Preview/Report/OPEN_ME/JSON über die Links öffnen.</p>
+          <div id="lp-preview-toolbar" class="lp-preview-btns" aria-label="Preview Artefakte"></div>
+          <div id="lp-preview-video-wrap" class="lp-preview-video-wrap"></div>
+        </div>
+
+        <div class="lp-section" id="lp-quality-diagnostics">
+          <h3 class="subh">Quality & Diagnostics</h3>
+          <span class="muted" style="display:none">Kosten-Schätzung (BA 22.4)</span>
+          <p class="lp-hint">Qualität, Warnstufe, Kosten — ohne externe Calls.</p>
+          <div id="lp-cost-card" class="lp-cost-card" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="lp-grid-2">
+        <div class="lp-section" id="lp-human-approval">
+          <h3 class="subh">Human Approval</h3>
+          <div id="lp-approval-card" class="lp-approval-card" aria-live="polite"></div>
+        </div>
+
+        <div class="lp-section" id="lp-final-render">
+          <h3 class="subh">Final Render</h3>
+          <span class="muted" style="display:none">Final Render (BA 22.6)</span>
+          <div id="lp-final-render-card" class="lp-final-render-card" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="lp-section" id="lp-operator-actions">
+        <h3 class="subh">Operator-Aktionen</h3>
+        <div id="lp-actions" class="lp-action-list"></div>
+      </div>
+
+      <div class="lp-section" id="lp-recent-runs">
+        <h3 class="subh">Recent Runs · Letzte Läufe unter output/</h3>
+        <div id="lp-runs-wrap"></div>
+      </div>
     </div>
   </section>
 
@@ -3337,12 +3378,12 @@ try {
     try {
       const r = await fetch("/founder/dashboard/local-preview/panel", { method: "GET" });
       if (!r.ok) {
-        st.textContent = "Local Preview Panel: HTTP " + r.status;
+        st.textContent = "Local Preview konnte nicht geladen werden (HTTP " + r.status + ").";
         st.classList.add("intake-status-err");
         return;
       }
       const data = await r.json();
-      st.textContent = "Contract " + (data.result_contract && data.result_contract.id ? data.result_contract.id : "?")
+      st.textContent = "Local Preview geladen · Contract " + (data.result_contract && data.result_contract.id ? data.result_contract.id : "?")
         + " · Läufe: " + ((data.runs && data.runs.length) || 0);
       st.classList.remove("intake-status-err");
       rootEl.textContent = "out_root: " + (data.out_root || "") + (data.out_root_exists ? "" : " (nicht lesbar)");
@@ -3377,13 +3418,13 @@ try {
         if (tiEl && nsEl) {
           if (latest && latest.top_issue) {
             tiEl.style.display = "block";
-            tiEl.textContent = "Top issue: " + latest.top_issue;
+            tiEl.textContent = "Wichtigster Hinweis: " + latest.top_issue;
           } else {
             tiEl.style.display = "none";
           }
           if (latest && latest.next_step) {
             nsEl.style.display = "block";
-            nsEl.textContent = "Next step: " + latest.next_step;
+            nsEl.textContent = "Nächster Schritt: " + latest.next_step;
           } else {
             nsEl.style.display = "none";
           }
@@ -3420,7 +3461,7 @@ try {
         if (!(data.runs && data.runs.length)) {
           var empty = document.createElement("p");
           empty.className = "muted";
-          empty.textContent = "Keine local_preview_* Ordner gefunden.";
+          empty.textContent = "Noch kein Local Preview Run gefunden.";
           runsEl.appendChild(empty);
         } else {
           var tbl = document.createElement("table");
