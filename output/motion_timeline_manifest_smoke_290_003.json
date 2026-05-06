@@ -1,0 +1,61 @@
+{
+  "timeline_version": "ba28_3_v1",
+  "run_id": "smoke_290_003",
+  "scenes": [
+    {
+      "scene_number": 1,
+      "start_seconds": 0.0,
+      "end_seconds": 6.0,
+      "duration_seconds": 6.0,
+      "voice_path": null,
+      "clip_path": "scene_001.mp4",
+      "image_path": "scene_001.png",
+      "subtitle_text": null,
+      "alignment_status": "missing_voice"
+    },
+    {
+      "scene_number": 2,
+      "start_seconds": 6.0,
+      "end_seconds": 12.0,
+      "duration_seconds": 6.0,
+      "voice_path": null,
+      "clip_path": "scene_002.mp4",
+      "image_path": "scene_002.png",
+      "subtitle_text": null,
+      "alignment_status": "missing_voice"
+    },
+    {
+      "scene_number": 3,
+      "start_seconds": 12.0,
+      "end_seconds": 18.0,
+      "duration_seconds": 6.0,
+      "voice_path": null,
+      "clip_path": "scene_003.mp4",
+      "image_path": "scene_003.png",
+      "subtitle_text": null,
+      "alignment_status": "missing_voice"
+    },
+    {
+      "scene_number": 4,
+      "start_seconds": 18.0,
+      "end_seconds": 23.0,
+      "duration_seconds": 5.0,
+      "voice_path": null,
+      "clip_path": "scene_004.mp4",
+      "image_path": "scene_004.png",
+      "subtitle_text": null,
+      "alignment_status": "missing_voice"
+    }
+  ],
+  "total_duration_seconds": 23.0,
+  "warnings": [
+    "scene_1:missing_voice",
+    "scene_2:missing_voice",
+    "scene_3:missing_voice",
+    "scene_4:missing_voice"
+  ],
+  "counts": {
+    "missing_voice": 4,
+    "missing_clip": 0
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "run_id": "smoke_290_003",
+  "production_run_version": "ba29_0_v1",
+  "duration_target_seconds": 45,
+  "scene_count": 4,
+  "used_real_images": true,
+  "used_placeholder_clips": true,
+  "used_real_voice": false,
+  "production_pack_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003",
+  "render_input_bundle_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\render_input_bundle_smoke_290_003.json",
+  "final_render_dry_run_result_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_dry_run_result_smoke_290_003.json",
+  "ready_for_manual_review": true,
+  "blocking_reasons": [],
+  "warnings": [
+    "reference_provider_payloads_missing",
+    "continuity_summary_missing"
+  ],
+  "next_operator_actions": [
+    "Open production_pack/README_PRODUCTION_PACK.md",
+    "Review visual_production_preflight_result",
+    "Review motion_timeline_manifest and render_input_bundle"
+  ]
+}

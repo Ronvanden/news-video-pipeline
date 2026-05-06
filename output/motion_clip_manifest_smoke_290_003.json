@@ -1,0 +1,11 @@
+{
+  "motion_clip_manifest_version": "ba28_0_v1",
+  "clips": [],
+  "summary": {
+    "clips_planned": 0,
+    "provider_counts": {},
+    "missing_input_count": 0,
+    "dry_run": true
+  },
+  "motion_clip_ingest_version": "ba28_2_v1"
+}

@@ -72,13 +72,7 @@
       "visual_cost_source": "estimate",
       "visual_provider_unit_cost": 0.05,
       "visual_cost_warning": "visual_cost_estimate_only",
-      "visual_cost_version": "ba26_8c_v1",
-      "visual_prompt_effective": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Hook. Textauszug: Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims. [visual_no_text_guard_v26_4] No readable text, no letters, no fake UI, no documents with legible writing, no subtitles, no watermark, no logo, no typography. Leave clean empty space for later editorial text overlay.",
-      "visual_text_guard_applied": true,
-      "visual_policy_status": "safe",
-      "visual_policy_warnings": [
-        "legacy_manifest_guard_patched_for_smoke"
-      ]
+      "visual_cost_version": "ba26_8c_v1"
     },
     {
       "scene_number": 2,
@@ -146,13 +140,7 @@
       "visual_cost_source": "estimate",
       "visual_provider_unit_cost": 0.05,
       "visual_cost_warning": "visual_cost_estimate_only",
-      "visual_cost_version": "ba26_8c_v1",
-      "visual_prompt_effective": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 1: Einstieg. Textauszug: Wir zeigen, wie ein Story-Text in Szenen zerlegt wird. [visual_no_text_guard_v26_4] No readable text, no letters, no fake UI, no documents with legible writing, no subtitles, no watermark, no logo, no typography. Leave clean empty space for later editorial text overlay.",
-      "visual_text_guard_applied": true,
-      "visual_policy_status": "safe",
-      "visual_policy_warnings": [
-        "legacy_manifest_guard_patched_for_smoke"
-      ]
+      "visual_cost_version": "ba26_8c_v1"
     },
     {
       "scene_number": 3,
@@ -220,13 +208,7 @@
       "visual_cost_source": "estimate",
       "visual_provider_unit_cost": 0.05,
       "visual_cost_warning": "visual_cost_estimate_only",
-      "visual_cost_version": "ba26_8c_v1",
-      "visual_prompt_effective": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Struktur. Textauszug: Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann. [visual_no_text_guard_v26_4] No readable text, no letters, no fake UI, no documents with legible writing, no subtitles, no watermark, no logo, no typography. Leave clean empty space for later editorial text overlay.",
-      "visual_text_guard_applied": true,
-      "visual_policy_status": "safe",
-      "visual_policy_warnings": [
-        "legacy_manifest_guard_patched_for_smoke"
-      ]
+      "visual_cost_version": "ba26_8c_v1"
     },
     {
       "scene_number": 4,
@@ -294,13 +276,7 @@
       "visual_cost_source": "estimate",
       "visual_provider_unit_cost": 0.05,
       "visual_cost_warning": "visual_cost_estimate_only",
-      "visual_cost_version": "ba26_8c_v1",
-      "visual_prompt_effective": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 3: Abschluss. Textauszug: Am Ende entsteht ein scene_asset_pack.json, das der Real Video Build Orchestrator direkt nutzen kann. [visual_no_text_guard_v26_4] No readable text, no letters, no fake UI, no documents with legible writing, no subtitles, no watermark, no logo, no typography. Leave clean empty space for later editorial text overlay.",
-      "visual_text_guard_applied": true,
-      "visual_policy_status": "safe",
-      "visual_policy_warnings": [
-        "legacy_manifest_guard_patched_for_smoke"
-      ]
+      "visual_cost_version": "ba26_8c_v1"
     }
   ],
   "provider_quality_compare_run": {
@@ -321,9 +297,14 @@
     "version": "ba26_8c_v1"
   },
   "production_asset_approval_result": {
-    "ok": true,
-    "approval_status": "approved",
-    "blocking_reasons": [],
+    "ok": false,
+    "approval_status": "blocked",
+    "blocking_reasons": [
+      "scene_1:no_text_guard_missing",
+      "scene_2:no_text_guard_missing",
+      "scene_3:no_text_guard_missing",
+      "scene_4:no_text_guard_missing"
+    ],
     "warnings": [],
     "assets_checked": 4,
     "accepted_count": 0,
@@ -333,6 +314,5 @@
     "overlay_pending_count": 0,
     "cost_warning_count": 4,
     "gate_version": "ba26_9c_v1"
-  },
-  "legacy_visual_guard_patch": "ba29_smoke_only"
+  }
 }

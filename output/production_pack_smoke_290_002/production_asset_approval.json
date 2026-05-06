@@ -1,0 +1,19 @@
+{
+  "ok": false,
+  "approval_status": "blocked",
+  "blocking_reasons": [
+    "scene_1:no_text_guard_missing",
+    "scene_2:no_text_guard_missing",
+    "scene_3:no_text_guard_missing",
+    "scene_4:no_text_guard_missing"
+  ],
+  "warnings": [],
+  "assets_checked": 4,
+  "accepted_count": 0,
+  "locked_count": 0,
+  "needs_review_count": 0,
+  "missing_asset_count": 0,
+  "overlay_pending_count": 0,
+  "cost_warning_count": 4,
+  "gate_version": "ba26_9c_v1"
+}

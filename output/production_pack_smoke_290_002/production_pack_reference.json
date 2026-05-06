@@ -1,0 +1,34 @@
+{
+  "pack_version": "ba27_0_v1",
+  "pack_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002",
+  "production_summary_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\production_summary.json",
+  "ready_for_render": false,
+  "render_readiness_status": "blocked",
+  "approval_status": "blocked",
+  "blocking_reasons": [
+    "render_not_ready_due_to_approval_status",
+    "scene_1:no_text_guard_missing",
+    "scene_2:no_text_guard_missing",
+    "scene_3:no_text_guard_missing",
+    "scene_4:no_text_guard_missing"
+  ],
+  "warnings": [],
+  "files_written": [
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\asset_manifest.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\motion_clip_manifest.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\production_asset_approval.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\assets\\images\\scene_001.png",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\assets\\clips\\scene_001.mp4",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\assets\\images\\scene_002.png",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\assets\\clips\\scene_002.mp4",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\assets\\images\\scene_003.png",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\assets\\clips\\scene_003.mp4",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\assets\\images\\scene_004.png",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\assets\\clips\\scene_004.mp4",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\asset_manifest_reference_index.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\production_summary.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_002\\README_PRODUCTION_PACK.md"
+  ],
+  "assets_copied_count": 8,
+  "created_by": "ba27_0b_snapshot_wiring"
+}

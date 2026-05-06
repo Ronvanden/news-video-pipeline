@@ -1,0 +1,28 @@
+{
+  "pack_version": "ba27_0_v1",
+  "pack_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003",
+  "production_summary_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\production_summary.json",
+  "ready_for_render": true,
+  "render_readiness_status": "ready",
+  "approval_status": "approved",
+  "blocking_reasons": [],
+  "warnings": [],
+  "files_written": [
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\asset_manifest.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\motion_clip_manifest.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\production_asset_approval.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\assets\\images\\scene_001.png",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\assets\\clips\\scene_001.mp4",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\assets\\images\\scene_002.png",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\assets\\clips\\scene_002.mp4",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\assets\\images\\scene_003.png",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\assets\\clips\\scene_003.mp4",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\assets\\images\\scene_004.png",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\assets\\clips\\scene_004.mp4",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\asset_manifest_reference_index.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\production_summary.json",
+    "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\README_PRODUCTION_PACK.md"
+  ],
+  "assets_copied_count": 8,
+  "created_by": "ba27_0b_snapshot_wiring"
+}
