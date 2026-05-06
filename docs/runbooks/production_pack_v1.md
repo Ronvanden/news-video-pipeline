@@ -60,3 +60,15 @@ python scripts/build_production_pack_v1.py ^
   --script-json output/generated_assets_test_001/script.json
 ```
 
+### Optional: Lokale Vorschau (BA 29.3)
+Nach `scripts/render_local_preview_from_bundle.py` können Preview-Artefakte in den Pack gemischt werden:
+- `--local-preview-render-result` → `local_preview_render_result.json`
+- `--preview-video` → `local_preview.mp4`
+
+`production_summary.json` enthält dann additiv u. a. `local_preview_status`, `local_preview_video_path`, `local_preview_render_result` (embedded, falls JSON geladen werden kann).
+
+Siehe: `docs/runbooks/local_preview_render_v1.md`, `docs/runbooks/founder_production_flow_v1.md`.
+
+### Render Input Bundle & Hydration (BA 29.2b)
+`scripts/build_render_input_bundle_v1.py` nutzt `build_render_input_bundle` mit eingebettetem `asset_manifest`; Bild- und Clip-Pfade kommen aus der **Media-Path-Hydration** (Manifest-Ordner als Basis für relative Pfade). So kann die lokale Preview auch dann Standbilder finden, wenn im Bundle zuvor nur `asset_manifest_path` stand.
+

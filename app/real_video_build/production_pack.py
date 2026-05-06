@@ -217,6 +217,7 @@ def collect_production_pack_inputs(source_paths: Dict[str, Any]) -> Dict[str, An
         "production_summary",
         "reference_library",
         "motion_clip_manifest",
+        "local_preview_render_result",
     ):
         p = source_paths.get(key) if isinstance(source_paths, dict) else None
         doc, err = _read_json_or_none(Path(p) if p else None)
@@ -411,6 +412,13 @@ def build_production_summary(
         "motion_clip_manifest_path": None,
         "motion_clip_summary": motion_clip_summary,
         "render_input_bundle_path": None,
+        "local_preview_video_path": None,
+        "local_preview_render_result_path": None,
+        "local_preview_status": "absent",
+        "local_preview_render_result": None,
+        "human_preview_review_result": None,
+        "final_render_readiness_result": None,
+        "final_render_execution_result": None,
     }
 
 
@@ -589,6 +597,40 @@ def build_production_pack(
     _copy_json(Path(source_paths.get("provider_quality_summary")) if source_paths.get("provider_quality_summary") else None, "provider_quality_summary.json")
     _copy_json(Path(source_paths.get("reference_library")) if source_paths.get("reference_library") else None, "reference_library.json")
     _copy_json(Path(source_paths.get("motion_clip_manifest")) if source_paths.get("motion_clip_manifest") else None, "motion_clip_manifest.json")
+    _copy_json(
+        Path(source_paths.get("local_preview_render_result")) if source_paths.get("local_preview_render_result") else None,
+        "local_preview_render_result.json",
+    )
+
+    # BA 29.3 — optional local preview video (operator-visible)
+    pv_src = Path(source_paths.get("preview_video")) if isinstance(source_paths, dict) and source_paths.get("preview_video") else None
+    if pv_src is not None and pv_src.is_file():
+        dst_pv = target_dir / "local_preview.mp4"
+        if dry_run:
+            copied_files.append(
+                {
+                    "kind": "preview_video",
+                    "src": str(pv_src.resolve()),
+                    "dst": str(dst_pv.resolve()),
+                    "status": "dry_run_skipped",
+                    "bytes": _file_size_bytes_or_none(pv_src),
+                }
+            )
+        else:
+            dst_pv.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(pv_src.resolve(), dst_pv)
+            copied_files.append(
+                {
+                    "kind": "preview_video",
+                    "src": str(pv_src.resolve()),
+                    "dst": str(dst_pv.resolve()),
+                    "status": "copied",
+                    "bytes": _file_size_bytes_or_none(dst_pv),
+                }
+            )
+            files_written.append(str(dst_pv.resolve()))
+    elif pv_src is not None and not dry_run:
+        missing_optional_files.append("local_preview.mp4")
 
     # Production asset approval json (from manifest result; do not recompute if missing)
     approval = None
@@ -664,6 +706,23 @@ def build_production_pack(
         summary["motion_clip_manifest_path"] = str((target_dir / "motion_clip_manifest.json").resolve())
         if summary.get("motion_clip_summary") is None and isinstance(motion_clip_manifest_doc.get("summary"), dict):
             summary["motion_clip_summary"] = dict(motion_clip_manifest_doc.get("summary") or {})
+
+    # BA 29.3 — local preview wiring (paths + embedded result for dashboard/readiness)
+    lp_src_path = Path(source_paths.get("local_preview_render_result")) if isinstance(source_paths, dict) and source_paths.get("local_preview_render_result") else None
+    lp_dst_json = target_dir / "local_preview_render_result.json"
+    if lp_src_path is not None and lp_src_path.is_file():
+        summary["local_preview_render_result_path"] = str(lp_dst_json.resolve())
+        doc_lp, _ = _read_json_or_none(lp_src_path)
+        if isinstance(doc_lp, dict):
+            summary["local_preview_render_result"] = doc_lp
+            summary["local_preview_status"] = "available" if doc_lp.get("ok") is True else "failed"
+        else:
+            summary["local_preview_status"] = "unknown"
+    preview_dst = target_dir / "local_preview.mp4"
+    if preview_dst.is_file():
+        summary["local_preview_video_path"] = str(preview_dst.resolve())
+        if summary.get("local_preview_status") == "absent":
+            summary["local_preview_status"] = "video_only"
 
     # BA 27.1: reference library summary (optional)
     if isinstance(reference_library_doc, dict) and _s(source_paths.get("reference_library")):

@@ -41,20 +41,14 @@ def main() -> int:
         mm = _read_json(args.motion_clip_manifest) if args.motion_clip_manifest else None
         tm = _read_json(args.motion_timeline_manifest) if args.motion_timeline_manifest else None
 
-        # derive minimal paths list for diagnostics
+        # voice + overlay from assets; images/clips via BA 29.2b hydration inside build_render_input_bundle
         voice_paths = []
-        clip_paths = []
-        image_paths = []
         overlay_intents = []
         for a in (am.get("assets") or []) if isinstance(am.get("assets"), list) else []:
             if not isinstance(a, dict):
                 continue
             if a.get("voice_path"):
                 voice_paths.append(str(a.get("voice_path")))
-            if a.get("video_path") or a.get("clip_path"):
-                clip_paths.append(str(a.get("video_path") or a.get("clip_path")))
-            if a.get("selected_asset_path") or a.get("image_path") or a.get("generated_image_path"):
-                image_paths.append(str(a.get("selected_asset_path") or a.get("image_path") or a.get("generated_image_path")))
             if isinstance(a.get("overlay_intent"), list):
                 overlay_intents.extend([str(x) for x in (a.get("overlay_intent") or []) if str(x).strip()])
 
@@ -62,6 +56,7 @@ def main() -> int:
             run_id=args.run_id,
             production_summary_path=str(args.production_summary.resolve()),
             asset_manifest_path=str(args.asset_manifest.resolve()),
+            asset_manifest=am,
             motion_clip_manifest_path=str(args.motion_clip_manifest.resolve()) if args.motion_clip_manifest else None,
             motion_timeline_manifest_path=str(args.motion_timeline_manifest.resolve()) if args.motion_timeline_manifest else None,
             ready_for_render=bool(ps.get("ready_for_render") is True),
@@ -69,8 +64,6 @@ def main() -> int:
             warnings=list(ps.get("warnings") or []) if isinstance(ps.get("warnings"), list) else [],
             blocking_reasons=list(ps.get("blocking_reasons") or []) if isinstance(ps.get("blocking_reasons"), list) else [],
             voice_paths=voice_paths,
-            clip_paths=clip_paths,
-            image_paths=image_paths,
             overlay_intents=overlay_intents,
         )
         _write_json(args.output, out)

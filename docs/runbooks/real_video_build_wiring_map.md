@@ -743,3 +743,18 @@ Optional: `--out-root` (Default `output`), `--asset-mode` (`placeholder` | `live
 - **Kein** TTS-Live-Zwang, **kein** Leonardo-Live-Zwang, **keine** neue Cost Engine.
 - BA 25.4 bricht **keinen** bestehenden Vertrag (`GenerateScriptResponse`, `scene_asset_pack.json`, `real_video_build_result.json`).
 
+---
+
+## BA 29.2–30.0 — Production Bundle Preview → Human Review → Final Render (lokal)
+
+Kurzverweise (Details in `docs/runbooks/local_preview_render_v1.md`, `founder_production_flow_v1.md`, `production_pack_v1.md`):
+
+| Schritt | CLI / Modul |
+|---------|-------------|
+| Preview aus Bundle | `scripts/render_local_preview_from_bundle.py` → `app/production_assembly/local_preview_render.py` |
+| Pack optional | `scripts/build_production_pack_v1.py` (`--local-preview-render-result`, `--preview-video`) |
+| Human Review | `scripts/patch_human_preview_review.py` |
+| Readiness | `scripts/run_final_render_readiness_gate.py` |
+| Final (explizit) | `scripts/run_safe_final_render.py` (`--execute`) |
+| Dashboard | `app/founder_dashboard/html.py` — Panel **Produktionsfluss** (read-only) |
+

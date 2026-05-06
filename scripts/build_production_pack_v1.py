@@ -41,6 +41,8 @@ def main() -> int:
     ap.add_argument("--provider-quality-summary", required=False, type=Path, dest="provider_quality_summary")
     ap.add_argument("--reference-library", required=False, type=Path, dest="reference_library")
     ap.add_argument("--motion-clip-manifest", required=False, type=Path, dest="motion_clip_manifest")
+    ap.add_argument("--local-preview-render-result", required=False, type=Path, dest="local_preview_render_result")
+    ap.add_argument("--preview-video", required=False, type=Path, dest="preview_video")
 
     ap.add_argument("--no-copy-assets", action="store_true", dest="no_copy_assets")
     ap.add_argument("--dry-run", action="store_true", dest="dry_run")
@@ -61,6 +63,8 @@ def main() -> int:
         "provider_quality_summary": args.provider_quality_summary,
         "reference_library": args.reference_library,
         "motion_clip_manifest": args.motion_clip_manifest,
+        "local_preview_render_result": args.local_preview_render_result,
+        "preview_video": args.preview_video,
     }
 
     try:
