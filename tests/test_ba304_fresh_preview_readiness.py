@@ -181,7 +181,7 @@ def test_api_includes_readiness_fields(tmp_path: Path, monkeypatch):
     r = client.get("/founder/dashboard/fresh-preview/snapshot")
     assert r.status_code == 200
     d = r.json()
-    assert d.get("fresh_preview_snapshot_version") == "ba30_4_v1"
+    assert d.get("fresh_preview_snapshot_version") == "ba31_0_v1"
     assert "readiness_status" in d
     assert "readiness_score" in d
     assert "blocking_reasons" in d

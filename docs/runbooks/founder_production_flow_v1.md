@@ -40,6 +40,15 @@ Nach erfolgreichem Dry-Run zeigt das Dashboard einen **kopierbaren** PowerShell-
 ### BA 30.9 — Artifact Access: Textdateien im Browser
 **„Öffnen“** im Fresh-Preview-Pfad-Grid startet `GET /founder/dashboard/fresh-preview/file?path=…` (nur **`.md`/`.json`/`.txt`**, read-only, max. 1 MB, Whitelist-Pfade unter `output` wie Fresh-Run, Summary-JSON, `OPEN_PREVIEW_SMOKE.md`). Keine Videos über diese Route; keine Writes.
 
+### BA 31.0 — Operator Review Loop (nach Full Preview Smoke)
+Nach einem vollständigen Preview-Smoke (Summary unter `output/preview_smoke_auto_summary_<run_id>.json`, optional `OPEN_PREVIEW_SMOKE.md`) zeigt das Dashboard im Panel **Fresh Preview** die Karte **Operator Review**: Status-Badge (approve / rework / blocked / pending), Gründe und empfohlene nächste Aktion — **rein read-only**, keine gespeicherte Freigabe und keine Freigabe-Schaltflächen. Daten kommen aus dem gleichen Snapshot-Endpunkt wie BA 30.3–30.4 (`evaluate_operator_review`).
+
+### BA 31.1 — Guided Production Flow
+Oben im Hauptbereich (unter Executive Row) zeigt **Production Flow** die Schritte vom Input bis Final Render mit Status-Badges und einer Box **Nächster Schritt** — abgeleitet aus dem Fresh-Preview-Snapshot (`guided_flow_*`, `build_guided_production_flow`). Keine Persistenz neuer Entscheidungen; Fokus Orientierung für den Operator.
+
+### BA 31.1b — Guided Flow Microcopy
+Klarstellung für Operatoren: **Snapshot** = Dashboard-Abgleich per **„Fresh Preview aktualisieren“**; nach lokalem Full Preview den Handoff-Befehl ausführen und danach im Dashboard aktualisieren. Handoff-Box mit Kurz-Hinweis nach dem kopierbaren CLI-Befehl.
+
 ### Operator-Workflow (CLI, keine Dashboard-Writes)
 1. Neu von Thema/URL/Skript bis Preview + Open-Me: `scripts/run_fresh_topic_preview_smoke.py` (siehe BA 30.2)
 2. Oder Preview-Smoke nur mit bestehendem Manifest: `scripts/run_preview_smoke_auto.py`

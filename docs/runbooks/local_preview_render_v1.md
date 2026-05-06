@@ -42,6 +42,15 @@ Bei **ok: true** liefert dieselbe Response additiv `handoff_cli_command` / `hand
 ### BA 30.9 — Fresh Preview: Artefakte im Browser öffnen (read-only)
 `GET /founder/dashboard/fresh-preview/file?path=<URL-encoded absoluter Pfad>` liefert Textartefakte (**`.md`**, **`.json`**, **`.txt`**) nur aus den vom Snapshot genutzten Bereichen: Unterbaum **`output/fresh_topic_preview/`**, **`output/preview_smoke_auto_summary_*.json`**, **`output/.preview_smoke_work/<run_id>/OPEN_PREVIEW_SMOKE.md`**. Max. **1 MB** pro Datei; keine Symlinks; kein Zugriff auf beliebige andere `output`-Dateien oder außerhalb von `output`. Fehler: **404** (nicht gefunden), **403** (Policy), **413** (zu groß). Im Dashboard neben **Kopieren** der Link **„Öffnen“** (neuer Tab) — **kein** MP4 über diese Route in BA 30.9. Meta: `GET /founder/dashboard/config` → `fresh_preview_file_relative`.
 
+### BA 31.0 — Operator Review (Full Preview Smoke, read-only)
+Der Fresh-Preview-Snapshot (`GET /founder/dashboard/fresh-preview/snapshot`) enthält additiv eine **Review-Empfehlung** aus vorhandenen Artefakten: `review_decision` (approve / rework / blocked / pending), kurze Gründe und `review_next_action`. **Keine** persistierte Freigabe, **keine** Buttons zum Freischalten — nur Orientierung nach Readiness, Summary-`ok` und OPEN_PREVIEW-Pfaden. UI: Karte **Operator Review** im Fresh-Preview-Cockpit. Logik: `evaluate_operator_review` in `app/production_assembly/fresh_preview_snapshot.py` (`operator_review_version: ba31_0_v1`).
+
+### BA 31.1 — Guided Production Flow
+Der Snapshot liefert additiv `guided_flow_steps` (Input → Dry-Run → Snapshot → Full Preview → Review → Final Render) mit Status pro Schritt sowie **Nächster Schritt** (`guided_flow_next_step_action`). Rein read-only aus bestehenden Snapshot-Feldern; keine neuen Writes. UI im Founder Dashboard: **Production Flow** direkt unter der Executive Row.
+
+### BA 31.1b — Guided Flow Microcopy
+Schritt **Snapshot** erklärt den Bezug zu **„Fresh Preview aktualisieren“** (`detail` im Snapshot); bei nur Dry-Run beschreibt der nächste Schritt explizit CLI-Handoff, lokales Ausführen und erneutes Aktualisieren. Zusätzliche Hilfezeile in der Production-Flow-Card und Hinweis in der Handoff-Box nach dem CLI-Befehl. `guided_flow_version: ba31_1b_v1`.
+
 ### CLI
 ```powershell
 python scripts/render_local_preview_from_bundle.py `

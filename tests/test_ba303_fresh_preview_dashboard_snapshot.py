@@ -130,6 +130,9 @@ def test_dashboard_html_contains_fresh_preview_panel():
     assert "data-ba305-copy-markers" in html
     assert "data-ba305-copy-path" in html
     assert "operator_next_step" in html
+    assert "Operator Review" in html
+    assert "data-ba310-operator-review" in html
+    assert "data-review-decision-marker" in html
 
 
 def test_api_fresh_preview_snapshot_endpoint(tmp_path: Path, monkeypatch):
@@ -143,7 +146,7 @@ def test_api_fresh_preview_snapshot_endpoint(tmp_path: Path, monkeypatch):
     r = client.get("/founder/dashboard/fresh-preview/snapshot")
     assert r.status_code == 200
     data = r.json()
-    assert data.get("fresh_preview_snapshot_version") == "ba30_4_v1"
+    assert data.get("fresh_preview_snapshot_version") == "ba31_0_v1"
     assert data.get("ok") is True
 
 
