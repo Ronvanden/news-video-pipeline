@@ -40,6 +40,7 @@ def main() -> int:
     ap.add_argument("--visual-cost-summary", required=False, type=Path, dest="visual_cost_summary")
     ap.add_argument("--provider-quality-summary", required=False, type=Path, dest="provider_quality_summary")
     ap.add_argument("--reference-library", required=False, type=Path, dest="reference_library")
+    ap.add_argument("--motion-clip-manifest", required=False, type=Path, dest="motion_clip_manifest")
 
     ap.add_argument("--no-copy-assets", action="store_true", dest="no_copy_assets")
     ap.add_argument("--dry-run", action="store_true", dest="dry_run")
@@ -59,6 +60,7 @@ def main() -> int:
         "visual_cost_summary": args.visual_cost_summary,
         "provider_quality_summary": args.provider_quality_summary,
         "reference_library": args.reference_library,
+        "motion_clip_manifest": args.motion_clip_manifest,
     }
 
     try:

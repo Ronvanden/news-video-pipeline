@@ -94,6 +94,7 @@ def _iter_asset_file_candidates(asset: Dict[str, Any]) -> Iterable[Tuple[str, st
         "generated_image_path",
         "image_path",
         "video_path",
+        "clip_path",
         "voice_path",
     ):
         v = asset.get(k)
@@ -215,6 +216,7 @@ def collect_production_pack_inputs(source_paths: Dict[str, Any]) -> Dict[str, An
         "provider_quality_summary",
         "production_summary",
         "reference_library",
+        "motion_clip_manifest",
     ):
         p = source_paths.get(key) if isinstance(source_paths, dict) else None
         doc, err = _read_json_or_none(Path(p) if p else None)
@@ -341,6 +343,12 @@ def build_production_summary(
     if isinstance(asset_manifest, dict) and isinstance(asset_manifest.get("reference_provider_payload_summary"), dict):
         reference_provider_payload_summary = asset_manifest.get("reference_provider_payload_summary")
 
+    motion_clip_summary = None
+    if isinstance(asset_manifest, dict) and isinstance(asset_manifest.get("motion_clip_manifest"), dict):
+        mm = asset_manifest.get("motion_clip_manifest")
+        if isinstance(mm, dict) and isinstance(mm.get("summary"), dict):
+            motion_clip_summary = dict(mm.get("summary") or {})
+
     # BA 27.6 — mirror reference payloads into scene-like pack objects (summary only)
     reference_payload_mirror_summary = None
     if assets and isinstance(scene_asset_pack, dict):
@@ -400,6 +408,9 @@ def build_production_summary(
                 "asset_manifest_reference_index_path": None,
             },
         ),
+        "motion_clip_manifest_path": None,
+        "motion_clip_summary": motion_clip_summary,
+        "render_input_bundle_path": None,
     }
 
 
@@ -535,6 +546,7 @@ def build_production_pack(
     scene_asset_pack = loaded.get("scene_asset_pack") if isinstance(loaded, dict) else None
     script_data = loaded.get("script_json") if isinstance(loaded, dict) else None
     reference_library_doc = loaded.get("reference_library") if isinstance(loaded, dict) else None
+    motion_clip_manifest_doc = loaded.get("motion_clip_manifest") if isinstance(loaded, dict) else None
 
     copied_files: List[Dict[str, Any]] = []
     missing_optional_files: List[str] = []
@@ -576,6 +588,7 @@ def build_production_pack(
     _copy_json(Path(source_paths.get("visual_cost_summary")) if source_paths.get("visual_cost_summary") else None, "visual_cost_summary.json")
     _copy_json(Path(source_paths.get("provider_quality_summary")) if source_paths.get("provider_quality_summary") else None, "provider_quality_summary.json")
     _copy_json(Path(source_paths.get("reference_library")) if source_paths.get("reference_library") else None, "reference_library.json")
+    _copy_json(Path(source_paths.get("motion_clip_manifest")) if source_paths.get("motion_clip_manifest") else None, "motion_clip_manifest.json")
 
     # Production asset approval json (from manifest result; do not recompute if missing)
     approval = None
@@ -647,6 +660,10 @@ def build_production_pack(
         scene_asset_pack=scene_asset_pack if isinstance(scene_asset_pack, dict) else None,
         script_data=script_data if isinstance(script_data, dict) else None,
     )
+    if isinstance(motion_clip_manifest_doc, dict):
+        summary["motion_clip_manifest_path"] = str((target_dir / "motion_clip_manifest.json").resolve())
+        if summary.get("motion_clip_summary") is None and isinstance(motion_clip_manifest_doc.get("summary"), dict):
+            summary["motion_clip_summary"] = dict(motion_clip_manifest_doc.get("summary") or {})
 
     # BA 27.1: reference library summary (optional)
     if isinstance(reference_library_doc, dict) and _s(source_paths.get("reference_library")):

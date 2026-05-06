@@ -1446,8 +1446,12 @@ try {
       var cmiss = cs && cs.missing_reference_count != null ? String(cs.missing_reference_count) : "0";
       var rps = ps && ps.reference_provider_payload_summary ? ps.reference_provider_payload_summary : null;
       var rpPrep = rps && rps.prepared_count != null ? String(rps.prepared_count) : "0";
+      var ms = ps && ps.motion_clip_summary ? ps.motion_clip_summary : null;
+      var mPlanned = ms && ms.clips_planned != null ? String(ms.clips_planned) : "0";
+      var mMissing = ms && ms.missing_input_count != null ? String(ms.missing_input_count) : "0";
+      var mDry = ms && ms.dry_run != null ? (ms.dry_run ? "ja" : "nein") : "—";
       meta.textContent = ps
-        ? ("Production Summary gefunden (read-only). References: " + rcount + " · Continuity prepared: " + cprep + " · Missing refs: " + cmiss + " · Referenz-Provider vorbereitet: " + rpPrep)
+        ? ("Production Summary gefunden (read-only). References: " + rcount + " · Continuity prepared: " + cprep + " · Missing refs: " + cmiss + " · Referenz-Provider vorbereitet: " + rpPrep + " · Motion Clips: " + mPlanned + " · Missing inputs: " + mMissing + " · Dry-run: " + mDry)
         : "Noch kein Production Pack Summary im geladenen JSON.";
     }
     setOut("out-prod-pack-summary", ps);
