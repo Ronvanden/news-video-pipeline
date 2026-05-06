@@ -99,6 +99,17 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("fdFpApplySafeFinalRenderHandoff", text)
         self.assertIn("fdFpApplyGuidedFlow", text)
         # BA 30.3–30.8 — Fresh Preview + Dry-Run + CLI-Handoff
+        # BA 32.3 — URL → Video (eigenes Panel, nicht Fresh Preview)
+        self.assertIn("panel-ba323-video-generate", text)
+        self.assertIn("fd-video-generate-form", text)
+        self.assertIn("fd-video-generate-url", text)
+        self.assertIn("fd-video-generate-submit", text)
+        self.assertIn("fd-video-generate-clear", text)
+        self.assertIn("data-ba323-video-generate", text)
+        self.assertIn("Zurücksetzen", text)
+        self.assertIn("/founder/dashboard/video/generate", text)
+        self.assertIn('data-fd-nav-scroll="panel-ba323-video-generate"', text)
+        self.assertGreaterEqual(text.count("Video generieren"), 2)
         self.assertIn("Fresh Preview Smoke (BA 30.3–30.8)", text)
         self.assertIn("Dry-Run starten", text)
         self.assertIn("data-ba307-start-dry-run", text)
@@ -230,6 +241,10 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertEqual(
             data["production_proof_summary_relative"]["path"],
             "/founder/production-proof/summary",
+        )
+        self.assertEqual(
+            data["video_generate_relative"]["path"],
+            "/founder/dashboard/video/generate",
         )
 
     def test_production_proof_summary_200(self):

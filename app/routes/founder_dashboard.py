@@ -11,13 +11,19 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from starlette.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from app.founder_dashboard.fresh_preview_artifact_access import (
     fresh_preview_artifact_media_type,
     resolve_fresh_preview_artifact_path,
+)
+from app.founder_dashboard.ba323_video_generate import (
+    execute_dashboard_video_generate,
+    new_video_gen_run_id,
+    runway_live_configured,
+    video_generate_output_dir,
 )
 from app.founder_dashboard.html import get_founder_dashboard_html
 from app.production_assembly.fresh_preview_snapshot import build_latest_fresh_preview_snapshot
@@ -155,6 +161,55 @@ class FreshPreviewStartDryRunRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+_ALLOWED_VOICE_MODES_BA323 = frozenset(
+    {"elevenlabs_or_safe_default", "none", "elevenlabs", "dummy", "openai", "existing"}
+)
+_ALLOWED_MOTION_MODES_BA323 = frozenset({"basic", "static"})
+
+
+class VideoGenerateRequest(BaseModel):
+    """BA 32.3 — kontrollierter URL→MP4-Lauf (kein Fresh-Preview-Dry-Run)."""
+
+    url: str = Field(..., min_length=1)
+    duration_target_seconds: int = Field(default=600, ge=60, le=1800)
+    max_scenes: int = Field(default=24, ge=1, le=80)
+    max_live_assets: int = Field(default=24, ge=0, le=80)
+    motion_clip_every_seconds: int = Field(default=60, ge=15, le=600)
+    motion_clip_duration_seconds: int = Field(default=10, ge=1, le=120)
+    max_motion_clips: int = Field(default=10, ge=0, le=30)
+    allow_live_assets: bool = False
+    allow_live_motion: bool = False
+    confirm_provider_costs: bool = False
+    voice_mode: str = Field(default="elevenlabs_or_safe_default")
+    motion_mode: str = Field(default="basic")
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator("url")
+    @classmethod
+    def _strip_url(cls, v: str) -> str:
+        s = (v or "").strip()
+        if not s:
+            raise ValueError("url_required")
+        return s
+
+    @field_validator("voice_mode")
+    @classmethod
+    def _voice_mode_ok(cls, v: str) -> str:
+        s = (v or "").strip()
+        if s not in _ALLOWED_VOICE_MODES_BA323:
+            raise ValueError("voice_mode_invalid")
+        return s
+
+    @field_validator("motion_mode")
+    @classmethod
+    def _motion_mode_ok(cls, v: str) -> str:
+        s = (v or "").strip().lower()
+        if s not in _ALLOWED_MOTION_MODES_BA323:
+            raise ValueError("motion_mode_invalid")
+        return s
+
+
 def _ps_single_quote_body(s: str) -> str:
     """PowerShell single-quoted literal: escape ' as ''."""
     return (s or "").replace("'", "''")
@@ -276,6 +331,49 @@ async def founder_fresh_preview_start_dry_run(req: FreshPreviewStartDryRunReques
                 max_scenes=int(req.max_scenes),
             )
         )
+    return payload
+
+
+@router.post("/founder/dashboard/video/generate")
+async def founder_dashboard_video_generate(req: VideoGenerateRequest) -> dict:
+    """
+    BA 32.3 — URL → ``final_video.mp4`` via ``run_ba265_url_to_final`` unter ``output/video_generate/<run_id>/``.
+
+    Keine Runway-Clip-Erzeugung in dieser Pipeline; Live-Motion nur mit konfiguriertem Connector + Warnhinweis.
+    """
+    if (req.allow_live_assets or req.allow_live_motion) and not req.confirm_provider_costs:
+        raise HTTPException(
+            status_code=422,
+            detail="confirm_provider_costs_required_when_live_flags",
+        )
+    if req.allow_live_motion and not runway_live_configured():
+        raise HTTPException(
+            status_code=422,
+            detail="live_motion_requires_runway_connector",
+        )
+    run_id = new_video_gen_run_id()
+    out_dir = video_generate_output_dir(default_local_preview_out_root(), run_id)
+
+    def _run() -> Dict[str, Any]:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        return execute_dashboard_video_generate(
+            url=req.url,
+            output_dir=out_dir,
+            run_id=run_id,
+            duration_target_seconds=int(req.duration_target_seconds),
+            max_scenes=int(req.max_scenes),
+            max_live_assets=int(req.max_live_assets),
+            motion_clip_every_seconds=int(req.motion_clip_every_seconds),
+            motion_clip_duration_seconds=int(req.motion_clip_duration_seconds),
+            max_motion_clips=int(req.max_motion_clips),
+            allow_live_assets=bool(req.allow_live_assets),
+            allow_live_motion=bool(req.allow_live_motion),
+            voice_mode=req.voice_mode,
+            motion_mode=req.motion_mode,
+        )
+
+    payload = await run_in_threadpool(_run)
+    payload["video_generate_version"] = "ba32_3_v1"
     return payload
 
 
@@ -566,7 +664,7 @@ async def founder_local_preview_final_render_run(run_id: str, req: LocalPreviewF
 async def founder_dashboard_config() -> dict:
     """Statische Meta-Infos für Ops/Integrationstests (keine Secrets)."""
     return {
-        "dashboard_version": "10.7-v1",
+        "dashboard_version": "10.8-v1",
         "auth": False,
         "local_preview_panel_relative": {"method": "GET", "path": "/founder/dashboard/local-preview/panel"},
         "fresh_preview_snapshot_relative": {"method": "GET", "path": "/founder/dashboard/fresh-preview/snapshot"},
@@ -574,6 +672,7 @@ async def founder_dashboard_config() -> dict:
             "method": "POST",
             "path": "/founder/dashboard/fresh-preview/start-dry-run",
         },
+        "video_generate_relative": {"method": "POST", "path": "/founder/dashboard/video/generate"},
         "fresh_preview_file_relative": {
             "method": "GET",
             "path": "/founder/dashboard/fresh-preview/file",

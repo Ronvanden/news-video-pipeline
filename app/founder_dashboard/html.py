@@ -1551,6 +1551,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
     <span class="vp-status-pill vp-status-pill--pipeline fd-sidebar-pill" title="Lokale Preview-Pipeline ohne externe Provider-Calls">Local Preview Pipeline</span>
     <nav id="fd-sidebar-nav" class="fd-sidebar-nav" aria-label="Bereiche">
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fd-overview-anchor">Overview</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba323-video-generate">Video generieren</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Fresh Preview</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Readiness</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fp-dry-run-handoff">Handoff</button>
@@ -1598,6 +1599,57 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
       <div id="fd-guided-flow-next-label" class="fd-guided-flow-next-label"></div>
       <p id="fd-guided-flow-next-action" class="fd-guided-flow-next-action">—</p>
     </div>
+  </section>
+
+  <section class="panel panel--video-generate" id="panel-ba323-video-generate" data-ba323-video-generate="1" aria-labelledby="vg-video-generate-h">
+    <div class="panel-section-head">
+      <h2 id="vg-video-generate-h">Video generieren</h2>
+      <p class="panel-section-desc muted">URL eingeben und einen kontrollierten 10-Minuten-Produktionslauf starten.</p>
+    </div>
+    <p class="muted" style="margin:0 0 0.75rem">Fresh Preview bleibt das Diagnose- und Review-Cockpit; dieser Bereich startet den Longform-Render bis <code class="fp-inline-path">final_video.mp4</code>.</p>
+    <p class="muted" style="margin:0 0 0.5rem">Live-Bilder können echte Provider-Kosten auslösen.</p>
+    <p class="muted" style="margin:0 0 1rem">Live-Motion ist nur sinnvoll, wenn ein echter Connector verfügbar ist. Keine Fake-Clips — ohne Runway-Konfiguration blockt der Server Live-Motion.</p>
+    <div id="fd-video-generate-form" class="fp-dry-run-grid" data-ba323-video-generate="1">
+      <div style="grid-column:1/-1">
+        <label for="fd-video-generate-url">URL</label>
+        <input type="url" id="fd-video-generate-url" name="url" placeholder="https://…" autocomplete="off" inputmode="url"/>
+      </div>
+      <div>
+        <label for="fd-vg-duration">Dauer (Sekunden)</label>
+        <input type="number" id="fd-vg-duration" min="60" max="1800" value="600"/>
+      </div>
+      <div>
+        <label for="fd-vg-max-scenes">Max. Szenen</label>
+        <input type="number" id="fd-vg-max-scenes" min="1" max="80" value="24"/>
+      </div>
+      <div>
+        <label for="fd-vg-max-live">Max. Live-Assets</label>
+        <input type="number" id="fd-vg-max-live" min="0" max="80" value="24"/>
+      </div>
+      <div>
+        <label for="fd-vg-motion-every">Motion Clip alle (Sek.)</label>
+        <input type="number" id="fd-vg-motion-every" min="15" max="600" value="60"/>
+      </div>
+      <div>
+        <label for="fd-vg-motion-dur">Motion-Clip-Dauer (Sek.)</label>
+        <input type="number" id="fd-vg-motion-dur" min="1" max="120" value="10"/>
+      </div>
+      <div>
+        <label for="fd-vg-max-motion">Max. Motion-Clips</label>
+        <input type="number" id="fd-vg-max-motion" min="0" max="30" value="10"/>
+      </div>
+      <div style="grid-column:1/-1" class="fp-dry-run-checks">
+        <label><input type="checkbox" id="fd-vg-live-assets"/> Live-Bilder erlauben (Leonardo live)</label>
+        <label><input type="checkbox" id="fd-vg-live-motion"/> Live-Motion erlauben (Runway — nur mit Connector)</label>
+        <label><input type="checkbox" id="fd-vg-confirm-costs"/> Mögliche Provider-Kosten bestätigen</label>
+      </div>
+      <div style="grid-column:1/-1" class="fp-dry-run-actions">
+        <button type="button" class="primary" id="fd-video-generate-submit" data-ba323-video-generate="1">Video generieren</button>
+        <button type="button" class="sm" id="fd-video-generate-clear" data-ba323-video-generate="1">Zurücksetzen</button>
+      </div>
+    </div>
+    <p class="muted" id="fd-video-generate-status" aria-live="polite"></p>
+    <pre class="out out-empty" id="fd-video-generate-result" style="max-height:260px;display:none"></pre>
   </section>
 
   <section class="panel panel--fresh-preview fp-cockpit-primary" id="panel-ba303-fresh-preview" aria-labelledby="fp-snapshot-h">
@@ -5291,6 +5343,153 @@ try {
     el.appendChild(ul);
   }
 
+  function fdClearVideoGenerateForm() {
+    var urlEl = document.getElementById("fd-video-generate-url");
+    if (urlEl) urlEl.value = "";
+    var d = document.getElementById("fd-vg-duration");
+    if (d) d.value = "600";
+    var ms = document.getElementById("fd-vg-max-scenes");
+    if (ms) ms.value = "24";
+    var ml = document.getElementById("fd-vg-max-live");
+    if (ml) ml.value = "24";
+    var me = document.getElementById("fd-vg-motion-every");
+    if (me) me.value = "60";
+    var md = document.getElementById("fd-vg-motion-dur");
+    if (md) md.value = "10";
+    var mm = document.getElementById("fd-vg-max-motion");
+    if (mm) mm.value = "10";
+    var la = document.getElementById("fd-vg-live-assets");
+    if (la) la.checked = false;
+    var lm = document.getElementById("fd-vg-live-motion");
+    if (lm) lm.checked = false;
+    var cc = document.getElementById("fd-vg-confirm-costs");
+    if (cc) cc.checked = false;
+    var st = document.getElementById("fd-video-generate-status");
+    if (st) {
+      st.textContent = "";
+      st.classList.remove("intake-status-err", "intake-status-success");
+    }
+    var res = document.getElementById("fd-video-generate-result");
+    if (res) {
+      res.textContent = "";
+      res.style.display = "none";
+      res.classList.add("out-empty");
+    }
+    var btn = document.getElementById("fd-video-generate-submit");
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove("is-loading", "is-success", "is-error");
+      btn.textContent = "Video generieren";
+    }
+  }
+
+  async function fdSubmitVideoGenerate() {
+    var st = document.getElementById("fd-video-generate-status");
+    var resEl = document.getElementById("fd-video-generate-result");
+    var btn = document.getElementById("fd-video-generate-submit");
+    if (!btn) return;
+    if (isKillSwitchActive()) {
+      if (st) {
+        st.textContent = "Kill Switch aktiv — Video-Generierung blockiert.";
+        st.classList.add("intake-status-err");
+      }
+      return;
+    }
+    var urlEl = document.getElementById("fd-video-generate-url");
+    var url = urlEl ? String(urlEl.value || "").trim() : "";
+    if (st) {
+      st.classList.remove("intake-status-err", "intake-status-success");
+    }
+    if (!url) {
+      if (st) {
+        st.textContent = "Bitte eine URL eingeben.";
+        st.classList.add("intake-status-err");
+      }
+      return;
+    }
+    var dur = parseInt(document.getElementById("fd-vg-duration") && document.getElementById("fd-vg-duration").value, 10);
+    var maxSc = parseInt(document.getElementById("fd-vg-max-scenes") && document.getElementById("fd-vg-max-scenes").value, 10);
+    var maxLive = parseInt(document.getElementById("fd-vg-max-live") && document.getElementById("fd-vg-max-live").value, 10);
+    var motEvery = parseInt(document.getElementById("fd-vg-motion-every") && document.getElementById("fd-vg-motion-every").value, 10);
+    var motDur = parseInt(document.getElementById("fd-vg-motion-dur") && document.getElementById("fd-vg-motion-dur").value, 10);
+    var maxMot = parseInt(document.getElementById("fd-vg-max-motion") && document.getElementById("fd-vg-max-motion").value, 10);
+    if (isNaN(dur) || dur < 60) dur = 600;
+    if (isNaN(maxSc) || maxSc < 1) maxSc = 24;
+    if (isNaN(maxLive) || maxLive < 0) maxLive = 24;
+    if (isNaN(motEvery) || motEvery < 15) motEvery = 60;
+    if (isNaN(motDur) || motDur < 1) motDur = 10;
+    if (isNaN(maxMot) || maxMot < 0) maxMot = 10;
+    var allowLiveAssets = document.getElementById("fd-vg-live-assets") && document.getElementById("fd-vg-live-assets").checked;
+    var allowLiveMotion = document.getElementById("fd-vg-live-motion") && document.getElementById("fd-vg-live-motion").checked;
+    var confirmCosts = document.getElementById("fd-vg-confirm-costs") && document.getElementById("fd-vg-confirm-costs").checked;
+    var body = {
+      url: url,
+      duration_target_seconds: dur,
+      max_scenes: maxSc,
+      max_live_assets: maxLive,
+      motion_clip_every_seconds: motEvery,
+      motion_clip_duration_seconds: motDur,
+      max_motion_clips: maxMot,
+      allow_live_assets: !!allowLiveAssets,
+      allow_live_motion: !!allowLiveMotion,
+      confirm_provider_costs: !!confirmCosts,
+      voice_mode: "elevenlabs_or_safe_default",
+      motion_mode: "basic"
+    };
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    btn.classList.remove("is-success", "is-error");
+    btn.textContent = "Generierung läuft…";
+    if (resEl) {
+      resEl.style.display = "none";
+      resEl.textContent = "";
+    }
+    if (st) st.textContent = "Starte Video-Generierung…";
+    try {
+      const r = await fetch("/founder/dashboard/video/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      var j = null;
+      try { j = await r.json(); } catch (eJ) {}
+      if (!r.ok) {
+        var det = j && j.detail != null ? j.detail : ("HTTP " + r.status);
+        if (st) {
+          st.textContent = "Video-Generierung: " + String(det);
+          st.classList.add("intake-status-err");
+        }
+        btn.classList.add("is-error");
+        btn.textContent = "Video generieren";
+        btn.disabled = false;
+        btn.classList.remove("is-loading");
+        return;
+      }
+      if (st) {
+        st.textContent = (j && j.ok) ? "Fertig — siehe Ergebnis." : "Beendet mit Blockern/Warnungen.";
+        st.classList.add((j && j.ok) ? "intake-status-success" : "intake-status-err");
+      }
+      if (resEl && j) {
+        resEl.style.display = "block";
+        resEl.classList.remove("out-empty");
+        resEl.textContent = JSON.stringify(j, null, 2);
+      }
+      btn.classList.add((j && j.ok) ? "is-success" : "is-error");
+      btn.textContent = "Video generieren";
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+    } catch (e) {
+      if (st) {
+        st.textContent = "Video-Generierung: " + String(e && e.message ? e.message : e);
+        st.classList.add("intake-status-err");
+      }
+      btn.classList.add("is-error");
+      btn.textContent = "Video generieren";
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+    }
+  }
+
   async function fdStartFreshPreviewDryRun() {
     var st = document.getElementById("fp-dry-run-status");
     var resEl = document.getElementById("fp-dry-run-result");
@@ -6254,6 +6453,18 @@ try {
     if (fpDry) {
       fpDry.addEventListener("click", async function() {
         try { await fdStartFreshPreviewDryRun(); } catch (eDry) {}
+      });
+    }
+    var vgSub = document.getElementById("fd-video-generate-submit");
+    if (vgSub) {
+      vgSub.addEventListener("click", async function() {
+        try { await fdSubmitVideoGenerate(); } catch (eVg) {}
+      });
+    }
+    var vgClr = document.getElementById("fd-video-generate-clear");
+    if (vgClr) {
+      vgClr.addEventListener("click", function() {
+        fdClearVideoGenerateForm();
       });
     }
     var fpCopyHandoff = document.getElementById("fp-btn-copy-handoff-cli");

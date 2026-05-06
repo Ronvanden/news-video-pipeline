@@ -1,3 +1,9 @@
+## Einordnung
+
+Dieses Runbook beschreibt den **Local Preview / Preview-Smoke**-Pfad (Bundle → FFmpeg-Preview, Open-Me). **Abgrenzung:** Der **direkte URL→`final_video.mp4`**-Pfad liegt bei **`scripts/run_url_to_final_mp4.py`** (**BA 26.5**) bzw. **`POST /founder/dashboard/video/generate`** (**BA 32.3**, `output/video_generate/<run_id>/`). Das **Fresh Preview Cockpit** (**BA 30.x–31.x**) ist ein **eigenes** Diagnose-/Operator-UI — siehe [founder_production_flow_v1.md](founder_production_flow_v1.md). Kanone: [PIPELINE_PLAN.md](../../PIPELINE_PLAN.md).
+
+---
+
 ## BA 29.2 — Lokale Preview aus `render_input_bundle.json`
 
 ### Ziel
@@ -23,6 +29,8 @@ End-to-End ohne zuvor vorhandenes `asset_manifest`: `scripts/run_fresh_topic_pre
 
 ### BA 30.3 — Founder Dashboard: Fresh-Preview-Snapshot
 Das Founder Dashboard (`GET /founder/dashboard`) lädt beim Start read-only `GET /founder/dashboard/fresh-preview/snapshot` und zeigt im Panel **Fresh Preview Smoke (BA 30.3–30.5)** an, ob unter `output/fresh_topic_preview/` der jüngste Run existiert und welche Artefakte (`script.json`, Pack, Manifest, `preview_smoke_auto_summary_*.json`, `OPEN_PREVIEW_SMOKE.md`) vorliegen. Kein Schreibzugriff, keine externen Calls. Meta: `GET /founder/dashboard/config` → `fresh_preview_snapshot_relative`.
+
+**BA 32.3 (Abgrenzung):** Fresh Preview bleibt **Diagnose- und Review-Cockpit** (Dry-Run bis Manifest, Snapshot, Readiness). Der Longform-**Video-Generate**-Flow (`POST /founder/dashboard/video/generate`, Panel **Video generieren**) ist ein **separater** End-to-End-Pfad zu `final_video.mp4` unter `output/video_generate/<run_id>/` und ersetzt oder überlädt den Fresh-Preview-Dry-Run nicht.
 
 ### BA 30.4 — Fresh Preview Readiness Gate
 Derselbe Snapshot-Endpunkt liefert additiv **Readiness** (`readiness_status`: ready / warning / blocked, `readiness_score`, `readiness_reasons`, `blocking_reasons`) aus Pflichtdateien, optionalen JSON-Inhaltschecks (Titel/Hook/Kapitel, Szenen im Pack, Manifest-Assets) und dem Zustand der Preview-Smoke-Summary (`ok`). Im Dashboard: Badge, Score, Blocking-/Hinweiszeilen. Keine Provider-Calls.

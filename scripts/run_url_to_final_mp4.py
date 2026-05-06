@@ -146,6 +146,43 @@ def _build_scene_rows_from_script(
     return out
 
 
+def _compute_motion_slot_scene_numbers(
+    scene_rows: Sequence[Dict[str, Any]],
+    *,
+    every_sec: int,
+    max_clips: int,
+) -> List[int]:
+    """
+    BA 32.3 — Kandidaten-Szenen (1-basiert) an Zeit-Grenzen ``every_sec`` innerhalb
+    der Timeline; rein deskriptiv für Pack-Metadaten, ohne Runway-Ausführung.
+    """
+    ev = max(1, int(every_sec))
+    cap = max(0, int(max_clips))
+    if cap == 0 or not scene_rows:
+        return []
+    durs = [max(1, int((r or {}).get("duration_seconds") or 6)) for r in scene_rows]
+    total = sum(durs)
+    if total <= 0:
+        return []
+    targets: List[int] = []
+    t = ev
+    while t <= total and len(targets) < cap:
+        targets.append(int(t))
+        t += ev
+    out: List[int] = []
+    for b in targets:
+        cum = 0
+        chosen: Optional[int] = None
+        for idx, d in enumerate(durs, start=1):
+            if b <= cum + d:
+                chosen = idx
+                break
+            cum += d
+        if chosen is not None and chosen not in out:
+            out.append(chosen)
+    return out
+
+
 def _assign_media(
     n_scenes: int,
     videos: Sequence[Path],
@@ -738,6 +775,11 @@ def run_ba265_url_to_final(
     fit_video_to_voice: bool = False,
     voice_fit_padding_seconds: float = _DEFAULT_VOICE_FIT_PADDING_SECONDS,
     fit_min_seconds_per_scene: int = 2,
+    asset_runner_mode: str = "placeholder",
+    max_live_assets: Optional[int] = None,
+    motion_clip_every_seconds: int = 60,
+    motion_clip_duration_seconds: int = 10,
+    max_motion_clips: int = 10,
 ) -> Dict[str, Any]:
     """Orchestrierung; gibt run_summary-Dict zurück."""
     out_dir = out_dir.resolve()
@@ -884,15 +926,36 @@ def run_ba265_url_to_final(
     scene_plan_path.write_text(json.dumps(scene_plan, ensure_ascii=False, indent=2), encoding="utf-8")
 
     pack = _build_scene_asset_pack(scene_rows, script=script, rel_videos=rel_videos, pack_parent=out_dir)
+    slot_nums = _compute_motion_slot_scene_numbers(
+        scene_rows,
+        every_sec=int(motion_clip_every_seconds),
+        max_clips=int(max_motion_clips),
+    )
+    meta_root = pack.get("metadata")
+    if isinstance(meta_root, dict):
+        meta_root["ba323_motion_strategy"] = {
+            "motion_clip_every_seconds": int(motion_clip_every_seconds),
+            "motion_clip_duration_seconds": int(motion_clip_duration_seconds),
+            "max_motion_clips": int(max_motion_clips),
+            "motion_slot_scene_numbers": slot_nums,
+        }
     pack_path.write_text(json.dumps(pack, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    runner_mode = (asset_runner_mode or "placeholder").strip().lower()
+    if runner_mode not in ("placeholder", "live"):
+        runner_mode = "placeholder"
+        warnings.append("ba265_invalid_asset_runner_mode_fallback_placeholder")
+    runner_kw: Dict[str, Any] = dict(
+        pack_path=pack_path,
+        out_root=out_dir,
+        run_id=rid,
+        mode=runner_mode,
+    )
+    if max_live_assets is not None:
+        runner_kw["max_assets_live"] = int(max_live_assets)
+
     try:
-        ameta = asset_mod.run_local_asset_runner(
-            pack_path,
-            out_dir,
-            run_id=rid,
-            mode="placeholder",
-        )
+        ameta = asset_mod.run_local_asset_runner(**runner_kw)
     except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError) as e:
         blocking.append(f"asset_runner_failed:{type(e).__name__}")
         doc = {

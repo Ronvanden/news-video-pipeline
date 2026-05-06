@@ -39,6 +39,7 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 
 | Schritt | Script | Input | Output | Real/Placeholder | Hinweise |
 |---|---|---|---|---|---|
+| 0b. Founder Dashboard URL→MP4 (BA 32.3) | *(HTTP)* `POST /founder/dashboard/video/generate` → `run_ba265_url_to_final` | JSON: `url`, Dauer, `max_scenes`, Live-Flags + Kostenbestätigung | `output/video_generate/<run_id>/final_video.mp4` + `run_summary.json` | placeholder/live wie gewählt | Eigenes UI-Panel vor Fresh Preview. Motion-Intervall/Max-Clips nur als **Metadaten** (`metadata.ba323_motion_strategy` im Pack). **Keine** Runway-Clip-Erzeugung in dieser BA-26.5-Kette; Live-Motion ohne Key → 422. |
 | 1. Script / Story Pack Input | *(extern / API / Export)* | URL, `ProductionPromptPlan.json`, oder `GenerateScriptResponse`/Story‑Pack | **Plan/Pack** für nachfolgende Schritte | real | Aktuell gibt es mehrere mögliche Quellen (API, CLI, Exporte). |
 | 2. Scene Asset Pack Export | `scripts/export_scene_asset_pack.py` | `--url` **oder** `--prompt-plan-json` | `output/scene_asset_pack_<run_id>/scene_asset_pack.json` + `leonardo_prompts.txt` + `shot_plan.md` + `founder_summary.txt` | real | Baut/erzwingt Scene Expansion im Plan. `--duration-minutes` wirkt nur auf Plan‑Erzeugung via URL. |
 | 3. Asset Runner | `scripts/run_asset_runner.py` | `scene_asset_pack.json` | `output/generated_assets_<run_id>/scene_001.png…` + optional `scene_XXX.mp4`/`.mov`/`.webm` + `asset_manifest.json` | **placeholder default** / optional live | Default `--mode placeholder` erzeugt bewusst PIL‑Placeholder‑PNGs. `--mode live` nutzt Leonardo nur mit `LEONARDO_API_KEY`, sonst Fallback + Warnungen. **BA 26.3:** Beats können **lokale** Clips referenzieren (`video_path`, `runway_clip_path`, …) — Validierung (Datei, Endung, kein Symlink); Kopie ins `generated_assets_*`‑Ordner; `asset_manifest` mit `asset_type`/`video_path` + optional `image_path` (Fallback). |
@@ -89,22 +90,27 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 
 ## Missing Wiring (konkrete Lücken)
 
-- **Script/Story‑Pack → `scene_asset_pack.json`**
-  - `export_scene_asset_pack.py` erwartet URL oder `ProductionPromptPlan.json`. Für `GenerateScriptResponse`/Story‑Pack fehlt ein direkter Adapter.
+- **URL → `final_video.mp4` (Founder, ohne vollständigen Preview/SUB-Pfad):** **umgesetzt** — [`scripts/run_url_to_final_mp4.py`](../../scripts/run_url_to_final_mp4.py) (`run_ba265_url_to_final`, **BA 26.5** / PIPELINE) und optional **`POST /founder/dashboard/video/generate`** (**BA 32.3**, Ausgabe `output/video_generate/<run_id>/`). Das ersetzt **nicht** automatisch Untertitel-Burn-in oder das Local-Preview-Paket; Pfade bleiben je nach Ziel unterschiedlich.
+- **Script/Story‑Pack → `scene_asset_pack.json` (isolierter Export-Pfad)**
+  - `export_scene_asset_pack.py` erwartet URL oder `ProductionPromptPlan.json`. Für reines `GenerateScriptResponse`/Story‑Pack ohne URL bleibt ein separater Adapter-Schritt sinnvoll (siehe BA 25.2 / manuelle JSON-Eingabe in `run_url_to_final_mp4.py`).
 - **Voiceover → Timeline (`audio_path`)**
   - `build_timeline_manifest.py` setzt `audio_path` nur über `--audio-path`. Der Voiceover‑Output wird heute nicht automatisch eingespeist.
 - **Run‑ID Propagation**
   - Es gibt mehrere Run‑IDs pro Teil‑Script (`scene_asset_pack_<rid>`, `generated_assets_<rid>`, `timeline_<rid>`, `full_voice_<rid>`…). Es fehlt eine durchgehende „eine run_id“ Konvention + Weitergabe.
 - **Unified Output Package**
   - Local Preview hat ein Paket `output/local_preview_<run_id>/…`, Final Render hat `output/final_render_<run_id>/…`. Für „Real Build“ fehlt ein durchgehendes „Build‑Package“ mit allen Zwischenartefakten (oder stabile Verweise).
-- **One‑Command Orchestrator**
-  - `run_local_preview_pipeline.py` ist bereits ein Orchestrator – aber er startet **nicht** die vorgelagerten Schritte (Script→Pack→Assets→Timeline→Voiceover) automatisch.
+- **One‑Command Orchestrator (Preview/SUB‑Paket)**
+  - `run_local_preview_pipeline.py` ist ein Orchestrator für den **Preview-/Subtitle‑Pfad** — er startet **nicht** die vorgelagerten Schritte (Script→Pack→Assets→Timeline→Voiceover) automatisch von einer nackten URL aus.
+- **One‑Command Orchestrator (URL → clean Final MP4)**
+  - **`run_url_to_final_mp4.py` / `run_ba265_url_to_final`** verdrahtet die **BA‑26.5‑Kette** bis **`final_video.mp4`** (Voice/Asset-Modi siehe CLI und PIPELINE). Dashboard-Trigger: **BA 32.3**.
 
 ## Shortest Real Local MVP Path (heute, ohne neue Features)
 
 Ziel: erst **2–3 Minuten** stabil, dann Richtung **10 Minuten** skalieren.
 
 **Minimal‑Pfad (lokal, akzeptiert Placeholder/Smoke):**
+
+0) *Alternative ein Befehl bis clean MP4 (ohne Burn-in):* `python scripts/run_url_to_final_mp4.py --url …` (siehe CLI-Hilfe; Ausgabe je nach Args, typisch mit `run_summary.json`) — gleiche Kernlogik wie **BA 32.3** im Dashboard.
 
 1) `export_scene_asset_pack.py` mit realer URL oder vorhandenem `ProductionPromptPlan.json`  
 2) `run_asset_runner.py` im Placeholder‑Mode  

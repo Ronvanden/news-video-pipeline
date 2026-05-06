@@ -1,3 +1,14 @@
+## Einordnung (BA 30.x–32.x vs. Fresh Preview)
+
+- **Aktuelle Produktionslinie (lokal, Founder Dashboard):** **BA 30.x–31.x** bauen das **Fresh Preview Cockpit** — Diagnose, Readiness, Operator Review, Guided Flow, Final-Render-**Vorbereitung** und **CLI-Handoffs** (read-only im Browser, kein Final-Render-Start aus dem UI).
+- **Direkter Langform-Pfad URL → `final_video.mp4`:** **BA 32.3** — Panel **„Video generieren“**, `POST /founder/dashboard/video/generate` → `run_ba265_url_to_final` → Ausgabe unter **`output/video_generate/<run_id>/`** (Default u. a. **600 s** Ziel-Länge). Das ist **nicht** der Fresh-Preview-Dry-Run; Fresh Preview bleibt für schnelle Gates und Preview-Smoke inkl. Open-Me.
+- **Runway Live Motion:** **BA 32.1** — API liefert **Readiness/Blocking** (422/Warnungen), **keine** integrierte Runway-Clip-Erzeugung in `run_ba265_url_to_final` (siehe Abschnitt **BA 32.3** unten und [PIPELINE_PLAN.md](../../PIPELINE_PLAN.md)).
+- **Nächster Fokus (Roadmap):** **BA 32.3+** — Zielbild „URL eingeben → Video generieren → **10-Minuten**-Produktionslauf“ weiter verfeinern; Teilentlastung bereits **BA 32.0** (Caps); vollständiger Longform-Smoke weiter **BA 26.8** (*planned*).
+
+Kanone: [PIPELINE_PLAN.md](../../PIPELINE_PLAN.md) (Phasenübersicht + BA-Tabelle).
+
+---
+
 ## BA 30.0 — Founder Dashboard: Produktionsfluss (read-only)
 
 ### Ziel
@@ -40,6 +51,12 @@ Nach erfolgreichem Dry-Run zeigt das Dashboard einen **kopierbaren** PowerShell-
 ### BA 30.9 — Artifact Access: Textdateien im Browser
 **„Öffnen“** im Fresh-Preview-Pfad-Grid startet `GET /founder/dashboard/fresh-preview/file?path=…` (nur **`.md`/`.json`/`.txt`**, read-only, max. 1 MB, Whitelist-Pfade unter `output` wie Fresh-Run, Summary-JSON, `OPEN_PREVIEW_SMOKE.md`). Keine Videos über diese Route; keine Writes.
 
+### BA 32.1 — Runway Live Motion: Readiness & Blocking (kein Fake-Live)
+Vor **`POST /founder/dashboard/video/generate`** (**BA 32.3**) prüft die API: Live-Flags (`allow_live_assets` / `allow_live_motion`) erfordern **`confirm_provider_costs`** (sonst **422** `confirm_provider_costs_required_when_live_flags`). **`allow_live_motion`** ohne nicht-leeres **`RUNWAY_API_KEY`** → **422** `live_motion_requires_runway_connector`. Mit Key startet **`run_ba265_url_to_final`** weiterhin **keine** Runway-Clip-Generierung — nur die **Warnung** `ba323_live_motion_runway_configured_but_url_to_final_does_not_ingest_runway_clips` im Ergebnis (`app/founder_dashboard/ba323_video_generate.py`). Keine simulierten Clips.
+
+### BA 32.3 — Dashboard: URL → `final_video.mp4` (eigenes Panel)
+Im Founder Dashboard liegt **oberhalb** des Fresh-Preview-Panels die Karte **„Video generieren“** (`panel-ba323-video-generate`). **„Video generieren“** sendet `POST /founder/dashboard/video/generate` mit URL, Dauer (Default 600 s), Szenen-/Live-Asset-Caps und Motion-Strategie-Parametern (Metadaten im `scene_asset_pack` unter `metadata.ba323_motion_strategy`). Der Server ruft **`run_ba265_url_to_final`** (`scripts/run_url_to_final_mp4.py`) auf; Ausgabe unter **`output/video_generate/<run_id>/`** inkl. `final_video.mp4` und `run_summary.json`. **Fresh Preview** bleibt das Diagnose-/Review-Cockpit (Dry-Run, Snapshot, Readiness); dieser Flow ist der **kontrollierte Longform-Produktionsbutton**. Live-Bilder nur mit Checkbox **Provider-Kosten bestätigen** + `asset_runner_mode=live`. Live-Motion / Runway: siehe **BA 32.1** (Readiness, keine integrierte Runway-Produktion in dieser Kette). Meta: `GET /founder/dashboard/config` → `video_generate_relative`.
+
 ### BA 31.0 — Operator Review Loop (nach Full Preview Smoke)
 Nach einem vollständigen Preview-Smoke (Summary unter `output/preview_smoke_auto_summary_<run_id>.json`, optional `OPEN_PREVIEW_SMOKE.md`) zeigt das Dashboard im Panel **Fresh Preview** die Karte **Operator Review**: Status-Badge (approve / rework / blocked / pending), Gründe und empfohlene nächste Aktion — **rein read-only**, keine gespeicherte Freigabe und keine Freigabe-Schaltflächen. Daten kommen aus dem gleichen Snapshot-Endpunkt wie BA 30.3–30.4 (`evaluate_operator_review`).
 
@@ -59,6 +76,7 @@ Unter dem Preparation Gate: **Final Render Input Checklist** — welche konkrete
 Unter der Input Checklist: Karte **Safe Final Render Handoff** — nur **Text/CLI zum Kopieren** für `scripts/run_safe_final_render.py` (Production Summary unter `output/production_pack_<run_id>/production_summary.json`, Ausgabeordner z. B. `output/safe_final_render_<run_id>`). Sichtbar, wenn Gate **ready** und Checkliste **ready** oder **warning**; bei Sperre Gründe und feste Kurzmeldung. **Kein** Final-Render-Start im Dashboard, keine Provider-Calls, keine neuen Writes — reiner Operator-Handoff.
 
 ### Operator-Workflow (CLI, keine Dashboard-Writes)
+0. URL direkt bis **`final_video.mp4`** (clean Render-Pfad, ohne Fresh-Preview-Paket): `python scripts/run_url_to_final_mp4.py --url …` (siehe `--help`; gleiche Kernlogik wie Dashboard **BA 32.3**)
 1. Neu von Thema/URL/Skript bis Preview + Open-Me: `scripts/run_fresh_topic_preview_smoke.py` (siehe BA 30.2)
 2. Oder Preview-Smoke nur mit bestehendem Manifest: `scripts/run_preview_smoke_auto.py`
 3. Oder nur Preview aus Bundle: `scripts/render_local_preview_from_bundle.py`
