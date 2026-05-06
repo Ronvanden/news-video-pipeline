@@ -376,6 +376,107 @@ def evaluate_operator_review(snapshot: Dict[str, Any]) -> Dict[str, Any]:
     return base_out
 
 
+_FINAL_RENDER_GATE_VERSION = "ba31_2_v1"
+
+
+def build_final_render_preparation_gate(snapshot: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    BA 31.2 — Read-only Gate: ob „Final Render vorbereiten“ sinnvoll freigegeben ist (kein echter Start).
+    """
+    rd = str(snapshot.get("review_decision") or "pending").lower()
+    rs = str(snapshot.get("readiness_status") or "").lower()
+    rb = [str(x) for x in (snapshot.get("blocking_reasons") or [])]
+    summ = bool(snapshot.get("preview_smoke_summary_present"))
+    open_p = bool(snapshot.get("open_preview_smoke_report_present"))
+
+    reasons: List[str] = []
+
+    def add_r(msg: str) -> None:
+        if msg and msg not in reasons:
+            reasons.append(msg)
+
+    base = {
+        "final_render_gate_version": _FINAL_RENDER_GATE_VERSION,
+        "final_render_gate_status": "locked",
+        "final_render_gate_label": "Gesperrt",
+        "final_render_gate_reasons": reasons,
+        "final_render_next_action": (
+            "Final Render ist gesperrt, bis der Full Preview Smoke geprüft wurde."
+        ),
+    }
+
+    if rd == "rework":
+        for code in (snapshot.get("readiness_reasons") or [])[:16]:
+            add_r(_readiness_reason_label(str(code)))
+        for msg in (snapshot.get("review_decision_reasons") or [])[:12]:
+            add_r(str(msg))
+        if not reasons:
+            add_r("Operator Review: Nacharbeit erforderlich.")
+        return {
+            **base,
+            "final_render_gate_status": "needs_rework",
+            "final_render_gate_label": "Nacharbeit",
+            "final_render_gate_reasons": reasons,
+            "final_render_next_action": "Vor dem Final Render sind Anpassungen nötig.",
+        }
+
+    if rd == "blocked" or rs == "blocked" or bool(rb):
+        for code in rb[:16]:
+            add_r(_blocking_reason_label(code))
+        if rd == "blocked":
+            for msg in (snapshot.get("review_decision_reasons") or [])[:12]:
+                add_r(str(msg))
+        if rs == "blocked" and not rb:
+            add_r("Readiness blockiert.")
+        if not reasons:
+            add_r("Blocker verhindern die Final-Render-Vorbereitung.")
+        return {
+            **base,
+            "final_render_gate_status": "blocked",
+            "final_render_gate_label": "Blockiert",
+            "final_render_gate_reasons": reasons,
+            "final_render_next_action": "Final Render blockiert. Behebe zuerst die Blocker.",
+        }
+
+    if (
+        rd == "approve"
+        and rs == "ready"
+        and summ
+        and open_p
+        and not rb
+    ):
+        return {
+            **base,
+            "final_render_gate_status": "ready",
+            "final_render_gate_label": "Freigegeben",
+            "final_render_gate_reasons": [],
+            "final_render_next_action": (
+                "Final Render kann vorbereitet werden. Prüfe nun die Render-Inputs und "
+                "starte den sicheren Final-Render-Flow."
+            ),
+        }
+
+    if rd == "pending":
+        for msg in (snapshot.get("review_decision_reasons") or [])[:12]:
+            add_r(str(msg))
+        if not reasons:
+            add_r("Full Preview / Operator Review noch nicht abgeschlossen.")
+    elif rd == "approve":
+        add_r("Voraussetzungen für Final Render nicht vollständig (Artefakte/Readiness prüfen).")
+    else:
+        add_r("Final Render derzeit nicht freigegeben.")
+
+    return {
+        **base,
+        "final_render_gate_status": "locked",
+        "final_render_gate_label": "Gesperrt",
+        "final_render_gate_reasons": reasons,
+        "final_render_next_action": (
+            "Final Render ist gesperrt, bis der Full Preview Smoke geprüft wurde."
+        ),
+    }
+
+
 _GUIDED_FLOW_VERSION = "ba31_1b_v1"
 
 # BA 31.1b — Microcopy (Snapshot-Schritt + Dry-Run → Full Preview)
@@ -457,9 +558,14 @@ def build_guided_production_flow(snapshot: Dict[str, Any]) -> Dict[str, Any]:
     else:
         st_rev = "pending"
 
-    # --- step: final_render
-    if rd == "approve":
+    # --- step: final_render (BA 31.2 — Preparation Gate)
+    gate_st = str(snapshot.get("final_render_gate_status") or "").lower()
+    if gate_st == "ready":
         st_final = "pending"
+    elif gate_st == "blocked":
+        st_final = "blocked"
+    elif gate_st == "needs_rework":
+        st_final = "warning"
     else:
         st_final = "locked"
 
@@ -539,6 +645,7 @@ def _merge_readiness(base: Dict[str, Any]) -> Dict[str, Any]:
     out = dict(base)
     out.update(r)
     out.update(evaluate_operator_review(out))
+    out.update(build_final_render_preparation_gate(out))
     out.update(build_guided_production_flow(out))
     return out
 

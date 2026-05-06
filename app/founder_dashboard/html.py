@@ -1258,6 +1258,65 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   font-weight: 520;
   color: rgba(236, 241, 248, 0.94);
 }
+.fp-final-render-gate-card {
+  margin: 0 0 1rem;
+  padding: 0.95rem 1.05rem;
+  border-radius: 11px;
+  border: 1px solid rgba(54, 65, 88, 0.85);
+  background: rgba(0, 0, 0, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+.fp-fr-gate-head { margin-bottom: 0.55rem; }
+.fp-fr-gate-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(54, 65, 88, 0.9);
+}
+.fp-fr-gate-badge--ready {
+  border-color: rgba(45, 160, 140, 0.45);
+  background: rgba(34, 90, 78, 0.35);
+  color: #a7f3d0;
+}
+.fp-fr-gate-badge--locked {
+  border-color: rgba(118, 132, 155, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(196, 206, 220, 0.92);
+}
+.fp-fr-gate-badge--blocked {
+  border-color: rgba(220, 110, 110, 0.45);
+  background: rgba(95, 45, 45, 0.22);
+  color: #fecaca;
+}
+.fp-fr-gate-badge--rework {
+  border-color: rgba(217, 165, 70, 0.45);
+  background: rgba(110, 85, 40, 0.22);
+  color: #fde68a;
+}
+.fp-fr-gate-reasons {
+  margin: 0.45rem 0 0.35rem;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(224, 232, 245, 0.88);
+}
+.fp-fr-gate-next {
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  font-weight: 520;
+  color: rgba(236, 241, 248, 0.94);
+}
+.fp-fr-gate-future-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(139, 156, 179, 0.88);
+}
 .fp-toolbar { margin: 0 0 0.35rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .fp-toolbar .sm.primary { font-weight: 600; }
 .fp-next-step-box {
@@ -1521,6 +1580,15 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
           </div>
           <ul id="fp-review-reasons" class="fp-review-reasons"></ul>
           <p id="fp-review-next-action" class="fp-review-next muted">Full Preview Smoke lokal über CLI-Handoff starten</p>
+        </div>
+        <div class="fp-final-render-gate-card" id="fp-final-render-gate" data-ba312-final-render-gate="1" aria-labelledby="fp-final-render-gate-h">
+          <h3 class="subh fp-module-title" id="fp-final-render-gate-h">Final Render Preparation</h3>
+          <div class="fp-fr-gate-head">
+            <span id="fp-final-render-gate-status" class="fp-fr-gate-badge fp-fr-gate-badge--locked" data-final-render-gate-marker="locked">—</span>
+          </div>
+          <ul id="fp-final-render-gate-reasons" class="fp-fr-gate-reasons"></ul>
+          <p id="fp-final-render-next-action" class="fp-fr-gate-next muted">—</p>
+          <p class="fp-fr-gate-future-hint">Der sichere Final-Render-Start im Dashboard folgt in einer späteren BA.</p>
         </div>
         <div class="fp-toolbar">
           <button type="button" class="primary" id="fp-btn-refresh" data-label="Fresh Preview aktualisieren" data-ba305-refresh="1">Fresh Preview aktualisieren</button>
@@ -5415,6 +5483,50 @@ try {
     nx.textContent = (d && d.review_next_action) ? String(d.review_next_action) : "";
   }
 
+  function fdFpResetFinalRenderGateNeutral() {
+    var badge = document.getElementById("fp-final-render-gate-status");
+    var ul = document.getElementById("fp-final-render-gate-reasons");
+    var nx = document.getElementById("fp-final-render-next-action");
+    if (badge) {
+      badge.textContent = "—";
+      badge.setAttribute("data-final-render-gate-marker", "locked");
+      badge.className = "fp-fr-gate-badge fp-fr-gate-badge--locked";
+    }
+    if (ul) ul.innerHTML = "";
+    if (nx) nx.textContent = "—";
+  }
+
+  function fdFpApplyFinalRenderGate(d) {
+    var badge = document.getElementById("fp-final-render-gate-status");
+    var ul = document.getElementById("fp-final-render-gate-reasons");
+    var nx = document.getElementById("fp-final-render-next-action");
+    if (!badge || !ul || !nx) return;
+    var st = String((d && d.final_render_gate_status) || "locked").toLowerCase();
+    var label = (d && d.final_render_gate_label) ? String(d.final_render_gate_label) : "Gesperrt";
+    badge.textContent = label;
+    badge.setAttribute("data-final-render-gate-marker", st);
+    var bcls = "fp-fr-gate-badge ";
+    if (st === "ready") bcls += "fp-fr-gate-badge--ready";
+    else if (st === "needs_rework") bcls += "fp-fr-gate-badge--rework";
+    else if (st === "blocked") bcls += "fp-fr-gate-badge--blocked";
+    else bcls += "fp-fr-gate-badge--locked";
+    badge.className = bcls;
+    ul.innerHTML = "";
+    var gr = d && d.final_render_gate_reasons;
+    if (gr && gr.length) {
+      gr.forEach(function(x) {
+        var li = document.createElement("li");
+        li.textContent = String(x);
+        ul.appendChild(li);
+      });
+    } else {
+      var li0 = document.createElement("li");
+      li0.textContent = "—";
+      ul.appendChild(li0);
+    }
+    nx.textContent = (d && d.final_render_next_action) ? String(d.final_render_next_action) : "";
+  }
+
   async function fdLoadFreshPreviewSnapshot() {
     var st = document.getElementById("fp-snapshot-status");
     var out = document.getElementById("out-fp-snapshot");
@@ -5422,6 +5534,7 @@ try {
     try {
       if (isKillSwitchActive()) {
         st.textContent = "Kill Switch aktiv — Fresh-Preview-Snapshot übersprungen.";
+        fdFpResetFinalRenderGateNeutral();
         fdFpResetGuidedFlowNeutral();
         return;
       }
@@ -5430,6 +5543,7 @@ try {
         st.textContent = "Fresh Preview Snapshot: HTTP " + r.status;
         st.classList.add("intake-status-err");
         fdFpResetPreviewPowerNeutral();
+        fdFpResetFinalRenderGateNeutral();
         fdFpResetGuidedFlowNeutral();
         return;
       }
@@ -5447,6 +5561,7 @@ try {
       if (scEl) scEl.textContent = d.readiness_score != null ? ("Score: " + String(d.readiness_score) + " / 100 · Score basiert auf Fresh Preview Readiness") : "Readiness wird nach dem Snapshot berechnet";
       fdFpUpdatePreviewPower(d);
       fdFpApplyOperatorReview(d);
+      fdFpApplyFinalRenderGate(d);
       fdFpApplyGuidedFlow(d);
       var nsOp = String(d.operator_next_step || "").trim();
       var exFs = document.getElementById("fp-exec-fresh-status");
@@ -5504,6 +5619,7 @@ try {
       st.textContent = "Fresh Preview Snapshot: " + String(e && e.message ? e.message : e);
       st.classList.add("intake-status-err");
       fdFpResetPreviewPowerNeutral();
+      fdFpResetFinalRenderGateNeutral();
       fdFpResetGuidedFlowNeutral();
     }
   }

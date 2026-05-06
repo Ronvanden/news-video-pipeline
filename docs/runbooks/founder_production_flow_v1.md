@@ -49,6 +49,9 @@ Oben im Hauptbereich (unter Executive Row) zeigt **Production Flow** die Schritt
 ### BA 31.1b — Guided Flow Microcopy
 Klarstellung für Operatoren: **Snapshot** = Dashboard-Abgleich per **„Fresh Preview aktualisieren“**; nach lokalem Full Preview den Handoff-Befehl ausführen und danach im Dashboard aktualisieren. Handoff-Box mit Kurz-Hinweis nach dem kopierbaren CLI-Befehl.
 
+### BA 31.2 — Final Render Preparation Gate
+Die Karte **Final Render Preparation** zeigt read-only, ob der nächste Schritt „Final Render vorbereiten“ fachlich freigegeben ist oder blockiert bleibt — abgeleitet aus dem gleichen Snapshot wie Operator Review (kein Button zum Starten eines Final Renders im Dashboard in dieser BA).
+
 ### Operator-Workflow (CLI, keine Dashboard-Writes)
 1. Neu von Thema/URL/Skript bis Preview + Open-Me: `scripts/run_fresh_topic_preview_smoke.py` (siehe BA 30.2)
 2. Oder Preview-Smoke nur mit bestehendem Manifest: `scripts/run_preview_smoke_auto.py`

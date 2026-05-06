@@ -83,6 +83,10 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("data-ba311-guided-flow", text)
         self.assertIn("Snapshot = aktueller Dashboard-Abgleich", text)
         self.assertIn("fd-guided-flow-microcopy-help", text)
+        # BA 31.2 — Final Render Preparation Gate
+        self.assertIn("Final Render Preparation", text)
+        self.assertIn("data-ba312-final-render-gate", text)
+        self.assertIn("fdFpApplyFinalRenderGate", text)
         self.assertIn("fdFpApplyGuidedFlow", text)
         # BA 30.3–30.8 — Fresh Preview + Dry-Run + CLI-Handoff
         self.assertIn("Fresh Preview Smoke (BA 30.3–30.8)", text)

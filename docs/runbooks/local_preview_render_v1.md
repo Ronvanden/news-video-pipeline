@@ -51,6 +51,9 @@ Der Snapshot liefert additiv `guided_flow_steps` (Input → Dry-Run → Snapshot
 ### BA 31.1b — Guided Flow Microcopy
 Schritt **Snapshot** erklärt den Bezug zu **„Fresh Preview aktualisieren“** (`detail` im Snapshot); bei nur Dry-Run beschreibt der nächste Schritt explizit CLI-Handoff, lokales Ausführen und erneutes Aktualisieren. Zusätzliche Hilfezeile in der Production-Flow-Card und Hinweis in der Handoff-Box nach dem CLI-Befehl. `guided_flow_version: ba31_1b_v1`.
 
+### BA 31.2 — Final Render Preparation Gate
+Der Fresh-Preview-Snapshot enthält additiv `final_render_gate_*`: read-only, ob die **Vorbereitung** für einen sicheren Final Render sinnvoll freigegeben ist (locked / ready / blocked / needs_rework) — **kein** Render-Start im Browser. UI: Karte **Final Render Preparation** unter Operator Review. Logik gekoppelt an Operator Review + Readiness + Summary/Open-Me. `final_render_gate_version: ba31_2_v1`.
+
 ### CLI
 ```powershell
 python scripts/render_local_preview_from_bundle.py `

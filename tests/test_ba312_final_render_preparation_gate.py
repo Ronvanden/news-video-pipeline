@@ -1,4 +1,4 @@
-"""BA 31.1 / 31.1b — Guided Production Flow + Microcopy."""
+"""BA 31.2 — Final Render Preparation Gate (Snapshot + Dashboard)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 from app.founder_dashboard.html import get_founder_dashboard_html
 from app.production_assembly.fresh_preview_snapshot import (
-    build_guided_production_flow,
+    build_final_render_preparation_gate,
     build_latest_fresh_preview_snapshot,
 )
 
@@ -30,24 +30,7 @@ def _manifest_ok():
     )
 
 
-def test_guided_flow_version_and_steps_no_run(tmp_path: Path, monkeypatch):
-    monkeypatch.setattr(
-        "app.production_assembly.fresh_preview_snapshot._resolve_output_root",
-        lambda p: Path(p).resolve(),
-    )
-    r = build_latest_fresh_preview_snapshot(tmp_path)
-    assert r.get("guided_flow_version") == "ba31_1b_v1"
-    steps = r.get("guided_flow_steps") or []
-    assert len(steps) == 6
-    ids = [s["id"] for s in steps]
-    assert ids == ["input", "dry_run", "snapshot", "full_preview", "review", "final_render"]
-    snap = next(s for s in steps if s.get("id") == "snapshot")
-    assert "Fresh Preview aktualisieren" in (snap.get("detail") or "")
-    assert r["guided_flow_next_step_action"] == "Fresh Preview Dry-Run starten"
-    assert r["guided_flow_current_step"] == "input"
-
-
-def test_guided_dry_run_only_full_preview_pending(tmp_path: Path, monkeypatch):
+def test_gate_pending_dry_run_locked(tmp_path: Path, monkeypatch):
     root = tmp_path / "output"
     run = root / "fresh_topic_preview" / "dry1"
     gen = run / "generated_assets_dry1"
@@ -60,17 +43,13 @@ def test_guided_dry_run_only_full_preview_pending(tmp_path: Path, monkeypatch):
         lambda p: root.resolve(),
     )
     r = build_latest_fresh_preview_snapshot(root)
-    by_id = {s["id"]: s["status"] for s in (r.get("guided_flow_steps") or [])}
-    assert by_id["full_preview"] == "pending"
-    assert by_id["review"] == "pending"
-    na = r["guided_flow_next_step_action"]
-    assert "Der Dry-Run ist vorhanden." in na
-    assert "Kopiere unten den Full-Preview-CLI-Befehl" in na
-    assert "Fresh Preview aktualisieren" in na
-    assert r["guided_flow_current_step"] == "full_preview"
+    assert r["review_decision"] == "pending"
+    assert r["final_render_gate_version"] == "ba31_2_v1"
+    assert r["final_render_gate_status"] == "locked"
+    assert "gesperrt" in r["final_render_next_action"].lower()
 
 
-def test_guided_approve_final_render_next(tmp_path: Path, monkeypatch):
+def test_gate_approve_ready_ready(tmp_path: Path, monkeypatch):
     root = tmp_path / "output"
     run = root / "fresh_topic_preview" / "ok1"
     gen = run / "generated_assets_ok1"
@@ -91,14 +70,41 @@ def test_guided_approve_final_render_next(tmp_path: Path, monkeypatch):
         lambda p: root.resolve(),
     )
     r = build_latest_fresh_preview_snapshot(root)
+    assert r["final_render_gate_status"] == "ready"
+    assert r["final_render_gate_label"] == "Freigegeben"
+    assert "Render-Inputs" in r["final_render_next_action"]
     by_id = {s["id"]: s["status"] for s in (r.get("guided_flow_steps") or [])}
-    assert by_id["review"] == "done"
     assert by_id["final_render"] == "pending"
-    assert r["guided_flow_next_step_action"] == "Final Render vorbereiten"
-    assert r["guided_flow_current_step"] == "final_render"
 
 
-def test_guided_blocked_next_action(tmp_path: Path, monkeypatch):
+def test_gate_rework_needs_rework(tmp_path: Path, monkeypatch):
+    """Summary ok, OPEN_PREVIEW-Pfad ungültig → Review rework (wie test_ba310 rework-Pfad)."""
+    root = tmp_path / "output"
+    run = root / "fresh_topic_preview" / "rw1"
+    gen = run / "generated_assets_rw1"
+    gen.mkdir(parents=True)
+    bogus_open = (root / "nonexistent" / "OPEN_PREVIEW_SMOKE.md").resolve()
+    (run / "script.json").write_text(_script(), encoding="utf-8")
+    (run / "scene_asset_pack.json").write_text(_pack(), encoding="utf-8")
+    (gen / "asset_manifest.json").write_text(_manifest_ok(), encoding="utf-8")
+    (root / "preview_smoke_auto_summary_rw1.json").write_text(
+        json.dumps({"ok": True, "open_preview_smoke_report_path": str(bogus_open)}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "app.production_assembly.fresh_preview_snapshot._resolve_output_root",
+        lambda p: root.resolve(),
+    )
+    r = build_latest_fresh_preview_snapshot(root)
+    assert r["review_decision"] == "rework"
+    assert r["final_render_gate_status"] == "needs_rework"
+    assert r["final_render_gate_label"] == "Nacharbeit"
+    assert "Anpassungen" in r["final_render_next_action"]
+    by_id = {s["id"]: s["status"] for s in (r.get("guided_flow_steps") or [])}
+    assert by_id["final_render"] == "warning"
+
+
+def test_gate_blocked_summary(tmp_path: Path, monkeypatch):
     root = tmp_path / "output"
     run = root / "fresh_topic_preview" / "badsum"
     gen = run / "generated_assets_badsum"
@@ -115,25 +121,21 @@ def test_guided_blocked_next_action(tmp_path: Path, monkeypatch):
         lambda p: root.resolve(),
     )
     r = build_latest_fresh_preview_snapshot(root)
-    assert r["review_decision"] == "blocked"
-    assert r["guided_flow_next_step_action"] == "Blocker beheben, bevor weiter produziert wird"
-    by_id = {s["id"]: s["status"] for s in (r.get("guided_flow_steps") or [])}
-    assert by_id["final_render"] == "blocked"
+    assert r["final_render_gate_status"] == "blocked"
+    assert "Blocker" in r["final_render_next_action"]
 
 
-def test_build_guided_production_flow_exported_minimal():
-    d = build_guided_production_flow({"fresh_preview_available": False})
-    assert "guided_flow_steps" in d
+def test_build_final_render_preparation_gate_exported():
+    d = build_final_render_preparation_gate({"review_decision": "pending", "readiness_status": "warning"})
+    assert d.get("final_render_gate_version") == "ba31_2_v1"
+    assert d.get("final_render_gate_status") == "locked"
 
 
-def test_dashboard_html_guided_flow_markers():
+def test_dashboard_html_final_render_gate_markers():
     html = get_founder_dashboard_html()
-    assert "Production Flow" in html
-    assert "data-ba311-guided-flow" in html
-    assert "fd-guided-production-flow" in html
-    assert "fd-guided-flow-steps" in html
-    assert "fd-guided-flow-next-action" in html
-    assert "Snapshot = aktueller Dashboard-Abgleich" in html
-    assert "fd-guided-flow-microcopy-help" in html
-    assert "Nach erfolgreichem Lauf: zurück ins Dashboard" in html
-    assert "fp-handoff-after-run" in html
+    assert "Final Render Preparation" in html
+    assert "data-ba312-final-render-gate" in html
+    assert "fp-final-render-gate" in html
+    assert "fp-final-render-gate-status" in html
+    assert "fp-final-render-next-action" in html
+    assert "fdFpApplyFinalRenderGate" in html
