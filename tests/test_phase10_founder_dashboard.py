@@ -16,6 +16,8 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200, msg=r.text)
         text = r.text
         self.assertIn("Founder Dashboard", text)
+        # Regression: Python """ must emit JS lines.join("\\n") not a literal newline inside the string
+        self.assertGreaterEqual(text.count('lines.join("\\n")'), 2, msg="fresh preview / prod flow join must emit valid JS")
         # BA 30.6 — Visual Upgrade (Design-Marker, keine Screenshot-Tests)
         self.assertIn("VideoPipe Founder Cockpit", text)
         self.assertIn("Production Ready", text)
@@ -72,6 +74,16 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Finale Render-Freigabe", text)
         self.assertIn("Nächste Schritte", text)
         self.assertIn("refreshProductionFlowPanel", text)
+        # BA 31.0 — Operator Review (Fresh Preview Snapshot)
+        self.assertIn("Operator Review", text)
+        self.assertIn("data-ba310-operator-review", text)
+        self.assertIn("data-review-decision-marker", text)
+        # BA 31.1 — Guided Production Flow
+        self.assertIn("Production Flow", text)
+        self.assertIn("data-ba311-guided-flow", text)
+        self.assertIn("Snapshot = aktueller Dashboard-Abgleich", text)
+        self.assertIn("fd-guided-flow-microcopy-help", text)
+        self.assertIn("fdFpApplyGuidedFlow", text)
         # BA 30.3–30.8 — Fresh Preview + Dry-Run + CLI-Handoff
         self.assertIn("Fresh Preview Smoke (BA 30.3–30.8)", text)
         self.assertIn("Dry-Run starten", text)

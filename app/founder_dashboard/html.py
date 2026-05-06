@@ -326,6 +326,147 @@ main.fd-dashboard-main {
 .fd-exec-row .fp-exec-strip {
   margin-bottom: 0;
 }
+.fd-guided-flow {
+  margin-bottom: 1.35rem;
+  padding: 1.1rem 1.25rem 1.15rem;
+  border-radius: 12px;
+  border: 1px solid rgba(42, 51, 73, 0.95);
+  background: linear-gradient(165deg, rgba(26, 34, 52, 0.92) 0%, rgba(18, 24, 38, 0.98) 100%);
+  box-shadow: var(--vp-card-shadow);
+}
+.fd-guided-flow-head {
+  margin-bottom: 0.85rem;
+}
+.fd-guided-flow-head h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.fd-guided-flow-sub {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(160, 176, 198, 0.88);
+}
+.fd-guided-flow-microcopy-help {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(160, 176, 198, 0.88);
+}
+.fd-guided-flow-step-detail {
+  font-size: 0.68rem;
+  line-height: 1.38;
+  color: rgba(139, 156, 179, 0.92);
+  margin: 0 0 0.4rem;
+}
+.fp-handoff-after {
+  margin: 0.45rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.fd-guided-flow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.65rem;
+  align-items: stretch;
+  margin-bottom: 1rem;
+}
+@media (max-width: 767px) {
+  .fd-guided-flow-steps {
+    flex-direction: column;
+  }
+}
+.fd-guided-flow-step {
+  flex: 1 1 108px;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(48, 58, 78, 0.95);
+  background: rgba(0, 0, 0, 0.2);
+}
+.fd-guided-flow-step--current {
+  border-color: rgba(0, 70, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(0, 70, 255, 0.12);
+}
+.fd-guided-flow-step-num {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(139, 156, 179, 0.85);
+  margin-bottom: 0.15rem;
+}
+.fd-guided-flow-step-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(224, 232, 245, 0.92);
+  margin-bottom: 0.35rem;
+  line-height: 1.25;
+}
+.fd-guided-step-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 650;
+  padding: 0.12rem 0.38rem;
+  border-radius: 5px;
+  letter-spacing: 0.02em;
+}
+.fd-guided-step-badge--done {
+  background: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+.fd-guided-step-badge--pending {
+  background: rgba(148, 163, 184, 0.15);
+  color: rgba(203, 213, 225, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+}
+.fd-guided-step-badge--warning {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+.fd-guided-step-badge--blocked {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+.fd-guided-step-badge--locked {
+  background: rgba(100, 116, 139, 0.2);
+  color: rgba(203, 213, 225, 0.85);
+  border: 1px solid rgba(100, 116, 139, 0.45);
+}
+.fd-guided-step-badge--active {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+.fd-guided-flow-next {
+  padding: 0.75rem 0.9rem;
+  border-radius: 9px;
+  border: 1px solid rgba(0, 70, 255, 0.28);
+  background: rgba(0, 35, 120, 0.18);
+}
+.fd-guided-flow-next-kicker {
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(147, 197, 253, 0.85);
+  margin-bottom: 0.28rem;
+}
+.fd-guided-flow-next-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(224, 232, 245, 0.88);
+  margin-bottom: 0.35rem;
+}
+.fd-guided-flow-next-action {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(248, 250, 252, 0.95);
+  font-weight: 520;
+}
 .fp-cockpit-primary {
   border-color: rgba(0, 70, 255, 0.32);
   background: linear-gradient(165deg, rgba(28, 38, 58, 0.92) 0%, rgba(22, 29, 44, 0.98) 48%, rgba(20, 26, 40, 1) 100%);
@@ -1064,6 +1205,59 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   min-width: 118px;
 }
 .fp-preview-power-title { margin: 0; }
+.fp-operator-review-card {
+  margin: 0 0 1rem;
+  padding: 0.95rem 1.05rem;
+  border-radius: 11px;
+  border: 1px solid rgba(54, 65, 88, 0.85);
+  background: rgba(0, 0, 0, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+.fp-review-head { margin-bottom: 0.55rem; }
+.fp-review-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(54, 65, 88, 0.9);
+}
+.fp-review-badge--approve {
+  border-color: rgba(45, 160, 140, 0.45);
+  background: rgba(34, 90, 78, 0.35);
+  color: #a7f3d0;
+}
+.fp-review-badge--rework {
+  border-color: rgba(217, 165, 70, 0.45);
+  background: rgba(110, 85, 40, 0.22);
+  color: #fde68a;
+}
+.fp-review-badge--blocked {
+  border-color: rgba(220, 110, 110, 0.45);
+  background: rgba(95, 45, 45, 0.22);
+  color: #fecaca;
+}
+.fp-review-badge--pending {
+  border-color: rgba(118, 132, 155, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(196, 206, 220, 0.92);
+}
+.fp-review-reasons {
+  margin: 0.45rem 0 0.35rem;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(224, 232, 245, 0.88);
+}
+.fp-review-next {
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  font-weight: 520;
+  color: rgba(236, 241, 248, 0.94);
+}
 .fp-toolbar { margin: 0 0 0.35rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .fp-toolbar .sm.primary { font-weight: 600; }
 .fp-next-step-box {
@@ -1245,6 +1439,20 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
     </div>
   </div>
 
+  <section class="fd-guided-flow" id="fd-guided-production-flow" data-ba311-guided-flow="1" aria-labelledby="fd-guided-flow-h">
+    <div class="fd-guided-flow-head">
+      <h2 id="fd-guided-flow-h">Production Flow</h2>
+      <p class="fd-guided-flow-sub">Geführter Ablauf vom Input bis zum Final Render</p>
+    </div>
+    <p class="fd-guided-flow-microcopy-help muted" id="fd-guided-flow-microcopy-help">Snapshot = aktueller Dashboard-Abgleich. Nutze „Fresh Preview aktualisieren“, nachdem du lokal einen Full Preview Smoke ausgeführt hast.</p>
+    <div id="fd-guided-flow-steps" class="fd-guided-flow-steps" aria-label="Produktionsschritte"></div>
+    <div class="fd-guided-flow-next">
+      <div class="fd-guided-flow-next-kicker">Nächster Schritt</div>
+      <div id="fd-guided-flow-next-label" class="fd-guided-flow-next-label"></div>
+      <p id="fd-guided-flow-next-action" class="fd-guided-flow-next-action">—</p>
+    </div>
+  </section>
+
   <section class="panel panel--fresh-preview fp-cockpit-primary" id="panel-ba303-fresh-preview" aria-labelledby="fp-snapshot-h">
     <div class="panel-section-head fp-cockpit-panel-head">
       <h2 id="fp-snapshot-h">Fresh Preview Smoke (BA 30.3–30.8)</h2>
@@ -1283,6 +1491,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
             <p class="fp-handoff-note muted" id="fp-handoff-note"></p>
             <p class="fp-handoff-warning" id="fp-handoff-warning"></p>
             <pre class="out" id="fp-dry-run-handoff-ps"></pre>
+            <p class="fp-handoff-after muted" id="fp-handoff-after-run">Nach erfolgreichem Lauf: zurück ins Dashboard und „Fresh Preview aktualisieren“ klicken.</p>
             <button type="button" class="sm fp-copy-path" id="fp-btn-copy-handoff-cli" data-ba308-copy-handoff="1">CLI-Befehl kopieren</button>
           </div>
         </div>
@@ -1304,6 +1513,14 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
             <span id="fp-readiness-score" class="fp-readiness-score-wrap">Readiness wird nach dem Snapshot berechnet</span>
           </div>
           <p class="fp-readiness-footnote muted">Score basiert auf Fresh Preview Readiness</p>
+        </div>
+        <div class="fp-operator-review-card" id="fp-operator-review-card" data-ba310-operator-review="1" aria-labelledby="fp-operator-review-h">
+          <h3 class="subh fp-module-title" id="fp-operator-review-h">Operator Review</h3>
+          <div class="fp-review-head">
+            <span id="fp-review-decision-badge" class="fp-review-badge fp-review-badge--pending" data-review-decision-marker="pending">Ausstehend</span>
+          </div>
+          <ul id="fp-review-reasons" class="fp-review-reasons"></ul>
+          <p id="fp-review-next-action" class="fp-review-next muted">Full Preview Smoke lokal über CLI-Handoff starten</p>
         </div>
         <div class="fp-toolbar">
           <button type="button" class="primary" id="fp-btn-refresh" data-label="Fresh Preview aktualisieren" data-ba305-refresh="1">Fresh Preview aktualisieren</button>
@@ -2387,7 +2604,7 @@ try {
     lines.push("- Lokale Vorschau erzeugen (sofern FFmpeg verfügbar) und Pfad prüfen.");
     lines.push("- human_preview_review per CLI setzen, danach final_render_readiness_gate ausführen.");
     lines.push("- Finalen Render nur mit Freigabe und explizitem --execute starten.");
-    host.textContent = lines.join("\n");
+    host.textContent = lines.join("\\n");
   }
 
   const VIEW_MODE_KEY = "fd_view_mode_v1";
@@ -5051,6 +5268,71 @@ try {
     }
   }
 
+  function fdGuidedStatusLabel(st) {
+    var s = String(st || "").toLowerCase();
+    if (s === "done") return "Erledigt";
+    if (s === "active") return "Aktiv";
+    if (s === "pending") return "Offen";
+    if (s === "warning") return "Hinweis";
+    if (s === "blocked") return "Blockiert";
+    if (s === "locked") return "Gesperrt";
+    return s || "—";
+  }
+
+  function fdGuidedStatusBadgeClass(st) {
+    var s = String(st || "").toLowerCase();
+    if (s === "done") return "fd-guided-step-badge fd-guided-step-badge--done";
+    if (s === "active") return "fd-guided-step-badge fd-guided-step-badge--active";
+    if (s === "pending") return "fd-guided-step-badge fd-guided-step-badge--pending";
+    if (s === "warning") return "fd-guided-step-badge fd-guided-step-badge--warning";
+    if (s === "blocked") return "fd-guided-step-badge fd-guided-step-badge--blocked";
+    if (s === "locked") return "fd-guided-step-badge fd-guided-step-badge--locked";
+    return "fd-guided-step-badge fd-guided-step-badge--pending";
+  }
+
+  function fdFpResetGuidedFlowNeutral() {
+    var host = document.getElementById("fd-guided-flow-steps");
+    var nx = document.getElementById("fd-guided-flow-next-action");
+    var lb = document.getElementById("fd-guided-flow-next-label");
+    if (host) host.innerHTML = "";
+    if (lb) lb.textContent = "";
+    if (nx) nx.textContent = "—";
+  }
+
+  function fdFpApplyGuidedFlow(d) {
+    var host = document.getElementById("fd-guided-flow-steps");
+    var nx = document.getElementById("fd-guided-flow-next-action");
+    var lb = document.getElementById("fd-guided-flow-next-label");
+    if (!host || !nx) return;
+    var steps = d && d.guided_flow_steps;
+    var cur = d && d.guided_flow_current_step ? String(d.guided_flow_current_step) : "";
+    if (!steps || !steps.length) {
+      host.innerHTML = "";
+      if (lb) lb.textContent = "";
+      nx.textContent = "—";
+      return;
+    }
+    host.innerHTML = "";
+    steps.forEach(function(step) {
+      var id = step && step.id != null ? String(step.id) : "";
+      var ord = step && step.order != null ? step.order : "";
+      var label = step && step.label != null ? String(step.label) : "—";
+      var detail = step && step.detail != null ? String(step.detail) : "";
+      var st = step && step.status != null ? String(step.status) : "pending";
+      var div = document.createElement("div");
+      div.className = "fd-guided-flow-step" + (cur && id === cur ? " fd-guided-flow-step--current" : "");
+      div.setAttribute("data-guided-step-id", id);
+      div.innerHTML =
+        '<div class="fd-guided-flow-step-num">Schritt ' + String(ord) + '</div>' +
+        '<div class="fd-guided-flow-step-label">' + label.replace(/</g, "&lt;") + '</div>' +
+        (detail ? '<div class="fd-guided-flow-step-detail">' + detail.replace(/</g, "&lt;") + '</div>' : '') +
+        '<span class="' + fdGuidedStatusBadgeClass(st) + '">' + fdGuidedStatusLabel(st) + '</span>';
+      host.appendChild(div);
+    });
+    if (lb) lb.textContent = (d && d.guided_flow_next_step_label) ? String(d.guided_flow_next_step_label) : "";
+    nx.textContent = (d && d.guided_flow_next_step_action) ? String(d.guided_flow_next_step_action) : "—";
+  }
+
   function fdFpResetPreviewPowerNeutral() {
     var pv = document.getElementById("fp-preview-power-value");
     var pl = document.getElementById("fp-preview-power-label");
@@ -5102,6 +5384,37 @@ try {
     else pl.textContent = "—";
   }
 
+  function fdFpApplyOperatorReview(d) {
+    var badge = document.getElementById("fp-review-decision-badge");
+    var ul = document.getElementById("fp-review-reasons");
+    var nx = document.getElementById("fp-review-next-action");
+    if (!badge || !ul || !nx) return;
+    var dec = String((d && d.review_decision) || "pending").toLowerCase();
+    var label = (d && d.review_decision_label) ? String(d.review_decision_label) : "Ausstehend";
+    badge.textContent = label;
+    badge.setAttribute("data-review-decision-marker", dec);
+    var bcls = "fp-review-badge ";
+    if (dec === "approve") bcls += "fp-review-badge--approve";
+    else if (dec === "rework") bcls += "fp-review-badge--rework";
+    else if (dec === "blocked") bcls += "fp-review-badge--blocked";
+    else bcls += "fp-review-badge--pending";
+    badge.className = bcls;
+    ul.innerHTML = "";
+    var rs = d && d.review_decision_reasons;
+    if (rs && rs.length) {
+      rs.forEach(function(x) {
+        var li = document.createElement("li");
+        li.textContent = String(x);
+        ul.appendChild(li);
+      });
+    } else {
+      var li0 = document.createElement("li");
+      li0.textContent = "—";
+      ul.appendChild(li0);
+    }
+    nx.textContent = (d && d.review_next_action) ? String(d.review_next_action) : "";
+  }
+
   async function fdLoadFreshPreviewSnapshot() {
     var st = document.getElementById("fp-snapshot-status");
     var out = document.getElementById("out-fp-snapshot");
@@ -5109,6 +5422,7 @@ try {
     try {
       if (isKillSwitchActive()) {
         st.textContent = "Kill Switch aktiv — Fresh-Preview-Snapshot übersprungen.";
+        fdFpResetGuidedFlowNeutral();
         return;
       }
       const r = await fetch("/founder/dashboard/fresh-preview/snapshot", { method: "GET" });
@@ -5116,10 +5430,11 @@ try {
         st.textContent = "Fresh Preview Snapshot: HTTP " + r.status;
         st.classList.add("intake-status-err");
         fdFpResetPreviewPowerNeutral();
+        fdFpResetGuidedFlowNeutral();
         return;
       }
       const d = await r.json();
-      st.textContent = "Snapshot geladen · read-only · " + (d.fresh_preview_snapshot_version || "ba30_4_v1");
+      st.textContent = "Snapshot geladen · read-only · " + (d.fresh_preview_snapshot_version || "ba31_0_v1");
       st.classList.remove("intake-status-err");
       var rs = String(d.readiness_status || "").toLowerCase();
       var badge = document.getElementById("fp-readiness-badge");
@@ -5131,6 +5446,8 @@ try {
       }
       if (scEl) scEl.textContent = d.readiness_score != null ? ("Score: " + String(d.readiness_score) + " / 100 · Score basiert auf Fresh Preview Readiness") : "Readiness wird nach dem Snapshot berechnet";
       fdFpUpdatePreviewPower(d);
+      fdFpApplyOperatorReview(d);
+      fdFpApplyGuidedFlow(d);
       var nsOp = String(d.operator_next_step || "").trim();
       var exFs = document.getElementById("fp-exec-fresh-status");
       if (exFs) exFs.textContent = d.fresh_preview_available ? "Aktiv" : "Noch kein Fresh Preview Run gefunden";
@@ -5181,12 +5498,13 @@ try {
       lines.push("- fresh_preview_available: " + (d.fresh_preview_available ? "ja" : "nein"));
       lines.push("- latest_run_id: " + (d.latest_run_id || "—"));
       lines.push("- Artefakt-Flags: script " + (d.script_json_present ? "ja" : "nein") + " · pack " + (d.scene_asset_pack_present ? "ja" : "nein") + " · manifest " + (d.asset_manifest_present ? "ja" : "nein") + " · summary " + (d.preview_smoke_summary_present ? "ja" : "nein") + " · open_me " + (d.open_preview_smoke_report_present ? "ja" : "nein"));
-      out.textContent = lines.join("\n");
+      out.textContent = lines.join("\\n");
       out.classList.remove("out-empty");
     } catch (e) {
       st.textContent = "Fresh Preview Snapshot: " + String(e && e.message ? e.message : e);
       st.classList.add("intake-status-err");
       fdFpResetPreviewPowerNeutral();
+      fdFpResetGuidedFlowNeutral();
     }
   }
 
