@@ -120,11 +120,14 @@ def run_fresh_topic_preview_smoke(
     max_scenes: int = 5,
     asset_dir: Optional[Path] = None,
     asset_runner_mode: str = "placeholder",
+    max_live_assets: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Build script → scene_asset_pack → placeholder (or configured) asset_runner → optional ``execute_preview_smoke_auto``.
 
     ``asset_runner_mode``: ``placeholder`` (default, no live provider) or ``live`` (requires keys/env; operator responsibility).
+
+    ``max_live_assets``: optional cap on Leonardo live generations (forwarded as ``max_assets_live``); unset keeps Asset Runner default (3).
     """
     from app.production_assembly.preview_smoke_auto import execute_preview_smoke_auto
 
@@ -193,13 +196,17 @@ def run_fresh_topic_preview_smoke(
         mode_l = "placeholder"
         result["warnings"].append("ba302_invalid_asset_runner_mode_fallback_placeholder")
 
+    runner_kw: Dict[str, Any] = dict(
+        pack_path=pack_path,
+        out_root=fresh_root,
+        run_id=rid,
+        mode=mode_l,
+    )
+    if max_live_assets is not None:
+        runner_kw["max_assets_live"] = int(max_live_assets)
+
     try:
-        ameta = ar.run_local_asset_runner(
-            pack_path,
-            fresh_root,
-            run_id=rid,
-            mode=mode_l,
-        )
+        ameta = ar.run_local_asset_runner(**runner_kw)
     except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError) as e:
         result["blocking_reasons"].append(f"asset_runner_failed:{type(e).__name__}")
         result["warnings"].append(str(e)[:300])
@@ -226,6 +233,7 @@ def run_fresh_topic_preview_smoke(
         asset_manifest=manifest_path,
         duration_target_seconds=int(duration_target_seconds),
         provider=str(provider),
+        max_timeline_scenes=int(max_scenes),
     )
     result["preview_smoke_exit_code"] = int(code)
     result["preview_smoke_summary"] = summ

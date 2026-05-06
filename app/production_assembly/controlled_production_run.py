@@ -40,9 +40,13 @@ def run_controlled_production_run(
     duration_target_seconds: int = 45,
     provider: str = "auto",
     render_local_preview: bool = False,
+    max_timeline_scenes: int = 5,
 ) -> Dict[str, Any]:
     """
     BA 29.0 core flow. Returns paths and artefact dicts (no printing).
+
+    ``max_timeline_scenes``: max number of manifest assets included in ``motion_timeline_manifest``
+    (default **5**, conservative; raise for long-form e.g. 20–24).
     """
     out_root = Path(output_root).resolve()
     out_root.mkdir(parents=True, exist_ok=True)
@@ -94,12 +98,13 @@ def run_controlled_production_run(
 
     preflight = build_visual_production_preflight_result(asset_manifest=asset_manifest, production_summary=prod_summary)
 
+    cap = max(1, int(max_timeline_scenes))
     scenes = []
     for a in assets:
         if not isinstance(a, dict):
             continue
         scenes.append(a)
-        if len(scenes) >= 5:
+        if len(scenes) >= cap:
             break
     timeline = build_motion_timeline_manifest(run_id=rid, scenes=scenes, default_duration_seconds=5)
     timeline_path = out_root / f"motion_timeline_manifest_{rid}.json"

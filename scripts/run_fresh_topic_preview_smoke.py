@@ -38,6 +38,13 @@ def main() -> int:
         action="store_true",
         help="Use asset_runner live mode (Leonardo etc.); default is placeholder-only. Operator must supply keys.",
     )
+    ap.add_argument(
+        "--max-live-assets",
+        type=int,
+        default=None,
+        metavar="N",
+        help="BA 32.0: max Leonardo live generations in live mode (default: Asset Runner default 3).",
+    )
     args = ap.parse_args()
 
     r = run_fresh_topic_preview_smoke(
@@ -52,6 +59,7 @@ def main() -> int:
         max_scenes=int(args.max_scenes),
         asset_dir=args.asset_dir.resolve() if args.asset_dir else None,
         asset_runner_mode="live" if args.allow_live_assets else "placeholder",
+        max_live_assets=args.max_live_assets,
     )
     print(json.dumps(r, ensure_ascii=False, indent=2, default=str))
     if r.get("blocking_reasons"):

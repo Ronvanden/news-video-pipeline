@@ -460,10 +460,13 @@ def execute_preview_smoke_auto(
     run_local_preview_from_bundle_fn: Optional[Callable[..., Dict[str, Any]]] = None,
     duration_target_seconds: int = 45,
     provider: str = "auto",
+    max_timeline_scenes: int = 5,
 ) -> Tuple[Dict[str, Any], int]:
     """
     BA 29.2c — Find/prepare manifest, run BA 29.0, repair bundle media paths if needed,
     run local preview, return (summary_dict, exit_code). No live providers/uploads.
+
+    ``max_timeline_scenes``: forwarded to ``run_controlled_production_run`` (default **5**).
     """
     from app.production_assembly.controlled_production_run import run_controlled_production_run
     from app.production_assembly.local_preview_render import run_local_preview_from_bundle
@@ -513,6 +516,7 @@ def execute_preview_smoke_auto(
             duration_target_seconds=int(duration_target_seconds),
             provider=str(provider),
             render_local_preview=False,
+            max_timeline_scenes=int(max_timeline_scenes),
         )
     except Exception as e:
         summ = {

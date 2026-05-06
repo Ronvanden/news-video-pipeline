@@ -1317,6 +1317,92 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   line-height: 1.45;
   color: rgba(139, 156, 179, 0.88);
 }
+.fp-fr-input-checklist-card {
+  margin: 0 0 1rem;
+  padding: 0.95rem 1.05rem;
+  border-radius: 11px;
+  border: 1px solid rgba(54, 65, 88, 0.85);
+  background: rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+.fp-fr-input-head { margin-bottom: 0.55rem; }
+.fp-fr-input-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(54, 65, 88, 0.9);
+}
+.fp-fr-input-badge--ready {
+  border-color: rgba(45, 160, 140, 0.45);
+  background: rgba(34, 90, 78, 0.35);
+  color: #a7f3d0;
+}
+.fp-fr-input-badge--pending {
+  border-color: rgba(118, 132, 155, 0.4);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(196, 206, 220, 0.92);
+}
+.fp-fr-input-badge--warning {
+  border-color: rgba(217, 165, 70, 0.45);
+  background: rgba(110, 85, 40, 0.22);
+  color: #fde68a;
+}
+.fp-fr-input-badge--blocked {
+  border-color: rgba(220, 110, 110, 0.45);
+  background: rgba(95, 45, 45, 0.22);
+  color: #fecaca;
+}
+.fp-final-render-input-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0.35rem 0 0.5rem;
+}
+.fp-fr-input-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr) auto auto;
+  gap: 0.35rem 0.5rem;
+  align-items: start;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid rgba(48, 58, 78, 0.75);
+  background: rgba(0, 0, 0, 0.15);
+}
+@media (max-width: 720px) {
+  .fp-fr-input-row {
+    grid-template-columns: 1fr;
+  }
+}
+.fp-fr-input-row-label { font-weight: 600; color: rgba(224, 232, 245, 0.92); }
+.fp-fr-input-row-meta { font-size: 0.68rem; color: rgba(139, 156, 179, 0.88); }
+.fp-fr-input-row-path {
+  word-break: break-all;
+  color: rgba(196, 206, 220, 0.85);
+  font-family: ui-monospace, monospace;
+  font-size: 0.68rem;
+}
+.fp-fr-input-item-status {
+  font-size: 0.65rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.fp-fr-input-item-status--present { color: #86efac; }
+.fp-fr-input-item-status--missing { color: #fecaca; }
+.fp-fr-input-item-status--unknown { color: rgba(148, 163, 184, 0.95); }
+.fp-fr-input-item-status--optional { color: rgba(251, 191, 36, 0.95); }
+.fp-fr-input-next {
+  margin: 0.45rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  font-weight: 520;
+  color: rgba(236, 241, 248, 0.94);
+}
 .fp-toolbar { margin: 0 0 0.35rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .fp-toolbar .sm.primary { font-weight: 600; }
 .fp-next-step-box {
@@ -1436,6 +1522,8 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
 .fp-handoff-h { margin: 0 0 0.5rem; font-size: 0.82rem; color: var(--text); }
 .fp-handoff-note, .fp-handoff-warning { margin: 0 0 0.45rem; font-size: 0.78rem; line-height: 1.45; }
 #fp-dry-run-handoff-ps { margin: 0.5rem 0; max-height: 220px; font-size: 0.72rem; }
+.fp-safe-final-handoff-card { margin-top: 0.85rem; }
+#fp-safe-final-render-cli { margin: 0.5rem 0; max-height: 220px; font-size: 0.72rem; white-space: pre-wrap; word-break: break-word; }
 </style>
 </head>
 <body>
@@ -1589,6 +1677,24 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
           <ul id="fp-final-render-gate-reasons" class="fp-fr-gate-reasons"></ul>
           <p id="fp-final-render-next-action" class="fp-fr-gate-next muted">—</p>
           <p class="fp-fr-gate-future-hint">Der sichere Final-Render-Start im Dashboard folgt in einer späteren BA.</p>
+        </div>
+        <div class="fp-fr-input-checklist-card" id="fp-final-render-input-checklist" data-ba313-final-render-input-checklist="1" aria-labelledby="fp-final-render-input-checklist-h">
+          <h3 class="subh fp-module-title" id="fp-final-render-input-checklist-h">Final Render Input Checklist</h3>
+          <div class="fp-fr-input-head">
+            <span id="fp-final-render-input-checklist-status" class="fp-fr-input-badge fp-fr-input-badge--pending" data-fr-input-checklist-marker="pending">—</span>
+          </div>
+          <div id="fp-final-render-input-items" class="fp-final-render-input-items" aria-label="Render-Input-Positionen"></div>
+          <p id="fp-final-render-input-next-action" class="fp-fr-input-next muted">—</p>
+        </div>
+        <div class="fp-safe-final-handoff-card fp-dry-run-handoff" id="fp-safe-final-render-handoff" data-ba314-safe-final-render-handoff="1" aria-labelledby="fp-safe-fr-h">
+          <h3 class="subh fp-module-title fp-handoff-h" id="fp-safe-fr-h">Safe Final Render Handoff</h3>
+          <p id="fp-safe-fr-availability" class="fp-fr-input-row-meta">—</p>
+          <p id="fp-safe-fr-locked-msg" class="muted" style="display:none">Final Render Handoff ist gesperrt, bis Gate und Input Checklist bereit sind.</p>
+          <ul id="fp-safe-fr-reasons" class="fp-fr-gate-reasons" style="display:none"></ul>
+          <p id="fp-safe-fr-note" class="fp-handoff-note muted" style="display:none"></p>
+          <p id="fp-safe-fr-warning" class="fp-handoff-warning" style="display:none"></p>
+          <pre class="out" id="fp-safe-final-render-cli" style="display:none"></pre>
+          <button type="button" class="sm fp-copy-path" id="fp-safe-final-render-copy" style="display:none" data-ba314-copy-safe-fr="1">Final-Render-Befehl kopieren</button>
         </div>
         <div class="fp-toolbar">
           <button type="button" class="primary" id="fp-btn-refresh" data-label="Fresh Preview aktualisieren" data-ba305-refresh="1">Fresh Preview aktualisieren</button>
@@ -5527,6 +5633,174 @@ try {
     nx.textContent = (d && d.final_render_next_action) ? String(d.final_render_next_action) : "";
   }
 
+  function fdFpChecklistItemStatusClass(st) {
+    var s = String(st || "").toLowerCase();
+    if (s === "present") return "fp-fr-input-item-status fp-fr-input-item-status--present";
+    if (s === "unknown") return "fp-fr-input-item-status fp-fr-input-item-status--unknown";
+    return "fp-fr-input-item-status fp-fr-input-item-status--missing";
+  }
+
+  function fdFpBuildFinalRenderInputRow(it) {
+    var row = document.createElement("div");
+    row.className = "fp-fr-input-row";
+    row.setAttribute("data-fr-input-item-id", String(it && it.id ? it.id : ""));
+    var left = document.createElement("div");
+    var lab = document.createElement("div");
+    lab.className = "fp-fr-input-row-label";
+    lab.textContent = it && it.label ? String(it.label) : "—";
+    var meta = document.createElement("div");
+    meta.className = "fp-fr-input-row-meta";
+    meta.textContent = it && it.hint ? String(it.hint) : "";
+    left.appendChild(lab);
+    left.appendChild(meta);
+    var pathCell = document.createElement("div");
+    pathCell.className = "fp-fr-input-row-path";
+    var pv = it && it.path ? String(it.path) : "";
+    pathCell.textContent = pv || "(kein Pfad)";
+    var stEl = document.createElement("div");
+    var st = it && it.status ? String(it.status) : "missing";
+    stEl.className = fdFpChecklistItemStatusClass(st);
+    stEl.textContent = st === "present" ? "vorhanden" : (st === "unknown" ? "unklar" : "fehlt");
+    var btnCell = document.createElement("div");
+    btnCell.style.display = "flex";
+    btnCell.style.flexWrap = "wrap";
+    btnCell.style.gap = "0.35rem";
+    btnCell.style.alignItems = "center";
+    var openEl;
+    if (pv && it && it.artifact_open_allowed) {
+      openEl = document.createElement("a");
+      openEl.href = fdFpArtifactFileUrl(pv);
+      openEl.target = "_blank";
+      openEl.rel = "noopener noreferrer";
+      openEl.className = "fp-open-artifact";
+      openEl.textContent = "Öffnen";
+    } else {
+      openEl = document.createElement("span");
+      openEl.className = "fp-open-placeholder";
+      openEl.setAttribute("aria-hidden", "true");
+    }
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "fp-copy-path sm";
+    b.textContent = "Kopieren";
+    b.disabled = !pv;
+    if (pv) {
+      (function(txt, bt) { b.onclick = function() { fdFpCopyToClipboard(txt, bt); }; })(pv, b);
+    }
+    btnCell.appendChild(openEl);
+    btnCell.appendChild(b);
+    row.appendChild(left);
+    row.appendChild(pathCell);
+    row.appendChild(stEl);
+    row.appendChild(btnCell);
+    return row;
+  }
+
+  function fdFpResetFinalRenderInputChecklistNeutral() {
+    var badge = document.getElementById("fp-final-render-input-checklist-status");
+    var host = document.getElementById("fp-final-render-input-items");
+    var nx = document.getElementById("fp-final-render-input-next-action");
+    if (badge) {
+      badge.textContent = "—";
+      badge.setAttribute("data-fr-input-checklist-marker", "pending");
+      badge.className = "fp-fr-input-badge fp-fr-input-badge--pending";
+    }
+    if (host) host.innerHTML = "";
+    if (nx) nx.textContent = "—";
+  }
+
+  function fdFpResetSafeFinalRenderHandoffNeutral() {
+    var av = document.getElementById("fp-safe-fr-availability");
+    var lm = document.getElementById("fp-safe-fr-locked-msg");
+    var rs = document.getElementById("fp-safe-fr-reasons");
+    var note = document.getElementById("fp-safe-fr-note");
+    var warn = document.getElementById("fp-safe-fr-warning");
+    var pre = document.getElementById("fp-safe-final-render-cli");
+    var cp = document.getElementById("fp-safe-final-render-copy");
+    if (av) av.textContent = "—";
+    if (lm) lm.style.display = "none";
+    if (rs) { rs.innerHTML = ""; rs.style.display = "none"; }
+    if (note) { note.textContent = ""; note.style.display = "none"; }
+    if (warn) { warn.textContent = ""; warn.style.display = "none"; }
+    if (pre) { pre.textContent = ""; pre.style.display = "none"; }
+    if (cp) cp.style.display = "none";
+  }
+
+  function fdFpApplySafeFinalRenderHandoff(d) {
+    var av = document.getElementById("fp-safe-fr-availability");
+    var lm = document.getElementById("fp-safe-fr-locked-msg");
+    var rs = document.getElementById("fp-safe-fr-reasons");
+    var note = document.getElementById("fp-safe-fr-note");
+    var warn = document.getElementById("fp-safe-fr-warning");
+    var pre = document.getElementById("fp-safe-final-render-cli");
+    var cp = document.getElementById("fp-safe-final-render-copy");
+    if (!d || !av || !lm || !rs || !note || !warn || !pre || !cp) return;
+    var ok = !!d.safe_final_render_handoff_available;
+    if (ok) {
+      av.textContent = "Status: verfügbar";
+      lm.style.display = "none";
+      rs.innerHTML = "";
+      rs.style.display = "none";
+      var ntxt = (d.safe_final_render_handoff_note) ? String(d.safe_final_render_handoff_note) : "";
+      note.textContent = ntxt;
+      note.style.display = ntxt ? "block" : "none";
+      var wtxt = (d.safe_final_render_handoff_warning) ? String(d.safe_final_render_handoff_warning) : "";
+      warn.textContent = wtxt;
+      warn.style.display = wtxt ? "block" : "none";
+      var cmd = (d.safe_final_render_cli_command_powershell) ? String(d.safe_final_render_cli_command_powershell) : "";
+      pre.textContent = cmd;
+      pre.style.display = cmd ? "block" : "none";
+      cp.style.display = cmd ? "inline-block" : "none";
+    } else {
+      av.textContent = "Status: gesperrt";
+      lm.style.display = "block";
+      rs.innerHTML = "";
+      var rrs = d.safe_final_render_handoff_reasons;
+      if (rrs && rrs.length) {
+        rrs.forEach(function(x) {
+          var li = document.createElement("li");
+          li.textContent = String(x);
+          rs.appendChild(li);
+        });
+        rs.style.display = "block";
+      } else {
+        rs.style.display = "none";
+      }
+      note.textContent = "";
+      note.style.display = "none";
+      warn.textContent = "";
+      warn.style.display = "none";
+      pre.textContent = "";
+      pre.style.display = "none";
+      cp.style.display = "none";
+    }
+  }
+
+  function fdFpApplyFinalRenderInputChecklist(d) {
+    var badge = document.getElementById("fp-final-render-input-checklist-status");
+    var host = document.getElementById("fp-final-render-input-items");
+    var nx = document.getElementById("fp-final-render-input-next-action");
+    if (!badge || !host || !nx) return;
+    var cs = String((d && d.final_render_input_checklist_status) || "pending").toLowerCase();
+    var bl = (d && d.final_render_input_checklist_label) ? String(d.final_render_input_checklist_label) : "Ausstehend";
+    badge.textContent = bl;
+    badge.setAttribute("data-fr-input-checklist-marker", cs);
+    var bcls = "fp-fr-input-badge ";
+    if (cs === "ready") bcls += "fp-fr-input-badge--ready";
+    else if (cs === "warning") bcls += "fp-fr-input-badge--warning";
+    else if (cs === "blocked") bcls += "fp-fr-input-badge--blocked";
+    else bcls += "fp-fr-input-badge--pending";
+    badge.className = bcls;
+    host.innerHTML = "";
+    var items = d && d.final_render_input_items;
+    if (items && items.length) {
+      items.forEach(function(it) {
+        host.appendChild(fdFpBuildFinalRenderInputRow(it));
+      });
+    }
+    nx.textContent = (d && d.final_render_input_next_action) ? String(d.final_render_input_next_action) : "";
+  }
+
   async function fdLoadFreshPreviewSnapshot() {
     var st = document.getElementById("fp-snapshot-status");
     var out = document.getElementById("out-fp-snapshot");
@@ -5535,6 +5809,8 @@ try {
       if (isKillSwitchActive()) {
         st.textContent = "Kill Switch aktiv — Fresh-Preview-Snapshot übersprungen.";
         fdFpResetFinalRenderGateNeutral();
+        fdFpResetFinalRenderInputChecklistNeutral();
+        fdFpResetSafeFinalRenderHandoffNeutral();
         fdFpResetGuidedFlowNeutral();
         return;
       }
@@ -5544,6 +5820,8 @@ try {
         st.classList.add("intake-status-err");
         fdFpResetPreviewPowerNeutral();
         fdFpResetFinalRenderGateNeutral();
+        fdFpResetFinalRenderInputChecklistNeutral();
+        fdFpResetSafeFinalRenderHandoffNeutral();
         fdFpResetGuidedFlowNeutral();
         return;
       }
@@ -5562,6 +5840,8 @@ try {
       fdFpUpdatePreviewPower(d);
       fdFpApplyOperatorReview(d);
       fdFpApplyFinalRenderGate(d);
+      fdFpApplyFinalRenderInputChecklist(d);
+      fdFpApplySafeFinalRenderHandoff(d);
       fdFpApplyGuidedFlow(d);
       var nsOp = String(d.operator_next_step || "").trim();
       var exFs = document.getElementById("fp-exec-fresh-status");
@@ -5620,6 +5900,8 @@ try {
       st.classList.add("intake-status-err");
       fdFpResetPreviewPowerNeutral();
       fdFpResetFinalRenderGateNeutral();
+      fdFpResetFinalRenderInputChecklistNeutral();
+      fdFpResetSafeFinalRenderHandoffNeutral();
       fdFpResetGuidedFlowNeutral();
     }
   }
@@ -5980,6 +6262,14 @@ try {
         var pre = document.getElementById("fp-dry-run-handoff-ps");
         var t = pre && pre.textContent ? pre.textContent.trim() : "";
         if (t) fdFpCopyToClipboard(t, fpCopyHandoff);
+      });
+    }
+    var fpCopySafeFr = document.getElementById("fp-safe-final-render-copy");
+    if (fpCopySafeFr) {
+      fpCopySafeFr.addEventListener("click", function() {
+        var pre = document.getElementById("fp-safe-final-render-cli");
+        var t = pre && pre.textContent ? pre.textContent.trim() : "";
+        if (t) fdFpCopyToClipboard(t, fpCopySafeFr);
       });
     }
   }

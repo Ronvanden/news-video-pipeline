@@ -33,6 +33,13 @@ def main() -> int:
         dest="render_local_preview",
         help="BA 29.3: build local_preview.mp4 from render_input_bundle (requires local FFmpeg).",
     )
+    ap.add_argument(
+        "--max-timeline-scenes",
+        type=int,
+        default=5,
+        metavar="N",
+        help="BA 32.0: max assets in motion_timeline_manifest (default 5).",
+    )
     args = ap.parse_args()
 
     run_controlled_production_run(
@@ -44,6 +51,7 @@ def main() -> int:
         duration_target_seconds=int(args.duration_target_seconds),
         provider=str(args.provider),
         render_local_preview=bool(args.render_local_preview),
+        max_timeline_scenes=int(args.max_timeline_scenes),
     )
     out_root = args.output_root.resolve()
     summ = out_root / f"first_real_production_run_summary_{args.run_id}.json"

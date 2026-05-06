@@ -7,6 +7,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from app.founder_dashboard.fresh_preview_artifact_access import resolve_fresh_preview_artifact_path
+
 _FRESH_PREVIEW_SNAPSHOT_VERSION = "ba31_0_v1"
 _OPERATOR_REVIEW_VERSION = "ba31_0_v1"
 _SUMMARY_READ_MAX_BYTES = 512_000
@@ -640,12 +642,362 @@ def build_guided_production_flow(snapshot: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+_FINAL_RENDER_INPUT_CHECKLIST_VERSION = "ba31_3_v1"
+
+
+def _output_root_from_fresh_snapshot(snapshot: Dict[str, Any]) -> Optional[Path]:
+    lrd = str(snapshot.get("latest_run_dir") or "").strip()
+    if lrd:
+        try:
+            run_dir = Path(lrd).resolve()
+            if run_dir.parent.name == "fresh_topic_preview":
+                return run_dir.parent.parent.resolve()
+        except OSError:
+            pass
+    summ = str(snapshot.get("preview_smoke_summary_path") or "").strip()
+    if summ:
+        try:
+            return Path(summ).resolve().parent
+        except OSError:
+            pass
+    script = str(snapshot.get("script_path") or "").strip()
+    if script:
+        try:
+            sp = Path(script).resolve()
+            if sp.parent.parent.name == "fresh_topic_preview":
+                return sp.parent.parent.parent.resolve()
+        except OSError:
+            pass
+    return None
+
+
+def _checklist_artifact_open_allowed(out_root: Optional[Path], abs_path: str) -> bool:
+    if not out_root or not str(abs_path or "").strip():
+        return False
+    try:
+        p, reason = resolve_fresh_preview_artifact_path(out_root, str(abs_path).strip())
+        return p is not None and reason == "ok"
+    except (OSError, TypeError, ValueError):
+        return False
+
+
+def build_final_render_input_checklist(snapshot: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    BA 31.3 — Read-only Checkliste typischer Final-Render-Inputs (Dateisystem + Snapshot).
+    """
+    gate_st = str(snapshot.get("final_render_gate_status") or "").lower()
+    run_id = str(snapshot.get("latest_run_id") or "").strip()
+    script_ok = bool(snapshot.get("script_json_present"))
+    pack_ok = bool(snapshot.get("scene_asset_pack_present"))
+    manifest_ok = bool(snapshot.get("asset_manifest_present"))
+    core_ok = script_ok and pack_ok and manifest_ok
+    summ_present = bool(snapshot.get("preview_smoke_summary_present"))
+    open_present = bool(snapshot.get("open_preview_smoke_report_present"))
+
+    out_root = _output_root_from_fresh_snapshot(snapshot)
+
+    script_p = str(snapshot.get("script_path") or "").strip()
+    pack_p = str(snapshot.get("scene_asset_pack_path") or "").strip()
+    manifest_p = str(snapshot.get("asset_manifest_path") or "").strip()
+    summ_p = str(snapshot.get("preview_smoke_summary_path") or "").strip()
+    open_p = str(snapshot.get("open_preview_smoke_report_path") or "").strip()
+
+    bundle_p = ""
+    timeline_p = ""
+    clip_p = ""
+    pack_dir_p = ""
+    if out_root and run_id:
+        try:
+            bundle_p = str((out_root / f"render_input_bundle_{run_id}.json").resolve())
+            timeline_p = str((out_root / f"motion_timeline_manifest_{run_id}.json").resolve())
+            clip_p = str((out_root / f"motion_clip_manifest_{run_id}.json").resolve())
+            pack_dir_p = str((out_root / f"production_pack_{run_id}").resolve())
+        except OSError:
+            bundle_p = timeline_p = clip_p = pack_dir_p = ""
+
+    lp_candidates: List[str] = []
+    if out_root and run_id:
+        lp_candidates = [
+            str((out_root / ".preview_smoke_work" / run_id / "local_preview" / "local_preview_render_result.json").resolve()),
+            str((out_root / f"local_preview_{run_id}" / "local_preview_render_result.json").resolve()),
+            str((out_root / f"preview_{run_id}" / "local_preview_render_result.json").resolve()),
+        ]
+    lp_p = ""
+    for cand in lp_candidates:
+        try:
+            if cand and _safe_is_file(Path(cand)):
+                lp_p = cand
+                break
+        except OSError:
+            continue
+    lp_path_display = lp_p or (lp_candidates[0] if lp_candidates else "")
+
+    items: List[Dict[str, Any]] = []
+    missing_ids: List[str] = []
+
+    def push_item(
+        item_id: str,
+        label: str,
+        present: bool,
+        path_str: str,
+        hint: str,
+        tier: str,
+    ) -> None:
+        st = "present" if present else "missing"
+        if tier == "optional" and not present and not path_str:
+            st = "unknown"
+        open_ok = False
+        if present and path_str and tier != "dir":
+            open_ok = _checklist_artifact_open_allowed(out_root, path_str)
+        elif present and path_str and tier == "dir":
+            open_ok = False
+        items.append(
+            {
+                "id": item_id,
+                "label": label,
+                "status": st,
+                "path": path_str if present or path_str else "",
+                "hint": hint,
+                "artifact_open_allowed": bool(open_ok),
+                "tier": tier,
+            }
+        )
+        if st == "missing" and tier in ("core", "preview", "bundle"):
+            missing_ids.append(item_id)
+
+    push_item(
+        "script_json",
+        "Skript (script.json)",
+        script_ok and bool(script_p),
+        script_p,
+        "Fresh-Preview-Run unter fresh_topic_preview.",
+        "core",
+    )
+    push_item(
+        "scene_asset_pack",
+        "Scene Asset Pack",
+        pack_ok and bool(pack_p),
+        pack_p,
+        "scene_asset_pack.json im Run-Ordner.",
+        "core",
+    )
+    push_item(
+        "asset_manifest",
+        "Asset Manifest",
+        manifest_ok and bool(manifest_p),
+        manifest_p,
+        "generated_assets_<run_id>/asset_manifest.json.",
+        "core",
+    )
+    push_item(
+        "preview_smoke_summary",
+        "Preview Smoke Summary",
+        summ_present and bool(summ_p),
+        summ_p,
+        "output/preview_smoke_auto_summary_<run_id>.json",
+        "preview",
+    )
+    push_item(
+        "open_preview_smoke_report",
+        "OPEN_PREVIEW_SMOKE.md",
+        open_present and bool(open_p),
+        open_p,
+        "Report unter .preview_smoke_work oder Pfad aus Summary.",
+        "preview",
+    )
+
+    bundle_present = bool(bundle_p and _safe_is_file(Path(bundle_p)))
+    push_item(
+        "render_input_bundle",
+        "Render Input Bundle",
+        bundle_present,
+        bundle_p,
+        "output/render_input_bundle_<run_id>.json (nach Preview-Smoke/Pack-Pipeline).",
+        "bundle",
+    )
+
+    tl_present = bool(timeline_p and _safe_is_file(Path(timeline_p)))
+    push_item(
+        "motion_timeline_manifest",
+        "Motion Timeline Manifest",
+        tl_present,
+        timeline_p,
+        "Optional: output/motion_timeline_manifest_<run_id>.json",
+        "optional",
+    )
+    cl_present = bool(clip_p and _safe_is_file(Path(clip_p)))
+    push_item(
+        "motion_clip_manifest",
+        "Motion Clip Manifest",
+        cl_present,
+        clip_p,
+        "Optional: output/motion_clip_manifest_<run_id>.json",
+        "optional",
+    )
+    pack_d_present = bool(pack_dir_p and _safe_is_dir(Path(pack_dir_p)))
+    push_item(
+        "production_pack",
+        "Production Pack (Ordner)",
+        pack_d_present,
+        pack_dir_p,
+        "Optional: output/production_pack_<run_id>/ — nur Pfad kopieren, kein Browser-Öffnen.",
+        "dir",
+    )
+    lp_present = bool(lp_p)
+    push_item(
+        "local_preview_render_result",
+        "Local Preview Result (JSON)",
+        lp_present,
+        lp_path_display,
+        "Optional: local_preview_render_result.json unter Preview-Work oder Preview-Ordner.",
+        "optional",
+    )
+
+    ext_ok = tl_present and cl_present and pack_d_present and lp_present
+    cs = "pending"
+    next_action = (
+        "Full Preview abschließen und „Fresh Preview aktualisieren“ klicken; danach werden weitere Inputs erkannt."
+    )
+
+    if not core_ok or gate_st == "blocked":
+        cs = "blocked"
+        next_action = (
+            "Kernartefakte oder Gate-Blocker klären, bevor Render-Inputs zuverlässig bewertet werden können."
+        )
+    elif gate_st == "needs_rework":
+        cs = "warning"
+        next_action = "Vor dem Final Render Anpassungen laut Operator Review — fehlende Inputs nachziehen."
+    elif gate_st in ("locked",):
+        cs = "pending"
+        next_action = (
+            "Full Preview Smoke ausführen und Snapshot aktualisieren; die Checkliste füllt sich danach."
+        )
+    elif gate_st == "ready":
+        if not bundle_present:
+            cs = "warning"
+            next_action = (
+                "Render Input Bundle fehlt — Preview-Smoke/Pipeline erneut ausführen oder Bundle-Skript prüfen."
+            )
+        elif not ext_ok:
+            cs = "warning"
+            next_action = (
+                "Kern-Inputs inkl. Bundle sind da; optionale Artefakte (Timeline, Clips, Pack, Local Preview) fehlen teilweise."
+            )
+        else:
+            cs = "ready"
+            next_action = (
+                "Wesentliche Render-Inputs sind vorhanden; Final-Render-Flow lokal vorbereiten (kein Start im Dashboard)."
+            )
+    else:
+        cs = "pending"
+
+    badge_label = {"blocked": "Blockiert", "pending": "Ausstehend", "warning": "Hinweis", "ready": "Bereit"}.get(
+        cs, "Ausstehend"
+    )
+
+    return {
+        "final_render_input_checklist_version": _FINAL_RENDER_INPUT_CHECKLIST_VERSION,
+        "final_render_input_checklist_status": cs,
+        "final_render_input_checklist_label": badge_label,
+        "final_render_input_items": items,
+        "final_render_input_missing": missing_ids,
+        "final_render_input_next_action": next_action,
+    }
+
+
+_SAFE_FINAL_RENDER_HANDOFF_VERSION = "ba31_4_v1"
+
+
+def build_safe_final_render_handoff(snapshot: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    BA 31.4 — Read-only CLI-Handoff für ``scripts/run_safe_final_render.py`` (kein Start im Dashboard).
+
+    Ist-Stand CLI (BA 29.6): ``--production-summary``, ``--output-dir``; optional ``--execute`` nur manuell.
+    """
+    gate_st = str(snapshot.get("final_render_gate_status") or "").lower()
+    cs = str(snapshot.get("final_render_input_checklist_status") or "").lower()
+    run_id = str(snapshot.get("latest_run_id") or "").strip()
+    script_ok = bool(snapshot.get("script_json_present"))
+    pack_ok = bool(snapshot.get("scene_asset_pack_present"))
+    manifest_ok = bool(snapshot.get("asset_manifest_present"))
+    core_ok = script_ok and pack_ok and manifest_ok
+
+    reasons: List[str] = []
+
+    def add_r(msg: str) -> None:
+        if msg and msg not in reasons:
+            reasons.append(msg)
+
+    available = False
+    if gate_st != "ready":
+        if gate_st == "blocked":
+            add_r("Final-Render-Gate: blockiert.")
+        elif gate_st == "needs_rework":
+            add_r("Final-Render-Gate: Nacharbeit nötig.")
+        elif gate_st == "locked":
+            add_r("Final-Render-Gate: noch gesperrt (z. B. Full Preview ausstehend).")
+        else:
+            add_r("Final-Render-Gate: nicht „ready“.")
+    elif cs in ("pending", "blocked"):
+        add_r("Input-Checkliste: Status „pending“ oder „blockiert“.")
+    elif not run_id:
+        add_r("Keine Run-ID im Snapshot.")
+    elif not core_ok:
+        add_r("Kernartefakte (Skript, Pack, Manifest) fehlen.")
+    else:
+        available = True
+
+    ps_posix = f"output/production_pack_{run_id}/production_summary.json"
+    ps_win = f"output\\production_pack_{run_id}\\production_summary.json"
+    out_posix = f"output/safe_final_render_{run_id}"
+    out_win = f"output\\safe_final_render_{run_id}"
+
+    cli_posix = ""
+    cli_ps = ""
+    if available:
+        cli_posix = (
+            f"python scripts/run_safe_final_render.py "
+            f"--production-summary {ps_posix} --output-dir {out_posix}"
+        )
+        cli_ps = (
+            "python scripts/run_safe_final_render.py `\n"
+            f"  --production-summary {ps_win} `\n"
+            f"  --output-dir {out_win}"
+        )
+
+    note = (
+        "Dieser Befehl startet den sicheren lokalen Final-Render-Flow. Prüfe vorher die Input Checklist."
+    )
+    warning = ""
+    if available:
+        out_root = _output_root_from_fresh_snapshot(snapshot)
+        if out_root and run_id:
+            ps_abs = out_root / f"production_pack_{run_id}" / "production_summary.json"
+            if not _safe_is_file(ps_abs):
+                warning = (
+                    "Hinweis: production_summary.json unter dem Production-Pack-Pfad wurde noch nicht gefunden — "
+                    "z. B. scripts/build_production_pack_v1.py ausführen, bevor der Befehl sinnvoll läuft."
+                )
+
+    return {
+        "safe_final_render_handoff_version": _SAFE_FINAL_RENDER_HANDOFF_VERSION,
+        "safe_final_render_handoff_available": available,
+        "safe_final_render_cli_command": cli_posix,
+        "safe_final_render_cli_command_powershell": cli_ps,
+        "safe_final_render_handoff_note": note if available else "",
+        "safe_final_render_handoff_warning": warning,
+        "safe_final_render_handoff_reasons": reasons if not available else [],
+    }
+
+
 def _merge_readiness(base: Dict[str, Any]) -> Dict[str, Any]:
     r = evaluate_fresh_preview_readiness(base)
     out = dict(base)
     out.update(r)
     out.update(evaluate_operator_review(out))
     out.update(build_final_render_preparation_gate(out))
+    out.update(build_final_render_input_checklist(out))
+    out.update(build_safe_final_render_handoff(out))
     out.update(build_guided_production_flow(out))
     return out
 

@@ -26,6 +26,13 @@ def main() -> int:
     )
     ap.add_argument("--duration-target-seconds", type=int, default=45)
     ap.add_argument("--provider", type=str, default="auto")
+    ap.add_argument(
+        "--max-timeline-scenes",
+        type=int,
+        default=5,
+        metavar="N",
+        help="BA 32.0: max assets in motion_timeline_manifest (default 5).",
+    )
     args = ap.parse_args()
 
     out_root = args.output_root.resolve()
@@ -35,6 +42,7 @@ def main() -> int:
         asset_manifest=args.asset_manifest.resolve() if args.asset_manifest else None,
         duration_target_seconds=int(args.duration_target_seconds),
         provider=str(args.provider),
+        max_timeline_scenes=int(args.max_timeline_scenes),
     )
     summary_path = out_root / f"preview_smoke_auto_summary_{args.run_id}.json"
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

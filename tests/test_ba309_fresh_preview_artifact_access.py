@@ -29,6 +29,37 @@ def test_resolve_under_fresh_topic_preview(tmp_path: Path):
     assert p_ok == fp.resolve()
 
 
+def test_resolve_render_input_bundle_at_output_root(tmp_path: Path):
+    root = tmp_path / "output"
+    root.mkdir(parents=True)
+    fp = root / "render_input_bundle_run_x.json"
+    fp.write_text("{}", encoding="utf-8")
+    p_ok, reason = resolve_fresh_preview_artifact_path(root, str(fp.resolve()))
+    assert reason == "ok"
+    assert p_ok == fp.resolve()
+
+
+def test_resolve_motion_manifests_at_output_root(tmp_path: Path):
+    root = tmp_path / "output"
+    root.mkdir(parents=True)
+    tl = root / "motion_timeline_manifest_run_x.json"
+    cl = root / "motion_clip_manifest_run_x.json"
+    tl.write_text("{}", encoding="utf-8")
+    cl.write_text("{}", encoding="utf-8")
+    assert resolve_fresh_preview_artifact_path(root, str(tl.resolve()))[1] == "ok"
+    assert resolve_fresh_preview_artifact_path(root, str(cl.resolve()))[1] == "ok"
+
+
+def test_resolve_local_preview_result_under_work(tmp_path: Path):
+    root = tmp_path / "output"
+    lp = root / ".preview_smoke_work" / "run_x" / "local_preview" / "local_preview_render_result.json"
+    lp.parent.mkdir(parents=True)
+    lp.write_text("{}", encoding="utf-8")
+    p_ok, reason = resolve_fresh_preview_artifact_path(root, str(lp.resolve()))
+    assert reason == "ok"
+    assert p_ok == lp.resolve()
+
+
 def test_resolve_preview_smoke_summary_at_output_root(tmp_path: Path):
     root = tmp_path / "output"
     root.mkdir(parents=True)

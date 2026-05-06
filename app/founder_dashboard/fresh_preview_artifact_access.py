@@ -9,6 +9,9 @@ from typing import Optional, Tuple
 _ALLOWED_SUFFIXES = frozenset({".md", ".json", ".txt"})
 _MAX_ARTIFACT_BYTES = 1024 * 1024
 _PREVIEW_SMOKE_SUMMARY_RE = re.compile(r"^preview_smoke_auto_summary_.+\.json$")
+_RENDER_INPUT_BUNDLE_RE = re.compile(r"^render_input_bundle_.+\.json$")
+_MOTION_TIMELINE_MANIFEST_RE = re.compile(r"^motion_timeline_manifest_.+\.json$")
+_MOTION_CLIP_MANIFEST_RE = re.compile(r"^motion_clip_manifest_.+\.json$")
 
 
 def fresh_preview_artifact_media_type(path: Path) -> str:
@@ -42,6 +45,9 @@ def resolve_fresh_preview_artifact_path(
     - gesamter Unterbaum ``fresh_topic_preview/`` (nur .md / .json / .txt)
     - ``preview_smoke_auto_summary_<run_id>.json`` direkt unter ``output/``
     - ``.preview_smoke_work/<run_id>/OPEN_PREVIEW_SMOKE.md``
+    - unter ``output/`` (genau eine Pfadkomponente): ``render_input_bundle_<run_id>.json``,
+      ``motion_timeline_manifest_<run_id>.json``, ``motion_clip_manifest_<run_id>.json``
+    - ``.preview_smoke_work/<run_id>/local_preview/local_preview_render_result.json``
 
     Keine Symlinks, keine Ordner, kein Path Traversal außerhalb von ``output``.
     """
@@ -96,13 +102,26 @@ def resolve_fresh_preview_artifact_path(
         except ValueError:
             return None, "forbidden"
         parts = rel.parts
-        if len(parts) == 1 and _PREVIEW_SMOKE_SUMMARY_RE.match(parts[0]):
+        if len(parts) == 1 and (
+            _PREVIEW_SMOKE_SUMMARY_RE.match(parts[0])
+            or _RENDER_INPUT_BUNDLE_RE.match(parts[0])
+            or _MOTION_TIMELINE_MANIFEST_RE.match(parts[0])
+            or _MOTION_CLIP_MANIFEST_RE.match(parts[0])
+        ):
             ok_zone = True
         elif (
             len(parts) == 3
             and parts[0] == ".preview_smoke_work"
             and parts[2] == "OPEN_PREVIEW_SMOKE.md"
             and _safe_segment(parts[1])
+        ):
+            ok_zone = True
+        elif (
+            len(parts) == 4
+            and parts[0] == ".preview_smoke_work"
+            and _safe_segment(parts[1])
+            and parts[2] == "local_preview"
+            and parts[3] == "local_preview_render_result.json"
         ):
             ok_zone = True
 

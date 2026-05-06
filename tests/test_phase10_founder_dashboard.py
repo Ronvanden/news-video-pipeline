@@ -87,6 +87,16 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Final Render Preparation", text)
         self.assertIn("data-ba312-final-render-gate", text)
         self.assertIn("fdFpApplyFinalRenderGate", text)
+        # BA 31.3 — Final Render Input Checklist
+        self.assertIn("Final Render Input Checklist", text)
+        self.assertIn("data-ba313-final-render-input-checklist", text)
+        self.assertIn("fdFpApplyFinalRenderInputChecklist", text)
+        # BA 31.4 — Safe Final Render Handoff
+        self.assertIn("Safe Final Render Handoff", text)
+        self.assertIn("data-ba314-safe-final-render-handoff", text)
+        self.assertIn("fp-safe-final-render-cli", text)
+        self.assertIn("fp-safe-final-render-copy", text)
+        self.assertIn("fdFpApplySafeFinalRenderHandoff", text)
         self.assertIn("fdFpApplyGuidedFlow", text)
         # BA 30.3–30.8 — Fresh Preview + Dry-Run + CLI-Handoff
         self.assertIn("Fresh Preview Smoke (BA 30.3–30.8)", text)
