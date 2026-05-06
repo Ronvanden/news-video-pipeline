@@ -52,6 +52,13 @@ def test_runway_motion_clip_with_reference_paths_image_to_video_prepared():
     }
     p = build_reference_provider_payload(a, provider="runway")
     assert p["supported_mode"] == "image_to_video_reference_prepared"
+    assert p.get("payload_format") == "runway_reference_stub_v1"
+    payload = p.get("payload")
+    assert isinstance(payload, dict)
+    assert payload.get("no_live_upload") is True
+    init_imgs = payload.get("init_images")
+    assert isinstance(init_imgs, list)
+    assert [r.get("path") for r in init_imgs] == ["ref.png"]
 
 
 def test_seedance_motion_clip_with_reference_paths_image_to_video_prepared():
@@ -64,6 +71,28 @@ def test_seedance_motion_clip_with_reference_paths_image_to_video_prepared():
     }
     p = build_reference_provider_payload(a, provider="seedance")
     assert p["supported_mode"] == "image_to_video_reference_prepared"
+    assert p.get("payload_format") == "seedance_reference_stub_v1"
+    payload = p.get("payload")
+    assert isinstance(payload, dict)
+    assert payload.get("no_live_upload") is True
+    ref_imgs = payload.get("reference_images")
+    assert isinstance(ref_imgs, list)
+    assert [r.get("path") for r in ref_imgs] == ["ref.png"]
+
+
+def test_leonardo_payload_is_prompt_hint_only():
+    a = {
+        "scene_number": 1,
+        "reference_asset_ids": ["r1"],
+        "continuity_reference_paths": ["ref.png"],
+        "continuity_provider_preparation_status": "prepared",
+    }
+    p = build_reference_provider_payload(a, provider="leonardo")
+    assert p.get("payload_format") == "leonardo_reference_stub_v1"
+    payload = p.get("payload")
+    assert isinstance(payload, dict)
+    assert payload.get("mode") == "prompt_hint_only"
+    assert payload.get("no_live_upload") is True
 
 
 def test_missing_reference_is_propagated():

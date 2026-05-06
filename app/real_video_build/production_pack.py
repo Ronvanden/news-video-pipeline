@@ -15,6 +15,8 @@ from app.visual_plan.reference_payload_mirror import (
     build_reference_payload_mirror_summary,
     mirror_reference_payloads_by_scene,
 )
+from app.visual_plan.asset_manifest_reference_index import build_asset_manifest_reference_index
+from app.visual_plan.visual_production_preflight import build_visual_production_preflight_result
 
 RenderReadinessStatus = Literal["ready", "needs_review", "blocked"]
 
@@ -388,6 +390,16 @@ def build_production_summary(
         "continuity_wiring_summary": continuity_wiring_summary,
         "reference_provider_payload_summary": reference_provider_payload_summary,
         "reference_payload_mirror_summary": reference_payload_mirror_summary,
+        "visual_production_preflight_result": build_visual_production_preflight_result(
+            asset_manifest=asset_manifest if isinstance(asset_manifest, dict) else None,
+            production_summary={
+                "ready_for_render": bool(ready_for_render),
+                "approval_status": approval_status,
+                # BA 27.9: preflight only needs presence signals; keep summary deterministic
+                "asset_manifest_reference_index": None,
+                "asset_manifest_reference_index_path": None,
+            },
+        ),
     }
 
 
@@ -649,6 +661,21 @@ def build_production_pack(
             summary["reference_library_summary"] = {"reference_assets_count": 0, "types_count": {}, "warnings": ["reference_library_summary_failed"]}
 
     if not dry_run:
+        # BA 27.7 — write compact reference index (optional but default-on when manifest present)
+        try:
+            if isinstance(asset_manifest, dict) and isinstance(asset_manifest.get("assets"), list):
+                idx = build_asset_manifest_reference_index(asset_manifest)
+                _write_json(target_dir / "asset_manifest_reference_index.json", idx)
+                files_written.append(str((target_dir / "asset_manifest_reference_index.json").resolve()))
+                # also surface in production summary
+                summary["asset_manifest_reference_index_path"] = str(
+                    (target_dir / "asset_manifest_reference_index.json").resolve()
+                )
+        except Exception:
+            summary.setdefault("warnings", [])
+            if isinstance(summary.get("warnings"), list):
+                summary["warnings"].append("asset_manifest_reference_index_write_failed")
+
         _write_json(target_dir / "production_summary.json", summary)
         files_written.append(str((target_dir / "production_summary.json").resolve()))
         write_production_pack_readme(pack_dir=target_dir, summary=summary)

@@ -2253,6 +2253,11 @@ try {
         function findAssetLikeForScene(sceneNumber) {
           try {
             var exp = lastExport && lastExport.asset_manifest ? lastExport.asset_manifest : null;
+            if (!exp && lastExport && lastExport.asset_manifest_reference_index) {
+              var idx = lastExport.asset_manifest_reference_index;
+              var by = idx && idx.by_scene_number ? idx.by_scene_number : null;
+              if (by && by[String(sceneNumber)]) return by[String(sceneNumber)];
+            }
             var man = exp && exp.assets && Array.isArray(exp.assets) ? exp : null;
             if (!man) return null;
             for (var ai = 0; ai < man.assets.length; ai++) {

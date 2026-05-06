@@ -149,6 +149,38 @@ def build_reference_provider_payload(asset: Dict[str, Any], *, provider: str | N
             "continuity_prompt_hint": hint,
             "reference_images": [{"input_type": "file_path", "path": p} for p in paths],
         }
+    # BA 27.8 — provider-specific stub formats (no live upload, no calls)
+    elif prov == "runway":
+        out["payload_format"] = "runway_reference_stub_v1"
+        out["payload"] = {
+            "provider": "runway",
+            "no_live_upload": True,
+            "mode": "image_to_video_reference",
+            "init_images": [{"input_type": "file_path", "path": p} for p in paths],
+            "motion_prompt_hint": hint,
+            "continuity_strength": strength,
+            "scene_motion_kind": kind or "unknown",
+        }
+    elif prov == "seedance":
+        out["payload_format"] = "seedance_reference_stub_v1"
+        out["payload"] = {
+            "provider": "seedance",
+            "no_live_upload": True,
+            "mode": "image_to_video_reference",
+            "reference_images": [{"input_type": "file_path", "path": p} for p in paths],
+            "continuity_prompt_hint": hint,
+            "continuity_strength": strength,
+        }
+    elif prov == "leonardo":
+        out["payload_format"] = "leonardo_reference_stub_v1"
+        out["payload"] = {
+            "provider": "leonardo",
+            "no_live_upload": True,
+            "mode": "prompt_hint_only",
+            "reference_prompt_hint": hint,
+            "reference_images_stub": [{"input_type": "file_path", "path": p} for p in paths],
+            "continuity_strength": strength,
+        }
     return out
 
 
