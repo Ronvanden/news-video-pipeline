@@ -1,0 +1,16 @@
+{
+  "video_created": true,
+  "output_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_2\\final_video.mp4",
+  "duration_seconds": 23.0,
+  "scene_count": 4,
+  "motion_mode": "basic",
+  "motion_applied": true,
+  "warnings": [
+    "audio_shorter_than_timeline_padded_or_continued"
+  ],
+  "blocking_reasons": [],
+  "subtitle_path_requested": null,
+  "subtitles_burned": false,
+  "run_id": "ba268_a9f4f8c4",
+  "render_output_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_2\\render_ba268_a9f4f8c4\\render_output_manifest.json"
+}

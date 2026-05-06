@@ -1,0 +1,31 @@
+{
+  "run_id": "mini_e2e",
+  "source_narration_script": "C:\\Users\\buicr\\news-to-video-pipeline\\fixtures\\local_preview_mini\\mini_narration.txt",
+  "timeline_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\fixtures\\local_preview_mini\\mini_timeline_manifest.json",
+  "subtitle_count": 14,
+  "estimated_duration_seconds": 6.0,
+  "subtitle_mode": "simple",
+  "subtitle_source": "narration",
+  "subtitle_style": "typewriter",
+  "subtitle_render_contract": {
+    "style": "typewriter",
+    "recommended_renderer": "future_typewriter_renderer",
+    "requires_word_timing": false,
+    "requires_character_timing": true,
+    "max_words_per_cue": 6,
+    "fallback_style": "word_by_word",
+    "warnings": [
+      "typewriter_v1_contract_only_srt_has_line_timing_only"
+    ]
+  },
+  "transcription_provider": "",
+  "transcription_used": false,
+  "fallback_used": false,
+  "audio_path": null,
+  "warnings": [
+    "subtitle_timeline_duration_used"
+  ],
+  "blocking_reasons": [],
+  "subtitles_srt_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_mini_e2e\\subtitles.srt",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_mini_e2e"
+}

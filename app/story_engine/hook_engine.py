@@ -11,6 +11,7 @@ from app.story_engine.hook_library import (
     HOOK_TEMPLATES_DE,
     opening_style_label,
 )
+from app.manual_url_story.rewrite_mode import REWRITE_MODE_TO_VIDEO_TEMPLATE
 from app.story_engine.templates import normalize_story_template_id
 
 
@@ -122,13 +123,21 @@ def generate_hook_v1(
     topic: str = "",
     title: str = "",
     source_summary: str = "",
+    manual_url_rewrite_mode: str = "",
 ) -> HookEngineResult:
     """
     Regelbasierte Hook-Zeile + Score. Entwirft keine neuen Fakten — Nutzung des
     gegebenen Titels/Themas/Zusammenfassung als Anker.
     """
     ws: List[str] = []
-    tid, nws = normalize_story_template_id(video_template)
+    tid_source = video_template
+    mode = (manual_url_rewrite_mode or "").strip().lower()
+    if mode:
+        mapped = REWRITE_MODE_TO_VIDEO_TEMPLATE.get(mode)
+        if mapped:
+            tid_source = mapped
+            ws.append(f"[hook_engine] manual_url_rewrite_mode={mode!r} → Template '{mapped}' für Hook-Stil.")
+    tid, nws = normalize_story_template_id(tid_source)
     ws.extend(nws)
 
     blob = f"{topic} {title} {source_summary}".lower()

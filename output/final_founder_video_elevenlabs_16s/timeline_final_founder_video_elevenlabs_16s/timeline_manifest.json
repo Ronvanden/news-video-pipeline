@@ -1,0 +1,56 @@
+{
+  "run_id": "final_founder_video_elevenlabs_16s",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_16s\\generated_assets_final_founder_video_elevenlabs_16s\\asset_manifest.json",
+  "assets_directory": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_16s\\generated_assets_final_founder_video_elevenlabs_16s",
+  "audio_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_16s\\voiceover.mp3",
+  "total_scenes": 3,
+  "estimated_duration_seconds": 16,
+  "scene_duration_default_seconds": 5,
+  "scenes": [
+    {
+      "scene_number": 1,
+      "start_time": 0.0,
+      "end_time": 6.0,
+      "duration_seconds": 6,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 0,
+      "media_type": "video",
+      "video_path": "scene_001.mp4",
+      "image_path": "scene_001.png"
+    },
+    {
+      "scene_number": 2,
+      "start_time": 6.0,
+      "end_time": 11.0,
+      "duration_seconds": 5,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 1,
+      "media_type": "video",
+      "video_path": "scene_002.mp4",
+      "image_path": "scene_002.png"
+    },
+    {
+      "scene_number": 3,
+      "start_time": 11.0,
+      "end_time": 16.0,
+      "duration_seconds": 5,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 2,
+      "media_type": "video",
+      "video_path": "scene_003.mp4",
+      "image_path": "scene_003.png"
+    }
+  ]
+}

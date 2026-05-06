@@ -1,0 +1,40 @@
+{
+  "ok": true,
+  "used_leonardo_images_count": 4,
+  "used_runway_videos_count": 3,
+  "fallback_assets_used": 0,
+  "scenes": [
+    {
+      "scene_number": 1,
+      "source": "runway_live",
+      "path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\visual_assets\\merged\\scene_001.mp4"
+    },
+    {
+      "scene_number": 2,
+      "source": "runway_live",
+      "path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\visual_assets\\merged\\scene_002.mp4"
+    },
+    {
+      "scene_number": 3,
+      "source": "runway_live",
+      "path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\visual_assets\\merged\\scene_003.mp4"
+    },
+    {
+      "scene_number": 4,
+      "source": "leonardo_image",
+      "path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\visual_assets\\merged\\scene_004.png"
+    }
+  ],
+  "warnings": [],
+  "blocking_reasons": [],
+  "provider_env_detected": {
+    "leonardo": "set",
+    "runway": "set",
+    "elevenlabs": "set"
+  },
+  "output_paths": {
+    "scene_plan": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\scene_plan.json",
+    "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\scene_asset_pack.json",
+    "asset_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\visual_assets\\merged"
+  }
+}

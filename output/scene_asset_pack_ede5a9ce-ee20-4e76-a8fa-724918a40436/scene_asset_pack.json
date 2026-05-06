@@ -1,0 +1,254 @@
+{
+  "export_version": "18.2-v1",
+  "source_label": "url:https://www.tagesschau.de/ausland/europa/eu-facebook-instagram-100.html",
+  "template_type": "documentary",
+  "video_template": "generic",
+  "hook": "Wusstest du, dass viele Kinder unter 13 Jahren auf Instagram und Facebook aktiv sind, obwohl diese Plattformen offiziell erst ab diesem Alter erlaubt sind? Die EU-Kommission hat jetzt alarmierende Ergebnisse veröffentlicht, die die Sicherheit unserer Kinder in den sozialen Medien in Frage stellen!",
+  "scene_expansion": {
+    "layer_version": "18.0-v1",
+    "plan_only": true,
+    "beats_per_chapter_default": 3,
+    "expanded_scene_assets": [
+      {
+        "chapter_index": 0,
+        "beat_index": 0,
+        "visual_prompt": "Establishing: Szene 1 (Kapitel 1: Die Vorwürfe der EU-Kommission): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt. — wide readable composition, documentary lighting.",
+        "camera_motion_hint": "slow push-in, tripod, neutral DE framing",
+        "duration_seconds": 5,
+        "asset_type": "establishing",
+        "continuity_note": "Open chapter 1; align with hook tone: Wusstest du, dass viele Kinder unter 13 Jahren auf Instagram und Facebook aktiv  …",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 1,
+        "visual_prompt": "Detail beat: focus element from chapter — E; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "subtle pan left-to-right, hold on subject anchor",
+        "duration_seconds": 5,
+        "asset_type": "detail",
+        "continuity_note": "Match palette and subject line from chapter 0 beat 0; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 2,
+        "visual_prompt": "B-roll / cutaway supporting narrative — Kommission): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "static lock-off, slight handheld micro-movement",
+        "duration_seconds": 5,
+        "asset_type": "broll",
+        "continuity_note": "Match palette and subject line from chapter 0 beat 1; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 1,
+        "beat_index": 0,
+        "visual_prompt": "Establishing: Szene 2 (Kapitel 2: Die Gefahren für Kinder): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt. — wide readable composition, documentary lighting.",
+        "camera_motion_hint": "slow push-in, tripod, neutral DE framing",
+        "duration_seconds": 5,
+        "asset_type": "establishing",
+        "continuity_note": "Open chapter 2; align with hook tone: Wusstest du, dass viele Kinder unter 13 Jahren auf Instagram und Facebook aktiv  …",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 1,
+        "beat_index": 1,
+        "visual_prompt": "Detail beat: focus element from chapter — e Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "subtle pan left-to-right, hold on subject anchor",
+        "duration_seconds": 5,
+        "asset_type": "detail",
+        "continuity_note": "Match palette and subject line from chapter 1 beat 0; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 1,
+        "beat_index": 2,
+        "visual_prompt": "B-roll / cutaway supporting narrative — der): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "static lock-off, slight handheld micro-movement",
+        "duration_seconds": 5,
+        "asset_type": "broll",
+        "continuity_note": "Match palette and subject line from chapter 1 beat 1; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 2,
+        "beat_index": 0,
+        "visual_prompt": "Establishing: Szene 3 (Kapitel 3: Die Reaktion von Meta): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt. — wide readable composition, documentary lighting.",
+        "camera_motion_hint": "slow push-in, tripod, neutral DE framing",
+        "duration_seconds": 5,
+        "asset_type": "establishing",
+        "continuity_note": "Open chapter 3; align with hook tone: Wusstest du, dass viele Kinder unter 13 Jahren auf Instagram und Facebook aktiv  …",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 2,
+        "beat_index": 1,
+        "visual_prompt": "Detail beat: focus element from chapter — Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "subtle pan left-to-right, hold on subject anchor",
+        "duration_seconds": 5,
+        "asset_type": "detail",
+        "continuity_note": "Match palette and subject line from chapter 2 beat 0; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 2,
+        "beat_index": 2,
+        "visual_prompt": "B-roll / cutaway supporting narrative — a): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "static lock-off, slight handheld micro-movement",
+        "duration_seconds": 5,
+        "asset_type": "broll",
+        "continuity_note": "Match palette and subject line from chapter 2 beat 1; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 3,
+        "beat_index": 0,
+        "visual_prompt": "Establishing: Szene 4 (Kapitel 4: Die rechtlichen Konsequenzen): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt. — wide readable composition, documentary lighting.",
+        "camera_motion_hint": "slow push-in, tripod, neutral DE framing",
+        "duration_seconds": 5,
+        "asset_type": "establishing",
+        "continuity_note": "Open chapter 4; align with hook tone: Wusstest du, dass viele Kinder unter 13 Jahren auf Instagram und Facebook aktiv  …",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 3,
+        "beat_index": 1,
+        "visual_prompt": "Detail beat: focus element from chapter — klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "subtle pan left-to-right, hold on subject anchor",
+        "duration_seconds": 5,
+        "asset_type": "detail",
+        "continuity_note": "Match palette and subject line from chapter 3 beat 0; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 3,
+        "beat_index": 2,
+        "visual_prompt": "B-roll / cutaway supporting narrative — equenzen): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "static lock-off, slight handheld micro-movement",
+        "duration_seconds": 5,
+        "asset_type": "broll",
+        "continuity_note": "Match palette and subject line from chapter 3 beat 1; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 4,
+        "beat_index": 0,
+        "visual_prompt": "Establishing: Szene 5 (Kapitel 5: Die Rolle der Eltern und Erziehungsberechtigten): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt. — wide readable composition, documentary lighting.",
+        "camera_motion_hint": "slow push-in, tripod, neutral DE framing",
+        "duration_seconds": 5,
+        "asset_type": "establishing",
+        "continuity_note": "Open chapter 5; align with hook tone: Wusstest du, dass viele Kinder unter 13 Jahren auf Instagram und Facebook aktiv  …",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 4,
+        "beat_index": 1,
+        "visual_prompt": "Detail beat: focus element from chapter — ischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "subtle pan left-to-right, hold on subject anchor",
+        "duration_seconds": 5,
+        "asset_type": "detail",
+        "continuity_note": "Match palette and subject line from chapter 4 beat 0; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 4,
+        "beat_index": 2,
+        "visual_prompt": "B-roll / cutaway supporting narrative — und Erziehungsberechtigten): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "static lock-off, slight handheld micro-movement",
+        "duration_seconds": 5,
+        "asset_type": "broll",
+        "continuity_note": "Match palette and subject line from chapter 4 beat 1; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 5,
+        "beat_index": 0,
+        "visual_prompt": "Establishing: Szene 6 (Kapitel 6: Zukünftige Entwicklungen und Lösungen): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt. — wide readable composition, documentary lighting.",
+        "camera_motion_hint": "slow push-in, tripod, neutral DE framing",
+        "duration_seconds": 5,
+        "asset_type": "establishing",
+        "continuity_note": "Open chapter 6; align with hook tone: Wusstest du, dass viele Kinder unter 13 Jahren auf Instagram und Facebook aktiv  …",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 5,
+        "beat_index": 1,
+        "visual_prompt": "Detail beat: focus element from chapter — s-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "subtle pan left-to-right, hold on subject anchor",
+        "duration_seconds": 5,
+        "asset_type": "detail",
+        "continuity_note": "Match palette and subject line from chapter 5 beat 0; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      },
+      {
+        "chapter_index": 5,
+        "beat_index": 2,
+        "visual_prompt": "B-roll / cutaway supporting narrative — ngen und Lösungen): Dokumentarischer News-Ton DE; klare Bildsprache; Thema «Mangelnde Alterskontrolle: EU sieht Kinder bei Instagram und Co.»; keine Clickbait-Gewalt.",
+        "camera_motion_hint": "static lock-off, slight handheld micro-movement",
+        "duration_seconds": 5,
+        "asset_type": "broll",
+        "continuity_note": "Match palette and subject line from chapter 5 beat 1; avoid harsh jump cuts on faces.",
+        "safety_notes": [
+          "Avoid explicit violence or identifiable victims without editorial clearance.",
+          "Do not invent locations, dates, or quotes; align with source and script."
+        ]
+      }
+    ],
+    "founder_note": "Generated 18 visual beats from 6 chapter(s) (default 3 beats where scene text is long). Use for Leonardo/Kling batch planning locally — no API calls from this layer.",
+    "checked_signals": [
+      "chapters=6",
+      "scene_prompts=6",
+      "template=documentary"
+    ]
+  }
+}

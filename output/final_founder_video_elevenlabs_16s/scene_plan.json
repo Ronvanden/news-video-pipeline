@@ -1,0 +1,32 @@
+{
+  "title": "Mini-Testskript (BA 25.2)",
+  "scenes": [
+    {
+      "scene_id": "sc_001",
+      "title": "Hook",
+      "voiceover_text": "Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+      "duration_seconds": 6,
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Hook. Textauszug: Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+      "image_prompt": null,
+      "video_prompt": null
+    },
+    {
+      "scene_id": "sc_002",
+      "title": "Kapitel 1: Einstieg",
+      "voiceover_text": "Wir zeigen, wie ein Story-Text in Szenen zerlegt wird.",
+      "duration_seconds": 5,
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 1: Einstieg. Textauszug: Wir zeigen, wie ein Story-Text in Szenen zerlegt wird.",
+      "image_prompt": null,
+      "video_prompt": null
+    },
+    {
+      "scene_id": "sc_003",
+      "title": "Kapitel 2: Struktur",
+      "voiceover_text": "Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.",
+      "duration_seconds": 5,
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Struktur. Textauszug: Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.",
+      "image_prompt": null,
+      "video_prompt": null
+    }
+  ]
+}

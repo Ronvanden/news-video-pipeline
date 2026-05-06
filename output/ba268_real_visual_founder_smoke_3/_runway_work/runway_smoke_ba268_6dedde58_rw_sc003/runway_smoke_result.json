@@ -1,0 +1,17 @@
+{
+  "schema_version": "runway_image_to_video_smoke_v1",
+  "run_id": "ba268_6dedde58_rw_sc003",
+  "ok": true,
+  "status": "completed",
+  "image_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\generated_assets_ba268_6dedde58\\scene_003.png",
+  "prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Struktur. Textauszug: Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.",
+  "output_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\_runway_work\\runway_smoke_ba268_6dedde58_rw_sc003\\runway_clip.mp4",
+  "warnings": [],
+  "blocking_reasons": [],
+  "metadata": {
+    "provider": "runway",
+    "duration_seconds": 5,
+    "task_id": "3cbb68d1-5d74-4f09-a09f-f7b2359e9ee3",
+    "task_url": "https://api.dev.runwayml.com/v1/tasks/3cbb68d1-5d74-4f09-a09f-f7b2359e9ee3"
+  }
+}

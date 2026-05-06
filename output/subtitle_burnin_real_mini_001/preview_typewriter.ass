@@ -1,0 +1,368 @@
+[Script Info]
+Title: preview_typewriter
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,22,&H00FFFFFF,&H00000000,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,1,2,40,40,{margin_v},1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:00.06,Default,,0,0,0,,{\an2}E
+Dialogue: 0,0:00:00.06,0:00:00.13,Default,,0,0,0,,{\an2}Ei
+Dialogue: 0,0:00:00.13,0:00:00.19,Default,,0,0,0,,{\an2}Ein
+Dialogue: 0,0:00:00.19,0:00:00.26,Default,,0,0,0,,{\an2}Eine
+Dialogue: 0,0:00:00.26,0:00:00.32,Default,,0,0,0,,{\an2}Eine 
+Dialogue: 0,0:00:00.32,0:00:00.39,Default,,0,0,0,,{\an2}Eine k
+Dialogue: 0,0:00:00.39,0:00:00.45,Default,,0,0,0,,{\an2}Eine ku
+Dialogue: 0,0:00:00.45,0:00:00.52,Default,,0,0,0,,{\an2}Eine kur
+Dialogue: 0,0:00:00.52,0:00:00.58,Default,,0,0,0,,{\an2}Eine kurz
+Dialogue: 0,0:00:00.58,0:00:00.64,Default,,0,0,0,,{\an2}Eine kurze
+Dialogue: 0,0:00:00.64,0:00:00.71,Default,,0,0,0,,{\an2}Eine kurze,
+Dialogue: 0,0:00:00.71,0:00:00.77,Default,,0,0,0,,{\an2}Eine kurze, 
+Dialogue: 0,0:00:00.77,0:00:00.84,Default,,0,0,0,,{\an2}Eine kurze, l
+Dialogue: 0,0:00:00.84,0:00:00.90,Default,,0,0,0,,{\an2}Eine kurze, lo
+Dialogue: 0,0:00:00.90,0:00:00.97,Default,,0,0,0,,{\an2}Eine kurze, lok
+Dialogue: 0,0:00:00.97,0:00:01.03,Default,,0,0,0,,{\an2}Eine kurze, loka
+Dialogue: 0,0:00:01.03,0:00:01.09,Default,,0,0,0,,{\an2}Eine kurze, lokal
+Dialogue: 0,0:00:01.09,0:00:01.16,Default,,0,0,0,,{\an2}Eine kurze, lokale
+Dialogue: 0,0:00:01.16,0:00:01.22,Default,,0,0,0,,{\an2}Eine kurze, lokale 
+Dialogue: 0,0:00:01.22,0:00:01.29,Default,,0,0,0,,{\an2}Eine kurze, lokale M
+Dialogue: 0,0:00:01.29,0:00:01.35,Default,,0,0,0,,{\an2}Eine kurze, lokale Mi
+Dialogue: 0,0:00:01.35,0:00:01.42,Default,,0,0,0,,{\an2}Eine kurze, lokale Min
+Dialogue: 0,0:00:01.42,0:00:01.48,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini
+Dialogue: 0,0:00:01.48,0:00:01.55,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-
+Dialogue: 0,0:00:01.55,0:00:01.61,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-S
+Dialogue: 0,0:00:01.61,0:00:01.67,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-St
+Dialogue: 0,0:00:01.67,0:00:01.74,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-Sto
+Dialogue: 0,0:00:01.74,0:00:01.80,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-Stor
+Dialogue: 0,0:00:01.80,0:00:01.87,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-Story
+Dialogue: 0,0:00:01.87,0:00:01.93,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-Story 
+Dialogue: 0,0:00:01.93,0:00:02.00,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-Story z
+Dialogue: 0,0:00:02.00,0:00:02.06,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-Story zu
+Dialogue: 0,0:00:02.06,0:00:02.13,Default,,0,0,0,,{\an2}Eine kurze, lokale Mini-Story zur
+Dialogue: 0,0:00:02.13,0:00:02.18,Default,,0,0,0,,{\an2}V
+Dialogue: 0,0:00:02.18,0:00:02.23,Default,,0,0,0,,{\an2}Ve
+Dialogue: 0,0:00:02.23,0:00:02.28,Default,,0,0,0,,{\an2}Ver
+Dialogue: 0,0:00:02.28,0:00:02.33,Default,,0,0,0,,{\an2}Verk
+Dialogue: 0,0:00:02.33,0:00:02.38,Default,,0,0,0,,{\an2}Verka
+Dialogue: 0,0:00:02.38,0:00:02.43,Default,,0,0,0,,{\an2}Verkab
+Dialogue: 0,0:00:02.43,0:00:02.48,Default,,0,0,0,,{\an2}Verkabe
+Dialogue: 0,0:00:02.48,0:00:02.53,Default,,0,0,0,,{\an2}Verkabel
+Dialogue: 0,0:00:02.53,0:00:02.58,Default,,0,0,0,,{\an2}Verkabelu
+Dialogue: 0,0:00:02.58,0:00:02.63,Default,,0,0,0,,{\an2}Verkabelun
+Dialogue: 0,0:00:02.63,0:00:02.68,Default,,0,0,0,,{\an2}Verkabelung
+Dialogue: 0,0:00:02.68,0:00:02.73,Default,,0,0,0,,{\an2}Verkabelung 
+Dialogue: 0,0:00:02.73,0:00:02.78,Default,,0,0,0,,{\an2}Verkabelung d
+Dialogue: 0,0:00:02.78,0:00:02.83,Default,,0,0,0,,{\an2}Verkabelung de
+Dialogue: 0,0:00:02.83,0:00:02.88,Default,,0,0,0,,{\an2}Verkabelung des
+Dialogue: 0,0:00:02.88,0:00:02.93,Default,,0,0,0,,{\an2}Verkabelung des 
+Dialogue: 0,0:00:02.93,0:00:02.99,Default,,0,0,0,,{\an2}Verkabelung des r
+Dialogue: 0,0:00:02.99,0:00:03.04,Default,,0,0,0,,{\an2}Verkabelung des re
+Dialogue: 0,0:00:03.04,0:00:03.09,Default,,0,0,0,,{\an2}Verkabelung des rea
+Dialogue: 0,0:00:03.09,0:00:03.14,Default,,0,0,0,,{\an2}Verkabelung des real
+Dialogue: 0,0:00:03.14,0:00:03.19,Default,,0,0,0,,{\an2}Verkabelung des reale
+Dialogue: 0,0:00:03.19,0:00:03.24,Default,,0,0,0,,{\an2}Verkabelung des realen
+Dialogue: 0,0:00:03.24,0:00:03.29,Default,,0,0,0,,{\an2}Verkabelung des realen 
+Dialogue: 0,0:00:03.29,0:00:03.34,Default,,0,0,0,,{\an2}Verkabelung des realen V
+Dialogue: 0,0:00:03.34,0:00:03.39,Default,,0,0,0,,{\an2}Verkabelung des realen Vi
+Dialogue: 0,0:00:03.39,0:00:03.44,Default,,0,0,0,,{\an2}Verkabelung des realen Vid
+Dialogue: 0,0:00:03.44,0:00:03.49,Default,,0,0,0,,{\an2}Verkabelung des realen Vide
+Dialogue: 0,0:00:03.49,0:00:03.54,Default,,0,0,0,,{\an2}Verkabelung des realen Video
+Dialogue: 0,0:00:03.54,0:00:03.59,Default,,0,0,0,,{\an2}Verkabelung des realen Video-
+Dialogue: 0,0:00:03.59,0:00:03.64,Default,,0,0,0,,{\an2}Verkabelung des realen Video-B
+Dialogue: 0,0:00:03.64,0:00:03.69,Default,,0,0,0,,{\an2}Verkabelung des realen Video-Bu
+Dialogue: 0,0:00:03.69,0:00:03.74,Default,,0,0,0,,{\an2}Verkabelung des realen Video-Bui
+Dialogue: 0,0:00:03.74,0:00:03.80,Default,,0,0,0,,{\an2}Verkabelung des realen Video-Buil
+Dialogue: 0,0:00:03.80,0:00:03.85,Default,,0,0,0,,{\an2}Verkabelung des realen Video-Build
+Dialogue: 0,0:00:03.85,0:00:03.90,Default,,0,0,0,,{\an2}Verkabelung des realen\\NVideo-Builds
+Dialogue: 0,0:00:03.90,0:00:03.95,Default,,0,0,0,,{\an2}Verkabelung des realen\\NVideo-Builds.
+Dialogue: 0,0:00:03.95,0:00:04.00,Default,,0,0,0,,{\an2}Verkabelung des realen\\NVideo-Builds. 
+Dialogue: 0,0:00:04.00,0:00:04.05,Default,,0,0,0,,{\an2}Verkabelung des realen\\NVideo-Builds. S
+Dialogue: 0,0:00:04.05,0:00:04.10,Default,,0,0,0,,{\an2}Verkabelung des realen\\NVideo-Builds. Sz
+Dialogue: 0,0:00:04.10,0:00:04.15,Default,,0,0,0,,{\an2}Verkabelung des realen\\NVideo-Builds. Sze
+Dialogue: 0,0:00:04.15,0:00:04.20,Default,,0,0,0,,{\an2}Verkabelung des realen\\NVideo-Builds. Szen
+Dialogue: 0,0:00:04.20,0:00:04.25,Default,,0,0,0,,{\an2}Verkabelung des realen\\NVideo-Builds. Szene
+Dialogue: 0,0:00:04.25,0:00:04.31,Default,,0,0,0,,{\an2}1
+Dialogue: 0,0:00:04.31,0:00:04.37,Default,,0,0,0,,{\an2}1.
+Dialogue: 0,0:00:04.37,0:00:04.43,Default,,0,0,0,,{\an2}1. 
+Dialogue: 0,0:00:04.43,0:00:04.49,Default,,0,0,0,,{\an2}1. E
+Dialogue: 0,0:00:04.49,0:00:04.55,Default,,0,0,0,,{\an2}1. Es
+Dialogue: 0,0:00:04.55,0:00:04.62,Default,,0,0,0,,{\an2}1. Est
+Dialogue: 0,0:00:04.62,0:00:04.68,Default,,0,0,0,,{\an2}1. Esta
+Dialogue: 0,0:00:04.68,0:00:04.74,Default,,0,0,0,,{\an2}1. Estab
+Dialogue: 0,0:00:04.74,0:00:04.80,Default,,0,0,0,,{\an2}1. Establ
+Dialogue: 0,0:00:04.80,0:00:04.86,Default,,0,0,0,,{\an2}1. Establi
+Dialogue: 0,0:00:04.86,0:00:04.92,Default,,0,0,0,,{\an2}1. Establis
+Dialogue: 0,0:00:04.92,0:00:04.98,Default,,0,0,0,,{\an2}1. Establish
+Dialogue: 0,0:00:04.98,0:00:05.04,Default,,0,0,0,,{\an2}1. Establishi
+Dialogue: 0,0:00:05.04,0:00:05.10,Default,,0,0,0,,{\an2}1. Establishin
+Dialogue: 0,0:00:05.10,0:00:05.16,Default,,0,0,0,,{\an2}1. Establishing
+Dialogue: 0,0:00:05.16,0:00:05.22,Default,,0,0,0,,{\an2}1. Establishing 
+Dialogue: 0,0:00:05.22,0:00:05.28,Default,,0,0,0,,{\an2}1. Establishing s
+Dialogue: 0,0:00:05.28,0:00:05.34,Default,,0,0,0,,{\an2}1. Establishing sh
+Dialogue: 0,0:00:05.34,0:00:05.40,Default,,0,0,0,,{\an2}1. Establishing sho
+Dialogue: 0,0:00:05.40,0:00:05.47,Default,,0,0,0,,{\an2}1. Establishing shot
+Dialogue: 0,0:00:05.47,0:00:05.53,Default,,0,0,0,,{\an2}1. Establishing shot:
+Dialogue: 0,0:00:05.53,0:00:05.59,Default,,0,0,0,,{\an2}1. Establishing shot: 
+Dialogue: 0,0:00:05.59,0:00:05.65,Default,,0,0,0,,{\an2}1. Establishing shot: r
+Dialogue: 0,0:00:05.65,0:00:05.71,Default,,0,0,0,,{\an2}1. Establishing shot: ru
+Dialogue: 0,0:00:05.71,0:00:05.77,Default,,0,0,0,,{\an2}1. Establishing shot: ruh
+Dialogue: 0,0:00:05.77,0:00:05.83,Default,,0,0,0,,{\an2}1. Establishing shot: ruhi
+Dialogue: 0,0:00:05.83,0:00:05.89,Default,,0,0,0,,{\an2}1. Establishing shot: ruhig
+Dialogue: 0,0:00:05.89,0:00:05.95,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige
+Dialogue: 0,0:00:05.95,0:00:06.01,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige 
+Dialogue: 0,0:00:06.01,0:00:06.07,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige S
+Dialogue: 0,0:00:06.07,0:00:06.13,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige St
+Dialogue: 0,0:00:06.13,0:00:06.19,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige Sta
+Dialogue: 0,0:00:06.19,0:00:06.25,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige Stad
+Dialogue: 0,0:00:06.25,0:00:06.32,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige Stadt
+Dialogue: 0,0:00:06.32,0:00:06.38,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige\\NStadtl
+Dialogue: 0,0:00:06.38,0:00:06.44,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige\\NStadtli
+Dialogue: 0,0:00:06.44,0:00:06.50,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige\\NStadtlin
+Dialogue: 0,0:00:06.50,0:00:06.56,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige\\NStadtlini
+Dialogue: 0,0:00:06.56,0:00:06.62,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige\\NStadtlinie
+Dialogue: 0,0:00:06.62,0:00:06.68,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige\\NStadtlinie 
+Dialogue: 0,0:00:06.68,0:00:06.74,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige\\NStadtlinie a
+Dialogue: 0,0:00:06.74,0:00:06.80,Default,,0,0,0,,{\an2}1. Establishing shot: ruhige\\NStadtlinie am
+Dialogue: 0,0:00:06.80,0:00:06.86,Default,,0,0,0,,{\an2}f
+Dialogue: 0,0:00:06.86,0:00:06.92,Default,,0,0,0,,{\an2}fr
+Dialogue: 0,0:00:06.92,0:00:06.98,Default,,0,0,0,,{\an2}frü
+Dialogue: 0,0:00:06.98,0:00:07.04,Default,,0,0,0,,{\an2}früh
+Dialogue: 0,0:00:07.04,0:00:07.10,Default,,0,0,0,,{\an2}frühe
+Dialogue: 0,0:00:07.10,0:00:07.15,Default,,0,0,0,,{\an2}frühen
+Dialogue: 0,0:00:07.15,0:00:07.21,Default,,0,0,0,,{\an2}frühen 
+Dialogue: 0,0:00:07.21,0:00:07.27,Default,,0,0,0,,{\an2}frühen M
+Dialogue: 0,0:00:07.27,0:00:07.33,Default,,0,0,0,,{\an2}frühen Mo
+Dialogue: 0,0:00:07.33,0:00:07.39,Default,,0,0,0,,{\an2}frühen Mor
+Dialogue: 0,0:00:07.39,0:00:07.45,Default,,0,0,0,,{\an2}frühen Morg
+Dialogue: 0,0:00:07.45,0:00:07.51,Default,,0,0,0,,{\an2}frühen Morge
+Dialogue: 0,0:00:07.51,0:00:07.57,Default,,0,0,0,,{\an2}frühen Morgen
+Dialogue: 0,0:00:07.57,0:00:07.62,Default,,0,0,0,,{\an2}frühen Morgen,
+Dialogue: 0,0:00:07.62,0:00:07.68,Default,,0,0,0,,{\an2}frühen Morgen, 
+Dialogue: 0,0:00:07.68,0:00:07.74,Default,,0,0,0,,{\an2}frühen Morgen, w
+Dialogue: 0,0:00:07.74,0:00:07.80,Default,,0,0,0,,{\an2}frühen Morgen, we
+Dialogue: 0,0:00:07.80,0:00:07.86,Default,,0,0,0,,{\an2}frühen Morgen, wei
+Dialogue: 0,0:00:07.86,0:00:07.92,Default,,0,0,0,,{\an2}frühen Morgen, weic
+Dialogue: 0,0:00:07.92,0:00:07.98,Default,,0,0,0,,{\an2}frühen Morgen, weich
+Dialogue: 0,0:00:07.98,0:00:08.04,Default,,0,0,0,,{\an2}frühen Morgen, weiche
+Dialogue: 0,0:00:08.04,0:00:08.10,Default,,0,0,0,,{\an2}frühen Morgen, weiches
+Dialogue: 0,0:00:08.10,0:00:08.15,Default,,0,0,0,,{\an2}frühen Morgen, weiches 
+Dialogue: 0,0:00:08.15,0:00:08.21,Default,,0,0,0,,{\an2}frühen Morgen, weiches T
+Dialogue: 0,0:00:08.21,0:00:08.27,Default,,0,0,0,,{\an2}frühen Morgen, weiches Ta
+Dialogue: 0,0:00:08.27,0:00:08.33,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tag
+Dialogue: 0,0:00:08.33,0:00:08.39,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tage
+Dialogue: 0,0:00:08.39,0:00:08.45,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tages
+Dialogue: 0,0:00:08.45,0:00:08.51,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tagesl
+Dialogue: 0,0:00:08.51,0:00:08.57,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tagesli
+Dialogue: 0,0:00:08.57,0:00:08.62,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tageslic
+Dialogue: 0,0:00:08.62,0:00:08.68,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tageslich
+Dialogue: 0,0:00:08.68,0:00:08.74,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tageslicht
+Dialogue: 0,0:00:08.74,0:00:08.80,Default,,0,0,0,,{\an2}frühen Morgen, weiches Tageslicht,
+Dialogue: 0,0:00:08.80,0:00:08.86,Default,,0,0,0,,{\an2}d
+Dialogue: 0,0:00:08.86,0:00:08.91,Default,,0,0,0,,{\an2}do
+Dialogue: 0,0:00:08.91,0:00:08.96,Default,,0,0,0,,{\an2}dok
+Dialogue: 0,0:00:08.96,0:00:09.02,Default,,0,0,0,,{\an2}doku
+Dialogue: 0,0:00:09.02,0:00:09.07,Default,,0,0,0,,{\an2}dokum
+Dialogue: 0,0:00:09.07,0:00:09.13,Default,,0,0,0,,{\an2}dokume
+Dialogue: 0,0:00:09.13,0:00:09.18,Default,,0,0,0,,{\an2}dokumen
+Dialogue: 0,0:00:09.18,0:00:09.23,Default,,0,0,0,,{\an2}dokument
+Dialogue: 0,0:00:09.23,0:00:09.29,Default,,0,0,0,,{\an2}dokumenta
+Dialogue: 0,0:00:09.29,0:00:09.34,Default,,0,0,0,,{\an2}dokumentar
+Dialogue: 0,0:00:09.34,0:00:09.40,Default,,0,0,0,,{\an2}dokumentari
+Dialogue: 0,0:00:09.40,0:00:09.45,Default,,0,0,0,,{\an2}dokumentaris
+Dialogue: 0,0:00:09.45,0:00:09.50,Default,,0,0,0,,{\an2}dokumentarisc
+Dialogue: 0,0:00:09.50,0:00:09.56,Default,,0,0,0,,{\an2}dokumentarisch
+Dialogue: 0,0:00:09.56,0:00:09.61,Default,,0,0,0,,{\an2}dokumentarische
+Dialogue: 0,0:00:09.61,0:00:09.67,Default,,0,0,0,,{\an2}dokumentarische 
+Dialogue: 0,0:00:09.67,0:00:09.72,Default,,0,0,0,,{\an2}dokumentarische B
+Dialogue: 0,0:00:09.72,0:00:09.77,Default,,0,0,0,,{\an2}dokumentarische Bi
+Dialogue: 0,0:00:09.77,0:00:09.83,Default,,0,0,0,,{\an2}dokumentarische Bil
+Dialogue: 0,0:00:09.83,0:00:09.88,Default,,0,0,0,,{\an2}dokumentarische Bild
+Dialogue: 0,0:00:09.88,0:00:09.94,Default,,0,0,0,,{\an2}dokumentarische Bilds
+Dialogue: 0,0:00:09.94,0:00:09.99,Default,,0,0,0,,{\an2}dokumentarische Bildsp
+Dialogue: 0,0:00:09.99,0:00:10.04,Default,,0,0,0,,{\an2}dokumentarische Bildspr
+Dialogue: 0,0:00:10.04,0:00:10.10,Default,,0,0,0,,{\an2}dokumentarische Bildspra
+Dialogue: 0,0:00:10.10,0:00:10.15,Default,,0,0,0,,{\an2}dokumentarische Bildsprac
+Dialogue: 0,0:00:10.15,0:00:10.21,Default,,0,0,0,,{\an2}dokumentarische Bildsprach
+Dialogue: 0,0:00:10.21,0:00:10.26,Default,,0,0,0,,{\an2}dokumentarische Bildsprache
+Dialogue: 0,0:00:10.26,0:00:10.31,Default,,0,0,0,,{\an2}dokumentarische Bildsprache.
+Dialogue: 0,0:00:10.31,0:00:10.37,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. 
+Dialogue: 0,0:00:10.37,0:00:10.42,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. S
+Dialogue: 0,0:00:10.42,0:00:10.48,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. Sz
+Dialogue: 0,0:00:10.48,0:00:10.53,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. Sze
+Dialogue: 0,0:00:10.53,0:00:10.58,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. Szen
+Dialogue: 0,0:00:10.58,0:00:10.64,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. Szene
+Dialogue: 0,0:00:10.64,0:00:10.69,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. Szene\\N
+Dialogue: 0,0:00:10.69,0:00:10.75,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. Szene\\N2
+Dialogue: 0,0:00:10.75,0:00:10.80,Default,,0,0,0,,{\an2}dokumentarische Bildsprache. Szene\\N2.
+Dialogue: 0,0:00:10.80,0:00:10.85,Default,,0,0,0,,{\an2}D
+Dialogue: 0,0:00:10.85,0:00:10.90,Default,,0,0,0,,{\an2}De
+Dialogue: 0,0:00:10.90,0:00:10.95,Default,,0,0,0,,{\an2}Det
+Dialogue: 0,0:00:10.95,0:00:11.00,Default,,0,0,0,,{\an2}Deta
+Dialogue: 0,0:00:11.00,0:00:11.05,Default,,0,0,0,,{\an2}Detai
+Dialogue: 0,0:00:11.05,0:00:11.10,Default,,0,0,0,,{\an2}Detail
+Dialogue: 0,0:00:11.10,0:00:11.15,Default,,0,0,0,,{\an2}Detaila
+Dialogue: 0,0:00:11.15,0:00:11.20,Default,,0,0,0,,{\an2}Detailau
+Dialogue: 0,0:00:11.20,0:00:11.25,Default,,0,0,0,,{\an2}Detailauf
+Dialogue: 0,0:00:11.25,0:00:11.30,Default,,0,0,0,,{\an2}Detailaufn
+Dialogue: 0,0:00:11.30,0:00:11.35,Default,,0,0,0,,{\an2}Detailaufna
+Dialogue: 0,0:00:11.35,0:00:11.40,Default,,0,0,0,,{\an2}Detailaufnah
+Dialogue: 0,0:00:11.40,0:00:11.45,Default,,0,0,0,,{\an2}Detailaufnahm
+Dialogue: 0,0:00:11.45,0:00:11.50,Default,,0,0,0,,{\an2}Detailaufnahme
+Dialogue: 0,0:00:11.50,0:00:11.55,Default,,0,0,0,,{\an2}Detailaufnahme:
+Dialogue: 0,0:00:11.55,0:00:11.60,Default,,0,0,0,,{\an2}Detailaufnahme: 
+Dialogue: 0,0:00:11.60,0:00:11.65,Default,,0,0,0,,{\an2}Detailaufnahme: S
+Dialogue: 0,0:00:11.65,0:00:11.70,Default,,0,0,0,,{\an2}Detailaufnahme: Sc
+Dialogue: 0,0:00:11.70,0:00:11.75,Default,,0,0,0,,{\an2}Detailaufnahme: Sch
+Dialogue: 0,0:00:11.75,0:00:11.80,Default,,0,0,0,,{\an2}Detailaufnahme: Schr
+Dialogue: 0,0:00:11.80,0:00:11.85,Default,,0,0,0,,{\an2}Detailaufnahme: Schre
+Dialogue: 0,0:00:11.85,0:00:11.90,Default,,0,0,0,,{\an2}Detailaufnahme: Schrei
+Dialogue: 0,0:00:11.90,0:00:11.95,Default,,0,0,0,,{\an2}Detailaufnahme: Schreib
+Dialogue: 0,0:00:11.95,0:00:12.00,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibt
+Dialogue: 0,0:00:12.00,0:00:12.05,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibti
+Dialogue: 0,0:00:12.05,0:00:12.10,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtis
+Dialogue: 0,0:00:12.10,0:00:12.15,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisc
+Dialogue: 0,0:00:12.15,0:00:12.20,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch
+Dialogue: 0,0:00:12.20,0:00:12.25,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch 
+Dialogue: 0,0:00:12.25,0:00:12.30,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch m
+Dialogue: 0,0:00:12.30,0:00:12.35,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mi
+Dialogue: 0,0:00:12.35,0:00:12.40,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit
+Dialogue: 0,0:00:12.40,0:00:12.45,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit 
+Dialogue: 0,0:00:12.45,0:00:12.50,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit N
+Dialogue: 0,0:00:12.50,0:00:12.55,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit\\NNo
+Dialogue: 0,0:00:12.55,0:00:12.60,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit\\NNot
+Dialogue: 0,0:00:12.60,0:00:12.65,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit\\NNoti
+Dialogue: 0,0:00:12.65,0:00:12.70,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit\\NNotiz
+Dialogue: 0,0:00:12.70,0:00:12.75,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit\\NNotize
+Dialogue: 0,0:00:12.75,0:00:12.80,Default,,0,0,0,,{\an2}Detailaufnahme: Schreibtisch mit\\NNotizen
+Dialogue: 0,0:00:12.80,0:00:12.86,Default,,0,0,0,,{\an2}u
+Dialogue: 0,0:00:12.86,0:00:12.91,Default,,0,0,0,,{\an2}un
+Dialogue: 0,0:00:12.91,0:00:12.96,Default,,0,0,0,,{\an2}und
+Dialogue: 0,0:00:12.96,0:00:13.02,Default,,0,0,0,,{\an2}und 
+Dialogue: 0,0:00:13.02,0:00:13.07,Default,,0,0,0,,{\an2}und S
+Dialogue: 0,0:00:13.07,0:00:13.13,Default,,0,0,0,,{\an2}und St
+Dialogue: 0,0:00:13.13,0:00:13.18,Default,,0,0,0,,{\an2}und Sti
+Dialogue: 0,0:00:13.18,0:00:13.24,Default,,0,0,0,,{\an2}und Stif
+Dialogue: 0,0:00:13.24,0:00:13.29,Default,,0,0,0,,{\an2}und Stift
+Dialogue: 0,0:00:13.29,0:00:13.35,Default,,0,0,0,,{\an2}und Stift,
+Dialogue: 0,0:00:13.35,0:00:13.40,Default,,0,0,0,,{\an2}und Stift, 
+Dialogue: 0,0:00:13.40,0:00:13.46,Default,,0,0,0,,{\an2}und Stift, n
+Dialogue: 0,0:00:13.46,0:00:13.51,Default,,0,0,0,,{\an2}und Stift, ne
+Dialogue: 0,0:00:13.51,0:00:13.56,Default,,0,0,0,,{\an2}und Stift, neu
+Dialogue: 0,0:00:13.56,0:00:13.62,Default,,0,0,0,,{\an2}und Stift, neut
+Dialogue: 0,0:00:13.62,0:00:13.67,Default,,0,0,0,,{\an2}und Stift, neutr
+Dialogue: 0,0:00:13.67,0:00:13.73,Default,,0,0,0,,{\an2}und Stift, neutra
+Dialogue: 0,0:00:13.73,0:00:13.78,Default,,0,0,0,,{\an2}und Stift, neutral
+Dialogue: 0,0:00:13.78,0:00:13.84,Default,,0,0,0,,{\an2}und Stift, neutrale
+Dialogue: 0,0:00:13.84,0:00:13.89,Default,,0,0,0,,{\an2}und Stift, neutraler
+Dialogue: 0,0:00:13.89,0:00:13.95,Default,,0,0,0,,{\an2}und Stift, neutraler 
+Dialogue: 0,0:00:13.95,0:00:14.00,Default,,0,0,0,,{\an2}und Stift, neutraler H
+Dialogue: 0,0:00:14.00,0:00:14.05,Default,,0,0,0,,{\an2}und Stift, neutraler Hi
+Dialogue: 0,0:00:14.05,0:00:14.11,Default,,0,0,0,,{\an2}und Stift, neutraler Hin
+Dialogue: 0,0:00:14.11,0:00:14.16,Default,,0,0,0,,{\an2}und Stift, neutraler Hint
+Dialogue: 0,0:00:14.16,0:00:14.22,Default,,0,0,0,,{\an2}und Stift, neutraler Hinte
+Dialogue: 0,0:00:14.22,0:00:14.27,Default,,0,0,0,,{\an2}und Stift, neutraler Hinter
+Dialogue: 0,0:00:14.27,0:00:14.33,Default,,0,0,0,,{\an2}und Stift, neutraler Hinterg
+Dialogue: 0,0:00:14.33,0:00:14.38,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergr
+Dialogue: 0,0:00:14.38,0:00:14.44,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergru
+Dialogue: 0,0:00:14.44,0:00:14.49,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrun
+Dialogue: 0,0:00:14.49,0:00:14.55,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrund
+Dialogue: 0,0:00:14.55,0:00:14.60,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrund,
+Dialogue: 0,0:00:14.60,0:00:14.65,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrund, 
+Dialogue: 0,0:00:14.65,0:00:14.71,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrund,\\NF
+Dialogue: 0,0:00:14.71,0:00:14.76,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrund,\\NFo
+Dialogue: 0,0:00:14.76,0:00:14.82,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrund,\\NFok
+Dialogue: 0,0:00:14.82,0:00:14.87,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrund,\\NFoku
+Dialogue: 0,0:00:14.87,0:00:14.93,Default,,0,0,0,,{\an2}und Stift, neutraler Hintergrund,\\NFokus
+Dialogue: 0,0:00:14.93,0:00:15.00,Default,,0,0,0,,{\an2}a
+Dialogue: 0,0:00:15.00,0:00:15.07,Default,,0,0,0,,{\an2}au
+Dialogue: 0,0:00:15.07,0:00:15.14,Default,,0,0,0,,{\an2}auf
+Dialogue: 0,0:00:15.14,0:00:15.21,Default,,0,0,0,,{\an2}auf 
+Dialogue: 0,0:00:15.21,0:00:15.28,Default,,0,0,0,,{\an2}auf H
+Dialogue: 0,0:00:15.28,0:00:15.35,Default,,0,0,0,,{\an2}auf Hä
+Dialogue: 0,0:00:15.35,0:00:15.42,Default,,0,0,0,,{\an2}auf Hän
+Dialogue: 0,0:00:15.42,0:00:15.49,Default,,0,0,0,,{\an2}auf Händ
+Dialogue: 0,0:00:15.49,0:00:15.56,Default,,0,0,0,,{\an2}auf Hände
+Dialogue: 0,0:00:15.56,0:00:15.64,Default,,0,0,0,,{\an2}auf Hände 
+Dialogue: 0,0:00:15.64,0:00:15.71,Default,,0,0,0,,{\an2}auf Hände b
+Dialogue: 0,0:00:15.71,0:00:15.78,Default,,0,0,0,,{\an2}auf Hände be
+Dialogue: 0,0:00:15.78,0:00:15.85,Default,,0,0,0,,{\an2}auf Hände bei
+Dialogue: 0,0:00:15.85,0:00:15.92,Default,,0,0,0,,{\an2}auf Hände beim
+Dialogue: 0,0:00:15.92,0:00:15.99,Default,,0,0,0,,{\an2}auf Hände beim 
+Dialogue: 0,0:00:15.99,0:00:16.06,Default,,0,0,0,,{\an2}auf Hände beim S
+Dialogue: 0,0:00:16.06,0:00:16.13,Default,,0,0,0,,{\an2}auf Hände beim Sc
+Dialogue: 0,0:00:16.13,0:00:16.20,Default,,0,0,0,,{\an2}auf Hände beim Sch
+Dialogue: 0,0:00:16.20,0:00:16.27,Default,,0,0,0,,{\an2}auf Hände beim Schr
+Dialogue: 0,0:00:16.27,0:00:16.34,Default,,0,0,0,,{\an2}auf Hände beim Schre
+Dialogue: 0,0:00:16.34,0:00:16.41,Default,,0,0,0,,{\an2}auf Hände beim Schrei
+Dialogue: 0,0:00:16.41,0:00:16.49,Default,,0,0,0,,{\an2}auf Hände beim Schreib
+Dialogue: 0,0:00:16.49,0:00:16.56,Default,,0,0,0,,{\an2}auf Hände beim Schreibe
+Dialogue: 0,0:00:16.56,0:00:16.63,Default,,0,0,0,,{\an2}auf Hände beim Schreiben
+Dialogue: 0,0:00:16.63,0:00:16.70,Default,,0,0,0,,{\an2}auf Hände beim Schreiben.
+Dialogue: 0,0:00:16.70,0:00:16.77,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. 
+Dialogue: 0,0:00:16.77,0:00:16.84,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. S
+Dialogue: 0,0:00:16.84,0:00:16.91,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Sz
+Dialogue: 0,0:00:16.91,0:00:16.98,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Sze
+Dialogue: 0,0:00:16.98,0:00:17.05,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szen
+Dialogue: 0,0:00:17.05,0:00:17.12,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene
+Dialogue: 0,0:00:17.12,0:00:17.19,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 
+Dialogue: 0,0:00:17.19,0:00:17.26,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3
+Dialogue: 0,0:00:17.26,0:00:17.34,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.
+Dialogue: 0,0:00:17.34,0:00:17.41,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.\\N
+Dialogue: 0,0:00:17.41,0:00:17.48,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.\\NB
+Dialogue: 0,0:00:17.48,0:00:17.55,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.\\NB-
+Dialogue: 0,0:00:17.55,0:00:17.62,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.\\NB-r
+Dialogue: 0,0:00:17.62,0:00:17.69,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.\\NB-ro
+Dialogue: 0,0:00:17.69,0:00:17.76,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.\\NB-rol
+Dialogue: 0,0:00:17.76,0:00:17.83,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.\\NB-roll
+Dialogue: 0,0:00:17.83,0:00:17.90,Default,,0,0,0,,{\an2}auf Hände beim Schreiben. Szene 3.\\NB-roll:
+Dialogue: 0,0:00:17.90,0:00:17.96,Default,,0,0,0,,{\an2}b
+Dialogue: 0,0:00:17.96,0:00:18.01,Default,,0,0,0,,{\an2}be
+Dialogue: 0,0:00:18.01,0:00:18.06,Default,,0,0,0,,{\an2}bel
+Dialogue: 0,0:00:18.06,0:00:18.11,Default,,0,0,0,,{\an2}bele
+Dialogue: 0,0:00:18.11,0:00:18.17,Default,,0,0,0,,{\an2}beleb
+Dialogue: 0,0:00:18.17,0:00:18.22,Default,,0,0,0,,{\an2}belebt
+Dialogue: 0,0:00:18.22,0:00:18.27,Default,,0,0,0,,{\an2}belebte
+Dialogue: 0,0:00:18.27,0:00:18.33,Default,,0,0,0,,{\an2}belebte 
+Dialogue: 0,0:00:18.33,0:00:18.38,Default,,0,0,0,,{\an2}belebte S
+Dialogue: 0,0:00:18.38,0:00:18.43,Default,,0,0,0,,{\an2}belebte St
+Dialogue: 0,0:00:18.43,0:00:18.49,Default,,0,0,0,,{\an2}belebte Str
+Dialogue: 0,0:00:18.49,0:00:18.54,Default,,0,0,0,,{\an2}belebte Stra
+Dialogue: 0,0:00:18.54,0:00:18.59,Default,,0,0,0,,{\an2}belebte Straß
+Dialogue: 0,0:00:18.59,0:00:18.65,Default,,0,0,0,,{\an2}belebte Straße
+Dialogue: 0,0:00:18.65,0:00:18.70,Default,,0,0,0,,{\an2}belebte Straße 
+Dialogue: 0,0:00:18.70,0:00:18.75,Default,,0,0,0,,{\an2}belebte Straße a
+Dialogue: 0,0:00:18.75,0:00:18.81,Default,,0,0,0,,{\an2}belebte Straße au
+Dialogue: 0,0:00:18.81,0:00:18.86,Default,,0,0,0,,{\an2}belebte Straße aus
+Dialogue: 0,0:00:18.86,0:00:18.91,Default,,0,0,0,,{\an2}belebte Straße aus 
+Dialogue: 0,0:00:18.91,0:00:18.97,Default,,0,0,0,,{\an2}belebte Straße aus e
+Dialogue: 0,0:00:18.97,0:00:19.02,Default,,0,0,0,,{\an2}belebte Straße aus er
+Dialogue: 0,0:00:19.02,0:00:19.07,Default,,0,0,0,,{\an2}belebte Straße aus erh
+Dialogue: 0,0:00:19.07,0:00:19.12,Default,,0,0,0,,{\an2}belebte Straße aus erhö
+Dialogue: 0,0:00:19.12,0:00:19.18,Default,,0,0,0,,{\an2}belebte Straße aus erhöh
+Dialogue: 0,0:00:19.18,0:00:19.23,Default,,0,0,0,,{\an2}belebte Straße aus erhöht
+Dialogue: 0,0:00:19.23,0:00:19.28,Default,,0,0,0,,{\an2}belebte Straße aus erhöhte
+Dialogue: 0,0:00:19.28,0:00:19.34,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter
+Dialogue: 0,0:00:19.34,0:00:19.39,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter 
+Dialogue: 0,0:00:19.39,0:00:19.44,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter P
+Dialogue: 0,0:00:19.44,0:00:19.50,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter Pe
+Dialogue: 0,0:00:19.50,0:00:19.55,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter Per
+Dialogue: 0,0:00:19.55,0:00:19.60,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter Pers
+Dialogue: 0,0:00:19.60,0:00:19.66,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter Persp
+Dialogue: 0,0:00:19.66,0:00:19.71,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter Perspe
+Dialogue: 0,0:00:19.71,0:00:19.76,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter\\NPerspek
+Dialogue: 0,0:00:19.76,0:00:19.82,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter\\NPerspekt
+Dialogue: 0,0:00:19.82,0:00:19.87,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter\\NPerspekti
+Dialogue: 0,0:00:19.87,0:00:19.92,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter\\NPerspektiv
+Dialogue: 0,0:00:19.92,0:00:19.97,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter\\NPerspektive
+Dialogue: 0,0:00:19.97,0:00:20.03,Default,,0,0,0,,{\an2}belebte Straße aus erhöhter\\NPerspektive,
+Dialogue: 0,0:00:20.03,0:00:20.31,Default,,0,0,0,,{\an2}l
+Dialogue: 0,0:00:20.31,0:00:20.59,Default,,0,0,0,,{\an2}le
+Dialogue: 0,0:00:20.59,0:00:20.87,Default,,0,0,0,,{\an2}lei
+Dialogue: 0,0:00:20.87,0:00:21.15,Default,,0,0,0,,{\an2}leic
+Dialogue: 0,0:00:21.15,0:00:21.44,Default,,0,0,0,,{\an2}leich
+Dialogue: 0,0:00:21.44,0:00:21.72,Default,,0,0,0,,{\an2}leicht
+Dialogue: 0,0:00:21.72,0:00:22.00,Default,,0,0,0,,{\an2}leichte

@@ -1,0 +1,46 @@
+{
+  "ok": false,
+  "used_leonardo_images_count": 0,
+  "used_runway_videos_count": 0,
+  "fallback_assets_used": 4,
+  "scenes": [
+    {
+      "scene_number": 1,
+      "source": "cinematic_placeholder",
+      "path": null
+    },
+    {
+      "scene_number": 2,
+      "source": "cinematic_placeholder",
+      "path": null
+    },
+    {
+      "scene_number": 3,
+      "source": "cinematic_placeholder",
+      "path": null
+    },
+    {
+      "scene_number": 4,
+      "source": "cinematic_placeholder",
+      "path": null
+    }
+  ],
+  "warnings": [
+    "ba268_runway_scene_image_missing:1",
+    "ba268_runway_scene_image_missing:2",
+    "ba268_runway_scene_image_missing:3"
+  ],
+  "blocking_reasons": [
+    "leonardo_missing_api_key"
+  ],
+  "provider_env_detected": {
+    "leonardo": "not_set",
+    "runway": "set",
+    "elevenlabs": "set"
+  },
+  "output_paths": {
+    "scene_plan": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\scene_plan.json",
+    "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\scene_asset_pack.json",
+    "asset_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\visual_assets\\merged"
+  }
+}

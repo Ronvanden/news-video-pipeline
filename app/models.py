@@ -158,6 +158,61 @@ class SceneExpandedPrompt(BaseModel):
         default="",
         description="Kurz-Anker aus Szene 1 bei continuity_lock; sonst leer.",
     )
+    overlay_intent: List[str] = Field(
+        default_factory=list,
+        description="BA 26.4b — konkrete Overlay-Texte/Lesetexte, nicht ins Generator-Bild legen.",
+    )
+    text_sensitive: bool = Field(
+        default=False,
+        description="BA 26.4b — Motiv nahe an Lesetext/UI → Disposition openai_images.",
+    )
+    visual_asset_kind: str = Field(
+        default="",
+        description="BA 26.4b — Rolle z. B. keyframe_still, cinematic_broll (Disposition).",
+    )
+    routed_visual_provider: str = Field(
+        default="",
+        description="BA 26.4b — empfohlener Haupt-Visual-Generator (leonardo|openai_images|runway|render_layer).",
+    )
+    routed_image_provider: str = Field(
+        default="",
+        description="BA 26.4b — Basis-Still bei render_layer.",
+    )
+    # BA 27.6 — optional mirror/meta fields (additiv; no provider calls)
+    reference_asset_ids: List[str] = Field(default_factory=list)
+    continuity_strength: str = ""
+    continuity_prompt_hint: str = ""
+    continuity_reference_paths: List[str] = Field(default_factory=list)
+    continuity_reference_types: List[str] = Field(default_factory=list)
+    continuity_provider_preparation_status: str = ""
+    continuity_provider_payload_stub: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payloads: Dict[str, Any] = Field(default_factory=dict)
+    recommended_reference_provider_payload: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payload_status: str = ""
+    reference_provider_payload_version: str = ""
+
+
+class PromptQualitySceneEntry(BaseModel):
+    """BA 10.1 — Heuristische Qualitätscodes je Szene (deterministisch, kein LLM)."""
+
+    scene_number: int = Field(ge=1)
+    checks: List[str] = Field(default_factory=list)
+    evidence_hints: List[str] = Field(
+        default_factory=list,
+        description="Kurze Hinweise ohne Geheimnisse (z. B. Längen, Flag-Namen).",
+    )
+
+
+class PromptQualityReport(BaseModel):
+    """BA 10.1 — aggregierter Prompt-Quality-Block für Scene-Prompts / Export."""
+
+    policy_profile: str = Field(
+        default="prompt_quality_v10_1_20260501",
+        description="Versionierter Qualitäts-Profilstring.",
+    )
+    summary: str = ""
+    global_checks: List[str] = Field(default_factory=list)
+    scenes: List[PromptQualitySceneEntry] = Field(default_factory=list)
 
 
 class ScenePromptsResponse(BaseModel):
@@ -170,6 +225,256 @@ class ScenePromptsResponse(BaseModel):
     continuity_anchor: str = ""
     blueprint_status: Literal["draft", "ready", "failed"] = "ready"
     scenes: List[SceneExpandedPrompt] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    prompt_quality: Optional[PromptQualityReport] = Field(
+        default=None,
+        description="BA 10.1 — deterministische Qualitätsmetadaten (optional im Typ, in V1 befüllt).",
+    )
+
+
+class ProviderPromptsBundle(BaseModel):
+    """BA 10.2 — gleiche Blueprint-Basis, drei Provider-Stub-Formatierungen."""
+
+    leonardo: List[SceneExpandedPrompt] = Field(default_factory=list)
+    openai: List[SceneExpandedPrompt] = Field(default_factory=list)
+    kling: List[SceneExpandedPrompt] = Field(default_factory=list)
+
+
+class ExportPackageRequest(ScenePromptsRequest):
+    """BA 10.3 — Export-Paket-Eingabe inkl. Hook-Engine-Ankern."""
+
+    topic: str = ""
+    source_summary: str = ""
+
+
+class ExportHookBlock(BaseModel):
+    """Hook-Teil im Export-Paket (spiegelt GenerateHookResponse-Kern)."""
+
+    hook_text: str
+    hook_type: str
+    hook_score: float = Field(ge=0.0, le=10.0)
+    rationale: str
+    template_match: str
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ExportPackageResponse(BaseModel):
+    """BA 10.3 — produktionsnahes Prompt-Paket ohne externe Provider-Calls."""
+
+    hook: ExportHookBlock
+    rhythm: Dict[str, Any] = Field(default_factory=dict)
+    scene_plan: SceneBlueprintPlanResponse
+    scene_prompts: ScenePromptsResponse
+    provider_prompts: ProviderPromptsBundle
+    thumbnail_prompt: str = ""
+    prompt_quality: Optional[PromptQualityReport] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+ReadinessStatusLiteral = Literal["ready", "partial_ready", "not_ready"]
+ThumbnailStrengthLiteral = Literal["low", "medium", "high"]
+
+
+class ProviderProfileFlags(BaseModel):
+    """BA 10.4 — grobe Nutzbarkeit je Stub-Profil (Schwellwert-heuristisch)."""
+
+    openai: bool = False
+    leonardo: bool = False
+    kling: bool = False
+
+
+class ExportPackagePreviewResponse(BaseModel):
+    """BA 10.4 — kompakte Founder-Ansicht aus lokalem Export-Paket."""
+
+    template_id: str
+    hook_score: float = Field(ge=0.0, le=10.0)
+    hook_type: str
+    thumbnail_strength: ThumbnailStrengthLiteral
+    prompt_quality_score: int = Field(ge=0, le=100)
+    scene_count: int = Field(ge=0)
+    provider_profiles: ProviderProfileFlags
+    provider_stub_warnings: int = Field(ge=0, description="Aggregierte Qualitätshinweise (Scene-Checks).")
+    readiness_status: ReadinessStatusLiteral
+    top_warnings: List[str] = Field(default_factory=list)
+    export_ready: bool
+
+
+class TemplateRegistryItem(BaseModel):
+    """BA 10.4 — öffentliche Template-Zeile für Template-Selector."""
+
+    template_id: str
+    label: str
+    style: str
+    ideal_use_case: str
+    hook_bias: str
+    pacing_bias: str
+
+
+class TemplateSelectorResponse(BaseModel):
+    templates: List[TemplateRegistryItem] = Field(default_factory=list)
+
+
+class ProviderReadinessRequest(ExportPackageRequest):
+    """BA 10.4 — gleicher Eingabekörper wie Export-Paket."""
+
+
+class ProviderReadinessScores(BaseModel):
+    leonardo: int = Field(ge=0, le=100)
+    kling: int = Field(ge=0, le=100)
+    openai: int = Field(ge=0, le=100)
+
+
+class ProviderReadinessResponse(BaseModel):
+    overall_status: ReadinessStatusLiteral
+    scores: ProviderReadinessScores
+    blocking_issues: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    recommended_next_step: str = ""
+
+
+ThumbnailCTREmotionLiteral = Literal[
+    "curiosity",
+    "shock",
+    "urgency",
+    "mystery",
+    "authority",
+    "neutral",
+]
+
+
+class OptimizedProviderScenePrompt(BaseModel):
+    """BA 10.5 — Leonardo- / OpenAI-optimierte Bildprompt-Zeile (lokal, deterministisch)."""
+
+    scene_number: int = Field(ge=1)
+    positive_optimized: str = ""
+    negative_prompt: str = ""
+    continuity_token: str = ""
+    # BA 27.6 — optional mirror/meta fields (additiv; no provider calls)
+    reference_asset_ids: List[str] = Field(default_factory=list)
+    continuity_strength: str = ""
+    continuity_prompt_hint: str = ""
+    continuity_reference_paths: List[str] = Field(default_factory=list)
+    continuity_reference_types: List[str] = Field(default_factory=list)
+    continuity_provider_preparation_status: str = ""
+    continuity_provider_payload_stub: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payloads: Dict[str, Any] = Field(default_factory=dict)
+    recommended_reference_provider_payload: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payload_status: str = ""
+    reference_provider_payload_version: str = ""
+
+
+class KlingMotionScenePrompt(BaseModel):
+    """BA 10.5 — Kling: Keyframe + Bewegungs-/Kamera-Metadaten pro Szene."""
+
+    scene_number: int = Field(ge=1)
+    motion_prompt: str = ""
+    camera_path: str = ""
+    transition_hint: str = ""
+    keyframe_positive: str = ""
+    routed_visual_provider: str = Field(
+        default="runway",
+        description="BA 26.4b — Motion-Clips dispositioniert zu Runway (Stub bleibt Kling-kompatibel).",
+    )
+    # BA 27.6 — optional mirror/meta fields (additiv; no provider calls)
+    reference_asset_ids: List[str] = Field(default_factory=list)
+    continuity_strength: str = ""
+    continuity_prompt_hint: str = ""
+    continuity_reference_paths: List[str] = Field(default_factory=list)
+    continuity_reference_types: List[str] = Field(default_factory=list)
+    continuity_provider_preparation_status: str = ""
+    continuity_provider_payload_stub: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payloads: Dict[str, Any] = Field(default_factory=dict)
+    recommended_reference_provider_payload: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payload_status: str = ""
+    reference_provider_payload_version: str = ""
+
+
+class ProviderOptimizedPromptsBundle(BaseModel):
+    """BA 10.5 — Aggregat aller Provider-Optimierungen (ohne Bruch zu BA 10.2 Stub-Listen)."""
+
+    leonardo: List[OptimizedProviderScenePrompt] = Field(default_factory=list)
+    kling: List[KlingMotionScenePrompt] = Field(default_factory=list)
+    openai: List[OptimizedProviderScenePrompt] = Field(default_factory=list)
+
+
+class ThumbnailVariantSpec(BaseModel):
+    """BA 10.5 — Thumbnail-Textvariante für CTR-/Packaging-Pfade."""
+
+    headline: str = ""
+    overlay_text: str = ""
+    emotion_type: ThumbnailCTREmotionLiteral = "neutral"
+
+
+class CapCutShotlistRow(BaseModel):
+    """BA 10.5 — Shotlist-Zeile (CapCut-orientiert, reines JSON)."""
+
+    scene_number: int = Field(ge=1)
+    scene_label: str = ""
+    visual_prompt_excerpt: str = ""
+    motion_summary: str = ""
+    editor_note: str = ""
+
+
+class CSVShotlistRow(BaseModel):
+    """BA 10.5 — CSV-taugliche Shotlist (gleiche Logik wie CapCut, separates Feld für Export-Pfade)."""
+
+    scene_number: int = Field(ge=1)
+    scene_label: str = ""
+    visual_prompt_excerpt: str = ""
+    motion_summary: str = ""
+    editor_note: str = ""
+
+
+class ProviderPromptOptimizeResponse(BaseModel):
+    """BA 10.5 — Produktionsnahe Provider-Artefakte aus Export-Paket + Optimierern."""
+
+    provider_profile: str = ""
+    optimized_prompts: ProviderOptimizedPromptsBundle = Field(
+        default_factory=ProviderOptimizedPromptsBundle
+    )
+    thumbnail_variants: List[ThumbnailVariantSpec] = Field(default_factory=list)
+    capcut_shotlist: List[CapCutShotlistRow] = Field(default_factory=list)
+    csv_shotlist: List[CSVShotlistRow] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ThumbnailCTRRequest(BaseModel):
+    """BA 10.5 — Heuristische CTR-Schätzung ohne Bildanalyse."""
+
+    title: str = ""
+    hook: str = ""
+    video_template: str = Field(default="generic")
+    thumbnail_prompt: str = ""
+    chapters: List[Chapter] = Field(default_factory=list)
+
+
+class ThumbnailCTRResponse(BaseModel):
+    ctr_score: int = Field(ge=0, le=100, default=0)
+    thumbnail_variants: List[ThumbnailVariantSpec] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class ExportFormatDescriptor(BaseModel):
+    """BA 10.5 — Eintrag im Export-Format-Registry."""
+
+    id: str
+    label: str = ""
+    description: str = ""
+    content_type: str = Field(default="application/json", description="MIME oder text/csv")
+    source_endpoint: str = Field(
+        default="",
+        description="Hinweis z. B. POST /story-engine/export-package — nur Dokumentation.",
+    )
+
+
+class ExportFormatsResponse(BaseModel):
+    """BA 10.5 — Registry der unterstützten Export-/Produktionspfade (read-only)."""
+
+    json_export: ExportFormatDescriptor
+    capcut_shotlist: ExportFormatDescriptor
+    csv_shotlist: ExportFormatDescriptor
+    thumbnail_variants: ExportFormatDescriptor
+    provider_prompt_bundle: ExportFormatDescriptor
     warnings: List[str] = Field(default_factory=list)
 
 

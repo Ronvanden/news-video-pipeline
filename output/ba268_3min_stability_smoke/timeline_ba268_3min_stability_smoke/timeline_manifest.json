@@ -1,0 +1,71 @@
+{
+  "run_id": "ba268_3min_stability_smoke",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_3min_stability_smoke\\generated_assets_ba268_3min_stability_smoke\\asset_manifest.json",
+  "assets_directory": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_3min_stability_smoke\\generated_assets_ba268_3min_stability_smoke",
+  "audio_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_3min_stability_smoke\\voiceover.mp3",
+  "total_scenes": 4,
+  "estimated_duration_seconds": 23,
+  "scene_duration_default_seconds": 5,
+  "scenes": [
+    {
+      "scene_number": 1,
+      "start_time": 0.0,
+      "end_time": 6.0,
+      "duration_seconds": 6,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 0,
+      "media_type": "video",
+      "video_path": "scene_001.mp4",
+      "image_path": "scene_001.png"
+    },
+    {
+      "scene_number": 2,
+      "start_time": 6.0,
+      "end_time": 12.0,
+      "duration_seconds": 6,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 1,
+      "media_type": "video",
+      "video_path": "scene_002.mp4",
+      "image_path": "scene_002.png"
+    },
+    {
+      "scene_number": 3,
+      "start_time": 12.0,
+      "end_time": 18.0,
+      "duration_seconds": 6,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 2,
+      "media_type": "video",
+      "video_path": "scene_003.mp4",
+      "image_path": "scene_003.png"
+    },
+    {
+      "scene_number": 4,
+      "start_time": 18.0,
+      "end_time": 23.0,
+      "duration_seconds": 5,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 3,
+      "media_type": "video",
+      "video_path": "scene_004.mp4",
+      "image_path": "scene_004.png"
+    }
+  ]
+}

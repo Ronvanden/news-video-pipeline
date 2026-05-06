@@ -1,0 +1,45 @@
+{
+  "template_key": "public_interest",
+  "video_template": "generic",
+  "tone": "bürgernah, sachlich; Transparenz und Trade-offs kennzeichnen",
+  "classifier_keywords": [
+    "öffentlich",
+    "bürger",
+    "beteiligung",
+    "transparenz",
+    "reform",
+    "regulierung",
+    "behörde",
+    "petition",
+    "demokratie",
+    "gemeinwohl",
+    "diskussion",
+    "debatte",
+    "verordnung",
+    "gesetzentwurf"
+  ],
+  "narrative_archetypes": [
+    {
+      "id": "stakeholder_map_arc",
+      "match_keywords": ["bürger", "beteiligung", "öffentlich", "petition"],
+      "chapter_slots": [
+        {
+          "title": "Worum es geht",
+          "summary": "Kernaussage zu «{topic}» im öffentlichen Interesse."
+        },
+        {
+          "title": "Wer betroffen ist",
+          "summary": "Akteure und Perspektiven fair benennen."
+        },
+        {
+          "title": "Was sich realistisch ändern kann",
+          "summary": "Prozesse und nächste Schritte ohne Kampagnen-Rhetorik."
+        }
+      ]
+    }
+  ],
+  "default_archetype_id": "stakeholder_map_arc",
+  "scene_pattern": "Szene {idx} ({chapter_title}): Sachlich-informativ; Fokus «{topic}»; keine Parteipolitik als Fakt verkaufen.",
+  "voice_style": "neutral, erklärend, respektvoll gegenüber unterschiedlichen Standpunkten",
+  "thumbnail_angle": "Seriös, hoher Kontrast, klare Typografie — kein reißerisches Drama"
+}

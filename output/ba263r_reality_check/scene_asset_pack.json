@@ -1,0 +1,20 @@
+{
+  "export_version": "18.2-v1",
+  "source_label": "ba263r_reality_check",
+  "hook": "BA 26.3R — ein Beat referenziert den vorhandenen Runway-Smoke-Clip.",
+  "scene_expansion": {
+    "expanded_scene_assets": [
+      {
+        "chapter_index": 0,
+        "beat_index": 0,
+        "visual_prompt": "Reality check: lokaler Runway-Clip als Video-Asset.",
+        "camera_motion_hint": "static",
+        "duration_seconds": 6,
+        "asset_type": "broll",
+        "runway_clip_path": "../runway_smoke_runway_smoke_002/runway_clip.mp4",
+        "continuity_note": "",
+        "safety_notes": []
+      }
+    ]
+  }
+}

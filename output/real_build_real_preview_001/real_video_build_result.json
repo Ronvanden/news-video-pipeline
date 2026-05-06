@@ -1,0 +1,100 @@
+{
+  "schema_version": "real_video_build_result_v1",
+  "run_id": "real_preview_001",
+  "ok": true,
+  "status": "completed",
+  "build_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_real_preview_001",
+  "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_real_preview_001\\scene_asset_pack.json",
+  "metadata": {
+    "asset_mode": "placeholder",
+    "voice_mode": "smoke",
+    "motion_mode": "static",
+    "subtitle_style": "typewriter",
+    "subtitle_mode": "simple",
+    "force": false
+  },
+  "steps": [
+    {
+      "name": "asset_runner",
+      "ok": true,
+      "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_real_preview_001\\asset_manifest.json",
+      "warnings": [],
+      "blocking_reasons": [],
+      "extra": {
+        "asset_count": 4
+      }
+    },
+    {
+      "name": "voiceover_smoke",
+      "ok": true,
+      "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_real_preview_001\\full_voiceover.mp3",
+      "warnings": [],
+      "blocking_reasons": [],
+      "extra": {
+        "voice_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_real_preview_001\\voice_manifest.json",
+        "estimated_duration_seconds": 21,
+        "word_count": 51,
+        "real_tts_generated": false
+      }
+    },
+    {
+      "name": "timeline_builder",
+      "ok": true,
+      "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\timeline_real_preview_001\\timeline_manifest.json",
+      "warnings": [],
+      "blocking_reasons": [],
+      "extra": {
+        "audio_path_set": true
+      }
+    },
+    {
+      "name": "clean_render",
+      "ok": true,
+      "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_real_preview_001\\clean_video.mp4",
+      "warnings": [],
+      "blocking_reasons": []
+    },
+    {
+      "name": "subtitle_build",
+      "ok": true,
+      "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_real_preview_001\\subtitle_manifest.json",
+      "warnings": [
+        "subtitle_audio_duration_used"
+      ],
+      "blocking_reasons": []
+    },
+    {
+      "name": "burn_in_preview",
+      "ok": true,
+      "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_real_preview_001\\preview_with_subtitles.mp4",
+      "warnings": [
+        "subtitle_typewriter_ass_renderer_used"
+      ],
+      "blocking_reasons": [],
+      "extra": {
+        "skipped": false
+      }
+    }
+  ],
+  "paths": {
+    "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_real_preview_001\\scene_asset_pack.json",
+    "asset_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_real_preview_001\\asset_manifest.json",
+    "timeline_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\timeline_real_preview_001\\timeline_manifest.json",
+    "voiceover_audio": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_real_preview_001\\full_voiceover.mp3",
+    "narration_script": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_real_preview_001\\narration_script.txt",
+    "clean_video": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_real_preview_001\\clean_video.mp4",
+    "subtitle_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_real_preview_001\\subtitle_manifest.json",
+    "subtitle_file": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_real_preview_001\\subtitles.srt",
+    "preview_with_subtitles": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_real_preview_001\\preview_with_subtitles.mp4",
+    "local_preview_dir": "",
+    "final_render_dir": "",
+    "final_video": ""
+  },
+  "warnings": [
+    "subtitle_audio_duration_used",
+    "subtitle_typewriter_ass_renderer_used"
+  ],
+  "blocking_reasons": [],
+  "next_step": "Öffne preview_with_subtitles.mp4 im Indexpaket; Final Render bleibt BA 24.x-Flow (run_final_render.py).",
+  "created_at_epoch": 1777992557.3671734
+}

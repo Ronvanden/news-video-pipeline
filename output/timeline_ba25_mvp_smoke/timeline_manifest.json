@@ -1,0 +1,76 @@
+{
+  "run_id": "ba25_mvp_smoke",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_ba25_mvp_smoke\\asset_manifest.json",
+  "assets_directory": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_ba25_mvp_smoke",
+  "audio_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_smoke\\full_voiceover.mp3",
+  "total_scenes": 5,
+  "estimated_duration_seconds": 20,
+  "scene_duration_default_seconds": 4,
+  "scenes": [
+    {
+      "scene_number": 1,
+      "image_path": "scene_001.png",
+      "start_time": 0.0,
+      "end_time": 4.0,
+      "duration_seconds": 4,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 0
+    },
+    {
+      "scene_number": 2,
+      "image_path": "scene_002.png",
+      "start_time": 4.0,
+      "end_time": 8.0,
+      "duration_seconds": 4,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 1
+    },
+    {
+      "scene_number": 3,
+      "image_path": "scene_003.png",
+      "start_time": 8.0,
+      "end_time": 12.0,
+      "duration_seconds": 4,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 2
+    },
+    {
+      "scene_number": 4,
+      "image_path": "scene_004.png",
+      "start_time": 12.0,
+      "end_time": 16.0,
+      "duration_seconds": 4,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 3
+    },
+    {
+      "scene_number": 5,
+      "image_path": "scene_005.png",
+      "start_time": 16.0,
+      "end_time": 20.0,
+      "duration_seconds": 4,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 4
+    }
+  ]
+}

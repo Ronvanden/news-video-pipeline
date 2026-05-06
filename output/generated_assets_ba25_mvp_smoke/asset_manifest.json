@@ -1,0 +1,59 @@
+{
+  "run_id": "ba25_mvp_smoke",
+  "source_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_smoke\\scene_asset_pack.json",
+  "asset_count": 5,
+  "generation_mode": "placeholder",
+  "warnings": [],
+  "assets": [
+    {
+      "scene_number": 1,
+      "chapter_index": 0,
+      "beat_index": 0,
+      "asset_type": "hook_text",
+      "image_path": "scene_001.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Hook. Textauszug: Hast du dich jemals gefragt, was es mit dieser speziellen Domäne auf sich hat, die in vielen Dokumentationen auftaucht? Heute klären wir das auf!",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 2,
+      "chapter_index": 0,
+      "beat_index": 1,
+      "asset_type": "story_text",
+      "image_path": "scene_002.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 1: Was ist diese Domäne?. Textauszug: Die Domäne, die wir heute besprechen, ist eine spezielle Adresse, die in Dokumentationsbeispielen verwendet wird. Sie ist nicht für den tatsächlichen Betrieb ge",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 3,
+      "chapter_index": 0,
+      "beat_index": 2,
+      "asset_type": "story_text",
+      "image_path": "scene_003.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Warum ist diese Domäne wichtig?. Textauszug: Die Verwendung dieser Domäne in Dokumentationen hat mehrere Vorteile. Erstens schützt sie die Privatsphäre und Sicherheit von echten Benutzern und Daten. Zweite",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 4,
+      "chapter_index": 0,
+      "beat_index": 3,
+      "asset_type": "story_text",
+      "image_path": "scene_004.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 3: Risiken der Verwendung im Betrieb. Textauszug: Es ist wichtig zu betonen, dass diese Domäne nicht für den Betrieb geeignet ist. Die Verwendung in einem produktiven Umfeld kann zu ernsthaften Problemen führen",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 5,
+      "chapter_index": 0,
+      "beat_index": 4,
+      "asset_type": "story_text",
+      "image_path": "scene_005.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 4: Zukünftige Entwicklungen und Trends. Textauszug: Mit der fortschreitenden Digitalisierung und der zunehmenden Bedeutung von Datenschutz wird die Verwendung solcher Domänen in der Dokumentation wahrscheinlich z",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    }
+  ]
+}

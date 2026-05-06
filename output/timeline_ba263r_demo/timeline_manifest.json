@@ -1,0 +1,26 @@
+{
+  "run_id": "ba263r_demo",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_ba263r_demo\\asset_manifest.json",
+  "assets_directory": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_ba263r_demo",
+  "audio_path": "",
+  "total_scenes": 1,
+  "estimated_duration_seconds": 6,
+  "scene_duration_default_seconds": 6,
+  "scenes": [
+    {
+      "scene_number": 1,
+      "start_time": 0.0,
+      "end_time": 6.0,
+      "duration_seconds": 6,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 0,
+      "media_type": "video",
+      "video_path": "scene_001.mp4",
+      "image_path": "scene_001.png"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "run_id": "ba263r_demo",
+  "source_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba263r_reality_check\\scene_asset_pack.json",
+  "asset_count": 1,
+  "generation_mode": "placeholder",
+  "local_video_scene_count": 1,
+  "warnings": [],
+  "assets": [
+    {
+      "scene_number": 1,
+      "chapter_index": 0,
+      "beat_index": 0,
+      "asset_type": "video",
+      "image_path": "scene_001.png",
+      "video_path": "scene_001.mp4",
+      "visual_prompt": "Reality check: lokaler Runway-Clip als Video-Asset.",
+      "camera_motion_hint": "static",
+      "generation_mode": "local_video_ingest",
+      "duration_seconds": 6,
+      "estimated_duration_seconds": 6
+    }
+  ]
+}

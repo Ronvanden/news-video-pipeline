@@ -1,0 +1,49 @@
+{
+  "run_id": "baum_voice_custom_fit_5",
+  "source_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_5\\scene_asset_pack.json",
+  "asset_count": 3,
+  "generation_mode": "placeholder",
+  "local_video_scene_count": 3,
+  "warnings": [],
+  "assets": [
+    {
+      "scene_number": 1,
+      "chapter_index": 0,
+      "beat_index": 0,
+      "asset_type": "video",
+      "image_path": "scene_001.png",
+      "video_path": "scene_001.mp4",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Hook. Textauszug: Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+      "camera_motion_hint": "static",
+      "generation_mode": "local_video_ingest",
+      "duration_seconds": 6,
+      "estimated_duration_seconds": 6
+    },
+    {
+      "scene_number": 2,
+      "chapter_index": 0,
+      "beat_index": 1,
+      "asset_type": "video",
+      "image_path": "scene_002.png",
+      "video_path": "scene_002.mp4",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 1: Einstieg. Textauszug: Wir zeigen, wie ein Story-Text in Szenen zerlegt wird.",
+      "camera_motion_hint": "static",
+      "generation_mode": "local_video_ingest",
+      "duration_seconds": 5,
+      "estimated_duration_seconds": 5
+    },
+    {
+      "scene_number": 3,
+      "chapter_index": 0,
+      "beat_index": 2,
+      "asset_type": "video",
+      "image_path": "scene_003.png",
+      "video_path": "scene_003.mp4",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Struktur. Textauszug: Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.",
+      "camera_motion_hint": "static",
+      "generation_mode": "local_video_ingest",
+      "duration_seconds": 5,
+      "estimated_duration_seconds": 5
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "video_created": true,
+  "output_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\final_video.mp4",
+  "duration_seconds": 30.04,
+  "scene_count": 3,
+  "motion_mode": "basic",
+  "motion_applied": true,
+  "warnings": [
+    "audio_shorter_than_timeline_padded_or_continued"
+  ],
+  "blocking_reasons": [],
+  "subtitle_path_requested": null,
+  "subtitles_burned": false,
+  "run_id": "final_founder_video_elevenlabs_real",
+  "render_output_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\render_final_founder_video_elevenlabs_real\\render_output_manifest.json"
+}

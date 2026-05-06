@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "input_mode": "script_json",
+  "url": null,
+  "script_json": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba266_visual_founder_smoke\\script.json",
+  "title": "Mini-Testskript (BA 25.2)",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy",
+  "script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy\\script.json",
+  "scene_plan_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy\\scene_plan.json",
+  "scene_asset_pack_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy\\scene_asset_pack.json",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy\\generated_assets_final_founder_video_dummy\\asset_manifest.json",
+  "timeline_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy\\timeline_final_founder_video_dummy\\timeline_manifest.json",
+  "final_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy\\final_video.mp4",
+  "used_existing_assets": true,
+  "used_video_assets_count": 3,
+  "used_image_assets_count": 0,
+  "warnings": [
+    "ba266_video_reuse_for_remaining_scenes",
+    "existing_asset_used",
+    "ba266_cinematic_placeholder_applied:3",
+    "audio_shorter_than_timeline_padded_or_continued"
+  ],
+  "blocking_reasons": [],
+  "voice_used": true,
+  "voice_mode": "dummy",
+  "voice_text_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy\\voiceover_text.txt",
+  "voice_file_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_dummy\\voiceover.mp3",
+  "voice_duration_seconds": 8.0,
+  "audio_stream_expected": true,
+  "voice_warnings": [
+    "dummy_voice_used_not_real_tts"
+  ],
+  "voice_blocking_reasons": []
+}

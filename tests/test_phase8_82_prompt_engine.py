@@ -27,6 +27,8 @@ class Phase82Engine(unittest.TestCase):
         a = build_scene_prompts_v1(req).model_dump()
         b = build_scene_prompts_v1(req).model_dump()
         self.assertEqual(a, b)
+        self.assertIsNotNone(a.get("prompt_quality"))
+        self.assertTrue(a["prompt_quality"]["policy_profile"])
 
     def test_provider_prefix_differs(self):
         base_kw = {

@@ -1,0 +1,30 @@
+{
+  "ok": false,
+  "render_contract_version": "ba28_5_v1",
+  "would_render": false,
+  "render_command_preview": "ffmpeg ... (dry-run preview only)",
+  "input_bundle_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\render_input_bundle_smoke_290_001.json",
+  "estimated_output_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render.mp4",
+  "missing_inputs": [],
+  "blocking_reasons": [
+    "not_ready_for_render"
+  ],
+  "warnings": [],
+  "steps": [
+    {
+      "step": "validate_inputs",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "step": "compose_timeline",
+      "ok": true,
+      "note": "dry_run_only"
+    },
+    {
+      "step": "build_ffmpeg_command",
+      "ok": false,
+      "note": "preview_only_no_execution"
+    }
+  ]
+}

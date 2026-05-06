@@ -1,0 +1,14 @@
+{
+  "video_created": true,
+  "output_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba267_fit_voice_dummy\\final_video.mp4",
+  "duration_seconds": 8.04,
+  "scene_count": 3,
+  "motion_mode": "basic",
+  "motion_applied": true,
+  "warnings": [],
+  "blocking_reasons": [],
+  "subtitle_path_requested": null,
+  "subtitles_burned": false,
+  "run_id": "ba267_fit_voice_dummy",
+  "render_output_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba267_fit_voice_dummy\\render_ba267_fit_voice_dummy\\render_output_manifest.json"
+}

@@ -1,0 +1,824 @@
+"""BA 22.0–22.2 — Dashboard Local Preview Panel: Scan, Status-Karten, sichere Artefakt-URLs (ohne Secrets)."""
+
+from __future__ import annotations
+
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote
+
+_LOCAL_PREVIEW_DIR_PREFIX = "local_preview_"
+_LOCAL_PREVIEW_RESULT_JSON_NAMES = ("local_preview_result.json", "result.json")
+
+# BA 22.2 — nur diese Basenamen dürfen über die Dashboard-Datei-Route ausgeliefert werden
+LOCAL_PREVIEW_ALLOWED_FILENAMES: frozenset[str] = frozenset(
+    {
+        "preview_with_subtitles.mp4",
+        "preview_video.mp4",
+        "clean_video.mp4",
+        "local_preview_report.md",
+        "OPEN_ME.md",
+        "local_preview_result.json",
+    }
+)
+_LOCAL_PREVIEW_RUN_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,220}$")
+
+_PF_STATUSES = frozenset({"pass", "warning", "fail"})
+_WARN_LEVELS = frozenset({"INFO", "CHECK", "WARNING", "BLOCKING"})
+_FOUNDER_CODES = frozenset({"GO_PREVIEW", "REVIEW_REQUIRED", "BLOCK"})
+_VERDICTS = frozenset({"PASS", "WARNING", "FAIL"})
+
+_APPROVAL_SCHEMA_V1 = "local_preview_human_approval_v1"
+_APPROVAL_FILENAME = "human_approval.json"
+
+
+def default_local_preview_out_root() -> Path:
+    """Repository-``output/`` relativ zu diesem Paket (keine Env-Abhängigkeit)."""
+    return Path(__file__).resolve().parents[2] / "output"
+
+
+def validate_local_preview_run_id(run_id: str) -> bool:
+    """Kein Pfad-Separator / keine Traversal-Muster — nur sichere Run-IDs."""
+    s = (run_id or "").strip()
+    if not s or ".." in s or "/" in s or "\\" in s:
+        return False
+    return bool(_LOCAL_PREVIEW_RUN_ID_RE.fullmatch(s))
+
+
+def local_preview_file_media_type(filename: str) -> str:
+    if filename.endswith(".mp4"):
+        return "video/mp4"
+    if filename.endswith(".md"):
+        return "text/markdown; charset=utf-8"
+    if filename.endswith(".json"):
+        return "application/json; charset=utf-8"
+    return "application/octet-stream"
+
+
+def build_local_preview_file_url(run_id: str, filename: str) -> str:
+    """Relativer URL-Pfad für ``GET /founder/dashboard/local-preview/file/...``."""
+    return f"/founder/dashboard/local-preview/file/{quote(run_id, safe='')}/{quote(filename, safe='')}"
+
+
+def _safe_artifact_file(run_dir: Path, name: str) -> bool:
+    p = run_dir / name
+    try:
+        if not p.exists():
+            return False
+        if p.is_symlink():
+            return False
+        return p.is_file()
+    except OSError:
+        return False
+
+
+def local_preview_safe_resolve_file(out_root: Path, run_id: str, filename: str) -> Optional[Path]:
+    """
+    Liefert einen aufgelösten Dateipfad nur unter ``out_root/local_preview_<run_id>/``,
+    ohne Symlinks auf Dateiebene, mit Whitelist für ``filename``.
+    """
+    if not validate_local_preview_run_id(run_id):
+        return None
+    if filename not in LOCAL_PREVIEW_ALLOWED_FILENAMES:
+        return None
+    try:
+        root = out_root.resolve()
+    except OSError:
+        return None
+    run_dir = root / f"{_LOCAL_PREVIEW_DIR_PREFIX}{run_id}"
+    try:
+        run_res = run_dir.resolve()
+    except OSError:
+        return None
+    if run_res.is_symlink() or not run_res.is_dir():
+        return None
+    try:
+        if run_res.parent.resolve() != root:
+            return None
+    except OSError:
+        return None
+    candidate = run_res / filename
+    try:
+        if candidate.is_symlink():
+            return None
+        resolved = candidate.resolve()
+        resolved.relative_to(run_res)
+    except (OSError, ValueError):
+        return None
+    if not resolved.is_file():
+        return None
+    return resolved
+
+
+def local_preview_safe_resolve_run_dir(out_root: Path, run_id: str) -> Optional[Path]:
+    """BA 22.5 — sicherer Run-Ordner unter out_root/local_preview_<run_id>/ (kein Symlink)."""
+    if not validate_local_preview_run_id(run_id):
+        return None
+    try:
+        root = out_root.resolve()
+    except OSError:
+        return None
+    run_dir = root / f"{_LOCAL_PREVIEW_DIR_PREFIX}{run_id}"
+    try:
+        run_res = run_dir.resolve()
+    except OSError:
+        return None
+    if run_res.is_symlink() or not run_res.is_dir():
+        return None
+    try:
+        if run_res.parent.resolve() != root:
+            return None
+    except OSError:
+        return None
+    return run_res
+
+
+def build_file_urls_for_run(run_dir: Path, run_id: str) -> Dict[str, str]:
+    """BA 22.2 — Dashboard-URLs nur wenn Datei physisch (ohne Symlink) vorhanden."""
+    empty = {"preview_url": "", "report_url": "", "open_me_url": "", "result_json_url": ""}
+    if not validate_local_preview_run_id(run_id):
+        return dict(empty)
+    preview_url = ""
+    for cand in ("preview_with_subtitles.mp4", "preview_video.mp4", "clean_video.mp4"):
+        if _safe_artifact_file(run_dir, cand):
+            preview_url = build_local_preview_file_url(run_id, cand)
+            break
+    report_url = (
+        build_local_preview_file_url(run_id, "local_preview_report.md")
+        if _safe_artifact_file(run_dir, "local_preview_report.md")
+        else ""
+    )
+    open_me_url = (
+        build_local_preview_file_url(run_id, "OPEN_ME.md") if _safe_artifact_file(run_dir, "OPEN_ME.md") else ""
+    )
+    result_json_url = (
+        build_local_preview_file_url(run_id, "local_preview_result.json")
+        if _safe_artifact_file(run_dir, "local_preview_result.json")
+        else ""
+    )
+    return {
+        "preview_url": preview_url,
+        "report_url": report_url,
+        "open_me_url": open_me_url,
+        "result_json_url": result_json_url,
+    }
+
+
+def _safe_is_dir(p: Path) -> bool:
+    try:
+        return p.is_dir()
+    except OSError:
+        return False
+
+
+def _artifact_flags(run_dir: Path) -> Dict[str, bool]:
+    def _f(rel: str) -> bool:
+        try:
+            p = (run_dir / rel).resolve()
+            return p.is_file()
+        except OSError:
+            return False
+
+    return {
+        "open_me": _f("OPEN_ME.md"),
+        "founder_report": _f("local_preview_report.md"),
+        "preview_with_subtitles": _f("preview_with_subtitles.mp4"),
+    }
+
+
+def _read_json_file(path: Path) -> Optional[Dict[str, Any]]:
+    try:
+        if not path.is_file():
+            return None
+        raw = path.read_text(encoding="utf-8")
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else None
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+
+
+def load_local_preview_saved_result(run_dir: Path) -> Optional[Dict[str, Any]]:
+    """Liest ``local_preview_result.json`` oder ``result.json`` aus dem Run-Ordner."""
+    for name in _LOCAL_PREVIEW_RESULT_JSON_NAMES:
+        data = _read_json_file(run_dir / name)
+        if data:
+            return data
+    return None
+
+
+def now_iso_utc() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def load_local_preview_human_approval(run_dir: Path) -> Optional[Dict[str, Any]]:
+    """BA 22.5 — liest `human_approval.json` aus dem Run-Ordner (optional, tolerant)."""
+    try:
+        p = (run_dir / _APPROVAL_FILENAME).resolve()
+    except OSError:
+        return None
+    try:
+        if p.is_symlink() or not p.is_file():
+            return None
+    except OSError:
+        return None
+    return _read_json_file(p)
+
+
+def build_approval_gate_from_run(
+    *,
+    run_id: str,
+    status_cards: Dict[str, Any],
+    file_urls: Dict[str, str],
+    approval_doc: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    BA 22.5 — Approval Gate (Eligibility + Status + Actions) rein aus Dashboard-Infos.
+    Keine Final-Render-Aktion hier.
+    """
+    verdict = str((status_cards or {}).get("verdict") or "UNKNOWN").strip().upper()
+    quality = str((status_cards or {}).get("quality") or "UNKNOWN").strip().upper()
+    founder = str((status_cards or {}).get("founder_decision") or "UNKNOWN").strip().upper()
+    has_preview = bool((file_urls or {}).get("preview_url"))
+
+    status = "not_approved"
+    approved_at = ""
+    approved_by = ""
+    note = ""
+    if isinstance(approval_doc, dict) and approval_doc:
+        if str(approval_doc.get("schema_version") or "").strip() == _APPROVAL_SCHEMA_V1:
+            st = str(approval_doc.get("status") or "").strip().lower()
+            if st in ("approved", "not_approved", "revoked", "blocked"):
+                status = st
+            approved_at = str(approval_doc.get("approved_at") or "").strip()
+            approved_by = str(approval_doc.get("approved_by") or "").strip()
+            note = str(approval_doc.get("note") or "").strip()
+
+    eligible = True
+    reason = ""
+    approve_enabled = True
+    revoke_enabled = False
+
+    if not has_preview:
+        eligible = False
+        approve_enabled = False
+        reason = "Keine Preview-Datei gefunden — zuerst Preview erzeugen."
+    elif verdict == "FAIL" or quality == "FAIL" or founder == "BLOCK":
+        eligible = False
+        approve_enabled = False
+        status = "blocked"
+        reason = "Blocking: Verdict/Quality/Founder blockiert — kein Approve möglich."
+    elif founder == "REVIEW_REQUIRED" or verdict == "WARNING" or quality == "WARNING":
+        eligible = True
+        reason = "Preview requires review before final render."
+
+    if status == "approved":
+        revoke_enabled = True
+        approve_enabled = False
+    elif status == "revoked":
+        revoke_enabled = False
+        # approve bleibt möglich, wenn eligible
+        approve_enabled = bool(eligible)
+    elif status == "blocked":
+        revoke_enabled = False
+        approve_enabled = False
+
+    if not eligible and status not in ("approved", "blocked"):
+        # Default-Status bei Ineligibility ohne gespeicherte Entscheidung
+        status = "not_approved"
+
+    return {
+        "status": status,
+        "eligible": bool(eligible),
+        "reason": reason,
+        "approved_at": approved_at,
+        "approved_by": approved_by,
+        "note": note,
+        "actions": {
+            "approve_enabled": bool(approve_enabled),
+            "revoke_enabled": bool(revoke_enabled),
+        },
+    }
+
+
+def build_final_render_gate_from_run(
+    *,
+    status_cards: Dict[str, Any],
+    file_urls: Dict[str, str],
+    cost_card: Dict[str, Any],
+    approval_gate: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    BA 22.6 — Final Render Button Preparation:
+    Nur Readiness/Reasons/Requirements, keine Ausführung.
+    """
+    has_contract = bool((status_cards or {}).get("contract_present") is True)
+    has_preview = bool((file_urls or {}).get("preview_url"))
+    verdict = str((status_cards or {}).get("verdict") or "UNKNOWN").strip().upper()
+    quality = str((status_cards or {}).get("quality") or "UNKNOWN").strip().upper()
+    founder = str((status_cards or {}).get("founder_decision") or "UNKNOWN").strip().upper()
+    appr_status = str((approval_gate or {}).get("status") or "not_approved").strip().lower()
+    cost_status = str((cost_card or {}).get("status") or "UNKNOWN").strip().upper()
+
+    reqs: List[Dict[str, Any]] = []
+
+    def add_req(rid: str, label: str, ok: Optional[bool], detail: str = "") -> None:
+        st = "unknown" if ok is None else ("pass" if ok else "fail")
+        reqs.append({"id": rid, "label": label, "status": st, "detail": detail})
+
+    add_req("preview_available", "Preview available", True if has_preview else False, "")
+    add_req("verdict_not_fail", "Verdict not FAIL", None if verdict == "UNKNOWN" else verdict != "FAIL", f"verdict={verdict}")
+    add_req("quality_not_fail", "Quality not FAIL", None if quality == "UNKNOWN" else quality != "FAIL", f"quality={quality}")
+    add_req(
+        "founder_not_block",
+        "Founder decision not BLOCK",
+        None if founder == "UNKNOWN" else founder != "BLOCK",
+        f"founder={founder}",
+    )
+    add_req("human_approved", "Human approval approved", True if appr_status == "approved" else False, f"approval={appr_status}")
+    add_req(
+        "cost_not_over_budget",
+        "Cost not OVER_BUDGET",
+        None if cost_status == "UNKNOWN" else cost_status != "OVER_BUDGET",
+        f"cost={cost_status}",
+    )
+
+    label = "Finales Video erstellen"
+    if not has_contract:
+        return {
+            "status": "unknown",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Kein Contract/Snapshot vorhanden — Readiness unbekannt.",
+            "requirements": reqs,
+        }
+
+    # harte Blocker
+    if not has_preview:
+        return {
+            "status": "blocked",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Preview fehlt — Final Render gesperrt.",
+            "requirements": reqs,
+        }
+    if verdict == "FAIL" or quality == "FAIL" or founder == "BLOCK":
+        return {
+            "status": "blocked",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Blocking: Verdict/Quality/Founder blockiert — Final Render gesperrt.",
+            "requirements": reqs,
+        }
+
+    # weiche Locks
+    if appr_status != "approved":
+        return {
+            "status": "locked",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Human Approval fehlt — Final Render gesperrt, bis approved.",
+            "requirements": reqs,
+        }
+    if cost_status == "OVER_BUDGET":
+        return {
+            "status": "locked",
+            "button_enabled": False,
+            "label": label,
+            "reason": "Cost is over budget; review required.",
+            "requirements": reqs,
+        }
+
+    return {
+        "status": "ready",
+        "button_enabled": True,
+        "label": label,
+        "reason": "Bereit (BA 22.6: Button ist vorbereitet, Ausführung folgt später).",
+        "requirements": reqs,
+    }
+
+
+def _norm_pf(v: Any) -> str:
+    t = str(v or "").strip().lower()
+    if t in _PF_STATUSES:
+        return t.upper()
+    return "UNKNOWN"
+
+
+def _norm_verdict(v: Any) -> str:
+    t = str(v or "").strip().upper()
+    if t in _VERDICTS:
+        return t
+    return "UNKNOWN"
+
+
+def _norm_warn_level(v: Any) -> str:
+    t = str(v or "").strip().upper()
+    if t in _WARN_LEVELS:
+        return t
+    t2 = str(v or "").strip().lower()
+    if t2 == "info":
+        return "INFO"
+    if t2 == "check":
+        return "CHECK"
+    if t2 == "warning":
+        return "WARNING"
+    if t2 == "blocking":
+        return "BLOCKING"
+    return "UNKNOWN"
+
+
+def _norm_founder(v: Any) -> str:
+    t = str(v or "").strip().upper()
+    if t in _FOUNDER_CODES:
+        return t
+    return "UNKNOWN"
+
+
+def build_status_cards_from_saved_result(data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Status-Karten aus Snapshot (BA 22.1) oder kompatiblem Pipeline-JSON-Subset.
+
+    Fehlt die Datei oder ist sie unlesbar → UNKNOWN-Felder mit Hinweis.
+    """
+    if not isinstance(data, dict) or not data:
+        return {
+            "verdict": "UNKNOWN",
+            "quality": "UNKNOWN",
+            "subtitle_quality": "UNKNOWN",
+            "sync_guard": "UNKNOWN",
+            "warning_level": "UNKNOWN",
+            "founder_decision": "UNKNOWN",
+            "top_issue": "contract_file_missing",
+            "next_step": "Neuen Local-Preview-Lauf ausführen (siehe docs/runbooks/local_preview_runbook.md).",
+            "contract_present": False,
+        }
+
+    qc = data.get("quality_checklist") if isinstance(data.get("quality_checklist"), dict) else {}
+    sq = data.get("subtitle_quality_check") if isinstance(data.get("subtitle_quality_check"), dict) else {}
+    sg = data.get("sync_guard") if isinstance(data.get("sync_guard"), dict) else {}
+    wc = data.get("warning_classification") if isinstance(data.get("warning_classification"), dict) else {}
+    fq = data.get("founder_quality_decision") if isinstance(data.get("founder_quality_decision"), dict) else {}
+
+    verdict = _norm_verdict(data.get("verdict"))
+    quality = _norm_pf(qc.get("status"))
+    subtitle_quality = _norm_pf(sq.get("status"))
+    sync_guard = _norm_pf(sg.get("status"))
+    warning_level = _norm_warn_level(wc.get("highest"))
+    founder_decision = _norm_founder(fq.get("decision_code"))
+
+    top_issue = str(fq.get("top_issue") or "").strip()
+    if not top_issue and isinstance(wc.get("items"), list) and wc["items"]:
+        first = wc["items"][0]
+        if isinstance(first, dict):
+            top_issue = str(first.get("code") or "").strip()
+    next_step = str(fq.get("next_step") or "").strip()
+    if not next_step:
+        next_step = "Siehe OPEN_ME.md oder Runbook."
+
+    return {
+        "verdict": verdict,
+        "quality": quality,
+        "subtitle_quality": subtitle_quality,
+        "sync_guard": sync_guard,
+        "warning_level": warning_level,
+        "founder_decision": founder_decision,
+        "top_issue": top_issue or "—",
+        "next_step": next_step,
+        "contract_present": True,
+    }
+
+
+def _to_float_or_none(v: Any) -> Optional[float]:
+    if v is None:
+        return None
+    if isinstance(v, (int, float)) and not isinstance(v, bool):
+        return float(v)
+    try:
+        s = str(v).strip()
+        if not s:
+            return None
+        return float(s)
+    except (TypeError, ValueError):
+        return None
+
+
+def _get_cost_obj(data: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not isinstance(data, dict) or not data:
+        return None
+    # bevorzugt: strukturiertes costs-Objekt falls vorhanden (keine Erfindung)
+    for k in (
+        "production_cost_estimate",
+        "production_costs",
+        "cost_summary",
+        "estimated_costs",
+        "cost_projection",
+        "cost_projection_v1",
+    ):
+        v = data.get(k)
+        if isinstance(v, dict) and v:
+            return v
+    return None
+
+
+def build_cost_card_from_saved_result(data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    BA 22.4 — Kostencard aus vorhandenem local_preview_result.json-Subset.
+    Fallback: UNKNOWN / unavailable (keine fake-genauen Zahlen).
+    """
+    hint_missing = "Noch keine Kostenschätzung für diesen lokalen Preview-Lauf vorhanden."
+    base = {
+        "status": "UNKNOWN",
+        "mode": "unavailable",
+        "estimated_total_eur": None,
+        "actual_total_eur": None,
+        "breakdown": {
+            "voice_eur": None,
+            "assets_eur": None,
+            "render_eur": None,
+            "buffer_eur": None,
+        },
+        "hint": hint_missing,
+    }
+    if not isinstance(data, dict) or not data:
+        return dict(base)
+
+    obj = _get_cost_obj(data)
+    # auch tolerieren: flache Keys im Result
+    estimated_total = None
+    actual_total = None
+    over_budget = False
+    variance = None
+    step_breakdown: Dict[str, Any] = {}
+
+    if isinstance(obj, dict):
+        estimated_total = _to_float_or_none(
+            obj.get("estimated_total_eur")
+            or obj.get("estimated_total_cost")
+            or obj.get("estimated_total")
+        )
+        actual_total = _to_float_or_none(
+            obj.get("actual_total_eur") or obj.get("actual_total_cost") or obj.get("actual_total")
+        )
+        variance = _to_float_or_none(obj.get("cost_variance") or obj.get("variance_eur"))
+        over_budget = bool(obj.get("over_budget_flag") or obj.get("over_budget") or obj.get("over_budget_flag") is True)
+        sb = obj.get("step_cost_breakdown") or obj.get("breakdown") or {}
+        if isinstance(sb, dict):
+            step_breakdown = dict(sb)
+
+    if estimated_total is None:
+        estimated_total = _to_float_or_none(data.get("estimated_total_eur"))
+    if actual_total is None:
+        actual_total = _to_float_or_none(data.get("actual_total_eur"))
+    if not over_budget and isinstance(data.get("over_budget_flag"), bool):
+        over_budget = bool(data.get("over_budget_flag"))
+    if variance is None:
+        variance = _to_float_or_none(data.get("cost_variance"))
+    if not step_breakdown and isinstance(data.get("step_cost_breakdown"), dict):
+        step_breakdown = dict(data.get("step_cost_breakdown") or {})
+
+    # Breakdown mapping (nur wenn vorhanden)
+    voice = _to_float_or_none(step_breakdown.get("voice") or step_breakdown.get("voice_eur"))
+    # Assets: image + video (und optional thumbnail) aus vorhandenem breakdown
+    img = _to_float_or_none(step_breakdown.get("image") or step_breakdown.get("image_eur"))
+    vid = _to_float_or_none(step_breakdown.get("video") or step_breakdown.get("video_eur"))
+    thumb = _to_float_or_none(step_breakdown.get("thumbnail") or step_breakdown.get("thumbnail_eur"))
+    assets = None
+    parts = [p for p in (img, vid, thumb) if isinstance(p, (int, float))]
+    if parts:
+        assets = float(sum(parts))
+
+    buffer_v = _to_float_or_none(step_breakdown.get("buffer") or step_breakdown.get("buffer_eur"))
+
+    # Render/cloud: für lokalen Preview i. d. R. unbekannt → nur übernehmen, wenn vorhanden
+    render_v = _to_float_or_none(step_breakdown.get("render") or step_breakdown.get("render_eur"))
+
+    mode = "unavailable"
+    if actual_total is not None:
+        mode = "actual"
+    elif estimated_total is not None:
+        mode = "estimate"
+
+    status = "UNKNOWN"
+    if over_budget:
+        status = "OVER_BUDGET"
+    elif estimated_total is not None or actual_total is not None:
+        status = "OK"
+
+    # CHECK heuristik: deutliche Varianz oder costs-warnings vorhanden
+    if status == "OK":
+        warns = data.get("warnings") if isinstance(data.get("warnings"), list) else []
+        has_cost_warn = any(isinstance(w, str) and ("[costs:" in w or "Kosten-" in w) for w in warns)
+        if has_cost_warn or (isinstance(variance, (int, float)) and abs(float(variance)) >= 0.05):
+            status = "CHECK"
+
+    hint = ""
+    if mode == "unavailable":
+        hint = hint_missing
+    else:
+        hint = "Kosten sind " + ("Istwerte." if mode == "actual" else "Schätzung (heuristisch).")
+
+    out = dict(base)
+    out.update(
+        {
+            "status": status,
+            "mode": mode,
+            "estimated_total_eur": estimated_total,
+            "actual_total_eur": actual_total,
+            "breakdown": {
+                "voice_eur": voice,
+                "assets_eur": assets,
+                "render_eur": render_v,
+                "buffer_eur": buffer_v,
+            },
+            "hint": hint,
+        }
+    )
+    return out
+
+
+def _scan_run_dirs(out_root: Path) -> Tuple[List[Tuple[float, str, Path]], List[str]]:
+    """Direkte Kinder ``local_preview_*``, keine Symlinks; absteigend nach mtime."""
+    warnings: List[str] = []
+    rows: List[Tuple[float, str, Path]] = []
+    try:
+        root = out_root.resolve()
+    except OSError:
+        warnings.append("local_preview_out_root_resolve_failed")
+        return [], warnings
+
+    if not _safe_is_dir(root):
+        return [], warnings
+
+    try:
+        entries = list(root.iterdir())
+    except OSError:
+        warnings.append("local_preview_out_root_list_failed")
+        return [], warnings
+
+    for entry in entries:
+        if entry.is_symlink():
+            warnings.append(f"local_preview_scan_skipped_symlink:{entry.name}")
+            continue
+        if not entry.is_dir():
+            continue
+        name = entry.name
+        if not name.startswith(_LOCAL_PREVIEW_DIR_PREFIX):
+            continue
+        try:
+            mt = float(entry.stat().st_mtime)
+        except OSError:
+            warnings.append(f"local_preview_scan_skipped_stat:{name}")
+            continue
+        rows.append((mt, name, entry))
+
+    rows.sort(key=lambda t: (-t[0], t[1]))
+    return rows, warnings
+
+
+def build_run_rows_payload(rows: List[Tuple[float, str, Path]], *, limit: int = 20) -> List[Dict[str, Any]]:
+    """Wandelt sortierte Scan-Zeilen in Dashboard-Run-Objekte um."""
+    cap = max(1, min(int(limit), 100))
+    out: List[Dict[str, Any]] = []
+    for _mt, name, path in rows[:cap]:
+        rid = name[len(_LOCAL_PREVIEW_DIR_PREFIX) :] if name.startswith(_LOCAL_PREVIEW_DIR_PREFIX) else name
+        try:
+            p_res = str(path.resolve())
+        except OSError:
+            p_res = str(path)
+        try:
+            mtime = float(path.stat().st_mtime)
+        except OSError:
+            mtime = 0.0
+        arts = _artifact_flags(path)
+        saved = load_local_preview_saved_result(path)
+        scards = build_status_cards_from_saved_result(saved)
+        file_urls = build_file_urls_for_run(path, rid)
+        cost_card = build_cost_card_from_saved_result(saved)
+        approval_doc = load_local_preview_human_approval(path)
+        approval_gate = build_approval_gate_from_run(
+            run_id=rid,
+            status_cards=scards,
+            file_urls=file_urls,
+            approval_doc=approval_doc,
+        )
+        final_render_gate = build_final_render_gate_from_run(
+            status_cards=scards,
+            file_urls=file_urls,
+            cost_card=cost_card,
+            approval_gate=approval_gate,
+        )
+        row: Dict[str, Any] = {
+            "dir_name": name,
+            "run_id": rid,
+            "path": p_res,
+            "mtime_epoch": mtime,
+            "artifacts": arts,
+            "status_cards": scards,
+            "file_urls": file_urls,
+            "cost_card": cost_card,
+            "approval_gate": approval_gate,
+            "final_render_gate": final_render_gate,
+        }
+        out.append(row)
+    return out
+
+
+def scan_local_preview_runs(out_root: Path, *, limit: int = 20) -> List[Dict[str, Any]]:
+    """Kompakte Run-Metadaten für das Dashboard (keine Dateiinhalte)."""
+    rows, _w = _scan_run_dirs(out_root)
+    return build_run_rows_payload(rows, limit=limit)
+
+
+def build_local_preview_panel_payload(
+    *,
+    out_root: Optional[Path] = None,
+    runs_limit: int = 20,
+) -> Dict[str, Any]:
+    """
+    JSON für ``GET /founder/dashboard/local-preview/panel``.
+
+    ``result_contract``-Referenz entspricht BA 21.7 (id/schema_version — bei Änderung dort angleichen).
+    """
+    root = Path(out_root) if out_root is not None else default_local_preview_out_root()
+    warnings: List[str] = []
+    readable = False
+    try:
+        r = root.resolve()
+        readable = _safe_is_dir(r)
+    except OSError:
+        warnings.append("local_preview_out_root_resolve_failed")
+        r = root
+
+    runs: List[Dict[str, Any]] = []
+    if not readable:
+        warnings.append("local_preview_out_root_missing_or_not_dir")
+    else:
+        rows, scan_extra = _scan_run_dirs(r)
+        warnings.extend(scan_extra)
+        runs = build_run_rows_payload(rows, limit=runs_limit)
+
+    latest_status_cards: Optional[Dict[str, Any]] = None
+    latest_file_urls: Dict[str, str] = {
+        "preview_url": "",
+        "report_url": "",
+        "open_me_url": "",
+        "result_json_url": "",
+    }
+    if runs:
+        latest_status_cards = dict(runs[0].get("status_cards") or {})
+        latest_file_urls = dict(runs[0].get("file_urls") or latest_file_urls)
+        latest_cost_card = dict(runs[0].get("cost_card") or {})
+        latest_approval_gate = dict(runs[0].get("approval_gate") or {})
+        latest_final_render_gate = dict(runs[0].get("final_render_gate") or {})
+    else:
+        latest_cost_card = build_cost_card_from_saved_result(None)
+        latest_approval_gate = build_approval_gate_from_run(
+            run_id="",
+            status_cards=build_status_cards_from_saved_result(None),
+            file_urls={"preview_url": "", "report_url": "", "open_me_url": "", "result_json_url": ""},
+            approval_doc=None,
+        )
+        latest_final_render_gate = build_final_render_gate_from_run(
+            status_cards=build_status_cards_from_saved_result(None),
+            file_urls={"preview_url": "", "report_url": "", "open_me_url": "", "result_json_url": ""},
+            cost_card=latest_cost_card,
+            approval_gate=latest_approval_gate,
+        )
+
+    actions: List[Dict[str, Any]] = [
+        {
+            "id": "cli_mini_fixture",
+            "label_de": "Mini E2E (Smoke) im Repo-Root",
+            "kind": "shell",
+            "example": "python scripts/run_local_preview_mini_fixture.py",
+        },
+        {
+            "id": "cli_cleanup_dry_run",
+            "label_de": "Alte Preview-Ordner listen (Dry-Run)",
+            "kind": "shell",
+            "example": "python scripts/cleanup_local_previews.py --out-root output",
+        },
+        {
+            "id": "doc_runbook",
+            "label_de": "Runbook (Start, Prüfen, Cleanup)",
+            "kind": "doc",
+            "path": "docs/runbooks/local_preview_runbook.md",
+        },
+    ]
+
+    return {
+        "panel_version": "ba22_local_preview_panel_v3",
+        "result_contract": {"id": "local_preview_result_v1", "schema_version": 1},
+        "out_root": str(r) if readable else str(root),
+        "out_root_exists": readable,
+        "runs": runs,
+        "latest_status_cards": latest_status_cards,
+        "latest_file_urls": latest_file_urls,
+        "latest_cost_card": latest_cost_card,
+        "latest_approval_gate": latest_approval_gate,
+        "latest_final_render_gate": latest_final_render_gate,
+        "actions": actions,
+        "warnings": warnings,
+    }

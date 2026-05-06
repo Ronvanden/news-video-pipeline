@@ -1,0 +1,12 @@
+{
+  "video_id": "sample_video_001",
+  "source_url": "https://example.com/news/demo-context-or-canonical-url",
+  "views": 12500,
+  "impressions": 180000,
+  "ctr": 0.045,
+  "watch_time_minutes": 420.5,
+  "avg_view_duration_seconds": 145,
+  "subscribers_gained": 120,
+  "revenue_eur": 42.5,
+  "upload_date": "2026-04-28"
+}

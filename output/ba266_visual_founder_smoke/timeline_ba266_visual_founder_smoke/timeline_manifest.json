@@ -1,0 +1,56 @@
+{
+  "run_id": "ba266_visual_founder_smoke",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba266_visual_founder_smoke\\generated_assets_ba266_visual_founder_smoke\\asset_manifest.json",
+  "assets_directory": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba266_visual_founder_smoke\\generated_assets_ba266_visual_founder_smoke",
+  "audio_path": "",
+  "total_scenes": 3,
+  "estimated_duration_seconds": 30,
+  "scene_duration_default_seconds": 10,
+  "scenes": [
+    {
+      "scene_number": 1,
+      "start_time": 0.0,
+      "end_time": 10.0,
+      "duration_seconds": 10,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 0,
+      "media_type": "video",
+      "video_path": "scene_001.mp4",
+      "image_path": "scene_001.png"
+    },
+    {
+      "scene_number": 2,
+      "start_time": 10.0,
+      "end_time": 20.0,
+      "duration_seconds": 10,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 1,
+      "media_type": "video",
+      "video_path": "scene_002.mp4",
+      "image_path": "scene_002.png"
+    },
+    {
+      "scene_number": 3,
+      "start_time": 20.0,
+      "end_time": 30.0,
+      "duration_seconds": 10,
+      "transition": "fade",
+      "camera_motion_hint": "static",
+      "zoom_type": "static",
+      "pan_direction": "none",
+      "chapter_index": 0,
+      "beat_index": 2,
+      "media_type": "video",
+      "video_path": "scene_003.mp4",
+      "image_path": "scene_003.png"
+    }
+  ]
+}

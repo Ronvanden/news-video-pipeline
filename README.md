@@ -4,7 +4,7 @@
 
 Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL oder einem YouTube-Link ein strukturiertes YouTube-Skript erzeugt. Fokus liegt auf einer sicheren, modularen Pipeline mit optionaler LLM-Unterstützung und stabiler Fallback-Logik.
 
-**Planung:** Phasen, Status und Akzeptanzkriterien für die gesamte Pipeline stehen in [PIPELINE_PLAN.md](PIPELINE_PLAN.md). **Betrieb:** [OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md). **Gold-Referenzpfad (Produktion):** [GOLD_PRODUCTION_STANDARD.md](GOLD_PRODUCTION_STANDARD.md). Gelöste und dokumentierte Vorfälle: [ISSUES_LOG.md](ISSUES_LOG.md). Vorlage für neue Module: [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md).
+**Planung:** Phasen, Status und Akzeptanzkriterien für die gesamte Pipeline stehen in [PIPELINE_PLAN.md](PIPELINE_PLAN.md). **Prompt-Governance:** [docs/PROMPT_OPERATING_SYSTEM.md](docs/PROMPT_OPERATING_SYSTEM.md) und [docs/PROMPT_PATTERNS.md](docs/PROMPT_PATTERNS.md). **Betrieb:** [OPERATOR_RUNBOOK.md](OPERATOR_RUNBOOK.md). **Local Preview (CLI, Artefakte, Cleanup):** [docs/runbooks/local_preview_runbook.md](docs/runbooks/local_preview_runbook.md). **Gold-Referenzpfad (Produktion):** [GOLD_PRODUCTION_STANDARD.md](GOLD_PRODUCTION_STANDARD.md). Gelöste und dokumentierte Vorfälle: [ISSUES_LOG.md](ISSUES_LOG.md). Vorlage für neue Module: [MODULE_TEMPLATE.md](MODULE_TEMPLATE.md).
 
 ## 2. Aktueller MVP-Status
 
@@ -44,6 +44,9 @@ Dieses MVP liefert eine lokale FastAPI-Anwendung, die aus einer Nachrichten-URL 
 - **Makro Phase 7 (Voiceover / TTS) — strukturierter Bauplan:** [docs/phases/phase7_voice_bauplan.md](docs/phases/phase7_voice_bauplan.md) (**Baustein 7.1–7.8**, Gates `compileall`/`pytest`; **nicht** BA 9.x / nicht Phase 10). Umsetzung **planned** bis erste Code-Lieferung siehe [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
 - **Phase 7.2 — MODULE vor Code (Provider-Vertrag + vertikaler Preview-Slice):** [docs/modules/phase7_72_voice_provider_minimal_slice.md](docs/modules/phase7_72_voice_provider_minimal_slice.md). **Umgesetzt:** `POST /production/jobs/{production_job_id}/voice/synthesize-preview` (OpenAI Speech, `dry_run`, optional Body-Base64 nur mit Env `ENABLE_VOICE_SYNTH_PREVIEW_BODY`); Persistenz Artefakte = **Baustein 7.3**.
 - **BA 9.x (Story Engine Kernlinie geschlossen inkl. BA 9.7–9.9):** **BA 9.x = Story Engine Maturity** — optional `video_template` auf Generate/Review; Hooks, Rhythm, Conformance Gate, **`story_structure`**, Story-Pack/`story_pack`-Export; Experiment-Registry; **Adaptive Optimization** (**`GET /story-engine/template-health`**, Control-Panel `template_optimization`); **Story Intelligence** (Control-Panel `story_intelligence`); Canonical **„Story OS“:** [docs/STORY_ENGINE_OS.md](docs/STORY_ENGINE_OS.md); **Phase 9 / Phase 10** bleiben **Packaging/Publishing**. Geplanter Ausbau **jenseits 9.9**: nur neue Plan-Deliverables (kein stiller **BA 10 Story** ohne Governance). Detail: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
+- **BA 15.0–15.9 (First Production Acceleration):** lokale Wiederholbarkeit aus echten Assets — Demo-Video-Automation, Asset-Download-Plan, Voice Registry, Scene Stitcher, Subtitle Draft, Thumbnail Extract, Founder Local Dashboard, Batch Topic Runner, Cost Snapshot und Viral Prototype Presets unter `app/production_acceleration/`; keine Upload-/Firestore-/Frontend-Pflicht. Detail: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
+- **BA 16.0–16.9 (Monetization & Scale OS):** strategische Vorbereitung von Revenue, Channel Portfolio, Multi-Platform-Ausspielung, Opportunity Scanning, Founder KPIs, Scale Blueprint, Sponsorship Readiness, Investment Plan und Scale Risks unter `app/monetization_scale/`; keine Auto-Monetarisierung, keine Pflicht-Analytics, kein Upload. Detail: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
+- **BA CF 16.5–16.9 (Real KPI Feedback Loop V1):** echte Performance-Kennzahlen nach Veröffentlichung (manuell / JSON) mit Heuristiken zu Klassifikation, Kalibrierung gegen optionales **Cash-Optimization**-Ergebnis und Founder-Fokus — Modul `app/cash_feedback/`, CLI `scripts/record_video_kpi.py`, Beispiel `examples/metrics.sample.json`. Kein YouTube-Analytics-API, kein Firestore. Kurzüberblick: Abschnitt **17** unten; Plan: [PIPELINE_PLAN.md](PIPELINE_PLAN.md).
 - **BA 6.6.1 (nur lokale/integration Tests):** `POST /dev/fixtures/completed-script-job` — optional mit `ENABLE_TEST_FIXTURES=true` in `.env`; legt ohne YouTube-Anruf einen **completed** `script_jobs`-Eintrag, **`generated_scripts`** mit Kapiteln und optional **`production_jobs`** an (IDs immer Präfix `dev_fixture_`). **In Produktion deaktiviert lassen.**
 
 ## 4. Projektstruktur
@@ -436,8 +439,29 @@ curl -X POST http://127.0.0.1:8000/youtube/latest-videos \
 - `warnings` enthält Hinweise zu unsicherer Quelle, ungenügendem Inhalt oder Fallback-Einsatz.
 - Warnings machen transparent, wenn der Output nicht die gewünschte Länge oder Qualität erreichen kann.
 
-## 17. Lokale Tests
+## 17. Real KPI Feedback Loop (CF 16.5–16.9)
 
+**Zweck:** Nach dem Upload **gemessene** Kennzahlen (Views, CTR, Watchtime, optional Umsatz) aufnehmen und daraus eine kompakte Einschätzung ableiten: wie stark das Video performed hat, ob frühere **Cash-Opportunity**-Heuristiken dazu passen, und welche Founder-Next-Step naheliegt (z. B. Format wiederholen vs. Thema beenden). Ziel ist **Lernen aus echten Zahlen**, nicht neue Theorie.
+
+**CO 16.0–16.4 vs. CF 16.5–16.9:** Die **Cash Optimization Layer** (`app/cash_optimization/`) bewertet Chancen **vor** oder **ohne** echte Posting-Daten (heuristisch). Der **Real KPI Feedback Loop** (`app/cash_feedback/`) arbeitet **nach** Veröffentlichung mit **tatsächlichen** Metriken und kann optional ein gespeichertes `cash_optimization_layer_result` mit der Realität abgleichen.
+
+**Beispiel (lokal, PowerShell):**
+
+```powershell
+python scripts/record_video_kpi.py examples/metrics.sample.json
+```
+
+Optional mit vorher exportiertem Cash-Layer-JSON (gleiches Schema wie `CashOptimizationLayerResult`):
+
+```powershell
+python scripts/record_video_kpi.py examples/metrics.sample.json --cash-layer-json path/to/cash_layer.json
+```
+
+**Hinweis V1:** Es gibt **keine** Anbindung an die YouTube Data/Analytics-API, **kein** Firestore und **kein** Frontend — nur **lokale JSON-Dateien** und stdout-JSON mit dem Ergebnis des Loops.
+
+## 18. Lokale Tests
+
+- Untertitel-Burn-in-Preview (bestehendes Video + `subtitle_manifest.json` aus BA 20.5): `python scripts/burn_in_subtitles_preview.py --input-video … --subtitle-manifest …` (Details: [PIPELINE_PLAN.md](PIPELINE_PLAN.md), BA 20.6).
 - App kompilieren:
   ```bash
   python -m compileall app
@@ -445,7 +469,7 @@ curl -X POST http://127.0.0.1:8000/youtube/latest-videos \
 - Endpoint-Tests per `curl` oder Postman durchführen.
 - Prüfe `GET /health`, mindestens einen `POST /generate-script` Request, bei Bedarf `POST /youtube/generate-script` (Video mit verfügbarem Transkript), `POST /youtube/latest-videos` (z. B. mit `/channel/UC…`). Watchlist: `tests/test_watchlist_*` (Firestore optional live testen, siehe [DEPLOYMENT.md](DEPLOYMENT.md)).
 
-## 18. Docker / Cloud Run
+## 19. Docker / Cloud Run
 
 **Cloud MVP v1 (URL, Deploy, Secret Manager, Online-Tests):** [DEPLOYMENT.md](DEPLOYMENT.md)
 
@@ -476,24 +500,24 @@ Der Container lauscht auf **0.0.0.0**. Der Port kommt aus der Umgebungsvariable 
 
 Ohne `OPENAI_API_KEY` läuft die API im dokumentierten Fallback-Modus.
 
-## 19. Sicherheit / Secret Handling
+## 20. Sicherheit / Secret Handling
 
 - `.env` darf niemals in Git landen.
 - Geheimnisse bleiben lokal und werden nicht im README dokumentiert.
 - Nur `OPENAI_API_KEY` optional in `.env` konfigurieren.
 
-## 20. Agent-Regeln / AGENTS.md Hinweis
+## 21. Agent-Regeln / AGENTS.md Hinweis
 
 - `AGENTS.md` enthält verbindliche Regeln für Agent-Verhalten und redaktionelle Qualität.
 - Änderungen am Workflow oder an der Scriptqualität sollten dort dokumentiert werden.
 
-## 21. Bekannte Grenzen
+## 22. Bekannte Grenzen
 
 - Kein 100% verlässliches LLM für Faktenprüfung.
 - Qualitätsgrenzen hängen von URL-Extraktion und Artikeltext ab.
 - Manche Inhalte können kurz bleiben, wenn die Quelle nur wenig Text liefert.
 
-## 22. Nächste Schritte
+## 23. Nächste Schritte
 
 - Weitere Quellen-Extraktion und Artikelerkennung hinzufügen.
 - Erweiterte Kapitel- und Timing-Logik implementieren.

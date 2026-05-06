@@ -1,0 +1,19 @@
+{
+  "schema_version": "runway_image_to_video_smoke_v1",
+  "run_id": "verify_blocked",
+  "ok": false,
+  "status": "blocked",
+  "image_path": "C:\\Users\\buicr\\news-to-video-pipeline\\fixtures\\real_video_build_mini\\assets\\scene_001.png",
+  "prompt": "test",
+  "output_video_path": "",
+  "warnings": [
+    "runway_api_key_missing"
+  ],
+  "blocking_reasons": [
+    "runway_api_key_missing"
+  ],
+  "metadata": {
+    "provider": "runway",
+    "duration_seconds": 5
+  }
+}

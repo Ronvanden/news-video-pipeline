@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import List, Tuple
 
 from app.watchlist.models import Scene, SceneAssetItem, SceneAssetStyleProfileLiteral
+from app.visual_plan.visual_no_text import append_no_text_guard, partition_visual_overlay_text
+from app.visual_plan.visual_provider_router import route_visual_provider
 
 
 def _style_image_prefix(style: SceneAssetStyleProfileLiteral) -> str:
@@ -63,16 +65,25 @@ def _style_camera_direction(style: SceneAssetStyleProfileLiteral, mood: str) -> 
 def _thumbnail_hint(style: SceneAssetStyleProfileLiteral, title: str) -> str:
     t = (title or "").strip()[:80]
     if style == "documentary":
-        return f"YouTube thumbnail concept, bold readable title area reserved (no real text rendered), subject: {t!s}, documentary tabloid-safe."
+        return (
+            f"YouTube thumbnail base frame, documentary tone, subject mood from: {t!s}; "
+            "large empty headline-safe negative space (no generated lettering)."
+        )
     if style == "news":
-        return f"News-style thumbnail, high clarity, lower-third friendly, topic: {t!s}, avoid fake logos."
+        return (
+            f"News-style thumbnail base, high clarity, topic anchor: {t!s}; "
+            "clean lower-third safe zone without rendered typography."
+        )
     if style == "cinematic":
-        return f"Cinematic thumbnail still, strong silhouette or symbolic object, topic hint: {t!s}, no faces."
+        return f"Cinematic thumbnail still base, strong silhouette or symbolic object, topic hint: {t!s}, no faces."
     if style == "faceless_youtube":
-        return f"High-retention faceless thumbnail, strong central shape, topic: {t!s}, vibrant but not noisy."
+        return (
+            f"High-retention faceless thumbnail base, strong central shape, topic: {t!s}, "
+            "vibrant but not noisy; reserve blank band for titles."
+        )
     if style == "true_crime":
-        return f"Moody true-crime thumbnail, foggy or low-key, abstract motif, topic: {t!s}, non-graphic."
-    return f"Editorial thumbnail, clear focal point, topic: {t!s}."
+        return f"Moody true-crime thumbnail base, foggy or low-key, abstract motif, topic: {t!s}, non-graphic."
+    return f"Editorial thumbnail base frame, clear focal point, topic: {t!s}."
 
 
 def build_scene_asset_items(
@@ -93,13 +104,24 @@ def build_scene_asset_items(
                 f"Szene {sc.scene_number}: leerer Voiceover — Platzhalter-Prompts."
             )
         vis = (sc.visual_summary or "").strip() or vo[:300]
-
-        img = _style_image_prefix(style_profile) + vis
-        vid = (
-            f"{_style_video_motion(style_profile)} Visual idea: {vis[:400]}. "
-            f"Sync to voiceover pacing; no on-screen readable quotes."
+        cleaned_vis, overlay_intent, text_sensitive = partition_visual_overlay_text(vis)
+        still_kind = (
+            "cinematic_broll"
+            if sc.asset_type == "b_roll"
+            else ("keyframe_still" if int(sc.scene_number) == 1 else "cinematic_broll")
         )
-        thumb = _thumbnail_hint(style_profile, sc.title)
+        still_route = route_visual_provider(still_kind, text_sensitive=text_sensitive)
+        vid_route = route_visual_provider("motion_clip", text_sensitive=False)
+        thumb_route = route_visual_provider("thumbnail_base", text_sensitive=False)
+
+        img = append_no_text_guard(_style_image_prefix(style_profile) + cleaned_vis)
+        vid = append_no_text_guard(
+            (
+                f"{_style_video_motion(style_profile)} Visual idea: {cleaned_vis[:400]}. "
+                "Sync to voiceover pacing; no on-screen readable quotes or UI."
+            )
+        )
+        thumb = append_no_text_guard(_thumbnail_hint(style_profile, sc.title))
         cam = _style_camera_direction(style_profile, str(sc.mood))
 
         items.append(
@@ -113,6 +135,12 @@ def build_scene_asset_items(
                 camera_direction=cam[:2000],
                 mood=str(sc.mood),
                 asset_type=sc.asset_type,
+                overlay_intent=list(overlay_intent),
+                text_sensitive=bool(text_sensitive),
+                image_provider_routed=str(still_route.get("provider") or ""),
+                image_base_provider_routed=str(still_route.get("image_provider") or ""),
+                video_provider_routed=str(vid_route.get("provider") or ""),
+                thumbnail_provider_routed=str(thumb_route.get("provider") or ""),
             )
         )
 

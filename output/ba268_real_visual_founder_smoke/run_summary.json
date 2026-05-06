@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "input_mode": "script_json",
+  "url": null,
+  "script_json": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba266_visual_founder_smoke\\script.json",
+  "title": "Mini-Testskript (BA 25.2)",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke",
+  "script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\script.json",
+  "scene_plan_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\scene_plan.json",
+  "scene_asset_pack_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\scene_asset_pack.json",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\generated_assets_ba268_731c957c\\asset_manifest.json",
+  "timeline_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\timeline_ba268_731c957c\\timeline_manifest.json",
+  "final_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\final_video.mp4",
+  "used_existing_assets": false,
+  "used_video_assets_count": 0,
+  "used_image_assets_count": 0,
+  "warnings": [
+    "no_existing_video_asset_found_using_fallback",
+    "no_assets_in_asset_dir_using_placeholder",
+    "ba268_runway_scene_image_missing:2",
+    "ba268_runway_scene_image_missing:3",
+    "ba268_runway_scene_image_missing:1",
+    "ba266_cinematic_placeholder_applied:4",
+    "ba267_video_fitted_to_voice:voice_audio~22.06s_padding=0.75s_target_total=23s_scenes=4"
+  ],
+  "blocking_reasons": [],
+  "voice_used": true,
+  "voice_mode": "elevenlabs",
+  "voice_text_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\voiceover_text.txt",
+  "voice_file_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\voiceover.mp3",
+  "voice_duration_seconds": 22.058957,
+  "audio_stream_expected": true,
+  "voice_warnings": [],
+  "voice_blocking_reasons": [],
+  "fit_video_to_voice": true,
+  "voice_fit_padding_seconds": 0.75,
+  "fitted_video_duration_seconds": 23.0,
+  "original_requested_duration_seconds": 60,
+  "ba268_visual": {
+    "used_leonardo_images_count": 0,
+    "used_runway_videos_count": 0,
+    "fallback_assets_used": 4,
+    "visual_summary_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke\\visual_summary.json",
+    "provider_env_detected": {
+      "leonardo": "not_set",
+      "runway": "set",
+      "elevenlabs": "set"
+    }
+  }
+}

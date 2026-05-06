@@ -1,0 +1,140 @@
+{
+    "registry_version": "1.0.0",
+    "default_template": "documentary",
+    "description": "Central registry for local video pipeline templates. Each entry maps a template_id to its JSON file, use case and strategic role.",
+    "templates": [
+      {
+        "template_id": "documentary",
+        "file": "documentary.json",
+        "label": "Documentary Story",
+        "category": "general",
+        "priority": 1,
+        "recommended_for": [
+          "general explainers",
+          "articles",
+          "background stories",
+          "technology",
+          "society",
+          "economy"
+        ],
+        "risk_level": "low",
+        "role": "default allrounder"
+      },
+      {
+        "template_id": "news_explainer",
+        "file": "news_explainer.json",
+        "label": "News Explainer",
+        "category": "news",
+        "priority": 2,
+        "recommended_for": [
+          "article news",
+          "current events with background",
+          "business news",
+          "consumer topics",
+          "technology news",
+          "real estate news"
+        ],
+        "risk_level": "medium",
+        "role": "news context and explanation"
+      },
+      {
+        "template_id": "mystery_history",
+        "file": "mystery_history.json",
+        "label": "Mystery History Story",
+        "category": "evergreen_story",
+        "priority": 3,
+        "recommended_for": [
+          "forgotten places",
+          "historical mysteries",
+          "lost buildings",
+          "regional history",
+          "strange roads",
+          "old events"
+        ],
+        "risk_level": "low_medium",
+        "role": "evergreen curiosity format"
+      },
+      {
+        "template_id": "true_crime",
+        "file": "true_crime.json",
+        "label": "True Crime Story",
+        "category": "suspense_story",
+        "priority": 4,
+        "recommended_for": [
+          "crime stories",
+          "investigative storytelling",
+          "mysterious incidents",
+          "unresolved cases"
+        ],
+        "risk_level": "high",
+        "role": "high tension storytelling with legal caution"
+      },
+      {
+        "template_id": "emotional_story",
+        "file": "emotional_story.json",
+        "label": "Emotional Story",
+        "category": "human_story",
+        "priority": 5,
+        "recommended_for": [
+          "personal transformation",
+          "motivation",
+          "comeback stories",
+          "life changes",
+          "society",
+          "relationships"
+        ],
+        "risk_level": "medium",
+        "role": "emotional retention format"
+      },
+      {
+        "template_id": "real_estate_story",
+        "file": "real_estate_story.json",
+        "label": "Real Estate Story",
+        "category": "business_story",
+        "priority": 6,
+        "recommended_for": [
+          "property sales",
+          "real estate transformation",
+          "historic properties",
+          "investment stories",
+          "renovations",
+          "market changes"
+        ],
+        "risk_level": "medium",
+        "role": "higher RPM business and property format"
+      }
+    ],
+    "selection_rules": [
+      {
+        "condition": "If the topic is broad, neutral or hard to classify",
+        "use_template": "documentary"
+      },
+      {
+        "condition": "If the source is a news article and needs context",
+        "use_template": "news_explainer"
+      },
+      {
+        "condition": "If the story involves forgotten places, old buildings or historical mystery",
+        "use_template": "mystery_history"
+      },
+      {
+        "condition": "If the story involves crime, investigation or unresolved incidents",
+        "use_template": "true_crime"
+      },
+      {
+        "condition": "If the story is mainly human, emotional or motivational",
+        "use_template": "emotional_story"
+      },
+      {
+        "condition": "If the story involves property, buildings, market value or transformation",
+        "use_template": "real_estate_story"
+      }
+    ],
+    "global_rules": [
+      "Do not invent facts.",
+      "Separate confirmed facts from interpretation.",
+      "Use warnings for uncertain or incomplete information.",
+      "Prefer documentary or news_explainer for unclear topics.",
+      "Avoid too many templates before real production testing."
+    ]
+  }

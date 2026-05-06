@@ -1,0 +1,550 @@
+[Script Info]
+Title: preview_typewriter
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,22,&H00FFFFFF,&H00000000,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,1,2,40,40,{margin_v},1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:00.04,Default,,0,0,0,,{\an2}D
+Dialogue: 0,0:00:00.01,0:00:00.05,Default,,0,0,0,,{\an2}Di
+Dialogue: 0,0:00:00.02,0:00:00.06,Default,,0,0,0,,{\an2}Die
+Dialogue: 0,0:00:00.03,0:00:00.07,Default,,0,0,0,,{\an2}Dies
+Dialogue: 0,0:00:00.04,0:00:00.08,Default,,0,0,0,,{\an2}Dies 
+Dialogue: 0,0:00:00.05,0:00:00.09,Default,,0,0,0,,{\an2}Dies i
+Dialogue: 0,0:00:00.06,0:00:00.10,Default,,0,0,0,,{\an2}Dies is
+Dialogue: 0,0:00:00.07,0:00:00.11,Default,,0,0,0,,{\an2}Dies ist
+Dialogue: 0,0:00:00.08,0:00:00.12,Default,,0,0,0,,{\an2}Dies ist 
+Dialogue: 0,0:00:00.09,0:00:00.13,Default,,0,0,0,,{\an2}Dies ist e
+Dialogue: 0,0:00:00.10,0:00:00.14,Default,,0,0,0,,{\an2}Dies ist ei
+Dialogue: 0,0:00:00.11,0:00:00.15,Default,,0,0,0,,{\an2}Dies ist ein
+Dialogue: 0,0:00:00.12,0:00:00.16,Default,,0,0,0,,{\an2}Dies ist ein 
+Dialogue: 0,0:00:00.13,0:00:00.17,Default,,0,0,0,,{\an2}Dies ist ein l
+Dialogue: 0,0:00:00.14,0:00:00.18,Default,,0,0,0,,{\an2}Dies ist ein lo
+Dialogue: 0,0:00:00.15,0:00:00.19,Default,,0,0,0,,{\an2}Dies ist ein lok
+Dialogue: 0,0:00:00.16,0:00:00.20,Default,,0,0,0,,{\an2}Dies ist ein loka
+Dialogue: 0,0:00:00.17,0:00:00.21,Default,,0,0,0,,{\an2}Dies ist ein lokal
+Dialogue: 0,0:00:00.18,0:00:00.22,Default,,0,0,0,,{\an2}Dies ist ein lokale
+Dialogue: 0,0:00:00.19,0:00:00.23,Default,,0,0,0,,{\an2}Dies ist ein lokaler
+Dialogue: 0,0:00:00.21,0:00:00.24,Default,,0,0,0,,{\an2}Dies ist ein lokaler 
+Dialogue: 0,0:00:00.22,0:00:00.25,Default,,0,0,0,,{\an2}Dies ist ein lokaler M
+Dialogue: 0,0:00:00.23,0:00:00.26,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mi
+Dialogue: 0,0:00:00.24,0:00:00.27,Default,,0,0,0,,{\an2}Dies ist ein lokaler Min
+Dialogue: 0,0:00:00.25,0:00:00.28,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini
+Dialogue: 0,0:00:00.26,0:00:00.29,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-
+Dialogue: 0,0:00:00.27,0:00:00.30,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-P
+Dialogue: 0,0:00:00.28,0:00:00.31,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-Pr
+Dialogue: 0,0:00:00.29,0:00:00.32,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-Pre
+Dialogue: 0,0:00:00.30,0:00:00.33,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-Prev
+Dialogue: 0,0:00:00.31,0:00:00.34,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-Previ
+Dialogue: 0,0:00:00.32,0:00:00.35,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-Previe
+Dialogue: 0,0:00:00.33,0:00:00.36,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-Preview
+Dialogue: 0,0:00:00.34,0:00:00.37,Default,,0,0,0,,{\an2}Dies ist ein lokaler Mini-Preview-
+Dialogue: 0,0:00:00.35,0:00:00.38,Default,,0,0,0,,{\an2}Dies ist ein lokaler\\NMini-Preview-T
+Dialogue: 0,0:00:00.36,0:00:00.39,Default,,0,0,0,,{\an2}Dies ist ein lokaler\\NMini-Preview-Te
+Dialogue: 0,0:00:00.37,0:00:00.40,Default,,0,0,0,,{\an2}Dies ist ein lokaler\\NMini-Preview-Tes
+Dialogue: 0,0:00:00.38,0:00:00.41,Default,,0,0,0,,{\an2}Dies ist ein lokaler\\NMini-Preview-Test
+Dialogue: 0,0:00:00.39,0:00:00.42,Default,,0,0,0,,{\an2}Dies ist ein lokaler\\NMini-Preview-Test 
+Dialogue: 0,0:00:00.40,0:00:00.43,Default,,0,0,0,,{\an2}Dies ist ein lokaler\\NMini-Preview-Test d
+Dialogue: 0,0:00:00.40,0:00:00.43,Default,,0,0,0,,{\an2}Dies ist ein lokaler\\NMini-Preview-Test de
+Dialogue: 0,0:00:00.40,0:00:00.43,Default,,0,0,0,,{\an2}Dies ist ein lokaler\\NMini-Preview-Test der
+Dialogue: 0,0:00:00.43,0:00:00.47,Default,,0,0,0,,{\an2}V
+Dialogue: 0,0:00:00.44,0:00:00.48,Default,,0,0,0,,{\an2}Vi
+Dialogue: 0,0:00:00.45,0:00:00.49,Default,,0,0,0,,{\an2}Vid
+Dialogue: 0,0:00:00.47,0:00:00.50,Default,,0,0,0,,{\an2}Vide
+Dialogue: 0,0:00:00.48,0:00:00.51,Default,,0,0,0,,{\an2}Video
+Dialogue: 0,0:00:00.49,0:00:00.52,Default,,0,0,0,,{\an2}Video-
+Dialogue: 0,0:00:00.50,0:00:00.53,Default,,0,0,0,,{\an2}Video-P
+Dialogue: 0,0:00:00.51,0:00:00.55,Default,,0,0,0,,{\an2}Video-Pi
+Dialogue: 0,0:00:00.52,0:00:00.56,Default,,0,0,0,,{\an2}Video-Pip
+Dialogue: 0,0:00:00.53,0:00:00.57,Default,,0,0,0,,{\an2}Video-Pipe
+Dialogue: 0,0:00:00.54,0:00:00.58,Default,,0,0,0,,{\an2}Video-Pipel
+Dialogue: 0,0:00:00.56,0:00:00.59,Default,,0,0,0,,{\an2}Video-Pipeli
+Dialogue: 0,0:00:00.57,0:00:00.60,Default,,0,0,0,,{\an2}Video-Pipelin
+Dialogue: 0,0:00:00.58,0:00:00.61,Default,,0,0,0,,{\an2}Video-Pipeline
+Dialogue: 0,0:00:00.59,0:00:00.63,Default,,0,0,0,,{\an2}Video-Pipeline.
+Dialogue: 0,0:00:00.60,0:00:00.64,Default,,0,0,0,,{\an2}Video-Pipeline. 
+Dialogue: 0,0:00:00.61,0:00:00.65,Default,,0,0,0,,{\an2}Video-Pipeline. E
+Dialogue: 0,0:00:00.62,0:00:00.66,Default,,0,0,0,,{\an2}Video-Pipeline. Er
+Dialogue: 0,0:00:00.64,0:00:00.67,Default,,0,0,0,,{\an2}Video-Pipeline. Er 
+Dialogue: 0,0:00:00.65,0:00:00.68,Default,,0,0,0,,{\an2}Video-Pipeline. Er p
+Dialogue: 0,0:00:00.66,0:00:00.69,Default,,0,0,0,,{\an2}Video-Pipeline. Er pr
+Dialogue: 0,0:00:00.67,0:00:00.70,Default,,0,0,0,,{\an2}Video-Pipeline. Er prü
+Dialogue: 0,0:00:00.68,0:00:00.72,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüf
+Dialogue: 0,0:00:00.69,0:00:00.73,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft
+Dialogue: 0,0:00:00.70,0:00:00.74,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft,
+Dialogue: 0,0:00:00.72,0:00:00.75,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, 
+Dialogue: 0,0:00:00.73,0:00:00.76,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, o
+Dialogue: 0,0:00:00.74,0:00:00.77,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob
+Dialogue: 0,0:00:00.75,0:00:00.78,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob 
+Dialogue: 0,0:00:00.76,0:00:00.80,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob a
+Dialogue: 0,0:00:00.77,0:00:00.81,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob au
+Dialogue: 0,0:00:00.78,0:00:00.82,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob aus
+Dialogue: 0,0:00:00.79,0:00:00.83,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob aus 
+Dialogue: 0,0:00:00.81,0:00:00.84,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob aus e
+Dialogue: 0,0:00:00.82,0:00:00.85,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob aus\\Nei
+Dialogue: 0,0:00:00.83,0:00:00.86,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob aus\\Nein
+Dialogue: 0,0:00:00.83,0:00:00.86,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob aus\\Neine
+Dialogue: 0,0:00:00.83,0:00:00.86,Default,,0,0,0,,{\an2}Video-Pipeline. Er prüft, ob aus\\Neiner
+Dialogue: 0,0:00:00.86,0:00:00.90,Default,,0,0,0,,{\an2}k
+Dialogue: 0,0:00:00.87,0:00:00.91,Default,,0,0,0,,{\an2}ku
+Dialogue: 0,0:00:00.88,0:00:00.92,Default,,0,0,0,,{\an2}kur
+Dialogue: 0,0:00:00.89,0:00:00.93,Default,,0,0,0,,{\an2}kurz
+Dialogue: 0,0:00:00.90,0:00:00.94,Default,,0,0,0,,{\an2}kurze
+Dialogue: 0,0:00:00.91,0:00:00.95,Default,,0,0,0,,{\an2}kurzen
+Dialogue: 0,0:00:00.92,0:00:00.96,Default,,0,0,0,,{\an2}kurzen 
+Dialogue: 0,0:00:00.93,0:00:00.97,Default,,0,0,0,,{\an2}kurzen T
+Dialogue: 0,0:00:00.95,0:00:00.98,Default,,0,0,0,,{\an2}kurzen Ti
+Dialogue: 0,0:00:00.96,0:00:00.99,Default,,0,0,0,,{\an2}kurzen Tim
+Dialogue: 0,0:00:00.97,0:00:01.00,Default,,0,0,0,,{\an2}kurzen Time
+Dialogue: 0,0:00:00.98,0:00:01.01,Default,,0,0,0,,{\an2}kurzen Timel
+Dialogue: 0,0:00:00.99,0:00:01.02,Default,,0,0,0,,{\an2}kurzen Timeli
+Dialogue: 0,0:00:01.00,0:00:01.03,Default,,0,0,0,,{\an2}kurzen Timelin
+Dialogue: 0,0:00:01.01,0:00:01.04,Default,,0,0,0,,{\an2}kurzen Timeline
+Dialogue: 0,0:00:01.02,0:00:01.05,Default,,0,0,0,,{\an2}kurzen Timeline 
+Dialogue: 0,0:00:01.03,0:00:01.06,Default,,0,0,0,,{\an2}kurzen Timeline u
+Dialogue: 0,0:00:01.04,0:00:01.07,Default,,0,0,0,,{\an2}kurzen Timeline un
+Dialogue: 0,0:00:01.05,0:00:01.08,Default,,0,0,0,,{\an2}kurzen Timeline und
+Dialogue: 0,0:00:01.06,0:00:01.09,Default,,0,0,0,,{\an2}kurzen Timeline und 
+Dialogue: 0,0:00:01.07,0:00:01.10,Default,,0,0,0,,{\an2}kurzen Timeline und d
+Dialogue: 0,0:00:01.08,0:00:01.11,Default,,0,0,0,,{\an2}kurzen Timeline und di
+Dialogue: 0,0:00:01.09,0:00:01.12,Default,,0,0,0,,{\an2}kurzen Timeline und die
+Dialogue: 0,0:00:01.10,0:00:01.13,Default,,0,0,0,,{\an2}kurzen Timeline und dies
+Dialogue: 0,0:00:01.11,0:00:01.14,Default,,0,0,0,,{\an2}kurzen Timeline und diese
+Dialogue: 0,0:00:01.12,0:00:01.15,Default,,0,0,0,,{\an2}kurzen Timeline und diesem
+Dialogue: 0,0:00:01.13,0:00:01.16,Default,,0,0,0,,{\an2}kurzen Timeline und diesem 
+Dialogue: 0,0:00:01.14,0:00:01.18,Default,,0,0,0,,{\an2}kurzen Timeline und diesem T
+Dialogue: 0,0:00:01.15,0:00:01.19,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Te
+Dialogue: 0,0:00:01.16,0:00:01.20,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Tex
+Dialogue: 0,0:00:01.17,0:00:01.21,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text
+Dialogue: 0,0:00:01.18,0:00:01.22,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text 
+Dialogue: 0,0:00:01.19,0:00:01.23,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text U
+Dialogue: 0,0:00:01.20,0:00:01.24,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text Un
+Dialogue: 0,0:00:01.21,0:00:01.25,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text\\NUnt
+Dialogue: 0,0:00:01.22,0:00:01.26,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text\\NUnte
+Dialogue: 0,0:00:01.23,0:00:01.27,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text\\NUnter
+Dialogue: 0,0:00:01.24,0:00:01.28,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text\\NUntert
+Dialogue: 0,0:00:01.25,0:00:01.29,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text\\NUnterti
+Dialogue: 0,0:00:01.26,0:00:01.29,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text\\NUntertit
+Dialogue: 0,0:00:01.26,0:00:01.29,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text\\NUntertite
+Dialogue: 0,0:00:01.26,0:00:01.29,Default,,0,0,0,,{\an2}kurzen Timeline und diesem Text\\NUntertitel
+Dialogue: 0,0:00:01.29,0:00:01.33,Default,,0,0,0,,{\an2}e
+Dialogue: 0,0:00:01.30,0:00:01.34,Default,,0,0,0,,{\an2}en
+Dialogue: 0,0:00:01.32,0:00:01.35,Default,,0,0,0,,{\an2}ent
+Dialogue: 0,0:00:01.33,0:00:01.36,Default,,0,0,0,,{\an2}ents
+Dialogue: 0,0:00:01.34,0:00:01.37,Default,,0,0,0,,{\an2}entst
+Dialogue: 0,0:00:01.35,0:00:01.38,Default,,0,0,0,,{\an2}entste
+Dialogue: 0,0:00:01.36,0:00:01.39,Default,,0,0,0,,{\an2}entsteh
+Dialogue: 0,0:00:01.37,0:00:01.40,Default,,0,0,0,,{\an2}entstehe
+Dialogue: 0,0:00:01.38,0:00:01.41,Default,,0,0,0,,{\an2}entstehen
+Dialogue: 0,0:00:01.39,0:00:01.42,Default,,0,0,0,,{\an2}entstehen 
+Dialogue: 0,0:00:01.40,0:00:01.43,Default,,0,0,0,,{\an2}entstehen u
+Dialogue: 0,0:00:01.41,0:00:01.44,Default,,0,0,0,,{\an2}entstehen un
+Dialogue: 0,0:00:01.42,0:00:01.46,Default,,0,0,0,,{\an2}entstehen und
+Dialogue: 0,0:00:01.43,0:00:01.47,Default,,0,0,0,,{\an2}entstehen und 
+Dialogue: 0,0:00:01.44,0:00:01.48,Default,,0,0,0,,{\an2}entstehen und o
+Dialogue: 0,0:00:01.45,0:00:01.49,Default,,0,0,0,,{\an2}entstehen und ob
+Dialogue: 0,0:00:01.46,0:00:01.50,Default,,0,0,0,,{\an2}entstehen und ob 
+Dialogue: 0,0:00:01.47,0:00:01.51,Default,,0,0,0,,{\an2}entstehen und ob a
+Dialogue: 0,0:00:01.48,0:00:01.52,Default,,0,0,0,,{\an2}entstehen und ob an
+Dialogue: 0,0:00:01.49,0:00:01.53,Default,,0,0,0,,{\an2}entstehen und ob ans
+Dialogue: 0,0:00:01.50,0:00:01.54,Default,,0,0,0,,{\an2}entstehen und ob ansc
+Dialogue: 0,0:00:01.52,0:00:01.55,Default,,0,0,0,,{\an2}entstehen und ob ansch
+Dialogue: 0,0:00:01.53,0:00:01.56,Default,,0,0,0,,{\an2}entstehen und ob anschl
+Dialogue: 0,0:00:01.54,0:00:01.57,Default,,0,0,0,,{\an2}entstehen und ob anschli
+Dialogue: 0,0:00:01.55,0:00:01.58,Default,,0,0,0,,{\an2}entstehen und ob anschlie
+Dialogue: 0,0:00:01.56,0:00:01.59,Default,,0,0,0,,{\an2}entstehen und ob anschließ
+Dialogue: 0,0:00:01.57,0:00:01.60,Default,,0,0,0,,{\an2}entstehen und ob anschließe
+Dialogue: 0,0:00:01.58,0:00:01.61,Default,,0,0,0,,{\an2}entstehen und ob anschließen
+Dialogue: 0,0:00:01.59,0:00:01.62,Default,,0,0,0,,{\an2}entstehen und ob anschließend
+Dialogue: 0,0:00:01.60,0:00:01.63,Default,,0,0,0,,{\an2}entstehen und ob anschließend 
+Dialogue: 0,0:00:01.61,0:00:01.65,Default,,0,0,0,,{\an2}entstehen und ob anschließend e
+Dialogue: 0,0:00:01.62,0:00:01.66,Default,,0,0,0,,{\an2}entstehen und ob anschließend ei
+Dialogue: 0,0:00:01.63,0:00:01.67,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein
+Dialogue: 0,0:00:01.64,0:00:01.68,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein 
+Dialogue: 0,0:00:01.65,0:00:01.69,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein\\Nc
+Dialogue: 0,0:00:01.66,0:00:01.70,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein\\Ncl
+Dialogue: 0,0:00:01.67,0:00:01.71,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein\\Ncle
+Dialogue: 0,0:00:01.68,0:00:01.72,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein\\Nclea
+Dialogue: 0,0:00:01.69,0:00:01.73,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein\\Nclean
+Dialogue: 0,0:00:01.69,0:00:01.73,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein\\Ncleane
+Dialogue: 0,0:00:01.69,0:00:01.73,Default,,0,0,0,,{\an2}entstehen und ob anschließend ein\\Ncleanes
+Dialogue: 0,0:00:01.73,0:00:01.76,Default,,0,0,0,,{\an2}V
+Dialogue: 0,0:00:01.74,0:00:01.77,Default,,0,0,0,,{\an2}Vi
+Dialogue: 0,0:00:01.75,0:00:01.78,Default,,0,0,0,,{\an2}Vid
+Dialogue: 0,0:00:01.76,0:00:01.79,Default,,0,0,0,,{\an2}Vide
+Dialogue: 0,0:00:01.77,0:00:01.80,Default,,0,0,0,,{\an2}Video
+Dialogue: 0,0:00:01.78,0:00:01.81,Default,,0,0,0,,{\an2}Video 
+Dialogue: 0,0:00:01.79,0:00:01.82,Default,,0,0,0,,{\an2}Video s
+Dialogue: 0,0:00:01.80,0:00:01.83,Default,,0,0,0,,{\an2}Video so
+Dialogue: 0,0:00:01.81,0:00:01.84,Default,,0,0,0,,{\an2}Video sow
+Dialogue: 0,0:00:01.82,0:00:01.85,Default,,0,0,0,,{\an2}Video sowi
+Dialogue: 0,0:00:01.83,0:00:01.86,Default,,0,0,0,,{\an2}Video sowie
+Dialogue: 0,0:00:01.84,0:00:01.87,Default,,0,0,0,,{\an2}Video sowie 
+Dialogue: 0,0:00:01.85,0:00:01.88,Default,,0,0,0,,{\an2}Video sowie e
+Dialogue: 0,0:00:01.86,0:00:01.89,Default,,0,0,0,,{\an2}Video sowie ei
+Dialogue: 0,0:00:01.87,0:00:01.90,Default,,0,0,0,,{\an2}Video sowie ein
+Dialogue: 0,0:00:01.88,0:00:01.91,Default,,0,0,0,,{\an2}Video sowie eine
+Dialogue: 0,0:00:01.89,0:00:01.93,Default,,0,0,0,,{\an2}Video sowie eine 
+Dialogue: 0,0:00:01.90,0:00:01.94,Default,,0,0,0,,{\an2}Video sowie eine P
+Dialogue: 0,0:00:01.91,0:00:01.95,Default,,0,0,0,,{\an2}Video sowie eine Pr
+Dialogue: 0,0:00:01.92,0:00:01.96,Default,,0,0,0,,{\an2}Video sowie eine Pre
+Dialogue: 0,0:00:01.93,0:00:01.97,Default,,0,0,0,,{\an2}Video sowie eine Prev
+Dialogue: 0,0:00:01.94,0:00:01.98,Default,,0,0,0,,{\an2}Video sowie eine Previ
+Dialogue: 0,0:00:01.95,0:00:01.99,Default,,0,0,0,,{\an2}Video sowie eine Previe
+Dialogue: 0,0:00:01.96,0:00:02.00,Default,,0,0,0,,{\an2}Video sowie eine Preview
+Dialogue: 0,0:00:01.97,0:00:02.01,Default,,0,0,0,,{\an2}Video sowie eine Preview 
+Dialogue: 0,0:00:01.98,0:00:02.02,Default,,0,0,0,,{\an2}Video sowie eine Preview m
+Dialogue: 0,0:00:01.99,0:00:02.03,Default,,0,0,0,,{\an2}Video sowie eine Preview mi
+Dialogue: 0,0:00:02.00,0:00:02.04,Default,,0,0,0,,{\an2}Video sowie eine Preview mit
+Dialogue: 0,0:00:02.01,0:00:02.05,Default,,0,0,0,,{\an2}Video sowie eine Preview mit 
+Dialogue: 0,0:00:02.02,0:00:02.06,Default,,0,0,0,,{\an2}Video sowie eine Preview mit e
+Dialogue: 0,0:00:02.03,0:00:02.07,Default,,0,0,0,,{\an2}Video sowie eine Preview mit ei
+Dialogue: 0,0:00:02.04,0:00:02.08,Default,,0,0,0,,{\an2}Video sowie eine Preview mit ein
+Dialogue: 0,0:00:02.05,0:00:02.09,Default,,0,0,0,,{\an2}Video sowie eine Preview mit eing
+Dialogue: 0,0:00:02.06,0:00:02.10,Default,,0,0,0,,{\an2}Video sowie eine Preview mit einge
+Dialogue: 0,0:00:02.07,0:00:02.11,Default,,0,0,0,,{\an2}Video sowie eine Preview mit\\Neingeb
+Dialogue: 0,0:00:02.09,0:00:02.12,Default,,0,0,0,,{\an2}Video sowie eine Preview mit\\Neingebr
+Dialogue: 0,0:00:02.10,0:00:02.13,Default,,0,0,0,,{\an2}Video sowie eine Preview mit\\Neingebra
+Dialogue: 0,0:00:02.11,0:00:02.14,Default,,0,0,0,,{\an2}Video sowie eine Preview mit\\Neingebran
+Dialogue: 0,0:00:02.12,0:00:02.15,Default,,0,0,0,,{\an2}Video sowie eine Preview mit\\Neingebrann
+Dialogue: 0,0:00:02.12,0:00:02.16,Default,,0,0,0,,{\an2}Video sowie eine Preview mit\\Neingebrannt
+Dialogue: 0,0:00:02.12,0:00:02.16,Default,,0,0,0,,{\an2}Video sowie eine Preview mit\\Neingebrannte
+Dialogue: 0,0:00:02.12,0:00:02.16,Default,,0,0,0,,{\an2}Video sowie eine Preview mit\\Neingebrannten
+Dialogue: 0,0:00:02.16,0:00:02.19,Default,,0,0,0,,{\an2}U
+Dialogue: 0,0:00:02.17,0:00:02.20,Default,,0,0,0,,{\an2}Un
+Dialogue: 0,0:00:02.18,0:00:02.22,Default,,0,0,0,,{\an2}Unt
+Dialogue: 0,0:00:02.19,0:00:02.23,Default,,0,0,0,,{\an2}Unte
+Dialogue: 0,0:00:02.20,0:00:02.24,Default,,0,0,0,,{\an2}Unter
+Dialogue: 0,0:00:02.21,0:00:02.25,Default,,0,0,0,,{\an2}Untert
+Dialogue: 0,0:00:02.23,0:00:02.26,Default,,0,0,0,,{\an2}Unterti
+Dialogue: 0,0:00:02.24,0:00:02.27,Default,,0,0,0,,{\an2}Untertit
+Dialogue: 0,0:00:02.25,0:00:02.28,Default,,0,0,0,,{\an2}Untertite
+Dialogue: 0,0:00:02.26,0:00:02.30,Default,,0,0,0,,{\an2}Untertitel
+Dialogue: 0,0:00:02.27,0:00:02.31,Default,,0,0,0,,{\an2}Untertiteln
+Dialogue: 0,0:00:02.28,0:00:02.32,Default,,0,0,0,,{\an2}Untertiteln 
+Dialogue: 0,0:00:02.30,0:00:02.33,Default,,0,0,0,,{\an2}Untertiteln g
+Dialogue: 0,0:00:02.31,0:00:02.34,Default,,0,0,0,,{\an2}Untertiteln ge
+Dialogue: 0,0:00:02.32,0:00:02.35,Default,,0,0,0,,{\an2}Untertiteln geb
+Dialogue: 0,0:00:02.33,0:00:02.37,Default,,0,0,0,,{\an2}Untertiteln geba
+Dialogue: 0,0:00:02.34,0:00:02.38,Default,,0,0,0,,{\an2}Untertiteln gebau
+Dialogue: 0,0:00:02.35,0:00:02.39,Default,,0,0,0,,{\an2}Untertiteln gebaut
+Dialogue: 0,0:00:02.37,0:00:02.40,Default,,0,0,0,,{\an2}Untertiteln gebaut 
+Dialogue: 0,0:00:02.38,0:00:02.41,Default,,0,0,0,,{\an2}Untertiteln gebaut w
+Dialogue: 0,0:00:02.39,0:00:02.42,Default,,0,0,0,,{\an2}Untertiteln gebaut we
+Dialogue: 0,0:00:02.40,0:00:02.44,Default,,0,0,0,,{\an2}Untertiteln gebaut wer
+Dialogue: 0,0:00:02.41,0:00:02.45,Default,,0,0,0,,{\an2}Untertiteln gebaut werd
+Dialogue: 0,0:00:02.42,0:00:02.46,Default,,0,0,0,,{\an2}Untertiteln gebaut werde
+Dialogue: 0,0:00:02.44,0:00:02.47,Default,,0,0,0,,{\an2}Untertiteln gebaut werden
+Dialogue: 0,0:00:02.45,0:00:02.48,Default,,0,0,0,,{\an2}Untertiteln gebaut werden 
+Dialogue: 0,0:00:02.46,0:00:02.49,Default,,0,0,0,,{\an2}Untertiteln gebaut werden k
+Dialogue: 0,0:00:02.47,0:00:02.51,Default,,0,0,0,,{\an2}Untertiteln gebaut werden kö
+Dialogue: 0,0:00:02.48,0:00:02.52,Default,,0,0,0,,{\an2}Untertiteln gebaut werden kön
+Dialogue: 0,0:00:02.49,0:00:02.53,Default,,0,0,0,,{\an2}Untertiteln gebaut werden könn
+Dialogue: 0,0:00:02.50,0:00:02.54,Default,,0,0,0,,{\an2}Untertiteln gebaut werden könne
+Dialogue: 0,0:00:02.52,0:00:02.55,Default,,0,0,0,,{\an2}Untertiteln gebaut werden können
+Dialogue: 0,0:00:02.53,0:00:02.56,Default,,0,0,0,,{\an2}Untertiteln gebaut werden können.
+Dialogue: 0,0:00:02.54,0:00:02.57,Default,,0,0,0,,{\an2}Untertiteln gebaut werden können. 
+Dialogue: 0,0:00:02.55,0:00:02.59,Default,,0,0,0,,{\an2}Untertiteln gebaut werden können.\\ND
+Dialogue: 0,0:00:02.55,0:00:02.59,Default,,0,0,0,,{\an2}Untertiteln gebaut werden können.\\NDe
+Dialogue: 0,0:00:02.55,0:00:02.59,Default,,0,0,0,,{\an2}Untertiteln gebaut werden können.\\NDer
+Dialogue: 0,0:00:02.59,0:00:02.62,Default,,0,0,0,,{\an2}A
+Dialogue: 0,0:00:02.60,0:00:02.63,Default,,0,0,0,,{\an2}Ab
+Dialogue: 0,0:00:02.61,0:00:02.64,Default,,0,0,0,,{\an2}Abl
+Dialogue: 0,0:00:02.62,0:00:02.65,Default,,0,0,0,,{\an2}Abla
+Dialogue: 0,0:00:02.63,0:00:02.66,Default,,0,0,0,,{\an2}Ablau
+Dialogue: 0,0:00:02.64,0:00:02.67,Default,,0,0,0,,{\an2}Ablauf
+Dialogue: 0,0:00:02.65,0:00:02.68,Default,,0,0,0,,{\an2}Ablauf 
+Dialogue: 0,0:00:02.66,0:00:02.69,Default,,0,0,0,,{\an2}Ablauf n
+Dialogue: 0,0:00:02.67,0:00:02.70,Default,,0,0,0,,{\an2}Ablauf nu
+Dialogue: 0,0:00:02.68,0:00:02.71,Default,,0,0,0,,{\an2}Ablauf nut
+Dialogue: 0,0:00:02.69,0:00:02.72,Default,,0,0,0,,{\an2}Ablauf nutz
+Dialogue: 0,0:00:02.70,0:00:02.73,Default,,0,0,0,,{\an2}Ablauf nutzt
+Dialogue: 0,0:00:02.71,0:00:02.74,Default,,0,0,0,,{\an2}Ablauf nutzt 
+Dialogue: 0,0:00:02.72,0:00:02.75,Default,,0,0,0,,{\an2}Ablauf nutzt n
+Dialogue: 0,0:00:02.73,0:00:02.76,Default,,0,0,0,,{\an2}Ablauf nutzt nu
+Dialogue: 0,0:00:02.74,0:00:02.77,Default,,0,0,0,,{\an2}Ablauf nutzt nur
+Dialogue: 0,0:00:02.75,0:00:02.78,Default,,0,0,0,,{\an2}Ablauf nutzt nur 
+Dialogue: 0,0:00:02.76,0:00:02.79,Default,,0,0,0,,{\an2}Ablauf nutzt nur k
+Dialogue: 0,0:00:02.77,0:00:02.80,Default,,0,0,0,,{\an2}Ablauf nutzt nur kl
+Dialogue: 0,0:00:02.78,0:00:02.81,Default,,0,0,0,,{\an2}Ablauf nutzt nur kle
+Dialogue: 0,0:00:02.79,0:00:02.82,Default,,0,0,0,,{\an2}Ablauf nutzt nur klei
+Dialogue: 0,0:00:02.80,0:00:02.84,Default,,0,0,0,,{\an2}Ablauf nutzt nur klein
+Dialogue: 0,0:00:02.81,0:00:02.85,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine
+Dialogue: 0,0:00:02.82,0:00:02.86,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine 
+Dialogue: 0,0:00:02.83,0:00:02.87,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine P
+Dialogue: 0,0:00:02.84,0:00:02.88,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Pl
+Dialogue: 0,0:00:02.85,0:00:02.89,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Pla
+Dialogue: 0,0:00:02.86,0:00:02.90,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Plat
+Dialogue: 0,0:00:02.87,0:00:02.91,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Platz
+Dialogue: 0,0:00:02.88,0:00:02.92,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Platzh
+Dialogue: 0,0:00:02.89,0:00:02.93,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Platzha
+Dialogue: 0,0:00:02.90,0:00:02.94,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Platzhal
+Dialogue: 0,0:00:02.91,0:00:02.95,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Platzhalt
+Dialogue: 0,0:00:02.92,0:00:02.96,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine Platzhalte
+Dialogue: 0,0:00:02.93,0:00:02.97,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine\\NPlatzhalter
+Dialogue: 0,0:00:02.94,0:00:02.98,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine\\NPlatzhalter-
+Dialogue: 0,0:00:02.95,0:00:02.99,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine\\NPlatzhalter-B
+Dialogue: 0,0:00:02.96,0:00:03.00,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine\\NPlatzhalter-Bi
+Dialogue: 0,0:00:02.97,0:00:03.01,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine\\NPlatzhalter-Bil
+Dialogue: 0,0:00:02.98,0:00:03.01,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine\\NPlatzhalter-Bild
+Dialogue: 0,0:00:02.98,0:00:03.01,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine\\NPlatzhalter-Bilde
+Dialogue: 0,0:00:02.98,0:00:03.01,Default,,0,0,0,,{\an2}Ablauf nutzt nur kleine\\NPlatzhalter-Bilder
+Dialogue: 0,0:00:03.01,0:00:03.05,Default,,0,0,0,,{\an2}u
+Dialogue: 0,0:00:03.02,0:00:03.06,Default,,0,0,0,,{\an2}un
+Dialogue: 0,0:00:03.04,0:00:03.07,Default,,0,0,0,,{\an2}und
+Dialogue: 0,0:00:03.05,0:00:03.08,Default,,0,0,0,,{\an2}und 
+Dialogue: 0,0:00:03.06,0:00:03.09,Default,,0,0,0,,{\an2}und b
+Dialogue: 0,0:00:03.07,0:00:03.10,Default,,0,0,0,,{\an2}und be
+Dialogue: 0,0:00:03.08,0:00:03.11,Default,,0,0,0,,{\an2}und bew
+Dialogue: 0,0:00:03.09,0:00:03.12,Default,,0,0,0,,{\an2}und bewu
+Dialogue: 0,0:00:03.10,0:00:03.13,Default,,0,0,0,,{\an2}und bewus
+Dialogue: 0,0:00:03.11,0:00:03.15,Default,,0,0,0,,{\an2}und bewuss
+Dialogue: 0,0:00:03.12,0:00:03.16,Default,,0,0,0,,{\an2}und bewusst
+Dialogue: 0,0:00:03.13,0:00:03.17,Default,,0,0,0,,{\an2}und bewusst 
+Dialogue: 0,0:00:03.14,0:00:03.18,Default,,0,0,0,,{\an2}und bewusst k
+Dialogue: 0,0:00:03.15,0:00:03.19,Default,,0,0,0,,{\an2}und bewusst ke
+Dialogue: 0,0:00:03.16,0:00:03.20,Default,,0,0,0,,{\an2}und bewusst kei
+Dialogue: 0,0:00:03.17,0:00:03.21,Default,,0,0,0,,{\an2}und bewusst kein
+Dialogue: 0,0:00:03.19,0:00:03.22,Default,,0,0,0,,{\an2}und bewusst keine
+Dialogue: 0,0:00:03.20,0:00:03.23,Default,,0,0,0,,{\an2}und bewusst keinen
+Dialogue: 0,0:00:03.21,0:00:03.24,Default,,0,0,0,,{\an2}und bewusst keinen 
+Dialogue: 0,0:00:03.22,0:00:03.25,Default,,0,0,0,,{\an2}und bewusst keinen s
+Dialogue: 0,0:00:03.23,0:00:03.26,Default,,0,0,0,,{\an2}und bewusst keinen se
+Dialogue: 0,0:00:03.24,0:00:03.27,Default,,0,0,0,,{\an2}und bewusst keinen sep
+Dialogue: 0,0:00:03.25,0:00:03.28,Default,,0,0,0,,{\an2}und bewusst keinen sepa
+Dialogue: 0,0:00:03.26,0:00:03.30,Default,,0,0,0,,{\an2}und bewusst keinen separ
+Dialogue: 0,0:00:03.27,0:00:03.31,Default,,0,0,0,,{\an2}und bewusst keinen separa
+Dialogue: 0,0:00:03.28,0:00:03.32,Default,,0,0,0,,{\an2}und bewusst keinen separat
+Dialogue: 0,0:00:03.29,0:00:03.33,Default,,0,0,0,,{\an2}und bewusst keinen separate
+Dialogue: 0,0:00:03.30,0:00:03.34,Default,,0,0,0,,{\an2}und bewusst keinen separaten
+Dialogue: 0,0:00:03.31,0:00:03.35,Default,,0,0,0,,{\an2}und bewusst keinen separaten 
+Dialogue: 0,0:00:03.33,0:00:03.36,Default,,0,0,0,,{\an2}und bewusst keinen separaten A
+Dialogue: 0,0:00:03.34,0:00:03.37,Default,,0,0,0,,{\an2}und bewusst keinen separaten Au
+Dialogue: 0,0:00:03.35,0:00:03.38,Default,,0,0,0,,{\an2}und bewusst keinen separaten Aud
+Dialogue: 0,0:00:03.36,0:00:03.39,Default,,0,0,0,,{\an2}und bewusst keinen separaten Audi
+Dialogue: 0,0:00:03.37,0:00:03.40,Default,,0,0,0,,{\an2}und bewusst keinen separaten Audio
+Dialogue: 0,0:00:03.38,0:00:03.41,Default,,0,0,0,,{\an2}und bewusst keinen separaten\\NAudiot
+Dialogue: 0,0:00:03.39,0:00:03.42,Default,,0,0,0,,{\an2}und bewusst keinen separaten\\NAudiotr
+Dialogue: 0,0:00:03.40,0:00:03.44,Default,,0,0,0,,{\an2}und bewusst keinen separaten\\NAudiotra
+Dialogue: 0,0:00:03.41,0:00:03.44,Default,,0,0,0,,{\an2}und bewusst keinen separaten\\NAudiotrac
+Dialogue: 0,0:00:03.41,0:00:03.44,Default,,0,0,0,,{\an2}und bewusst keinen separaten\\NAudiotrack
+Dialogue: 0,0:00:03.41,0:00:03.44,Default,,0,0,0,,{\an2}und bewusst keinen separaten\\NAudiotrack.
+Dialogue: 0,0:00:03.44,0:00:03.48,Default,,0,0,0,,{\an2}W
+Dialogue: 0,0:00:03.45,0:00:03.49,Default,,0,0,0,,{\an2}We
+Dialogue: 0,0:00:03.47,0:00:03.50,Default,,0,0,0,,{\an2}Wen
+Dialogue: 0,0:00:03.48,0:00:03.51,Default,,0,0,0,,{\an2}Wenn
+Dialogue: 0,0:00:03.49,0:00:03.53,Default,,0,0,0,,{\an2}Wenn 
+Dialogue: 0,0:00:03.50,0:00:03.54,Default,,0,0,0,,{\an2}Wenn f
+Dialogue: 0,0:00:03.51,0:00:03.55,Default,,0,0,0,,{\an2}Wenn ff
+Dialogue: 0,0:00:03.53,0:00:03.56,Default,,0,0,0,,{\an2}Wenn ffm
+Dialogue: 0,0:00:03.54,0:00:03.57,Default,,0,0,0,,{\an2}Wenn ffmp
+Dialogue: 0,0:00:03.55,0:00:03.59,Default,,0,0,0,,{\an2}Wenn ffmpe
+Dialogue: 0,0:00:03.56,0:00:03.60,Default,,0,0,0,,{\an2}Wenn ffmpeg
+Dialogue: 0,0:00:03.57,0:00:03.61,Default,,0,0,0,,{\an2}Wenn ffmpeg 
+Dialogue: 0,0:00:03.59,0:00:03.62,Default,,0,0,0,,{\an2}Wenn ffmpeg o
+Dialogue: 0,0:00:03.60,0:00:03.63,Default,,0,0,0,,{\an2}Wenn ffmpeg od
+Dialogue: 0,0:00:03.61,0:00:03.64,Default,,0,0,0,,{\an2}Wenn ffmpeg ode
+Dialogue: 0,0:00:03.62,0:00:03.66,Default,,0,0,0,,{\an2}Wenn ffmpeg oder
+Dialogue: 0,0:00:03.63,0:00:03.67,Default,,0,0,0,,{\an2}Wenn ffmpeg oder 
+Dialogue: 0,0:00:03.65,0:00:03.68,Default,,0,0,0,,{\an2}Wenn ffmpeg oder B
+Dialogue: 0,0:00:03.66,0:00:03.69,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bi
+Dialogue: 0,0:00:03.67,0:00:03.70,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bil
+Dialogue: 0,0:00:03.68,0:00:03.72,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bild
+Dialogue: 0,0:00:03.69,0:00:03.73,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bildd
+Dialogue: 0,0:00:03.71,0:00:03.74,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bildda
+Dialogue: 0,0:00:03.72,0:00:03.75,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddat
+Dialogue: 0,0:00:03.73,0:00:03.76,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddate
+Dialogue: 0,0:00:03.74,0:00:03.78,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddatei
+Dialogue: 0,0:00:03.75,0:00:03.79,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateie
+Dialogue: 0,0:00:03.76,0:00:03.80,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien
+Dialogue: 0,0:00:03.78,0:00:03.81,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien 
+Dialogue: 0,0:00:03.79,0:00:03.82,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien f
+Dialogue: 0,0:00:03.80,0:00:03.84,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien fe
+Dialogue: 0,0:00:03.81,0:00:03.85,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien feh
+Dialogue: 0,0:00:03.82,0:00:03.86,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien fehl
+Dialogue: 0,0:00:03.84,0:00:03.87,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien fehle
+Dialogue: 0,0:00:03.84,0:00:03.87,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien\\Nfehlen
+Dialogue: 0,0:00:03.84,0:00:03.87,Default,,0,0,0,,{\an2}Wenn ffmpeg oder Bilddateien\\Nfehlen,
+Dialogue: 0,0:00:03.87,0:00:03.91,Default,,0,0,0,,{\an2}e
+Dialogue: 0,0:00:03.88,0:00:03.92,Default,,0,0,0,,{\an2}er
+Dialogue: 0,0:00:03.89,0:00:03.93,Default,,0,0,0,,{\an2}ers
+Dialogue: 0,0:00:03.90,0:00:03.94,Default,,0,0,0,,{\an2}ersc
+Dialogue: 0,0:00:03.92,0:00:03.95,Default,,0,0,0,,{\an2}ersch
+Dialogue: 0,0:00:03.93,0:00:03.96,Default,,0,0,0,,{\an2}ersche
+Dialogue: 0,0:00:03.94,0:00:03.97,Default,,0,0,0,,{\an2}erschei
+Dialogue: 0,0:00:03.95,0:00:03.98,Default,,0,0,0,,{\an2}erschein
+Dialogue: 0,0:00:03.96,0:00:03.99,Default,,0,0,0,,{\an2}erscheine
+Dialogue: 0,0:00:03.97,0:00:04.00,Default,,0,0,0,,{\an2}erscheinen
+Dialogue: 0,0:00:03.98,0:00:04.01,Default,,0,0,0,,{\an2}erscheinen 
+Dialogue: 0,0:00:03.99,0:00:04.03,Default,,0,0,0,,{\an2}erscheinen W
+Dialogue: 0,0:00:04.00,0:00:04.04,Default,,0,0,0,,{\an2}erscheinen Wa
+Dialogue: 0,0:00:04.01,0:00:04.05,Default,,0,0,0,,{\an2}erscheinen War
+Dialogue: 0,0:00:04.02,0:00:04.06,Default,,0,0,0,,{\an2}erscheinen Warn
+Dialogue: 0,0:00:04.03,0:00:04.07,Default,,0,0,0,,{\an2}erscheinen Warnu
+Dialogue: 0,0:00:04.04,0:00:04.08,Default,,0,0,0,,{\an2}erscheinen Warnun
+Dialogue: 0,0:00:04.06,0:00:04.09,Default,,0,0,0,,{\an2}erscheinen Warnung
+Dialogue: 0,0:00:04.07,0:00:04.10,Default,,0,0,0,,{\an2}erscheinen Warnunge
+Dialogue: 0,0:00:04.08,0:00:04.11,Default,,0,0,0,,{\an2}erscheinen Warnungen
+Dialogue: 0,0:00:04.09,0:00:04.12,Default,,0,0,0,,{\an2}erscheinen Warnungen 
+Dialogue: 0,0:00:04.10,0:00:04.13,Default,,0,0,0,,{\an2}erscheinen Warnungen —
+Dialogue: 0,0:00:04.11,0:00:04.14,Default,,0,0,0,,{\an2}erscheinen Warnungen — 
+Dialogue: 0,0:00:04.12,0:00:04.15,Default,,0,0,0,,{\an2}erscheinen Warnungen — d
+Dialogue: 0,0:00:04.13,0:00:04.17,Default,,0,0,0,,{\an2}erscheinen Warnungen — da
+Dialogue: 0,0:00:04.14,0:00:04.18,Default,,0,0,0,,{\an2}erscheinen Warnungen — das
+Dialogue: 0,0:00:04.15,0:00:04.19,Default,,0,0,0,,{\an2}erscheinen Warnungen — das 
+Dialogue: 0,0:00:04.16,0:00:04.20,Default,,0,0,0,,{\an2}erscheinen Warnungen — das i
+Dialogue: 0,0:00:04.17,0:00:04.21,Default,,0,0,0,,{\an2}erscheinen Warnungen — das is
+Dialogue: 0,0:00:04.18,0:00:04.22,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist
+Dialogue: 0,0:00:04.20,0:00:04.23,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist 
+Dialogue: 0,0:00:04.21,0:00:04.24,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist e
+Dialogue: 0,0:00:04.22,0:00:04.25,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist er
+Dialogue: 0,0:00:04.23,0:00:04.26,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist erw
+Dialogue: 0,0:00:04.24,0:00:04.27,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist\\Nerwa
+Dialogue: 0,0:00:04.25,0:00:04.28,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist\\Nerwar
+Dialogue: 0,0:00:04.26,0:00:04.29,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist\\Nerwart
+Dialogue: 0,0:00:04.27,0:00:04.30,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist\\Nerwartb
+Dialogue: 0,0:00:04.27,0:00:04.30,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist\\Nerwartba
+Dialogue: 0,0:00:04.27,0:00:04.30,Default,,0,0,0,,{\an2}erscheinen Warnungen — das ist\\Nerwartbar
+Dialogue: 0,0:00:04.30,0:00:04.34,Default,,0,0,0,,{\an2}u
+Dialogue: 0,0:00:04.31,0:00:04.35,Default,,0,0,0,,{\an2}un
+Dialogue: 0,0:00:04.32,0:00:04.36,Default,,0,0,0,,{\an2}und
+Dialogue: 0,0:00:04.33,0:00:04.37,Default,,0,0,0,,{\an2}und 
+Dialogue: 0,0:00:04.34,0:00:04.38,Default,,0,0,0,,{\an2}und k
+Dialogue: 0,0:00:04.36,0:00:04.39,Default,,0,0,0,,{\an2}und ke
+Dialogue: 0,0:00:04.37,0:00:04.40,Default,,0,0,0,,{\an2}und kei
+Dialogue: 0,0:00:04.38,0:00:04.41,Default,,0,0,0,,{\an2}und kein
+Dialogue: 0,0:00:04.39,0:00:04.42,Default,,0,0,0,,{\an2}und kein 
+Dialogue: 0,0:00:04.40,0:00:04.43,Default,,0,0,0,,{\an2}und kein P
+Dialogue: 0,0:00:04.41,0:00:04.44,Default,,0,0,0,,{\an2}und kein Pr
+Dialogue: 0,0:00:04.42,0:00:04.45,Default,,0,0,0,,{\an2}und kein Pro
+Dialogue: 0,0:00:04.43,0:00:04.46,Default,,0,0,0,,{\an2}und kein Prod
+Dialogue: 0,0:00:04.44,0:00:04.47,Default,,0,0,0,,{\an2}und kein Produ
+Dialogue: 0,0:00:04.45,0:00:04.48,Default,,0,0,0,,{\an2}und kein Produk
+Dialogue: 0,0:00:04.46,0:00:04.49,Default,,0,0,0,,{\an2}und kein Produkt
+Dialogue: 0,0:00:04.47,0:00:04.51,Default,,0,0,0,,{\an2}und kein Produkti
+Dialogue: 0,0:00:04.48,0:00:04.52,Default,,0,0,0,,{\an2}und kein Produktio
+Dialogue: 0,0:00:04.49,0:00:04.53,Default,,0,0,0,,{\an2}und kein Produktion
+Dialogue: 0,0:00:04.50,0:00:04.54,Default,,0,0,0,,{\an2}und kein Produktions
+Dialogue: 0,0:00:04.51,0:00:04.55,Default,,0,0,0,,{\an2}und kein Produktionsf
+Dialogue: 0,0:00:04.52,0:00:04.56,Default,,0,0,0,,{\an2}und kein Produktionsfe
+Dialogue: 0,0:00:04.53,0:00:04.57,Default,,0,0,0,,{\an2}und kein Produktionsfeh
+Dialogue: 0,0:00:04.54,0:00:04.58,Default,,0,0,0,,{\an2}und kein Produktionsfehl
+Dialogue: 0,0:00:04.55,0:00:04.59,Default,,0,0,0,,{\an2}und kein Produktionsfehle
+Dialogue: 0,0:00:04.56,0:00:04.60,Default,,0,0,0,,{\an2}und kein Produktionsfehler
+Dialogue: 0,0:00:04.58,0:00:04.61,Default,,0,0,0,,{\an2}und kein Produktionsfehler.
+Dialogue: 0,0:00:04.59,0:00:04.62,Default,,0,0,0,,{\an2}und kein Produktionsfehler. 
+Dialogue: 0,0:00:04.60,0:00:04.63,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Z
+Dialogue: 0,0:00:04.61,0:00:04.64,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zu
+Dialogue: 0,0:00:04.62,0:00:04.65,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum
+Dialogue: 0,0:00:04.63,0:00:04.66,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum 
+Dialogue: 0,0:00:04.64,0:00:04.67,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum A
+Dialogue: 0,0:00:04.65,0:00:04.68,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum Ab
+Dialogue: 0,0:00:04.66,0:00:04.69,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum\\NAbs
+Dialogue: 0,0:00:04.67,0:00:04.70,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum\\NAbsc
+Dialogue: 0,0:00:04.68,0:00:04.71,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum\\NAbsch
+Dialogue: 0,0:00:04.69,0:00:04.73,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum\\NAbschl
+Dialogue: 0,0:00:04.70,0:00:04.73,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum\\NAbschlu
+Dialogue: 0,0:00:04.70,0:00:04.73,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum\\NAbschlus
+Dialogue: 0,0:00:04.70,0:00:04.73,Default,,0,0,0,,{\an2}und kein Produktionsfehler. Zum\\NAbschluss
+Dialogue: 0,0:00:04.73,0:00:04.77,Default,,0,0,0,,{\an2}s
+Dialogue: 0,0:00:04.74,0:00:04.78,Default,,0,0,0,,{\an2}so
+Dialogue: 0,0:00:04.75,0:00:04.79,Default,,0,0,0,,{\an2}sol
+Dialogue: 0,0:00:04.77,0:00:04.80,Default,,0,0,0,,{\an2}soll
+Dialogue: 0,0:00:04.78,0:00:04.81,Default,,0,0,0,,{\an2}sollt
+Dialogue: 0,0:00:04.79,0:00:04.82,Default,,0,0,0,,{\an2}sollte
+Dialogue: 0,0:00:04.80,0:00:04.84,Default,,0,0,0,,{\an2}solltes
+Dialogue: 0,0:00:04.81,0:00:04.85,Default,,0,0,0,,{\an2}solltest
+Dialogue: 0,0:00:04.82,0:00:04.86,Default,,0,0,0,,{\an2}solltest 
+Dialogue: 0,0:00:04.83,0:00:04.87,Default,,0,0,0,,{\an2}solltest d
+Dialogue: 0,0:00:04.85,0:00:04.88,Default,,0,0,0,,{\an2}solltest du
+Dialogue: 0,0:00:04.86,0:00:04.89,Default,,0,0,0,,{\an2}solltest du 
+Dialogue: 0,0:00:04.87,0:00:04.90,Default,,0,0,0,,{\an2}solltest du O
+Dialogue: 0,0:00:04.88,0:00:04.91,Default,,0,0,0,,{\an2}solltest du OP
+Dialogue: 0,0:00:04.89,0:00:04.93,Default,,0,0,0,,{\an2}solltest du OPE
+Dialogue: 0,0:00:04.90,0:00:04.94,Default,,0,0,0,,{\an2}solltest du OPEN
+Dialogue: 0,0:00:04.91,0:00:04.95,Default,,0,0,0,,{\an2}solltest du OPEN_
+Dialogue: 0,0:00:04.92,0:00:04.96,Default,,0,0,0,,{\an2}solltest du OPEN_M
+Dialogue: 0,0:00:04.94,0:00:04.97,Default,,0,0,0,,{\an2}solltest du OPEN_ME
+Dialogue: 0,0:00:04.95,0:00:04.98,Default,,0,0,0,,{\an2}solltest du OPEN_ME.
+Dialogue: 0,0:00:04.96,0:00:04.99,Default,,0,0,0,,{\an2}solltest du OPEN_ME.m
+Dialogue: 0,0:00:04.97,0:00:05.01,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md
+Dialogue: 0,0:00:04.98,0:00:05.02,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md 
+Dialogue: 0,0:00:04.99,0:00:05.03,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md u
+Dialogue: 0,0:00:05.00,0:00:05.04,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md un
+Dialogue: 0,0:00:05.02,0:00:05.05,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und
+Dialogue: 0,0:00:05.03,0:00:05.06,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und 
+Dialogue: 0,0:00:05.04,0:00:05.07,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und d
+Dialogue: 0,0:00:05.05,0:00:05.08,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und de
+Dialogue: 0,0:00:05.06,0:00:05.10,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den
+Dialogue: 0,0:00:05.07,0:00:05.11,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den 
+Dialogue: 0,0:00:05.08,0:00:05.12,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den F
+Dialogue: 0,0:00:05.09,0:00:05.13,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den Fo
+Dialogue: 0,0:00:05.11,0:00:05.14,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den Fou
+Dialogue: 0,0:00:05.12,0:00:05.15,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den\\NFoun
+Dialogue: 0,0:00:05.13,0:00:05.16,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den\\NFound
+Dialogue: 0,0:00:05.13,0:00:05.16,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den\\NFounde
+Dialogue: 0,0:00:05.13,0:00:05.16,Default,,0,0,0,,{\an2}solltest du OPEN_ME.md und den\\NFounder
+Dialogue: 0,0:00:05.16,0:00:05.20,Default,,0,0,0,,{\an2}R
+Dialogue: 0,0:00:05.17,0:00:05.21,Default,,0,0,0,,{\an2}Re
+Dialogue: 0,0:00:05.19,0:00:05.22,Default,,0,0,0,,{\an2}Rep
+Dialogue: 0,0:00:05.20,0:00:05.23,Default,,0,0,0,,{\an2}Repo
+Dialogue: 0,0:00:05.21,0:00:05.24,Default,,0,0,0,,{\an2}Repor
+Dialogue: 0,0:00:05.22,0:00:05.25,Default,,0,0,0,,{\an2}Report
+Dialogue: 0,0:00:05.23,0:00:05.26,Default,,0,0,0,,{\an2}Report 
+Dialogue: 0,0:00:05.24,0:00:05.28,Default,,0,0,0,,{\an2}Report i
+Dialogue: 0,0:00:05.25,0:00:05.29,Default,,0,0,0,,{\an2}Report im
+Dialogue: 0,0:00:05.26,0:00:05.30,Default,,0,0,0,,{\an2}Report im 
+Dialogue: 0,0:00:05.27,0:00:05.31,Default,,0,0,0,,{\an2}Report im O
+Dialogue: 0,0:00:05.28,0:00:05.32,Default,,0,0,0,,{\an2}Report im Or
+Dialogue: 0,0:00:05.30,0:00:05.33,Default,,0,0,0,,{\an2}Report im Ord
+Dialogue: 0,0:00:05.31,0:00:05.34,Default,,0,0,0,,{\an2}Report im Ordn
+Dialogue: 0,0:00:05.32,0:00:05.35,Default,,0,0,0,,{\an2}Report im Ordne
+Dialogue: 0,0:00:05.33,0:00:05.36,Default,,0,0,0,,{\an2}Report im Ordner
+Dialogue: 0,0:00:05.34,0:00:05.37,Default,,0,0,0,,{\an2}Report im Ordner 
+Dialogue: 0,0:00:05.35,0:00:05.39,Default,,0,0,0,,{\an2}Report im Ordner l
+Dialogue: 0,0:00:05.36,0:00:05.40,Default,,0,0,0,,{\an2}Report im Ordner lo
+Dialogue: 0,0:00:05.37,0:00:05.41,Default,,0,0,0,,{\an2}Report im Ordner loc
+Dialogue: 0,0:00:05.38,0:00:05.42,Default,,0,0,0,,{\an2}Report im Ordner loca
+Dialogue: 0,0:00:05.39,0:00:05.43,Default,,0,0,0,,{\an2}Report im Ordner local
+Dialogue: 0,0:00:05.41,0:00:05.44,Default,,0,0,0,,{\an2}Report im Ordner local_
+Dialogue: 0,0:00:05.42,0:00:05.45,Default,,0,0,0,,{\an2}Report im Ordner local_p
+Dialogue: 0,0:00:05.43,0:00:05.46,Default,,0,0,0,,{\an2}Report im Ordner local_pr
+Dialogue: 0,0:00:05.44,0:00:05.47,Default,,0,0,0,,{\an2}Report im Ordner local_pre
+Dialogue: 0,0:00:05.45,0:00:05.48,Default,,0,0,0,,{\an2}Report im Ordner local_prev
+Dialogue: 0,0:00:05.46,0:00:05.50,Default,,0,0,0,,{\an2}Report im Ordner local_previ
+Dialogue: 0,0:00:05.47,0:00:05.51,Default,,0,0,0,,{\an2}Report im Ordner local_previe
+Dialogue: 0,0:00:05.48,0:00:05.52,Default,,0,0,0,,{\an2}Report im Ordner local_preview
+Dialogue: 0,0:00:05.49,0:00:05.53,Default,,0,0,0,,{\an2}Report im Ordner local_preview_
+Dialogue: 0,0:00:05.50,0:00:05.54,Default,,0,0,0,,{\an2}Report im Ordner local_preview_<
+Dialogue: 0,0:00:05.52,0:00:05.55,Default,,0,0,0,,{\an2}Report im Ordner local_preview_<r
+Dialogue: 0,0:00:05.53,0:00:05.56,Default,,0,0,0,,{\an2}Report im Ordner local_preview_<ru
+Dialogue: 0,0:00:05.54,0:00:05.57,Default,,0,0,0,,{\an2}Report im Ordner\\Nlocal_preview_<run
+Dialogue: 0,0:00:05.55,0:00:05.58,Default,,0,0,0,,{\an2}Report im Ordner\\Nlocal_preview_<run_
+Dialogue: 0,0:00:05.56,0:00:05.59,Default,,0,0,0,,{\an2}Report im Ordner\\Nlocal_preview_<run_i
+Dialogue: 0,0:00:05.56,0:00:05.59,Default,,0,0,0,,{\an2}Report im Ordner\\Nlocal_preview_<run_id
+Dialogue: 0,0:00:05.56,0:00:05.59,Default,,0,0,0,,{\an2}Report im Ordner\\Nlocal_preview_<run_id>
+Dialogue: 0,0:00:05.59,0:00:05.63,Default,,0,0,0,,{\an2}ö
+Dialogue: 0,0:00:05.61,0:00:05.65,Default,,0,0,0,,{\an2}öf
+Dialogue: 0,0:00:05.63,0:00:05.67,Default,,0,0,0,,{\an2}öff
+Dialogue: 0,0:00:05.65,0:00:05.69,Default,,0,0,0,,{\an2}öffn
+Dialogue: 0,0:00:05.67,0:00:05.71,Default,,0,0,0,,{\an2}öffne
+Dialogue: 0,0:00:05.69,0:00:05.73,Default,,0,0,0,,{\an2}öffnen
+Dialogue: 0,0:00:05.71,0:00:05.75,Default,,0,0,0,,{\an2}öffnen 
+Dialogue: 0,0:00:05.73,0:00:05.77,Default,,0,0,0,,{\an2}öffnen u
+Dialogue: 0,0:00:05.76,0:00:05.79,Default,,0,0,0,,{\an2}öffnen un
+Dialogue: 0,0:00:05.78,0:00:05.81,Default,,0,0,0,,{\an2}öffnen und
+Dialogue: 0,0:00:05.80,0:00:05.83,Default,,0,0,0,,{\an2}öffnen und 
+Dialogue: 0,0:00:05.82,0:00:05.85,Default,,0,0,0,,{\an2}öffnen und d
+Dialogue: 0,0:00:05.84,0:00:05.87,Default,,0,0,0,,{\an2}öffnen und di
+Dialogue: 0,0:00:05.86,0:00:05.89,Default,,0,0,0,,{\an2}öffnen und die
+Dialogue: 0,0:00:05.88,0:00:05.91,Default,,0,0,0,,{\an2}öffnen und die 
+Dialogue: 0,0:00:05.90,0:00:05.93,Default,,0,0,0,,{\an2}öffnen und die P
+Dialogue: 0,0:00:05.92,0:00:05.95,Default,,0,0,0,,{\an2}öffnen und die Pf
+Dialogue: 0,0:00:05.94,0:00:05.97,Default,,0,0,0,,{\an2}öffnen und die Pfa
+Dialogue: 0,0:00:05.96,0:00:05.99,Default,,0,0,0,,{\an2}öffnen und die Pfad
+Dialogue: 0,0:00:05.97,0:00:06.00,Default,,0,0,0,,{\an2}öffnen und die Pfade

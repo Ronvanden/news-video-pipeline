@@ -1,0 +1,22 @@
+{
+  "export_version": "18.2-v1",
+  "source_label": "fixture:real_video_build_mini:video_asset_ba263",
+  "template_type": "documentary_news",
+  "video_template": "documentary_explainer",
+  "hook": "BA 26.3 — ein Beat referenziert einen lokalen Clip neben dieser JSON-Datei.",
+  "scene_expansion": {
+    "expanded_scene_assets": [
+      {
+        "chapter_index": 0,
+        "beat_index": 0,
+        "visual_prompt": "Runway-Clip als primäres Video-Asset; Fallback-Placeholder wird vom Asset Runner erzeugt.",
+        "camera_motion_hint": "static",
+        "duration_seconds": 5,
+        "asset_type": "broll",
+        "runway_clip_path": "local_test_clip.mp4",
+        "continuity_note": "",
+        "safety_notes": []
+      }
+    ]
+  }
+}

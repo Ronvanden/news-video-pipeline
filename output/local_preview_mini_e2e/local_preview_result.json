@@ -1,0 +1,51 @@
+{
+  "snapshot_version": "local_preview_dashboard_snapshot_v1",
+  "saved_at_epoch": 1777987701.0028355,
+  "result_contract": {
+    "id": "local_preview_result_v1",
+    "schema_version": 1
+  },
+  "ok": true,
+  "verdict": "WARNING",
+  "run_id": "mini_e2e",
+  "pipeline_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_mini_e2e",
+  "paths": {
+    "subtitle_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_mini_e2e\\subtitle_manifest.json",
+    "clean_video": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_mini_e2e\\clean_video.mp4",
+    "preview_with_subtitles": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_mini_e2e\\preview_with_subtitles.mp4",
+    "preview_video": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_mini_e2e\\preview_with_subtitles.mp4",
+    "burnin_preview_source": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_mini_e2e\\preview_with_subtitles.mp4",
+    "timeline_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\fixtures\\local_preview_mini\\mini_timeline_manifest.json",
+    "audio_path": "",
+    "founder_report": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_mini_e2e\\local_preview_report.md",
+    "open_me": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_mini_e2e\\OPEN_ME.md",
+    "subtitles_srt_path": ""
+  },
+  "quality_checklist": {
+    "status": "warning"
+  },
+  "subtitle_quality_check": {
+    "status": "pass",
+    "summary": "14 cues; status=pass"
+  },
+  "sync_guard": {
+    "status": "warning",
+    "summary": "status=warning; tl=6.0s; sub=6.0s; clean=6.0s; pv=8.0s"
+  },
+  "warning_classification": {
+    "highest": "WARNING",
+    "summary": "4 WARNING, 4 INFO"
+  },
+  "founder_quality_decision": {
+    "decision_code": "REVIEW_REQUIRED",
+    "top_issue": "Warnung [WARNING]: audio_missing_silent_render",
+    "next_step": "Öffne die Preview, prüfe die Warnungen und entscheide, ob ein Repair nötig ist."
+  },
+  "warnings": [
+    "subtitle_timeline_duration_used",
+    "audio_missing_silent_render",
+    "subtitle_typewriter_ass_renderer_used",
+    "preview_with_subtitles_already_exists"
+  ],
+  "blocking_reasons": []
+}

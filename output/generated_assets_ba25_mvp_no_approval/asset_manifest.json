@@ -1,0 +1,59 @@
+{
+  "run_id": "ba25_mvp_no_approval",
+  "source_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_no_approval\\scene_asset_pack.json",
+  "asset_count": 5,
+  "generation_mode": "placeholder",
+  "warnings": [],
+  "assets": [
+    {
+      "scene_number": 1,
+      "chapter_index": 0,
+      "beat_index": 0,
+      "asset_type": "hook_text",
+      "image_path": "scene_001.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Hook. Textauszug: Hast du dich jemals gefragt, welche Rolle spezielle Domänen in der digitalen Welt spielen? Heute tauchen wir in die faszinierende Welt der Dokumentationsbeispie",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 2,
+      "chapter_index": 0,
+      "beat_index": 1,
+      "asset_type": "story_text",
+      "image_path": "scene_002.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 1: Was sind Dokumentationsbeispiele?. Textauszug: Dokumentationsbeispiele sind essentielle Werkzeuge in der Softwareentwicklung und IT. Sie dienen dazu, Konzepte, Funktionen und Anwendungsfälle zu veranschaulic",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 3,
+      "chapter_index": 0,
+      "beat_index": 2,
+      "asset_type": "story_text",
+      "image_path": "scene_003.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Die Bedeutung von Beispiel-Domänen. Textauszug: Beispiel-Domänen wie 'example.com' sind von großer Bedeutung, da sie Entwicklern und Autoren eine sichere Umgebung bieten, um ihre Ideen zu präsentieren. Sie si",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 4,
+      "chapter_index": 0,
+      "beat_index": 3,
+      "asset_type": "story_text",
+      "image_path": "scene_004.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 3: Risiken des Einsatzes im Betrieb. Textauszug: Die Verwendung von Beispiel-Domänen in produktiven Umgebungen kann ernsthafte Risiken mit sich bringen. Zum einen besteht die Gefahr, dass Nutzer auf diese Domä",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 5,
+      "chapter_index": 0,
+      "beat_index": 4,
+      "asset_type": "story_text",
+      "image_path": "scene_005.png",
+      "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 4: Zukünftige Entwicklungen und Trends. Textauszug: Mit der fortschreitenden Digitalisierung und der zunehmenden Komplexität von Softwareprojekten wird die Bedeutung von klaren und verständlichen Dokumentationen ",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    }
+  ]
+}

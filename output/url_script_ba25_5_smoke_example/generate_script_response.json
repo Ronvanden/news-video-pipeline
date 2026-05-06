@@ -1,0 +1,39 @@
+{
+  "title": "Diese Domäne ist für die Verwendung in Dokumentationsbeispielen vorgesehen, ohne dass eine Genehmigung erforderlich ist",
+  "hook": "Hast du dich jemals gefragt, welche Rolle spezielle Domänen in der digitalen Welt spielen? Heute klären wir das!",
+  "chapters": [
+    {
+      "title": "Kapitel 1: Was sind Dokumentationsdomänen?",
+      "content": "Dokumentationsdomänen sind spezielle Internetadressen, die für Schulungs- und Beispielzwecke verwendet werden. Sie sind nicht für den realen Betrieb gedacht, sondern dienen dazu, Entwicklern und Nutzern zu zeigen, wie bestimmte Technologien oder Systeme funktionieren."
+    },
+    {
+      "title": "Kapitel 2: Warum keine Genehmigung erforderlich?",
+      "content": "Die Verwendung dieser Domänen erfordert keine Genehmigung, da sie speziell für diesen Zweck geschaffen wurden. Das bedeutet, dass jeder sie nutzen kann, um Beispiele zu erstellen oder zu demonstrieren, ohne rechtliche Bedenken."
+    },
+    {
+      "title": "Kapitel 3: Risiken der Nutzung im Betrieb",
+      "content": "Es ist wichtig, diese Domänen nicht im operativen Geschäft zu verwenden. Sie sind nicht zuverlässig und können zu Verwirrung oder Sicherheitsproblemen führen. Daher sollten sie ausschließlich für Dokumentationszwecke genutzt werden."
+    },
+    {
+      "title": "Kapitel 4: Fazit und Ausblick",
+      "content": "Zusammenfassend lässt sich sagen, dass Dokumentationsdomänen eine wertvolle Ressource sind, solange sie richtig eingesetzt werden. In Zukunft könnten wir jedoch neue Standards sehen, die die Nutzung solcher Domänen weiter regulieren."
+    }
+  ],
+  "full_script": "Hast du dich jemals gefragt, welche Rolle spezielle Domänen in der digitalen Welt spielen? Heute klären wir das! Dokumentationsdomänen sind spezielle Internetadressen, die für Schulungs- und Beispielzwecke verwendet werden. Sie sind nicht für den realen Betrieb gedacht, sondern dienen dazu, Entwicklern und Nutzern zu zeigen, wie bestimmte Technologien oder Systeme funktionieren. Die Verwendung dieser Domänen erfordert keine Genehmigung, da sie speziell für diesen Zweck geschaffen wurden. Das bedeutet, dass jeder sie nutzen kann, um Beispiele zu erstellen oder zu demonstrieren, ohne rechtliche Bedenken. Es ist wichtig, diese Domänen nicht im operativen Geschäft zu verwenden. Sie sind nicht zuverlässig und können zu Verwirrung oder Sicherheitsproblemen führen. Daher sollten sie ausschließlich für Dokumentationszwecke genutzt werden. Zusammenfassend lässt sich sagen, dass Dokumentationsdomänen eine wertvolle Ressource sind, solange sie richtig eingesetzt werden. In Zukunft könnten wir jedoch neue Standards sehen, die die Nutzung solcher Domänen weiter regulieren.",
+  "sources": [
+    "https://example.com"
+  ],
+  "warnings": [
+    "URL appears to be a homepage or index page. Use a specific article URL for better results.",
+    "Extracted content is very short. The URL may not contain sufficient article text.",
+    "Target word count: 140, Actual word count: 143",
+    "Generated using LLM mode",
+    "LLM output shorter than target"
+  ],
+  "run_id": "ba25_5_smoke_example",
+  "source_url": "https://example.com",
+  "source_type": "article",
+  "target_language": "de",
+  "duration_minutes": 1,
+  "created_at_epoch": 1777993111
+}

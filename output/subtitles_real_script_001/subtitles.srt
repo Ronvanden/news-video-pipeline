@@ -1,0 +1,39 @@
+1
+00:00:00,000 --> 00:00:03,081
+Das ist ein kurzer Testtext für den
+
+2
+00:00:03,081 --> 00:00:05,723
+lokalen Adapter – ohne echte News-Claims.
+
+3
+00:00:05,723 --> 00:00:08,804
+Das ist ein kurzer Testtext für den
+
+4
+00:00:08,804 --> 00:00:11,445
+lokalen Adapter – ohne echte News-Claims.
+
+5
+00:00:11,445 --> 00:00:14,526
+Wir zeigen, wie ein Story-Text in Szenen
+
+6
+00:00:14,526 --> 00:00:17,168
+zerlegt wird. Jede Szene erhält eine
+
+7
+00:00:17,168 --> 00:00:19,368
+Narration, damit der Orchestrator daraus
+
+8
+00:00:19,368 --> 00:00:22,010
+einen Sprechertext bauen kann. Am Ende
+
+9
+00:00:22,010 --> 00:00:24,010
+entsteht ein scene_asset_pack.json, das
+
+10
+00:00:24,010 --> 00:00:26,000
+der Real Video Build

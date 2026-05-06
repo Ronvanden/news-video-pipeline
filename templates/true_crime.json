@@ -1,0 +1,39 @@
+{
+  "template_id": "true_crime",
+  "label": "True Crime Story",
+  "narrative_style": "dark investigative suspense",
+  "hook_style": [
+    "Was wie ein normaler Tag begann, endete in...",
+    "Niemand ahnte, dass hinter ...",
+    "Bis heute bleibt die Frage..."
+  ],
+  "chapter_structure": [
+    "Das scheinbar normale Leben",
+    "Der Wendepunkt",
+    "Die dunklen Details",
+    "Ermittlungen und Widersprüche",
+    "Die offene Frage oder das Urteil"
+  ],
+  "voice_style": "serious dramatic documentary",
+  "scene_style": "cinematic dark realism, investigative atmosphere, moody lighting",
+  "thumbnail_angle": [
+    "shocked face + hidden clue",
+    "crime scene silhouette",
+    "mysterious house + bold question"
+  ],
+  "target_emotion": [
+    "suspense",
+    "fear",
+    "curiosity"
+  ],
+  "duration_recommendation": {
+    "short": "8-10 min",
+    "medium": "10-15 min",
+    "long": "15-25 min"
+  },
+  "warnings": [
+    "Avoid unverified accusations",
+    "No factual invention",
+    "Respect legal sensitivity"
+  ]
+}

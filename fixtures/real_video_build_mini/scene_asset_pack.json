@@ -1,0 +1,41 @@
+{
+  "export_version": "18.2-v1",
+  "source_label": "fixture:real_video_build_mini",
+  "template_type": "documentary_news",
+  "video_template": "documentary_explainer",
+  "hook": "Eine kurze, lokale Mini-Story zur Verkabelung des realen Video-Builds.",
+  "scene_expansion": {
+    "expanded_scene_assets": [
+      {
+        "chapter_index": 0,
+        "beat_index": 0,
+        "visual_prompt": "Establishing shot: ruhige Stadtlinie am frühen Morgen, weiches Tageslicht, dokumentarische Bildsprache.",
+        "camera_motion_hint": "slow push-in",
+        "duration_seconds": 4,
+        "asset_type": "establishing",
+        "continuity_note": "",
+        "safety_notes": []
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 1,
+        "visual_prompt": "Detailaufnahme: Schreibtisch mit Notizen und Stift, neutraler Hintergrund, Fokus auf Hände beim Schreiben.",
+        "camera_motion_hint": "static",
+        "duration_seconds": 4,
+        "asset_type": "detail",
+        "continuity_note": "match prior",
+        "safety_notes": []
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 2,
+        "visual_prompt": "B-roll: belebte Straße aus erhöhter Perspektive, leichte Kamerabewegung, alltägliche Szene ohne Konflikt.",
+        "camera_motion_hint": "pan right",
+        "duration_seconds": 4,
+        "asset_type": "broll",
+        "continuity_note": "",
+        "safety_notes": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "schema_version": "real_local_preview_result_v1",
+  "run_id": "ba25_mvp_no_approval",
+  "ok": true,
+  "status": "completed",
+  "build_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_no_approval",
+  "metadata": {
+    "adapter": "generate_script_response",
+    "asset_mode": "placeholder",
+    "voice_mode": "smoke",
+    "motion_mode": "static",
+    "subtitle_style": "typewriter",
+    "subtitle_mode": "simple",
+    "force": false,
+    "beat_count": 5,
+    "title": "Diese Domäne ist für die Verwendung in Dokumentationsbeispielen vorgesehen, ohne dass eine Genehmigung erforderlich ist",
+    "hook_present": true
+  },
+  "paths": {
+    "script_json": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\url_script_ba25_mvp_no_approval\\generate_script_response.json",
+    "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_no_approval\\scene_asset_pack.json",
+    "real_build_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_mvp_no_approval",
+    "real_video_build_result": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_mvp_no_approval\\real_video_build_result.json",
+    "preview_with_subtitles": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_ba25_mvp_no_approval\\preview_with_subtitles.mp4",
+    "clean_video": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_mvp_no_approval\\clean_video.mp4",
+    "subtitle_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_mvp_no_approval\\subtitle_manifest.json",
+    "subtitle_file": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_mvp_no_approval\\subtitles.srt",
+    "narration_script": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_no_approval\\narration_script.txt",
+    "voiceover_audio": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_no_approval\\full_voiceover.mp3",
+    "local_preview_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_no_approval",
+    "open_me": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_no_approval\\REAL_LOCAL_PREVIEW_OPEN_ME.md"
+  },
+  "real_build_result": {
+    "schema_version": "real_video_build_result_v1",
+    "run_id": "ba25_mvp_no_approval",
+    "ok": true,
+    "status": "completed",
+    "build_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_mvp_no_approval",
+    "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_no_approval\\scene_asset_pack.json",
+    "metadata": {
+      "asset_mode": "placeholder",
+      "voice_mode": "smoke",
+      "motion_mode": "static",
+      "subtitle_style": "typewriter",
+      "subtitle_mode": "simple",
+      "force": false
+    },
+    "steps": [
+      {
+        "name": "asset_runner",
+        "ok": true,
+        "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_ba25_mvp_no_approval\\asset_manifest.json",
+        "warnings": [],
+        "blocking_reasons": [],
+        "extra": {
+          "asset_count": 5
+        }
+      },
+      {
+        "name": "voiceover_smoke",
+        "ok": true,
+        "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_no_approval\\full_voiceover.mp3",
+        "warnings": [],
+        "blocking_reasons": [],
+        "extra": {
+          "voice_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_no_approval\\voice_manifest.json",
+          "estimated_duration_seconds": 123,
+          "word_count": 298,
+          "real_tts_generated": false
+        }
+      },
+      {
+        "name": "timeline_builder",
+        "ok": true,
+        "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\timeline_ba25_mvp_no_approval\\timeline_manifest.json",
+        "warnings": [],
+        "blocking_reasons": [],
+        "extra": {
+          "audio_path_set": true
+        }
+      },
+      {
+        "name": "clean_render",
+        "ok": true,
+        "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_mvp_no_approval\\clean_video.mp4",
+        "warnings": [],
+        "blocking_reasons": []
+      },
+      {
+        "name": "subtitle_build",
+        "ok": true,
+        "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_mvp_no_approval\\subtitle_manifest.json",
+        "warnings": [
+          "subtitle_audio_duration_used"
+        ],
+        "blocking_reasons": []
+      },
+      {
+        "name": "burn_in_preview",
+        "ok": true,
+        "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_ba25_mvp_no_approval\\preview_with_subtitles.mp4",
+        "warnings": [
+          "subtitle_typewriter_ass_renderer_used"
+        ],
+        "blocking_reasons": [],
+        "extra": {
+          "skipped": false
+        }
+      }
+    ],
+    "paths": {
+      "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_no_approval\\scene_asset_pack.json",
+      "asset_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_ba25_mvp_no_approval\\asset_manifest.json",
+      "timeline_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\timeline_ba25_mvp_no_approval\\timeline_manifest.json",
+      "voiceover_audio": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_no_approval\\full_voiceover.mp3",
+      "narration_script": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_no_approval\\narration_script.txt",
+      "clean_video": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_mvp_no_approval\\clean_video.mp4",
+      "subtitle_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_mvp_no_approval\\subtitle_manifest.json",
+      "subtitle_file": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_mvp_no_approval\\subtitles.srt",
+      "preview_with_subtitles": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_ba25_mvp_no_approval\\preview_with_subtitles.mp4",
+      "local_preview_dir": "",
+      "final_render_dir": "",
+      "final_video": ""
+    },
+    "warnings": [
+      "subtitle_audio_duration_used",
+      "subtitle_typewriter_ass_renderer_used"
+    ],
+    "blocking_reasons": [],
+    "next_step": "Öffne preview_with_subtitles.mp4 im Indexpaket; Final Render bleibt BA 24.x-Flow (run_final_render.py).",
+    "created_at_epoch": 1778006465.0019822,
+    "paths_self": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_mvp_no_approval\\real_video_build_result.json"
+  },
+  "warnings": [
+    "subtitle_audio_duration_used",
+    "subtitle_typewriter_ass_renderer_used"
+  ],
+  "blocking_reasons": [],
+  "next_step": "Öffne preview_with_subtitles.mp4 (siehe Pfad im Result). Final Render bleibt der bestehende BA 24.x-Flow (run_final_render.py).",
+  "exit_code": 0,
+  "created_at_epoch": 1778006465
+}

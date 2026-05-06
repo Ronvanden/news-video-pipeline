@@ -1,0 +1,17 @@
+{
+  "render_input_bundle_version": "ba28_4_v1",
+  "run_id": "smoke_290_003",
+  "ready_for_render": true,
+  "render_readiness_status": "ready",
+  "production_summary_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\production_pack_smoke_290_003\\production_summary.json",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\generated_assets_ba268_6dedde58\\asset_manifest.json",
+  "motion_clip_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\motion_clip_manifest_smoke_290_003.json",
+  "motion_timeline_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\motion_timeline_manifest_smoke_290_003.json",
+  "subtitle_path": null,
+  "voice_paths": [],
+  "clip_paths": [],
+  "image_paths": [],
+  "overlay_intents": [],
+  "warnings": [],
+  "blocking_reasons": []
+}

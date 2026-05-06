@@ -1,0 +1,10 @@
+Founder Scene Asset Pack — BA 18.2
+
+Source: url:https://www.tagesschau.de/ausland/europa/eu-facebook-instagram-100.html
+Total chapters: 6
+Total beats: 18
+Recommended production mode: generic / documentary
+Viral hook (plan): Wusstest du, dass viele Kinder unter 13 Jahren auf Instagram und Facebook aktiv sind, obwohl diese Plattformen offiziell erst ab diesem Alter erlaubt sind? Die EU-Kommission hat jetzt alarmierende Ergebnisse veröffentlicht, die die Sicherheit unserer Kinder in den sozialen Medien in Frage stellen!
+Template type: documentary
+
+Pack contains: scene_asset_pack.json, leonardo_prompts.txt, shot_plan.md, founder_summary.txt

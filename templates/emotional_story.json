@@ -1,0 +1,73 @@
+{
+    "template_id": "emotional_story",
+    "label": "Emotional Story",
+    "narrative_style": "emotional cinematic storytelling with personal transformation",
+    "hook_style": [
+      "Manchmal verändert ein einziger Moment alles.",
+      "Diese Geschichte beginnt leise, aber sie bleibt im Kopf.",
+      "Was zunächst wie ein Rückschlag wirkt, wird zum Wendepunkt."
+    ],
+    "chapter_structure": [
+      "Der normale Anfang",
+      "Der innere Konflikt",
+      "Der Moment der Veränderung",
+      "Der schwere Weg danach",
+      "Was wir daraus lernen können"
+    ],
+    "voice_style": "warm, calm, reflective and human",
+    "scene_style": "cinematic emotional realism, warm light, intimate close-ups, natural environments",
+    "thumbnail_angle": [
+      "lonely person + emotional question",
+      "before and after transformation",
+      "symbolic object + strong facial emotion"
+    ],
+    "target_emotion": [
+      "empathy",
+      "hope",
+      "reflection",
+      "inspiration"
+    ],
+    "duration_recommendation": {
+      "short": "6-8 min",
+      "medium": "8-12 min",
+      "long": "12-18 min"
+    },
+    "best_for_topics": [
+      "life changes",
+      "personal growth",
+      "loss and comeback",
+      "motivation",
+      "human stories",
+      "society",
+      "relationships"
+    ],
+    "visual_rules": [
+      "avoid exaggerated melodrama",
+      "avoid fake personal claims",
+      "keep scenes believable and human",
+      "do not exploit real suffering"
+    ],
+    "prompt_keywords": [
+      "cinematic emotional realism",
+      "warm natural light",
+      "intimate documentary feel",
+      "human expression",
+      "soft depth of field",
+      "hopeful atmosphere"
+    ],
+    "negative_prompt": [
+      "cartoon style",
+      "overly dramatic crying",
+      "fake text",
+      "watermarks",
+      "AI artifacts",
+      "plastic skin",
+      "overly glossy commercial look"
+    ],
+    "warnings": [
+      "No fake personal testimony",
+      "Avoid emotional manipulation",
+      "Keep tone respectful and honest"
+    ]
+  }
+  

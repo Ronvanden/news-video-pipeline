@@ -1,0 +1,11 @@
+{
+  "schema_version": "real_build_voice_manifest_v1",
+  "run_id": "real_preview_001",
+  "source_type": "scene_asset_pack_visual_prompts",
+  "voice_mode_effective": "smoke",
+  "word_count": 51,
+  "estimated_duration_seconds": 21,
+  "narration_script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_real_preview_001\\narration_script.txt",
+  "full_voiceover_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_real_preview_001\\full_voiceover.mp3",
+  "warnings": []
+}

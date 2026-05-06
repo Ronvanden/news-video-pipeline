@@ -1,0 +1,17 @@
+{
+  "schema_version": "runway_image_to_video_smoke_v1",
+  "run_id": "runway_smoke_002",
+  "ok": true,
+  "status": "completed",
+  "image_path": "",
+  "prompt": "",
+  "output_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\runway_smoke_runway_smoke_002\\runway_clip.mp4",
+  "warnings": [],
+  "blocking_reasons": [],
+  "metadata": {
+    "provider": "runway",
+    "duration_seconds": 5,
+    "task_id": "7512bda1-d052-4a30-9016-fb3b8128ae05",
+    "task_url": "https://api.dev.runwayml.com/v1/tasks/7512bda1-d052-4a30-9016-fb3b8128ae05"
+  }
+}
