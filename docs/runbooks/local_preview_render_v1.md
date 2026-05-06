@@ -39,6 +39,9 @@ Nur Darstellung in `app/founder_dashboard/html.py`: dunkles Cockpit-Layout, einh
 ### BA 30.8 — CLI-Handoff nach Dashboard-Dry-Run (Full Preview Smoke lokal)
 Bei **ok: true** liefert dieselbe Response additiv `handoff_cli_command` / `handoff_cli_command_powershell` für `scripts/run_fresh_topic_preview_smoke.py` mit Run-ID `<dry_run_id>_full`, **ohne** `--dry-run`, **ohne** `--allow-live-assets`, `--provider placeholder`. Der Operator kopiert den Befehl ins Terminal (Repo-Root). Hinweis im UI: für Live-Assets nur bei bewusstem `--allow-live-assets` + Keys.
 
+### BA 30.9 — Fresh Preview: Artefakte im Browser öffnen (read-only)
+`GET /founder/dashboard/fresh-preview/file?path=<URL-encoded absoluter Pfad>` liefert Textartefakte (**`.md`**, **`.json`**, **`.txt`**) nur aus den vom Snapshot genutzten Bereichen: Unterbaum **`output/fresh_topic_preview/`**, **`output/preview_smoke_auto_summary_*.json`**, **`output/.preview_smoke_work/<run_id>/OPEN_PREVIEW_SMOKE.md`**. Max. **1 MB** pro Datei; keine Symlinks; kein Zugriff auf beliebige andere `output`-Dateien oder außerhalb von `output`. Fehler: **404** (nicht gefunden), **403** (Policy), **413** (zu groß). Im Dashboard neben **Kopieren** der Link **„Öffnen“** (neuer Tab) — **kein** MP4 über diese Route in BA 30.9. Meta: `GET /founder/dashboard/config` → `fresh_preview_file_relative`.
+
 ### CLI
 ```powershell
 python scripts/render_local_preview_from_bundle.py `

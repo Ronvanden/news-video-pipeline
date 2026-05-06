@@ -37,6 +37,9 @@ Im Panel **Fresh Preview starten**: **„Dry-Run starten“** sendet `POST /foun
 ### BA 30.8 — Handoff: Full Preview Smoke nach Dry-Run
 Nach erfolgreichem Dry-Run zeigt das Dashboard einen **kopierbaren** PowerShell-/POSIX-CLI-Befehl (`handoff_cli_command_*`) mit neuer Run-ID `…_full`, gleicher Topic/URL-Logik und Parametern — **ohne** Dashboard-Ausführung, **ohne** `--allow-live-assets` im generierten Text. Vollständiger Lauf nur lokal im Terminal; Live-Assets nur bei manueller Ergänzung von `--allow-live-assets`.
 
+### BA 30.9 — Artifact Access: Textdateien im Browser
+**„Öffnen“** im Fresh-Preview-Pfad-Grid startet `GET /founder/dashboard/fresh-preview/file?path=…` (nur **`.md`/`.json`/`.txt`**, read-only, max. 1 MB, Whitelist-Pfade unter `output` wie Fresh-Run, Summary-JSON, `OPEN_PREVIEW_SMOKE.md`). Keine Videos über diese Route; keine Writes.
+
 ### Operator-Workflow (CLI, keine Dashboard-Writes)
 1. Neu von Thema/URL/Skript bis Preview + Open-Me: `scripts/run_fresh_topic_preview_smoke.py` (siehe BA 30.2)
 2. Oder Preview-Smoke nur mit bestehendem Manifest: `scripts/run_preview_smoke_auto.py`

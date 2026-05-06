@@ -1080,8 +1080,28 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
 .fp-next-step-label { font-size: 0.64rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(139, 156, 179, 0.92); margin-bottom: 0.55rem; }
 .fp-next-step-text { font-size: 0.96rem; line-height: 1.55; font-weight: 540; color: rgba(240, 244, 250, 0.96); }
 .fp-path-grid { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.55rem 0 0.65rem; font-size: 0.82rem; }
-.fp-path-row { display: grid; grid-template-columns: minmax(108px, 148px) 1fr auto; gap: 0.5rem 0.65rem; align-items: center; }
+.fp-path-row { display: grid; grid-template-columns: minmax(100px, 132px) 1fr auto auto; gap: 0.45rem 0.55rem; align-items: center; }
 @media (max-width: 720px) { .fp-path-row { grid-template-columns: 1fr; align-items: start; } }
+a.fp-open-artifact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.22rem 0.52rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 70, 255, 0.35);
+  background: rgba(0, 70, 255, 0.1);
+  color: #b8ceff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.fp-open-artifact:hover {
+  background: rgba(0, 70, 255, 0.18);
+  border-color: rgba(0, 70, 255, 0.5);
+  color: var(--text);
+}
+.fp-open-placeholder { min-width: 3.25rem; }
 .fp-path-label { font-weight: 650; color: var(--muted); font-size: 0.78rem; }
 .fp-path-value {
   word-break: break-all;
@@ -1293,7 +1313,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
           <div class="fp-next-step-label">Nächster Schritt (Operator)</div>
           <div id="fp-operator-next-step" class="fp-next-step-text">—</div>
         </div>
-        <div id="fp-path-rows" class="fp-path-grid" data-ba305-copy-markers="1" aria-label="Fresh Preview Pfade"></div>
+        <div id="fp-path-rows" class="fp-path-grid" data-ba305-copy-markers="1" data-ba309-artifact-open="1" aria-label="Fresh Preview Pfade"></div>
         <div id="fp-reasons-wrap" class="fp-reasons-stack">
           <div id="fp-blocking-list" class="fp-reasons-block fp-blocking" style="display:none"></div>
           <div id="fp-readiness-list" class="fp-reasons-block fp-readiness" style="display:none"></div>
@@ -4806,6 +4826,16 @@ try {
     }).catch(function() {});
   }
 
+  function fdFpArtifactFileUrl(absPath) {
+    return "/founder/dashboard/fresh-preview/file?path=" + encodeURIComponent(String(absPath || ""));
+  }
+
+  function fdFpIsArtifactOpenable(absPath) {
+    var s = String(absPath || "").trim().toLowerCase();
+    if (!s) return false;
+    return /\.(md|json|txt)$/.test(s);
+  }
+
   function fdFpBuildPathRow(label, pathVal) {
     var wrap = document.createElement("div");
     wrap.className = "fp-path-row";
@@ -4816,6 +4846,20 @@ try {
     var v = document.createElement("span");
     v.className = "fp-path-value muted";
     v.textContent = has ? String(pathVal) : "Noch kein Pfad";
+    var openEl;
+    if (has && fdFpIsArtifactOpenable(pathVal)) {
+      openEl = document.createElement("a");
+      openEl.href = fdFpArtifactFileUrl(pathVal);
+      openEl.target = "_blank";
+      openEl.rel = "noopener noreferrer";
+      openEl.className = "fp-open-artifact";
+      openEl.textContent = "Öffnen";
+      openEl.setAttribute("data-ba309-open", label);
+    } else {
+      openEl = document.createElement("span");
+      openEl.className = "fp-open-placeholder";
+      openEl.setAttribute("aria-hidden", "true");
+    }
     var b = document.createElement("button");
     b.type = "button";
     b.className = "fp-copy-path";
@@ -4829,6 +4873,7 @@ try {
     }
     wrap.appendChild(pl);
     wrap.appendChild(v);
+    wrap.appendChild(openEl);
     wrap.appendChild(b);
     return wrap;
   }

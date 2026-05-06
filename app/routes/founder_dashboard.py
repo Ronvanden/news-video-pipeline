@@ -9,12 +9,16 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from app.founder_dashboard.fresh_preview_artifact_access import (
+    fresh_preview_artifact_media_type,
+    resolve_fresh_preview_artifact_path,
+)
 from app.founder_dashboard.html import get_founder_dashboard_html
 from app.production_assembly.fresh_preview_snapshot import build_latest_fresh_preview_snapshot
 from app.production_assembly.fresh_topic_preview_smoke import run_fresh_topic_preview_smoke
@@ -106,6 +110,34 @@ async def founder_production_proof_summary() -> dict:
 async def founder_fresh_preview_snapshot() -> dict:
     """BA 30.3 — read-only Scan von ``output/fresh_topic_preview`` (keine Provider, keine Secrets)."""
     return await run_in_threadpool(build_latest_fresh_preview_snapshot, default_local_preview_out_root())
+
+
+@router.get("/founder/dashboard/fresh-preview/file")
+async def founder_fresh_preview_artifact_file(
+    artifact_path: str = Query(..., alias="path", min_length=1, max_length=6000),
+) -> FileResponse:
+    """
+    BA 30.9 — liefert eine Textdatei (.md / .json / .txt) aus den Fresh-Preview-Artefakt-Zonen.
+
+    Read-only; maximal 1 MB; keine Symlinks; Path-Traversal außerhalb von ``output`` blockiert.
+    """
+    out_root = default_local_preview_out_root()
+
+    def _resolve() -> tuple:
+        return resolve_fresh_preview_artifact_path(out_root, artifact_path)
+
+    resolved, reason = await run_in_threadpool(_resolve)
+    if reason == "ok" and resolved is not None:
+        return FileResponse(
+            resolved,
+            media_type=fresh_preview_artifact_media_type(resolved),
+            filename=resolved.name,
+        )
+    if reason == "not_found":
+        raise HTTPException(status_code=404, detail="not found")
+    if reason == "too_large":
+        raise HTTPException(status_code=413, detail="payload too large")
+    raise HTTPException(status_code=403, detail="forbidden")
 
 
 class FreshPreviewStartDryRunRequest(BaseModel):
@@ -541,6 +573,10 @@ async def founder_dashboard_config() -> dict:
         "fresh_preview_start_dry_run_relative": {
             "method": "POST",
             "path": "/founder/dashboard/fresh-preview/start-dry-run",
+        },
+        "fresh_preview_file_relative": {
+            "method": "GET",
+            "path": "/founder/dashboard/fresh-preview/file",
         },
         "local_preview_run_mini_fixture_relative": {
             "method": "POST",
