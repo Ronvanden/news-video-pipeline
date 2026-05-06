@@ -334,6 +334,7 @@ def synthesize_elevenlabs_mp3(
     ffmpeg: str,
     *,
     max_retries: int = 2,
+    chunk_max_chars: int = ELEVENLABS_CHUNK_MAX_CHARS,
     elevenlabs_voice_settings: Optional[Dict[str, Any]] = None,
     elevenlabs_post_override: Optional[Callable[[str, str, str, str], bytes]] = None,
 ) -> Tuple[bool, int, List[str], List[str]]:
@@ -346,10 +347,12 @@ def synthesize_elevenlabs_mp3(
     api_key = _elevenlabs_api_key()
     voice_id = _elevenlabs_voice_id()
     if not api_key:
-        warns.append("elevenlabs_env_missing_fallback_smoke")
+        warns.append("elevenlabs_api_key_missing_env")
+        block.append("elevenlabs_api_key_missing")
         return False, 0, warns, block
 
-    chunks = chunk_narration_for_tts(narration, ELEVENLABS_CHUNK_MAX_CHARS)
+    cm = max(200, int(chunk_max_chars or ELEVENLABS_CHUNK_MAX_CHARS))
+    chunks = chunk_narration_for_tts(narration, cm)
     if not chunks:
         return False, 0, warns + ["elevenlabs_chunks_empty"], block
 
@@ -401,18 +404,22 @@ def synthesize_openai_mp3(
     ffmpeg: str,
     *,
     max_retries: int = 2,
+    chunk_max_chars: int = OPENAI_CHUNK_MAX_CHARS,
     openai_voice_override: Optional[str] = None,
     openai_post_override: Optional[Callable[[str, str, str, str], bytes]] = None,
 ) -> Tuple[bool, int, List[str], List[str]]:
     api_key = _openai_api_key()
     warns: List[str] = []
+    block: List[str] = []
     if not api_key:
-        warns.append("openai_tts_env_missing_fallback_smoke")
-        return False, 0, warns, []
+        warns.append("openai_api_key_missing_env")
+        block.append("openai_api_key_missing")
+        return False, 0, warns, block
 
     voice = (openai_voice_override or "").strip() or _openai_tts_voice()
     model = _openai_tts_model()
-    chunks = chunk_narration_for_tts(narration, OPENAI_CHUNK_MAX_CHARS)
+    cm = max(200, int(chunk_max_chars or OPENAI_CHUNK_MAX_CHARS))
+    chunks = chunk_narration_for_tts(narration, cm)
     if not chunks:
         return False, 0, warns + ["openai_chunks_empty"], []
 
@@ -491,6 +498,9 @@ def build_full_voiceover(
     ffmpeg_bin: Optional[str] = None,
     elevenlabs_post_override: Optional[Callable[[str, str, str, str], bytes]] = None,
     openai_post_override: Optional[Callable[[str, str, str, str], bytes]] = None,
+    strict_live_voice: bool = False,
+    elevenlabs_chunk_max_chars: Optional[int] = None,
+    openai_chunk_max_chars: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Schreibt output/full_voice_<run_id>/ und gibt Metadaten zurück."""
     warnings: List[str] = []
@@ -548,12 +558,15 @@ def build_full_voiceover(
     elif est_sec < 1:
         warnings.append("smoke_mp3_skipped_zero_duration")
     else:
+        el_chunks = int(elevenlabs_chunk_max_chars) if elevenlabs_chunk_max_chars else ELEVENLABS_CHUNK_MAX_CHARS
+        oa_chunks = int(openai_chunk_max_chars) if openai_chunk_max_chars else OPENAI_CHUNK_MAX_CHARS
         if requested == "elevenlabs":
             ok_tts, n_chunks, tw, br = synthesize_elevenlabs_mp3(
                 narration,
                 mp3_path,
                 work_tts,
                 ffmpeg or "",
+                chunk_max_chars=el_chunks,
                 elevenlabs_voice_settings=elevenlabs_voice_settings,
                 elevenlabs_post_override=elevenlabs_post_override,
             )
@@ -565,23 +578,35 @@ def build_full_voiceover(
                 real_tts_generated = True
             else:
                 blocking.extend(br)
-                fallback_used = True
-                if _elevenlabs_api_key():
-                    warnings.append("elevenlabs_failed_using_smoke_fallback")
-                mp3_ok, br_smoke = _write_smoke_mp3_ffmpeg(mp3_path, est_sec, ffmpeg or "")
-                blocking = [b for b in blocking if b not in ("elevenlabs_mid_run_failed",)]
-                blocking.extend(br_smoke)
-                provider_used = "smoke"
-                chunk_count = 0
-                real_tts_generated = False
-                if not mp3_ok:
-                    warnings.append("smoke_placeholder_mp3_not_created_see_blocking")
+                key_missing = "elevenlabs_api_key_missing" in br
+                no_fallback = key_missing or strict_live_voice
+                if no_fallback:
+                    provider_used = "none"
+                    mp3_ok = False
+                    fallback_used = False
+                    real_tts_generated = False
+                    chunk_count = 0
+                    if strict_live_voice and not key_missing:
+                        warnings.append("elevenlabs_live_voice_failed_strict_no_fallback")
+                else:
+                    fallback_used = True
+                    if _elevenlabs_api_key():
+                        warnings.append("elevenlabs_failed_using_smoke_fallback")
+                    mp3_ok, br_smoke = _write_smoke_mp3_ffmpeg(mp3_path, est_sec, ffmpeg or "")
+                    blocking = [b for b in blocking if b not in ("elevenlabs_mid_run_failed",)]
+                    blocking.extend(br_smoke)
+                    provider_used = "smoke"
+                    chunk_count = 0
+                    real_tts_generated = False
+                    if not mp3_ok:
+                        warnings.append("smoke_placeholder_mp3_not_created_see_blocking")
         elif requested == "openai":
             ok_tts, n_chunks, tw, br = synthesize_openai_mp3(
                 narration,
                 mp3_path,
                 work_tts,
                 ffmpeg or "",
+                chunk_max_chars=oa_chunks,
                 openai_voice_override=openai_voice_override,
                 openai_post_override=openai_post_override,
             )
@@ -593,17 +618,28 @@ def build_full_voiceover(
                 real_tts_generated = True
             else:
                 blocking.extend(br)
-                fallback_used = True
-                if _openai_api_key():
-                    warnings.append("openai_failed_using_smoke_fallback")
-                mp3_ok, br_smoke = _write_smoke_mp3_ffmpeg(mp3_path, est_sec, ffmpeg or "")
-                blocking = [b for b in blocking if b not in ("openai_mid_run_failed",)]
-                blocking.extend(br_smoke)
-                provider_used = "smoke"
-                chunk_count = 0
-                real_tts_generated = False
-                if not mp3_ok:
-                    warnings.append("smoke_placeholder_mp3_not_created_see_blocking")
+                key_missing = "openai_api_key_missing" in br
+                no_fallback = key_missing or strict_live_voice
+                if no_fallback:
+                    provider_used = "none"
+                    mp3_ok = False
+                    fallback_used = False
+                    real_tts_generated = False
+                    chunk_count = 0
+                    if strict_live_voice and not key_missing:
+                        warnings.append("openai_live_voice_failed_strict_no_fallback")
+                else:
+                    fallback_used = True
+                    if _openai_api_key():
+                        warnings.append("openai_failed_using_smoke_fallback")
+                    mp3_ok, br_smoke = _write_smoke_mp3_ffmpeg(mp3_path, est_sec, ffmpeg or "")
+                    blocking = [b for b in blocking if b not in ("openai_mid_run_failed",)]
+                    blocking.extend(br_smoke)
+                    provider_used = "smoke"
+                    chunk_count = 0
+                    real_tts_generated = False
+                    if not mp3_ok:
+                        warnings.append("smoke_placeholder_mp3_not_created_see_blocking")
         else:
             provider_used = "smoke"
             mp3_ok, br = _write_smoke_mp3_ffmpeg(mp3_path, est_sec, ffmpeg or "")
@@ -617,11 +653,28 @@ def build_full_voiceover(
     except OSError:
         pass
 
+    el_cfg = bool(_elevenlabs_api_key())
+    oa_cfg = bool(_openai_api_key())
+    voice_completeness = "incomplete"
+    if "narration_text_empty" in blocking:
+        voice_completeness = "blocked"
+    elif mp3_ok and real_tts_generated:
+        voice_completeness = "complete"
+    elif mp3_ok and provider_used == "smoke" and narration.strip():
+        voice_completeness = "placeholder_smoke"
+    elif blocking:
+        voice_completeness = "blocked"
+
     manifest: Dict[str, Any] = {
         "run_id": run_id,
         "source_type": source_type,
         "word_count": wc,
         "estimated_duration_seconds": est_sec,
+        "voice_completeness": voice_completeness,
+        "elevenlabs_api_key_configured": el_cfg,
+        "openai_api_key_configured": oa_cfg,
+        "strict_live_voice": bool(strict_live_voice),
+        "audio_duration_seconds_probed": None,
         "voice_mode": requested,
         "voice_preset_requested": voice_preset_requested or None,
         "voice_preset_effective": voice_preset_effective,
@@ -648,6 +701,7 @@ def build_full_voiceover(
         "full_voiceover_path": str(mp3_path) if mp3_ok else "",
         "word_count": wc,
         "estimated_duration_seconds": est_sec,
+        "voice_completeness": voice_completeness,
         "source_type": source_type,
         "voice_mode": manifest["voice_mode"],
         "voice_preset_effective": voice_preset_effective,
@@ -658,6 +712,9 @@ def build_full_voiceover(
         "fallback_used": fallback_used,
         "warnings": warnings,
         "blocking_reasons": manifest["blocking_reasons"],
+        "elevenlabs_api_key_configured": el_cfg,
+        "openai_api_key_configured": oa_cfg,
+        "strict_live_voice": bool(strict_live_voice),
     }
 
 
@@ -682,9 +739,33 @@ def main() -> int:
     )
     parser.add_argument("--topic", default="Full Voiceover Run", dest="topic")
     parser.add_argument("--duration-minutes", type=int, default=10, dest="duration_minutes")
+    parser.add_argument(
+        "--strict-live-voice",
+        action="store_true",
+        dest="strict_live_voice",
+        help="BA 32.2: bei elevenlabs/openai kein Smoke-Fallback bei API-Fehler (Key fehlt weiterhin hart geblockt).",
+    )
+    parser.add_argument(
+        "--elevenlabs-chunk-max-chars",
+        type=int,
+        default=0,
+        dest="elevenlabs_chunk_max_chars",
+        metavar="N",
+        help=f"Chunk-Größe ElevenLabs (0 = Default {ELEVENLABS_CHUNK_MAX_CHARS}).",
+    )
+    parser.add_argument(
+        "--openai-chunk-max-chars",
+        type=int,
+        default=0,
+        dest="openai_chunk_max_chars",
+        metavar="N",
+        help=f"Chunk-Größe OpenAI TTS (0 = Default {OPENAI_CHUNK_MAX_CHARS}).",
+    )
     args = parser.parse_args()
 
     run_id = (args.run_id or "").strip() or str(uuid.uuid4())
+    el_cc = int(args.elevenlabs_chunk_max_chars or 0)
+    oa_cc = int(args.openai_chunk_max_chars or 0)
     try:
         if args.prompt_plan_json:
             plan, fs_extra = load_plan_from_json_file(args.prompt_plan_json)
@@ -695,6 +776,9 @@ def main() -> int:
                 voice_mode=args.voice_mode,
                 voice_preset=(args.voice_preset or "").strip() or None,
                 full_script_json=fs_extra,
+                strict_live_voice=bool(args.strict_live_voice),
+                elevenlabs_chunk_max_chars=(el_cc if el_cc > 0 else None),
+                openai_chunk_max_chars=(oa_cc if oa_cc > 0 else None),
             )
         else:
             url = (args.url or "").strip()
@@ -708,6 +792,9 @@ def main() -> int:
                 voice_mode=args.voice_mode,
                 voice_preset=(args.voice_preset or "").strip() or None,
                 full_script_json="",
+                strict_live_voice=bool(args.strict_live_voice),
+                elevenlabs_chunk_max_chars=(el_cc if el_cc > 0 else None),
+                openai_chunk_max_chars=(oa_cc if oa_cc > 0 else None),
             )
     except (OSError, ValueError, json.JSONDecodeError) as e:
         print(json.dumps({"ok": False, "error": type(e).__name__, "message": str(e)}, ensure_ascii=False, indent=2))

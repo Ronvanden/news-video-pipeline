@@ -45,6 +45,13 @@ def main() -> int:
         metavar="N",
         help="BA 32.1: max motion_clip stub generations under budget (0 = unlimited cap).",
     )
+    ap.add_argument(
+        "--voice-manifest",
+        type=Path,
+        default=None,
+        dest="voice_manifest",
+        help="BA 32.2: voice_manifest.json für Bundle/Pack (optional).",
+    )
     args = ap.parse_args()
 
     out_root = args.output_root.resolve()
@@ -57,6 +64,7 @@ def main() -> int:
         max_timeline_scenes=int(args.max_timeline_scenes),
         allow_live_motion=bool(args.allow_live_motion),
         max_live_motion_clips=int(args.max_live_motion_clips or 0),
+        voice_manifest_path=args.voice_manifest.resolve() if args.voice_manifest else None,
     )
     summary_path = out_root / f"preview_smoke_auto_summary_{args.run_id}.json"
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

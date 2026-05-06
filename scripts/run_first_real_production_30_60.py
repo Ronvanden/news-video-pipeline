@@ -52,6 +52,13 @@ def main() -> int:
         metavar="N",
         help="BA 32.1: max motion_clip stub rows under budget (0 = no cap).",
     )
+    ap.add_argument(
+        "--voice-manifest",
+        type=Path,
+        default=None,
+        dest="voice_manifest",
+        help="BA 32.2: voice_manifest.json für Render-Bundle und Production Pack (optional).",
+    )
     args = ap.parse_args()
 
     run_controlled_production_run(
@@ -66,6 +73,7 @@ def main() -> int:
         max_timeline_scenes=int(args.max_timeline_scenes),
         allow_live_motion=bool(args.allow_live_motion),
         max_live_motion_clips=int(args.max_live_motion_clips or 0),
+        voice_manifest_path=args.voice_manifest.resolve() if args.voice_manifest else None,
     )
     out_root = args.output_root.resolve()
     summ = out_root / f"first_real_production_run_summary_{args.run_id}.json"
