@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import shlex
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -14,6 +16,8 @@ from starlette.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from app.founder_dashboard.html import get_founder_dashboard_html
+from app.production_assembly.fresh_preview_snapshot import build_latest_fresh_preview_snapshot
+from app.production_assembly.fresh_topic_preview_smoke import run_fresh_topic_preview_smoke
 from app.founder_dashboard.final_render_dry_run import build_final_render_dry_run_for_local_preview
 from app.founder_dashboard.local_preview_panel import (
     build_local_preview_panel_payload,
@@ -96,6 +100,151 @@ def production_proof_summary_payload() -> dict:
 async def founder_production_proof_summary() -> dict:
     """Kompakte Orientierung für Proof-of-Production (statisch, kein SaaS)."""
     return production_proof_summary_payload()
+
+
+@router.get("/founder/dashboard/fresh-preview/snapshot")
+async def founder_fresh_preview_snapshot() -> dict:
+    """BA 30.3 — read-only Scan von ``output/fresh_topic_preview`` (keine Provider, keine Secrets)."""
+    return await run_in_threadpool(build_latest_fresh_preview_snapshot, default_local_preview_out_root())
+
+
+class FreshPreviewStartDryRunRequest(BaseModel):
+    """BA 30.7 — nur Dry-Run (stoppt nach asset_manifest); kein Live-Asset-Runner."""
+
+    topic: Optional[str] = None
+    url: Optional[str] = None
+    duration_target_seconds: int = Field(default=45, ge=5, le=900)
+    provider: Optional[str] = Field(
+        default="placeholder",
+        description="Dashboard V1: wird ignoriert; intern immer placeholder",
+    )
+    max_scenes: int = Field(default=6, ge=1, le=40)
+
+    model_config = {"extra": "forbid"}
+
+
+def _ps_single_quote_body(s: str) -> str:
+    """PowerShell single-quoted literal: escape ' as ''."""
+    return (s or "").replace("'", "''")
+
+
+def _build_fresh_preview_handoff_cli(
+    *,
+    dry_run_run_id: str,
+    topic: Optional[str],
+    url: Optional[str],
+    duration_target_seconds: int,
+    max_scenes: int,
+) -> Dict[str, str]:
+    """BA 30.8 — kopierbare CLI für vollen Preview-Smoke (ohne --dry-run, ohne --allow-live-assets)."""
+    rid_full = f"{dry_run_run_id}_full"
+    out_disp = "output"
+    dur = int(duration_target_seconds)
+    mxs = int(max_scenes)
+    if topic is not None:
+        arg_ps = f"  --topic '{_ps_single_quote_body(topic)}' `"
+        arg_sh = f"--topic {shlex.quote(topic)}"
+    else:
+        arg_ps = f"  --url '{_ps_single_quote_body(url or '')}' `"
+        arg_sh = f"--url {shlex.quote(url or '')}"
+    handoff_cli_command = " ".join(
+        [
+            "python scripts/run_fresh_topic_preview_smoke.py",
+            f"--run-id {shlex.quote(rid_full)}",
+            f"--output-root {shlex.quote(out_disp)}",
+            arg_sh,
+            f"--duration-target-seconds {dur}",
+            "--provider placeholder",
+            f"--max-scenes {mxs}",
+        ]
+    )
+    lines_ps = [
+        "python scripts/run_fresh_topic_preview_smoke.py `",
+        f"  --run-id {rid_full} `",
+        f"  --output-root {out_disp} `",
+        arg_ps,
+        f"  --duration-target-seconds {dur} `",
+        "  --provider placeholder `",
+        f"  --max-scenes {mxs}",
+    ]
+    handoff_cli_command_powershell = "\n".join(lines_ps)
+    handoff_note = (
+        "Vollständiger Preview-Smoke lokal (ohne --dry-run): MP4/Open-Me gemäß BA 30.2. "
+        "Im Repository-Root ausführen."
+    )
+    handoff_warning = (
+        "Dieser Befehl startet einen längeren Lauf inkl. Preview-Pipeline und FFmpeg — nicht aus dem Dashboard. "
+        "Für echte Live-Assets muss der Operator bewusst --allow-live-assets ergänzen und API-Keys bereitstellen."
+    )
+    return {
+        "handoff_cli_command": handoff_cli_command,
+        "handoff_cli_command_powershell": handoff_cli_command_powershell,
+        "handoff_note": handoff_note,
+        "handoff_warning": handoff_warning,
+    }
+
+
+@router.post("/founder/dashboard/fresh-preview/start-dry-run")
+async def founder_fresh_preview_start_dry_run(req: FreshPreviewStartDryRunRequest) -> dict:
+    """
+    BA 30.7 — startet ``run_fresh_topic_preview_smoke`` mit ``dry_run=True`` und ``asset_runner_mode=placeholder``.
+
+    Genau eines von ``topic`` oder ``url`` (nicht-leer nach Strip) ist erforderlich.
+    """
+    topic = (req.topic or "").strip() or None
+    url = (req.url or "").strip() or None
+    if not topic and not url:
+        raise HTTPException(
+            status_code=422,
+            detail="fresh_preview_start_dry_run: topic oder url erforderlich",
+        )
+    if topic and url:
+        raise HTTPException(
+            status_code=422,
+            detail="fresh_preview_start_dry_run: nur eines von topic oder url, nicht beides",
+        )
+
+    run_id = f"fresh_dash_{int(time.time() * 1000)}"
+    out_root = default_local_preview_out_root()
+
+    def _run() -> Dict[str, Any]:
+        return run_fresh_topic_preview_smoke(
+            run_id=run_id,
+            output_root=out_root,
+            topic=topic,
+            url=url,
+            duration_target_seconds=int(req.duration_target_seconds),
+            provider="placeholder",
+            dry_run=True,
+            max_scenes=int(req.max_scenes),
+            asset_runner_mode="placeholder",
+        )
+
+    result = await run_in_threadpool(_run)
+    warnings = list(result.get("warnings") or [])
+    blockers = list(result.get("blocking_reasons") or [])
+    ok = bool(result.get("ok"))
+    rid_actual = str(result.get("run_id") or run_id)
+    payload: Dict[str, Any] = {
+        "ok": ok,
+        "run_id": rid_actual,
+        "output_dir": str(result.get("fresh_work_dir") or ""),
+        "snapshot_hint": "Refresh Fresh Preview Snapshot",
+        "warnings": warnings,
+        "blocking_reasons": blockers,
+        "fresh_preview_start_dry_run_version": "ba30_8_v1",
+    }
+    if ok:
+        payload.update(
+            _build_fresh_preview_handoff_cli(
+                dry_run_run_id=rid_actual,
+                topic=topic,
+                url=url,
+                duration_target_seconds=int(req.duration_target_seconds),
+                max_scenes=int(req.max_scenes),
+            )
+        )
+    return payload
 
 
 @router.get("/founder/dashboard/local-preview/panel")
@@ -388,6 +537,11 @@ async def founder_dashboard_config() -> dict:
         "dashboard_version": "10.7-v1",
         "auth": False,
         "local_preview_panel_relative": {"method": "GET", "path": "/founder/dashboard/local-preview/panel"},
+        "fresh_preview_snapshot_relative": {"method": "GET", "path": "/founder/dashboard/fresh-preview/snapshot"},
+        "fresh_preview_start_dry_run_relative": {
+            "method": "POST",
+            "path": "/founder/dashboard/fresh-preview/start-dry-run",
+        },
         "local_preview_run_mini_fixture_relative": {
             "method": "POST",
             "path": "/founder/dashboard/local-preview/run-mini-fixture",

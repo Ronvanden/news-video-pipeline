@@ -8,15 +8,23 @@ def get_founder_dashboard_html() -> str:
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Founder Dashboard</title>
+<title>VideoPipe · Founder Dashboard</title>
 <style>
 :root {
-  --bg: #0f1419;
-  --surface: #1a222d;
-  --border: #2d3a4d;
-  --text: #e7ecf3;
-  --muted: #8b9cb3;
-  --accent: #3d8bfd;
+  /* BA 30.6 — Visual tokens (alias → bestehende Semantik) */
+  --vp-blue: #0046FF;
+  --vp-bg-dark: #0a0f1a;
+  --vp-card: #1a2334;
+  --vp-border: #2a3349;
+  --vp-text-main: #e8edf5;
+  --vp-text-muted: #8b9cb3;
+  --vp-card-shadow: 0 1px 0 rgba(255, 255, 255, 0.055), 0 16px 40px rgba(0, 0, 0, 0.28);
+  --bg: var(--vp-bg-dark);
+  --surface: var(--vp-card);
+  --border: var(--vp-border);
+  --text: var(--vp-text-main);
+  --muted: var(--vp-text-muted);
+  --accent: var(--vp-blue);
   --danger: #f87171;
   --ok: #4ade80;
   --warn: #fbbf24;
@@ -24,20 +32,362 @@ def get_founder_dashboard_html() -> str:
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  background: var(--bg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Inter", sans-serif;
+  background:
+    radial-gradient(ellipse 85% 55% at 50% -15%, rgba(0, 70, 255, 0.16), transparent 52%),
+    radial-gradient(ellipse 60% 40% at 100% 30%, rgba(0, 50, 180, 0.08), transparent 45%),
+    var(--bg);
   color: var(--text);
   line-height: 1.45;
   font-size: 15px;
 }
-header {
-  padding: 1rem 1.25rem;
+.fd-header-hero {
+  padding: 1.85rem clamp(1.25rem, 3vw, 2.25rem) 1.65rem;
   border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(22, 30, 48, 0.97) 0%, rgba(12, 16, 26, 0.94) 100%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
 }
-header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
-header p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.85rem; }
-main { padding: 1rem 1.25rem 2rem; max-width: 1200px; margin: 0 auto; }
+.fd-header-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: min(100%, 320px);
+}
+.fd-logo-mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 10px;
+  background: linear-gradient(145deg, var(--vp-blue), #0032b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 70, 255, 0.35);
+}
+.fd-header-brand h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 2.05rem);
+  font-weight: 680;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+.fd-header-sub {
+  margin: 0.55rem 0 0;
+  color: rgba(224, 232, 245, 0.92);
+  font-size: 1rem;
+  font-weight: 450;
+  max-width: 40rem;
+  line-height: 1.55;
+  letter-spacing: -0.015em;
+}
+.fd-header-tech {
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 450;
+  color: rgba(139, 156, 179, 0.82);
+  max-width: 40rem;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+.fd-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+}
+.vp-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.26rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 580;
+  border: 1px solid rgba(54, 65, 88, 0.95);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(196, 206, 220, 0.88);
+  white-space: nowrap;
+}
+.vp-status-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(139, 156, 179, 0.55);
+  flex-shrink: 0;
+}
+.vp-status-pill--ok {
+  border-color: rgba(74, 222, 128, 0.38);
+  background: rgba(74, 222, 128, 0.09);
+  color: #c4f5d4;
+}
+.vp-status-pill--ok::before {
+  background: var(--ok);
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.18);
+}
+.vp-status-pill--pipeline {
+  border-color: rgba(0, 70, 255, 0.32);
+  background: rgba(0, 70, 255, 0.08);
+  color: #b8ceff;
+}
+.vp-status-pill--pipeline::before {
+  background: var(--vp-blue);
+  box-shadow: 0 0 0 2px rgba(0, 70, 255, 0.16);
+}
+button.fd-header-cta.primary {
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0.58rem 1.2rem;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #1a5cff 0%, var(--accent) 100%);
+  border: 1px solid rgba(100, 150, 255, 0.45);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 8px 26px rgba(0, 70, 255, 0.26);
+  letter-spacing: -0.01em;
+}
+button.fd-header-cta.primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.fd-app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  gap: 0;
+}
+@media (min-width: 960px) {
+  .fd-app-shell {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 0 clamp(1rem, 2.5vw, 1.75rem) 2rem;
+    box-sizing: border-box;
+  }
+}
+.fd-sidebar {
+  flex-shrink: 0;
+  padding: 1rem 1.15rem 1.15rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--vp-card-shadow);
+  margin: 0 clamp(1.25rem, 3vw, 2.25rem) 0.85rem;
+  box-sizing: border-box;
+}
+@media (min-width: 960px) {
+  .fd-sidebar {
+    width: min(280px, 26vw);
+    min-width: 240px;
+    max-width: 280px;
+    margin: 0;
+    align-self: flex-start;
+  }
+}
+.fd-sidebar-brand { margin-bottom: 0.65rem; }
+.fd-sidebar-logo {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+.fd-sidebar-tagline {
+  margin: 0.28rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(139, 156, 179, 0.92);
+  font-weight: 450;
+}
+.fd-sidebar-pill {
+  margin-bottom: 0.85rem;
+  font-size: 0.65rem;
+}
+.fd-sidebar-nav {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.85rem;
+}
+@media (min-width: 960px) {
+  .fd-sidebar-nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0.2rem;
+  }
+}
+button.fd-sidebar-link {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  padding: 0.42rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(48, 58, 78, 0.85);
+  background: rgba(0, 0, 0, 0.12);
+  color: rgba(224, 232, 245, 0.92);
+  font-size: 0.78rem;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+@media (min-width: 960px) {
+  button.fd-sidebar-link {
+    width: 100%;
+  }
+}
+button.fd-sidebar-link:hover:not(:disabled) {
+  background: rgba(0, 70, 255, 0.12);
+  border-color: rgba(0, 70, 255, 0.35);
+  color: var(--text);
+}
+.fd-sidebar-score {
+  margin-top: 0.35rem;
+  padding: 0.72rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(48, 58, 78, 0.85);
+  background: rgba(0, 0, 0, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.fd-sidebar-score-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+}
+.fd-sidebar-mini-gauge .fd-score-gauge-ring {
+  --fd-sg-ring: 40px;
+  --fd-sg-inner: 28px;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.fd-sidebar-mini-gauge .fd-score-gauge-inner {
+  padding: 0;
+  border-width: 1px;
+}
+.fd-sidebar-score-copy {
+  flex: 1;
+  min-width: 0;
+}
+.fd-sidebar-score-k {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(139, 156, 179, 0.9);
+  margin-bottom: 0.15rem;
+}
+.fd-sidebar-score-v {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: rgba(236, 241, 248, 0.96);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Inter", sans-serif;
+  line-height: 1.25;
+}
+.fd-sidebar-score-v.fd-sidebar-score-v--empty {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(160, 176, 198, 0.9);
+}
+.fd-sidebar-score-footnote {
+  margin: 0.45rem 0 0;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  color: rgba(139, 156, 179, 0.78);
+  font-weight: 450;
+}
+.fd-main-column {
+  flex: 1;
+  min-width: 0;
+}
+.fd-main-column .fd-dashboard-main {
+  margin: 0;
+  max-width: none;
+}
+main.fd-dashboard-main {
+  padding: 1.5rem clamp(1.25rem, 3vw, 2.25rem) 3rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.fd-exec-row {
+  margin-bottom: 1.35rem;
+}
+.fd-exec-row .fp-exec-strip {
+  margin-bottom: 0;
+}
+.fp-cockpit-primary {
+  border-color: rgba(0, 70, 255, 0.32);
+  background: linear-gradient(165deg, rgba(28, 38, 58, 0.92) 0%, rgba(22, 29, 44, 0.98) 48%, rgba(20, 26, 40, 1) 100%);
+  box-shadow: var(--vp-card-shadow), 0 0 0 1px rgba(0, 70, 255, 0.07);
+}
+.fp-cockpit-panel-head {
+  border-bottom-color: rgba(42, 51, 73, 0.9);
+}
+.fp-cockpit-split {
+  display: grid;
+  gap: 1.35rem;
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .fp-cockpit-split {
+    grid-template-columns: minmax(300px, 0.92fr) minmax(340px, 1.08fr);
+  }
+}
+.fp-cockpit-col { min-width: 0; }
+.fp-cockpit-col--actions .fp-dry-run-card {
+  margin-bottom: 0;
+  height: 100%;
+  min-height: 100%;
+  background: rgba(0, 0, 0, 0.18);
+  border-color: rgba(0, 70, 255, 0.22);
+}
+.fp-cockpit-col--snapshot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.fp-cockpit-col--snapshot .fp-readiness-banner {
+  margin-top: 0;
+}
+.fp-btn-dry-run.primary {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.58rem 1.22rem;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #1a5cff 0%, var(--accent) 100%);
+  border: 1px solid rgba(100, 150, 255, 0.5);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 10px 28px rgba(0, 70, 255, 0.3);
+  letter-spacing: -0.01em;
+}
+.fp-btn-dry-run.primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+button.fp-btn-secondary {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(48, 58, 78, 0.95);
+  color: rgba(224, 232, 245, 0.9);
+  font-weight: 520;
+  box-shadow: none;
+}
+button.fp-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(0, 70, 255, 0.32);
+}
+.panel--founder-secondary {
+  opacity: 0.97;
+  border-color: rgba(42, 51, 73, 0.75);
+}
 #error-bar {
   display: none;
   margin-bottom: 1rem;
@@ -65,8 +415,9 @@ main { padding: 1rem 1.25rem 2rem; max-width: 1200px; margin: 0 auto; }
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1rem;
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: var(--vp-card-shadow);
 }
 .panel h2, .subh {
   margin: 0 0 0.75rem;
@@ -75,6 +426,44 @@ main { padding: 1rem 1.25rem 2rem; max-width: 1200px; margin: 0 auto; }
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+.panel-section-head {
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(36, 43, 61, 0.85);
+}
+.panel-section-head h2 {
+  margin-bottom: 0.35rem;
+}
+.panel-section-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.fp-cockpit-panel-head h2#fp-snapshot-h {
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  text-transform: none;
+  color: var(--text);
+}
+.fp-cockpit-panel-head .panel-section-desc {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: rgba(196, 206, 220, 0.88);
+}
+.fp-inline-path {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.82em;
+  font-weight: 450;
+  padding: 0.1rem 0.32rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(42, 51, 73, 0.85);
+}
+.panel--fresh-preview {
+  border-color: rgba(0, 70, 255, 0.22);
+  box-shadow: var(--vp-card-shadow), 0 0 0 1px rgba(0, 70, 255, 0.06);
 }
 .lp-section {
   border: 1px solid rgba(45, 58, 77, 0.65);
@@ -114,8 +503,9 @@ button {
 }
 button.primary {
   background: var(--accent);
-  border-color: #2563eb;
+  border-color: #0038d9;
   color: #fff;
+  font-weight: 600;
 }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 button.is-loading {
@@ -168,9 +558,10 @@ pre.out {
 details.fd-coll {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   margin-bottom: 0.75rem;
   padding: 0.35rem 0.75rem 0.75rem;
+  box-shadow: var(--vp-card-shadow);
 }
 details.fd-coll > summary {
   cursor: pointer;
@@ -376,13 +767,13 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
 .strat-badge.mid { background: rgba(251,191,36,0.15); color: var(--warn); }
 .strat-badge.low { background: rgba(139,156,179,0.2); color: var(--muted); }
 .nba-card {
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 0.65rem 0.85rem;
   margin: 0.5rem 0 0.75rem;
   font-weight: 700;
   font-size: 0.95rem;
   border: 1px solid var(--border);
-  background: rgba(61,139,253,0.12);
+  background: rgba(0, 70, 255, 0.1);
 }
 .nba-card.produzieren { background: rgba(74,222,128,0.15); border-color: var(--ok); color: #bbf7d0; }
 .nba-card.thumb { background: rgba(251,191,36,0.12); border-color: var(--warn); }
@@ -428,7 +819,7 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
 }
 .pipe-timeline li.pipe-step.pending { color: var(--muted); }
 .pipe-timeline li.pipe-step.active { color: var(--accent); font-weight: 600; }
-.pipe-timeline li.pipe-step.active::before { background: var(--accent); box-shadow: 0 0 0 3px rgba(61,139,253,0.25); }
+.pipe-timeline li.pipe-step.active::before { background: var(--accent); box-shadow: 0 0 0 3px rgba(0, 70, 255, 0.28); }
 .pipe-timeline li.pipe-step.done { color: var(--ok); }
 .pipe-timeline li.pipe-step.done::before { background: var(--ok); }
 .pipe-timeline li.pipe-step.err { color: var(--danger); }
@@ -464,17 +855,456 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
   border: 1px solid var(--border);
   background: #000;
 }
+.fp-exec-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+.fp-exec-cell {
+  border-radius: 11px;
+  border: 1px solid rgba(42, 51, 73, 0.75);
+  background: linear-gradient(165deg, rgba(32, 40, 58, 0.52) 0%, rgba(18, 24, 38, 0.78) 100%);
+  padding: 0.75rem 0.88rem;
+  min-height: 4.35rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+.fp-exec-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(139, 156, 179, 0.88);
+  margin-bottom: 0.35rem;
+}
+.fp-exec-val {
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  word-break: break-word;
+  color: var(--text);
+}
+.fp-exec-hint {
+  font-size: 0.72rem;
+  font-weight: 450;
+  line-height: 1.42;
+  color: rgba(139, 156, 179, 0.9);
+  margin-top: 0.42rem;
+}
+.fp-exec-readiness-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+.fp-exec-readiness-copy {
+  flex: 1;
+  min-width: 0;
+}
+.fp-exec-mini-gauge {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+.fp-readiness-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  padding: 0.78rem 1rem;
+  margin: 0 0 0.85rem;
+  border-radius: 11px;
+  border: 1px solid rgba(48, 58, 78, 0.92);
+  background: rgba(12, 16, 26, 0.55);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.035) inset;
+}
+.fp-readiness-row { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; flex: 1; min-width: 140px; }
+.fp-readiness-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(54, 65, 88, 0.9);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Inter", sans-serif;
+}
+.fp-readiness-ready { background: rgba(34, 120, 80, 0.45); color: #c8ffd8; border-color: rgba(74, 222, 128, 0.45); }
+.fp-readiness-warning { background: rgba(140, 100, 30, 0.42); color: #ffe0a8; border-color: rgba(251, 191, 36, 0.45); }
+.fp-readiness-blocked { background: rgba(120, 40, 40, 0.42); color: #ffc8c8; border-color: rgba(248, 113, 113, 0.45); }
+.fp-readiness-unknown { background: rgba(255, 255, 255, 0.04); color: var(--muted); }
+.fp-readiness-score-wrap { font-size: 0.86rem; font-weight: 550; color: rgba(224, 232, 245, 0.92); letter-spacing: -0.01em; }
+.fp-readiness-footnote {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: rgba(139, 156, 179, 0.88);
+  font-weight: 450;
+}
+/* BA 30.6d — wiederverwendbares Score-Gauge (Preview Power + weitere 0–100-Werte) */
+.fd-score-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.fd-score-gauge--large {
+  gap: 0.42rem;
+}
+.fd-score-gauge--large .fd-score-gauge-ring {
+  --fd-sg-ring: 118px;
+  --fd-sg-inner: 86px;
+}
+.fd-score-gauge--small .fd-score-gauge-ring {
+  --fd-sg-ring: 44px;
+  --fd-sg-inner: 32px;
+}
+.fd-score-gauge-caption {
+  margin: 0;
+  font-size: 0.63rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: rgba(154, 168, 188, 0.9);
+  text-align: center;
+}
+.fd-score-gauge-footnote {
+  margin: 0;
+  max-width: 11.5rem;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  font-weight: 450;
+  color: rgba(139, 156, 179, 0.82);
+  text-align: center;
+}
+.fd-score-gauge-ring {
+  --fd-sg-pct: 0;
+  --fd-sg-accent: rgba(120, 135, 158, 0.42);
+  --fd-sg-track: rgba(28, 34, 48, 0.88);
+  width: var(--fd-sg-ring);
+  height: var(--fd-sg-ring);
+  border-radius: 50%;
+  background: conic-gradient(from -90deg, var(--fd-sg-accent) calc(var(--fd-sg-pct) * 1%), var(--fd-sg-track) 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.32),
+    0 1px 0 rgba(255, 255, 255, 0.05),
+    0 6px 18px rgba(0, 0, 0, 0.16);
+}
+.fd-score-gauge-inner {
+  width: var(--fd-sg-inner);
+  height: var(--fd-sg-inner);
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 22%, rgba(55, 65, 88, 0.45) 0%, rgba(16, 20, 32, 0.98) 55%, rgba(10, 14, 22, 1) 100%);
+  border: 1px solid rgba(55, 65, 88, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.28rem 0.32rem;
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.fd-score-gauge-value {
+  font-size: 1.32rem;
+  font-weight: 680;
+  letter-spacing: -0.035em;
+  color: rgba(244, 247, 252, 0.98);
+  line-height: 1.02;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Inter", sans-serif;
+}
+.fd-score-gauge-value.fd-score-gauge-value--empty {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: rgba(176, 188, 206, 0.92);
+  text-transform: none;
+}
+.fd-score-gauge-label {
+  font-size: 0.6rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(154, 168, 188, 0.82);
+  margin-top: 0.28rem;
+  line-height: 1.2;
+  max-width: 5.5rem;
+}
+.fd-score-gauge-ring--ready {
+  --fd-sg-accent: rgba(56, 189, 172, 0.82);
+  --fd-sg-track: rgba(45, 110, 100, 0.22);
+}
+.fd-score-gauge-ring--ready .fd-score-gauge-inner {
+  border-color: rgba(56, 189, 172, 0.22);
+}
+.fd-score-gauge-ring--ready .fd-score-gauge-label { color: rgba(153, 230, 216, 0.88); }
+.fd-score-gauge-ring--warning {
+  --fd-sg-accent: rgba(217, 165, 70, 0.88);
+  --fd-sg-track: rgba(110, 85, 40, 0.2);
+}
+.fd-score-gauge-ring--warning .fd-score-gauge-label { color: rgba(253, 224, 138, 0.88); }
+.fd-score-gauge-ring--blocked {
+  --fd-sg-accent: rgba(220, 110, 110, 0.82);
+  --fd-sg-track: rgba(95, 45, 45, 0.22);
+}
+.fd-score-gauge-ring--blocked .fd-score-gauge-label { color: rgba(254, 202, 202, 0.88); }
+.fd-score-gauge-ring--neutral {
+  --fd-sg-accent: rgba(118, 132, 155, 0.38);
+  --fd-sg-track: rgba(30, 36, 50, 0.9);
+}
+.fp-preview-power-host {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 118px;
+}
+.fp-preview-power-title { margin: 0; }
+.fp-toolbar { margin: 0 0 0.35rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.fp-toolbar .sm.primary { font-weight: 600; }
+.fp-next-step-box {
+  border-radius: 11px;
+  padding: 1.05rem 1.12rem;
+  margin: 0.55rem 0 0.85rem;
+  border: 1px solid rgba(54, 65, 88, 0.95);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.24);
+}
+.fp-next-step--blocked { border-color: rgba(248, 113, 113, 0.42); background: rgba(120, 40, 40, 0.14); }
+.fp-next-step--warning { border-color: rgba(251, 191, 36, 0.42); background: rgba(140, 100, 30, 0.12); }
+.fp-next-step--ready { border-color: rgba(74, 222, 128, 0.42); background: rgba(34, 120, 80, 0.14); }
+.fp-next-step--neutral { background: rgba(0, 0, 0, 0.18); }
+.fp-next-step-label { font-size: 0.64rem; font-weight: 650; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(139, 156, 179, 0.92); margin-bottom: 0.55rem; }
+.fp-next-step-text { font-size: 0.96rem; line-height: 1.55; font-weight: 540; color: rgba(240, 244, 250, 0.96); }
+.fp-path-grid { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.55rem 0 0.65rem; font-size: 0.82rem; }
+.fp-path-row { display: grid; grid-template-columns: minmax(108px, 148px) 1fr auto; gap: 0.5rem 0.65rem; align-items: center; }
+@media (max-width: 720px) { .fp-path-row { grid-template-columns: 1fr; align-items: start; } }
+.fp-path-label { font-weight: 650; color: var(--muted); font-size: 0.78rem; }
+.fp-path-value {
+  word-break: break-all;
+  font-family: ui-monospace, monospace;
+  font-size: 0.76rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(36, 43, 61, 0.9);
+  color: var(--text);
+}
+.fp-reasons-stack { display: flex; flex-direction: column; gap: 0.65rem; margin: 0.5rem 0 0.75rem; }
+.fp-reasons-block { margin: 0; font-size: 0.84rem; border-radius: 10px; padding: 0.72rem 0.88rem; border: 1px solid rgba(48, 58, 78, 0.85); background: rgba(0, 0, 0, 0.14); line-height: 1.45; }
+.fp-reasons-block ul { margin: 0.3rem 0 0 1.1rem; padding: 0; }
+.fp-reasons-title { font-weight: 650; margin: 0; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(196, 206, 220, 0.82); }
+.fp-blocking { border-color: rgba(248, 113, 113, 0.32); background: rgba(120, 40, 40, 0.09); }
+.fp-blocking .fp-reasons-title { color: #f0a8a8; }
+.fp-readiness { border-color: rgba(251, 191, 36, 0.32); background: rgba(140, 100, 30, 0.08); }
+.fp-readiness .fp-reasons-title { color: #f5d78a; }
+.fp-scan { border-color: rgba(139, 156, 179, 0.28); background: rgba(255, 255, 255, 0.02); }
+.fp-scan .fp-reasons-title { color: rgba(160, 176, 198, 0.88); }
+button.fp-copy-path {
+  padding: 0.16rem 0.4rem;
+  font-size: 0.61rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(48, 58, 78, 0.95);
+  color: rgba(180, 194, 212, 0.95);
+  align-self: center;
+}
+button.fp-copy-path:hover:not(:disabled) {
+  border-color: rgba(0, 70, 255, 0.45);
+  color: var(--text);
+}
+button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
+.fp-dry-run-card {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 70, 255, 0.28);
+  background: rgba(0, 0, 0, 0.2);
+}
+.fp-dry-run-card .subh { margin-top: 0; }
+.fp-module-title {
+  font-size: 0.7rem !important;
+  font-weight: 650 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.07em !important;
+  color: rgba(196, 206, 220, 0.78) !important;
+  margin-bottom: 0.7rem !important;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(42, 51, 73, 0.85);
+}
+.fp-dry-run-meta {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  font-weight: 450;
+  color: rgba(139, 156, 179, 0.94);
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+.fp-dry-run-grid { display: grid; gap: 0.15rem 1rem; }
+@media (min-width: 720px) {
+  .fp-dry-run-grid { grid-template-columns: 1fr 1fr; }
+}
+.fp-dry-run-actions { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+#fp-dry-run-status { min-height: 1.2rem; margin: 0.5rem 0 0; font-size: 0.82rem; }
+#fp-dry-run-result { margin-top: 0.5rem; }
+.fp-dry-run-handoff {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 70, 255, 0.35);
+  background: rgba(0, 70, 255, 0.08);
+}
+.fp-handoff-h { margin: 0 0 0.5rem; font-size: 0.82rem; color: var(--text); }
+.fp-handoff-note, .fp-handoff-warning { margin: 0 0 0.45rem; font-size: 0.78rem; line-height: 1.45; }
+#fp-dry-run-handoff-ps { margin: 0.5rem 0; max-height: 220px; font-size: 0.72rem; }
 </style>
 </head>
 <body>
-  <header>
-  <h1>Founder Dashboard</h1>
-  <p>Read-only Cockpit · Story-Engine per fetch · BA 11.0–11.2 Operator Clarity · BA 22.0 Local Preview Panel (ohne Auth / Firestore / externe Provider)</p>
-</header>
-<main>
+  <header class="fd-header-hero" id="fd-overview-anchor">
+    <div class="fd-header-brand">
+      <div class="fd-logo-mark" aria-hidden="true">▶</div>
+      <div>
+        <h1>VideoPipe Founder Cockpit</h1>
+        <p class="fd-header-sub">Start, prüfe und steuere Fresh Preview Runs aus einem ruhigen Operator-Cockpit.</p>
+        <p class="fd-header-tech">Lokaler Snapshot · Dry-Run ohne Live-Provider · read-only</p>
+      </div>
+    </div>
+    <div class="fd-header-actions">
+      <span class="vp-status-pill vp-status-pill--ok" title="Lokaler Produktions- und Preview-Pfad vorbereitet">Production Ready</span>
+      <span class="vp-status-pill vp-status-pill--pipeline" title="Lokale Preview-Pipeline ohne externe Provider-Calls">Local Preview Pipeline</span>
+      <button type="button" class="primary fd-header-cta" id="fd-header-cta-local-preview" data-ba306-header-cta="1">Zum Fresh Preview Panel</button>
+    </div>
+  </header>
+<div class="fd-app-shell" data-ba306c-sidebar="1">
+  <aside id="fd-sidebar" class="fd-sidebar" aria-label="Hauptnavigation">
+    <div class="fd-sidebar-brand">
+      <span class="fd-sidebar-logo">VideoPipe</span>
+      <p class="fd-sidebar-tagline">Founder Cockpit</p>
+    </div>
+    <span class="vp-status-pill vp-status-pill--pipeline fd-sidebar-pill" title="Lokale Preview-Pipeline ohne externe Provider-Calls">Local Preview Pipeline</span>
+    <nav id="fd-sidebar-nav" class="fd-sidebar-nav" aria-label="Bereiche">
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fd-overview-anchor">Overview</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Fresh Preview</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Readiness</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fp-dry-run-handoff">Handoff</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba22-local-preview">Local Preview</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="founder-strategic-summary">Founder Summary</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="coll-input-panel">Raw / Debug</button>
+    </nav>
+    <div class="fd-sidebar-score" data-ba306d-score-gauge="sidebar" aria-live="polite">
+      <div class="fd-sidebar-score-row">
+        <div class="fd-sidebar-mini-gauge fd-score-gauge fd-score-gauge--small" aria-hidden="true">
+          <div class="fd-score-gauge-ring fd-score-gauge-ring--neutral" id="fd-sidebar-preview-power-ring" style="--fd-sg-pct: 0">
+            <div class="fd-score-gauge-inner"></div>
+          </div>
+        </div>
+        <div class="fd-sidebar-score-copy">
+          <span class="fd-sidebar-score-k">Preview Power</span>
+          <span class="fd-sidebar-score-v fd-sidebar-score-v--empty" id="fd-sidebar-preview-power">Noch kein Score</span>
+        </div>
+      </div>
+      <p class="fd-sidebar-score-footnote">Score basiert auf Fresh Preview Readiness</p>
+    </div>
+  </aside>
+  <div class="fd-main-column">
+<main class="fd-dashboard-main">
   <div id="error-bar" role="alert"></div>
 
-  <section class="panel" id="founder-strategic-summary">
+  <div class="fd-exec-row" data-ba306b-exec-row="1">
+    <div class="fp-exec-strip" id="fp-exec-strip" data-ba306-exec-strip="1" aria-label="Executive Kurzüberblick Fresh Preview">
+      <div class="fp-exec-cell"><div class="fp-exec-label">Fresh Preview Status</div><div class="fp-exec-val" id="fp-exec-fresh-status">Warte auf Snapshot</div><div class="fp-exec-hint" id="fp-exec-hint-fresh"></div></div>
+      <div class="fp-exec-cell"><div class="fp-exec-label">Readiness Score</div><div class="fp-exec-readiness-body"><div class="fp-exec-mini-gauge fd-score-gauge fd-score-gauge--small" aria-hidden="true"><div class="fd-score-gauge-ring fd-score-gauge-ring--neutral" id="fp-exec-readiness-ring" style="--fd-sg-pct: 0"><div class="fd-score-gauge-inner"></div></div></div><div class="fp-exec-readiness-copy"><div class="fp-exec-val" id="fp-exec-readiness-score">Nicht bewertet</div><div class="fp-exec-hint" id="fp-exec-hint-score">Readiness wird nach dem Snapshot berechnet</div></div></div></div>
+      <div class="fp-exec-cell"><div class="fp-exec-label">Latest Run</div><div class="fp-exec-val" id="fp-exec-latest-run">Noch kein Run</div><div class="fp-exec-hint" id="fp-exec-hint-run"></div></div>
+      <div class="fp-exec-cell"><div class="fp-exec-label">Next Operator Step</div><div class="fp-exec-val" id="fp-exec-next-step-short">Starte einen Dry-Run, um den ersten Snapshot zu erzeugen</div><div class="fp-exec-hint" id="fp-exec-hint-next"></div></div>
+    </div>
+  </div>
+
+  <section class="panel panel--fresh-preview fp-cockpit-primary" id="panel-ba303-fresh-preview" aria-labelledby="fp-snapshot-h">
+    <div class="panel-section-head fp-cockpit-panel-head">
+      <h2 id="fp-snapshot-h">Fresh Preview Smoke (BA 30.3–30.8)</h2>
+      <p class="panel-section-desc muted">Read-only Snapshot unter <code class="fp-inline-path">output/fresh_topic_preview/</code> · Ready, Warning oder Blocked auf einen Blick · Dry-Run und Aktualisieren an einem Ort.</p>
+    </div>
+    <div class="fp-cockpit-split">
+      <div class="fp-cockpit-col fp-cockpit-col--actions">
+        <div class="fp-dry-run-card" id="fp-dry-run-panel" data-ba307-dry-run-panel="1" aria-labelledby="fp-dry-run-h">
+          <h3 class="subh fp-module-title" id="fp-dry-run-h">Fresh Preview starten</h3>
+          <p class="fp-dry-run-meta">Dry-Run: keine Live-Provider, keine externen Asset-Kosten.</p>
+          <div class="fp-dry-run-grid">
+            <div>
+              <label for="fp-dry-topic">Topic</label>
+              <input type="text" id="fp-dry-topic" placeholder="Thema (exklusiv zu URL)" autocomplete="off"/>
+            </div>
+            <div>
+              <label for="fp-dry-url">URL</label>
+              <input type="text" id="fp-dry-url" placeholder="Artikel-URL (exklusiv zu Topic)" autocomplete="off"/>
+            </div>
+            <div>
+              <label for="fp-dry-duration">Dauer (Sekunden)</label>
+              <input type="number" id="fp-dry-duration" min="5" max="900" value="45"/>
+            </div>
+            <div>
+              <label for="fp-dry-max-scenes">Max. Szenen</label>
+              <input type="number" id="fp-dry-max-scenes" min="1" max="40" value="6"/>
+            </div>
+          </div>
+          <div class="fp-dry-run-actions">
+            <button type="button" class="primary fp-btn-dry-run" id="fp-btn-start-dry-run" data-label="Dry-Run starten" data-ba307-start-dry-run="1">Dry-Run starten</button>
+          </div>
+          <p class="muted" id="fp-dry-run-status" aria-live="polite"></p>
+          <pre class="out out-empty" id="fp-dry-run-result" style="display:none;max-height:180px" data-ba307-dry-run-result="1"></pre>
+          <div id="fp-dry-run-handoff" class="fp-dry-run-handoff" style="display:none" data-ba308-handoff="1" aria-labelledby="fp-handoff-heading">
+            <h4 class="subh fp-handoff-h" id="fp-handoff-heading">Nächster Schritt: Full Preview Smoke lokal starten</h4>
+            <p class="fp-handoff-note muted" id="fp-handoff-note"></p>
+            <p class="fp-handoff-warning" id="fp-handoff-warning"></p>
+            <pre class="out" id="fp-dry-run-handoff-ps"></pre>
+            <button type="button" class="sm fp-copy-path" id="fp-btn-copy-handoff-cli" data-ba308-copy-handoff="1">CLI-Befehl kopieren</button>
+          </div>
+        </div>
+      </div>
+      <div class="fp-cockpit-col fp-cockpit-col--snapshot">
+        <div class="fp-readiness-banner">
+          <div class="fp-preview-power-host fd-score-gauge fd-score-gauge--large" id="fp-preview-power-gauge" data-ba306c-preview-power="1" data-ba306d-score-gauge="cockpit" aria-label="Preview Power Readiness">
+            <p class="fp-preview-power-title fd-score-gauge-caption">Preview Power</p>
+            <div class="fp-preview-power-ring fd-score-gauge-ring fd-score-gauge-ring--neutral" id="fp-preview-power-ring" style="--fd-sg-pct: 0">
+              <div class="fp-preview-power-inner fd-score-gauge-inner">
+                <span class="fp-preview-power-value fd-score-gauge-value fd-score-gauge-value--empty" id="fp-preview-power-value">Noch kein Score</span>
+                <span class="fp-preview-power-label fd-score-gauge-label" id="fp-preview-power-label"></span>
+              </div>
+            </div>
+            <p class="fd-score-gauge-footnote">Score basiert auf Fresh Preview Readiness</p>
+          </div>
+          <div class="fp-readiness-row" id="fp-readiness-row" data-ba304-readiness-marker="1">
+            <span id="fp-readiness-badge" class="fp-readiness-badge fp-readiness-unknown" title="BA 30.4 Readiness Gate">OFFEN</span>
+            <span id="fp-readiness-score" class="fp-readiness-score-wrap">Readiness wird nach dem Snapshot berechnet</span>
+          </div>
+          <p class="fp-readiness-footnote muted">Score basiert auf Fresh Preview Readiness</p>
+        </div>
+        <div class="fp-toolbar">
+          <button type="button" class="primary" id="fp-btn-refresh" data-label="Fresh Preview aktualisieren" data-ba305-refresh="1">Fresh Preview aktualisieren</button>
+        </div>
+        <p class="muted" id="fp-snapshot-status" style="margin:0.25rem 0 0.5rem;font-size:0.82rem">Lade Snapshot…</p>
+        <div id="fp-next-step-box" class="fp-next-step-box fp-next-step--neutral" data-ba305-next-step="1" data-operator-next-step-host="1" data-field="operator_next_step" role="status">
+          <div class="fp-next-step-label">Nächster Schritt (Operator)</div>
+          <div id="fp-operator-next-step" class="fp-next-step-text">—</div>
+        </div>
+        <div id="fp-path-rows" class="fp-path-grid" data-ba305-copy-markers="1" aria-label="Fresh Preview Pfade"></div>
+        <div id="fp-reasons-wrap" class="fp-reasons-stack">
+          <div id="fp-blocking-list" class="fp-reasons-block fp-blocking" style="display:none"></div>
+          <div id="fp-readiness-list" class="fp-reasons-block fp-readiness" style="display:none"></div>
+          <div id="fp-scan-warnings-list" class="fp-reasons-block fp-scan" style="display:none"></div>
+        </div>
+        <pre class="out out-empty" id="out-fp-snapshot" style="max-height:200px" data-fp-snapshot-marker="ba303">Noch kein Fresh Preview Run gefunden. Starte einen Dry-Run, um den ersten Snapshot zu erzeugen. Technische Kurzübersicht erscheint danach hier (read-only).</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel panel--founder-secondary" id="founder-strategic-summary">
     <h2>Founder Strategic Summary</h2>
     <div class="mode-toggle">
       <button type="button" id="btn-founder-mode" class="active" data-label="Founder Mode">Founder Mode</button>
@@ -729,6 +1559,9 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       <button type="button" class="sm tb-txt" data-pre="out-prod-pack-summary" data-dlname="production_summary.txt">TXT</button>
     </div>
     <pre class="out out-empty" id="out-prod-pack-summary">Noch kein Ergebnis. (Optional) In Export/Run-Snapshots kann ein Production Summary eingebettet sein.</pre>
+    <h2 class="subh" id="prod-flow-heading">Produktionsfluss</h2>
+    <p class="muted" id="prod-flow-intro" style="margin:0.25rem 0 0.5rem;font-size:0.82rem">Lokale Vorschau, menschliche Prüfung und finale Render-Freigabe (read-only, aus eingebettetem <code>production_summary</code>).</p>
+    <pre class="out out-empty" id="out-prod-flow">Kein Production Summary — Produktionsfluss nicht verfügbar.</pre>
     <h2 class="subh">Export Ops (lokal)</h2>
     <p class="muted">Download Production Bundle: mehrere Dateien nacheinander (kein ZIP). Session Snapshot: localStorage Key <code>fd_session_snapshot_v1</code>.</p>
     <div class="actions">
@@ -946,6 +1779,8 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     <ul class="warn-list" id="out-warnings" style="display:none" aria-hidden="true"></ul>
   </section>
 </main>
+  </div>
+</div>
 <script>
 try {
 (function(){
@@ -1455,7 +2290,84 @@ try {
         : "Noch kein Production Pack Summary im geladenen JSON.";
     }
     setOut("out-prod-pack-summary", ps);
+    refreshProductionFlowPanel(ps);
     refreshFounderInterpretation();
+  }
+
+  // BA 30.0 — Founder production flow (read-only, German operator labels)
+  function mapHumanPreviewReviewDe(st) {
+    var k = String(st || "").toLowerCase();
+    if (k === "pending") return "Offen";
+    if (k === "approved") return "Freigegeben";
+    if (k === "rejected") return "Abgelehnt";
+    if (k === "needs_changes") return "Änderungen nötig";
+    return st || "—";
+  }
+  function mapFinalReadinessDe(st) {
+    var k = String(st || "").toLowerCase();
+    if (k === "ready") return "Renderbereit";
+    if (k === "needs_review") return "Prüfung nötig";
+    if (k === "blocked") return "Blockiert";
+    return st || "—";
+  }
+  function refreshProductionFlowPanel(ps) {
+    var host = $("out-prod-flow");
+    if (!host) return;
+    if (!ps) {
+      host.textContent = "Kein Production Summary — Produktionsfluss nicht verfügbar.";
+      return;
+    }
+    var pf = ps.visual_production_preflight_result || null;
+    var mc = ps.motion_clip_summary || null;
+    var rib = ps.render_input_bundle_path || "";
+    var lpPath = String(ps.local_preview_video_path || "").trim();
+    var lpSt = String(ps.local_preview_status || "absent");
+    var lpOk = lpSt === "available" || lpSt === "video_only";
+    var hpr = ps.human_preview_review_result || null;
+    var frr = ps.final_render_readiness_result || null;
+    var lines = [];
+    lines.push("Produktionspaket / Pack-Status");
+    lines.push("- ready_for_render: " + (ps.ready_for_render ? "ja" : "nein") + " · render_readiness_status: " + String(ps.render_readiness_status || "—"));
+    lines.push("- approval_status: " + String(ps.approval_status || "—"));
+    lines.push("");
+    lines.push("Visual Preflight");
+    lines.push(pf ? ("- Status: " + String(pf.preflight_status || "—") + " · ok: " + (pf.ok ? "ja" : "nein")) : "- (kein Preflight im Summary)");
+    lines.push("");
+    lines.push("Motion Clips");
+    lines.push(mc ? ("- geplant: " + String(mc.clips_planned != null ? mc.clips_planned : "—") + " · fehlende Inputs: " + String(mc.missing_input_count != null ? mc.missing_input_count : "—")) : "- (kein motion_clip_summary)");
+    lines.push("");
+    lines.push("Timeline / Bundle");
+    lines.push("- render_input_bundle_path: " + (rib || "—"));
+    lines.push("");
+    lines.push("Lokale Vorschau");
+    lines.push("- Vorschau verfügbar: " + (lpOk ? "ja" : "nein") + " · Status: " + lpSt);
+    if (lpPath) lines.push("- Pfad: " + lpPath);
+    if (ps.local_preview_render_result && ps.local_preview_render_result.blocking_reasons && ps.local_preview_render_result.blocking_reasons.length) {
+      lines.push("- Blockierende Gründe: " + ps.local_preview_render_result.blocking_reasons.join(", "));
+    }
+    lines.push("");
+    lines.push("Menschliche Vorschau-Prüfung");
+    if (hpr) {
+      lines.push("- Status: " + mapHumanPreviewReviewDe(hpr.review_status) + " (raw: " + String(hpr.review_status || "") + ")");
+      lines.push("- Freigabe finaler Render: " + (hpr.approved_for_final_render ? "ja" : "nein"));
+    } else {
+      lines.push("- (noch kein human_preview_review_result)");
+    }
+    lines.push("");
+    lines.push("Finale Render-Freigabe");
+    if (frr) {
+      lines.push("- Gesamt: " + mapFinalReadinessDe(frr.readiness_status) + " · ok: " + (frr.ok ? "ja" : "nein"));
+      lines.push("- technisch: " + (frr.technical_ready ? "ja" : "nein") + " · menschlich freigegeben: " + (frr.human_review_approved ? "ja" : "nein"));
+      if (frr.blocking_reasons && frr.blocking_reasons.length) lines.push("- Blockiert wegen: " + frr.blocking_reasons.join(", "));
+    } else {
+      lines.push("- (noch kein final_render_readiness_result)");
+    }
+    lines.push("");
+    lines.push("Nächste Schritte (Vorschlag)");
+    lines.push("- Lokale Vorschau erzeugen (sofern FFmpeg verfügbar) und Pfad prüfen.");
+    lines.push("- human_preview_review per CLI setzen, danach final_render_readiness_gate ausführen.");
+    lines.push("- Finalen Render nur mit Freigabe und explizitem --execute starten.");
+    host.textContent = lines.join("\n");
   }
 
   const VIEW_MODE_KEY = "fd_view_mode_v1";
@@ -3883,6 +4795,356 @@ try {
     }
   }
 
+  function fdFpCopyToClipboard(text, btn) {
+    var t = String(text || "").trim();
+    if (!t || !navigator.clipboard || !navigator.clipboard.writeText) return;
+    navigator.clipboard.writeText(t).then(function() {
+      if (btn) {
+        btn.classList.add("is-success");
+        setTimeout(function() { btn.classList.remove("is-success"); }, 900);
+      }
+    }).catch(function() {});
+  }
+
+  function fdFpBuildPathRow(label, pathVal) {
+    var wrap = document.createElement("div");
+    wrap.className = "fp-path-row";
+    var has = !!(pathVal && String(pathVal).trim());
+    var pl = document.createElement("span");
+    pl.className = "fp-path-label";
+    pl.textContent = label;
+    var v = document.createElement("span");
+    v.className = "fp-path-value muted";
+    v.textContent = has ? String(pathVal) : "Noch kein Pfad";
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "fp-copy-path";
+    b.textContent = "Kopieren";
+    b.setAttribute("data-ba305-copy-path", label);
+    b.disabled = !has;
+    if (has) {
+      (function(pv, bt) {
+        b.onclick = function() { fdFpCopyToClipboard(pv, bt); };
+      })(String(pathVal), b);
+    }
+    wrap.appendChild(pl);
+    wrap.appendChild(v);
+    wrap.appendChild(b);
+    return wrap;
+  }
+
+  function fdFpFillReasonList(elId, title, items) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = "";
+    if (!items || !items.length) {
+      el.style.display = "none";
+      return;
+    }
+    el.style.display = "block";
+    var h = document.createElement("div");
+    h.className = "fp-reasons-title";
+    h.textContent = title;
+    el.appendChild(h);
+    var ul = document.createElement("ul");
+    items.forEach(function(x) {
+      var li = document.createElement("li");
+      li.textContent = String(x);
+      ul.appendChild(li);
+    });
+    el.appendChild(ul);
+  }
+
+  async function fdStartFreshPreviewDryRun() {
+    var st = document.getElementById("fp-dry-run-status");
+    var resEl = document.getElementById("fp-dry-run-result");
+    var handoffWrap = document.getElementById("fp-dry-run-handoff");
+    var btn = document.getElementById("fp-btn-start-dry-run");
+    if (!btn) return;
+    var label = btn.getAttribute("data-label") || btn.textContent || "Dry-Run starten";
+    if (isKillSwitchActive()) {
+      if (st) {
+        st.textContent = "Kill Switch aktiv — Fresh-Preview-Dry-Run blockiert.";
+        st.classList.add("intake-status-err");
+      }
+      return;
+    }
+    var topicEl = document.getElementById("fp-dry-topic");
+    var urlEl = document.getElementById("fp-dry-url");
+    var durEl = document.getElementById("fp-dry-duration");
+    var msEl = document.getElementById("fp-dry-max-scenes");
+    var topic = topicEl ? String(topicEl.value || "").trim() : "";
+    var url = urlEl ? String(urlEl.value || "").trim() : "";
+    if (st) {
+      st.classList.remove("intake-status-err", "intake-status-success");
+    }
+    if (!topic && !url) {
+      if (st) {
+        st.textContent = "Bitte genau eines ausfüllen: Topic oder URL.";
+        st.classList.add("intake-status-err");
+      }
+      return;
+    }
+    if (topic && url) {
+      if (st) {
+        st.textContent = "Nur Topic oder URL — nicht beides gleichzeitig.";
+        st.classList.add("intake-status-err");
+      }
+      return;
+    }
+    var dur = durEl ? parseInt(durEl.value, 10) : 45;
+    if (isNaN(dur) || dur < 5) dur = 45;
+    var maxSc = msEl ? parseInt(msEl.value, 10) : 6;
+    if (isNaN(maxSc) || maxSc < 1) maxSc = 6;
+    var body = {
+      topic: topic || null,
+      url: url || null,
+      duration_target_seconds: dur,
+      max_scenes: maxSc,
+      provider: "placeholder"
+    };
+    btn.disabled = true;
+    btn.classList.add("is-loading");
+    btn.classList.remove("is-success", "is-error");
+    btn.textContent = "Dry-Run läuft…";
+    if (resEl) {
+      resEl.style.display = "none";
+      resEl.textContent = "";
+    }
+    if (handoffWrap) handoffWrap.style.display = "none";
+    if (st) st.textContent = "Starte Fresh-Preview-Dry-Run…";
+    try {
+      const r = await fetch("/founder/dashboard/fresh-preview/start-dry-run", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      var j = null;
+      try { j = await r.json(); } catch (eJson) {}
+      if (!r.ok) {
+        var detail = j && j.detail != null ? j.detail : ("HTTP " + r.status);
+        if (st) {
+          st.textContent = "Dry-Run: " + String(detail);
+          st.classList.add("intake-status-err");
+        }
+        if (handoffWrap) handoffWrap.style.display = "none";
+        btn.classList.add("is-error");
+        return;
+      }
+      if (!j || j.ok !== true) {
+        if (st) {
+          st.textContent = "Dry-Run beendet mit Blockern. Siehe Details.";
+          st.classList.add("intake-status-err");
+        }
+        if (resEl) {
+          resEl.style.display = "block";
+          resEl.classList.remove("out-empty");
+          resEl.textContent = JSON.stringify(j, null, 2);
+        }
+        if (handoffWrap) handoffWrap.style.display = "none";
+        btn.classList.add("is-error");
+        return;
+      }
+      if (st) {
+        st.textContent = (j.snapshot_hint || "Snapshot aktualisieren") + " — Run " + (j.run_id || "—");
+        st.classList.add("intake-status-success");
+      }
+      if (resEl) {
+        resEl.style.display = "block";
+        resEl.classList.remove("out-empty");
+        resEl.textContent = JSON.stringify(j, null, 2);
+      }
+      var handoffPre = document.getElementById("fp-dry-run-handoff-ps");
+      var hn = document.getElementById("fp-handoff-note");
+      var hw = document.getElementById("fp-handoff-warning");
+      if (handoffWrap && j.handoff_cli_command_powershell) {
+        handoffWrap.style.display = "block";
+        if (handoffPre) handoffPre.textContent = j.handoff_cli_command_powershell;
+        if (hn) hn.textContent = j.handoff_note || "";
+        if (hw) hw.textContent = j.handoff_warning || "";
+      } else if (handoffWrap) {
+        handoffWrap.style.display = "none";
+      }
+      btn.classList.add("is-success");
+      try { await fdLoadFreshPreviewSnapshot(); } catch (eRef) {}
+    } catch (e) {
+      if (st) {
+        st.textContent = "Dry-Run: " + (e && e.message ? e.message : String(e));
+        st.classList.add("intake-status-err");
+      }
+      if (handoffWrap) handoffWrap.style.display = "none";
+      btn.classList.add("is-error");
+    } finally {
+      btn.textContent = label;
+      btn.disabled = false;
+      btn.classList.remove("is-loading");
+    }
+  }
+
+  function fdFpReadinessGaugeModifier(rs) {
+    if (rs === "ready") return "fd-score-gauge-ring--ready";
+    if (rs === "warning") return "fd-score-gauge-ring--warning";
+    if (rs === "blocked") return "fd-score-gauge-ring--blocked";
+    return "fd-score-gauge-ring--neutral";
+  }
+
+  function fdFpSyncReadinessRings(mod, pctStr) {
+    var main = document.getElementById("fp-preview-power-ring");
+    if (main) {
+      main.className = "fp-preview-power-ring fd-score-gauge-ring " + mod;
+      main.style.setProperty("--fd-sg-pct", pctStr);
+    }
+    var side = document.getElementById("fd-sidebar-preview-power-ring");
+    if (side) {
+      side.className = "fd-score-gauge-ring " + mod;
+      side.style.setProperty("--fd-sg-pct", pctStr);
+    }
+    var ex = document.getElementById("fp-exec-readiness-ring");
+    if (ex) {
+      ex.className = "fd-score-gauge-ring " + mod;
+      ex.style.setProperty("--fd-sg-pct", pctStr);
+    }
+  }
+
+  function fdFpResetPreviewPowerNeutral() {
+    var pv = document.getElementById("fp-preview-power-value");
+    var pl = document.getElementById("fp-preview-power-label");
+    var sidePp = document.getElementById("fd-sidebar-preview-power");
+    fdFpSyncReadinessRings("fd-score-gauge-ring--neutral", "0");
+    if (sidePp) {
+      sidePp.textContent = "Noch kein Score";
+      sidePp.classList.add("fd-sidebar-score-v--empty");
+    }
+    if (pv) {
+      pv.textContent = "Noch kein Score";
+      pv.classList.add("fd-score-gauge-value--empty");
+    }
+    if (pl) pl.textContent = "";
+  }
+
+  function fdFpUpdatePreviewPower(d) {
+    var pv = document.getElementById("fp-preview-power-value");
+    var pl = document.getElementById("fp-preview-power-label");
+    var sidePp = document.getElementById("fd-sidebar-preview-power");
+    var rs = String(d.readiness_status || "").toLowerCase();
+    var raw = d.readiness_score;
+    var hasNum = raw !== null && raw !== undefined && raw !== "" && !isNaN(Number(raw));
+    var scoreNum = hasNum ? Math.max(0, Math.min(100, Number(raw))) : null;
+    var mod = fdFpReadinessGaugeModifier(rs);
+    var pctStr = scoreNum == null ? "0" : String(scoreNum);
+    fdFpSyncReadinessRings(mod, pctStr);
+    if (sidePp) {
+      if (scoreNum == null) {
+        sidePp.textContent = "Noch kein Score";
+        sidePp.classList.add("fd-sidebar-score-v--empty");
+      } else {
+        sidePp.textContent = String(Math.round(scoreNum)) + "%";
+        sidePp.classList.remove("fd-sidebar-score-v--empty");
+      }
+    }
+    if (!pv || !pl) return;
+    if (scoreNum == null) {
+      pv.textContent = "Noch kein Score";
+      pv.classList.add("fd-score-gauge-value--empty");
+      pl.textContent = "";
+      return;
+    }
+    pv.classList.remove("fd-score-gauge-value--empty");
+    pv.textContent = String(Math.round(scoreNum)) + "%";
+    if (rs === "ready") pl.textContent = "Ready";
+    else if (rs === "warning") pl.textContent = "Warning";
+    else if (rs === "blocked") pl.textContent = "Blocked";
+    else pl.textContent = "—";
+  }
+
+  async function fdLoadFreshPreviewSnapshot() {
+    var st = document.getElementById("fp-snapshot-status");
+    var out = document.getElementById("out-fp-snapshot");
+    if (!st || !out) return;
+    try {
+      if (isKillSwitchActive()) {
+        st.textContent = "Kill Switch aktiv — Fresh-Preview-Snapshot übersprungen.";
+        return;
+      }
+      const r = await fetch("/founder/dashboard/fresh-preview/snapshot", { method: "GET" });
+      if (!r.ok) {
+        st.textContent = "Fresh Preview Snapshot: HTTP " + r.status;
+        st.classList.add("intake-status-err");
+        fdFpResetPreviewPowerNeutral();
+        return;
+      }
+      const d = await r.json();
+      st.textContent = "Snapshot geladen · read-only · " + (d.fresh_preview_snapshot_version || "ba30_4_v1");
+      st.classList.remove("intake-status-err");
+      var rs = String(d.readiness_status || "").toLowerCase();
+      var badge = document.getElementById("fp-readiness-badge");
+      var scEl = document.getElementById("fp-readiness-score");
+      if (badge) {
+        var bl = rs === "ready" ? "READY" : (rs === "warning" ? "WARNING" : (rs === "blocked" ? "BLOCKED" : "OFFEN"));
+        badge.textContent = bl;
+        badge.className = "fp-readiness-badge " + (rs === "ready" ? "fp-readiness-ready" : (rs === "warning" ? "fp-readiness-warning" : (rs === "blocked" ? "fp-readiness-blocked" : "fp-readiness-unknown")));
+      }
+      if (scEl) scEl.textContent = d.readiness_score != null ? ("Score: " + String(d.readiness_score) + " / 100 · Score basiert auf Fresh Preview Readiness") : "Readiness wird nach dem Snapshot berechnet";
+      fdFpUpdatePreviewPower(d);
+      var nsOp = String(d.operator_next_step || "").trim();
+      var exFs = document.getElementById("fp-exec-fresh-status");
+      if (exFs) exFs.textContent = d.fresh_preview_available ? "Aktiv" : "Noch kein Fresh Preview Run gefunden";
+      var exScore = document.getElementById("fp-exec-readiness-score");
+      if (exScore) exScore.textContent = d.readiness_score != null ? String(d.readiness_score) + " / 100" : "Nicht bewertet";
+      var exRun = document.getElementById("fp-exec-latest-run");
+      if (exRun) exRun.textContent = d.latest_run_id || "Noch kein Run";
+      var exNx = document.getElementById("fp-exec-next-step-short");
+      if (exNx) {
+        exNx.textContent = nsOp ? (nsOp.length > 72 ? nsOp.slice(0, 72) + "…" : nsOp) : "Starte einen Dry-Run, um den ersten Snapshot zu erzeugen";
+        exNx.setAttribute("title", nsOp || "");
+      }
+      var hFresh = document.getElementById("fp-exec-hint-fresh");
+      if (hFresh) hFresh.textContent = d.fresh_preview_available ? "" : "Starte einen Dry-Run, um den ersten Snapshot zu erzeugen";
+      var hScore = document.getElementById("fp-exec-hint-score");
+      if (hScore) hScore.textContent = d.readiness_score != null ? "" : "Readiness wird nach dem Snapshot berechnet";
+      var hRun = document.getElementById("fp-exec-hint-run");
+      if (hRun) hRun.textContent = d.latest_run_id ? "" : "Der zuletzt erkannte Run erscheint hier";
+      var hNext = document.getElementById("fp-exec-hint-next");
+      if (hNext) hNext.textContent = nsOp ? "" : "Wird aus Snapshot und Readiness abgeleitet";
+      var nextBox = document.getElementById("fp-next-step-box");
+      var nextText = document.getElementById("fp-operator-next-step");
+      if (nextBox && nextText) {
+        nextText.textContent = nsOp || "Starte einen Dry-Run, um den ersten Snapshot zu erzeugen";
+        var ncls = "fp-next-step-box ";
+        if (rs === "ready") ncls += "fp-next-step--ready";
+        else if (rs === "warning") ncls += "fp-next-step--warning";
+        else if (rs === "blocked") ncls += "fp-next-step--blocked";
+        else ncls += "fp-next-step--neutral";
+        nextBox.className = ncls;
+      }
+      var pr = document.getElementById("fp-path-rows");
+      if (pr) {
+        pr.innerHTML = "";
+        pr.appendChild(fdFpBuildPathRow("Run-Ordner", d.latest_run_dir));
+        pr.appendChild(fdFpBuildPathRow("script.json", d.script_path));
+        pr.appendChild(fdFpBuildPathRow("scene_asset_pack.json", d.scene_asset_pack_path));
+        pr.appendChild(fdFpBuildPathRow("asset_manifest.json", d.asset_manifest_path));
+        pr.appendChild(fdFpBuildPathRow("preview_smoke_summary", d.preview_smoke_summary_path));
+        pr.appendChild(fdFpBuildPathRow("OPEN_PREVIEW_SMOKE.md", d.open_preview_smoke_report_path));
+      }
+      fdFpFillReasonList("fp-blocking-list", "Freigabe blockiert (Review)", d.blocking_reasons);
+      fdFpFillReasonList("fp-readiness-list", "Readiness zur Prüfung", d.readiness_reasons);
+      fdFpFillReasonList("fp-scan-warnings-list", "Pfade und Dateien (Review)", d.warnings);
+      var lines = [];
+      lines.push("Fresh Preview — Kurzüberblick (Details oben)");
+      lines.push("- Readiness: " + (d.readiness_status || "—") + " · Score: " + (d.readiness_score != null ? d.readiness_score : "—"));
+      lines.push("- fresh_preview_available: " + (d.fresh_preview_available ? "ja" : "nein"));
+      lines.push("- latest_run_id: " + (d.latest_run_id || "—"));
+      lines.push("- Artefakt-Flags: script " + (d.script_json_present ? "ja" : "nein") + " · pack " + (d.scene_asset_pack_present ? "ja" : "nein") + " · manifest " + (d.asset_manifest_present ? "ja" : "nein") + " · summary " + (d.preview_smoke_summary_present ? "ja" : "nein") + " · open_me " + (d.open_preview_smoke_report_present ? "ja" : "nein"));
+      out.textContent = lines.join("\n");
+      out.classList.remove("out-empty");
+    } catch (e) {
+      st.textContent = "Fresh Preview Snapshot: " + String(e && e.message ? e.message : e);
+      st.classList.add("intake-status-err");
+      fdFpResetPreviewPowerNeutral();
+    }
+  }
+
   async function fdRunLocalPreviewMiniFixture() {
     var btn = document.getElementById("lp-btn-run-mini");
     var st = document.getElementById("lp-run-status");
@@ -3936,11 +5198,27 @@ try {
     }
   }
 
+  function fdBindSidebarNav() {
+    var nav = document.getElementById("fd-sidebar-nav");
+    if (!nav) return;
+    nav.addEventListener("click", function(ev) {
+      var t = ev.target && ev.target.closest("[data-fd-nav-scroll]");
+      if (!t || t.disabled) return;
+      ev.preventDefault();
+      var scrollId = t.getAttribute("data-fd-nav-scroll");
+      if (!scrollId) return;
+      var detRaw = t.getAttribute("data-fd-nav-details");
+      var detailsId = detRaw === null || detRaw === "" ? null : detRaw;
+      openPanelAndScroll(detailsId, scrollId);
+    });
+  }
+
   function fdBootstrapDashboard() {
     try {
       console.log("FD_BOOTSTRAP_START");
       showError("FD_BOOTSTRAP_START");
     } catch (eBootLog) {}
+    fdBindSidebarNav();
     var autoBtn = document.getElementById("btn-intake-body");
     if (!autoBtn) {
       try {
@@ -3951,6 +5229,12 @@ try {
     if (domTestBtn) {
       domTestBtn.addEventListener("click", function() {
         showError("DOM_TEST_OK");
+      });
+    }
+    var headerPreviewCta = document.getElementById("fd-header-cta-local-preview");
+    if (headerPreviewCta) {
+      headerPreviewCta.addEventListener("click", function() {
+        openPanelAndScroll(null, "panel-ba303-fresh-preview");
       });
     }
 
@@ -4192,10 +5476,31 @@ try {
   updatePqBadge();
   refreshOperatorClarity();
   fdLoadLocalPreviewPanel();
+  fdLoadFreshPreviewSnapshot();
     var lpBtn = document.getElementById("lp-btn-run-mini");
     if (lpBtn) {
       lpBtn.addEventListener("click", async function() {
         try { await fdRunLocalPreviewMiniFixture(); } catch (eLp) {}
+      });
+    }
+    var fpRef = document.getElementById("fp-btn-refresh");
+    if (fpRef) {
+      fpRef.addEventListener("click", async function() {
+        try { await fdLoadFreshPreviewSnapshot(); } catch (eFp) {}
+      });
+    }
+    var fpDry = document.getElementById("fp-btn-start-dry-run");
+    if (fpDry) {
+      fpDry.addEventListener("click", async function() {
+        try { await fdStartFreshPreviewDryRun(); } catch (eDry) {}
+      });
+    }
+    var fpCopyHandoff = document.getElementById("fp-btn-copy-handoff-cli");
+    if (fpCopyHandoff) {
+      fpCopyHandoff.addEventListener("click", function() {
+        var pre = document.getElementById("fp-dry-run-handoff-ps");
+        var t = pre && pre.textContent ? pre.textContent.trim() : "";
+        if (t) fdFpCopyToClipboard(t, fpCopyHandoff);
       });
     }
   }
