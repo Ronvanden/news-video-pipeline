@@ -1,0 +1,7 @@
+Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.
+
+Wir zeigen, wie ein Story-Text in Szenen zerlegt wird.
+
+Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.
+
+Am Ende entsteht ein scene_asset_pack.json, das der Real Video Build Orchestrator direkt nutzen kann.

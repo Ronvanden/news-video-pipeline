@@ -419,6 +419,24 @@ class SceneAssetItem(BaseModel):
     camera_direction: str = ""
     mood: str = ""
     asset_type: SceneAssetTypeLiteral = "generated"
+    overlay_intent: List[str] = Field(
+        default_factory=list,
+        description="BA 26.4b — Lesetexte für Render-Layer, nicht für Bildgeneratoren.",
+    )
+    text_sensitive: bool = Field(
+        default=False,
+        description="BA 26.4b — Still dispositioniert zu openai_images wenn true.",
+    )
+    image_provider_routed: str = Field(
+        default="",
+        description="BA 26.4b — Router: Primär-Generator für image_prompt.",
+    )
+    image_base_provider_routed: str = Field(
+        default="",
+        description="BA 26.4b — Router: Basis-Still wenn image_provider_routed=render_layer.",
+    )
+    video_provider_routed: str = Field(default="", description="BA 26.4b — Motion: typ. runway.")
+    thumbnail_provider_routed: str = Field(default="", description="BA 26.4b — Thumbnail-Basis: openai_images.")
 
 
 class SceneAssets(BaseModel):

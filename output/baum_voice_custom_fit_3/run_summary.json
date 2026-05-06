@@ -1,0 +1,43 @@
+{
+  "ok": true,
+  "input_mode": "script_json",
+  "url": null,
+  "script_json": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba266_visual_founder_smoke\\script.json",
+  "title": "Mini-Testskript (BA 25.2)",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_3",
+  "script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_3\\script.json",
+  "scene_plan_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_3\\scene_plan.json",
+  "scene_asset_pack_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_3\\scene_asset_pack.json",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_3\\generated_assets_baum_voice_custom_fit_3\\asset_manifest.json",
+  "timeline_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_3\\timeline_baum_voice_custom_fit_3\\timeline_manifest.json",
+  "final_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_3\\final_video.mp4",
+  "used_existing_assets": true,
+  "used_video_assets_count": 3,
+  "used_image_assets_count": 0,
+  "warnings": [
+    "ba266_video_reuse_for_remaining_scenes",
+    "existing_asset_used",
+    "ba266_cinematic_placeholder_applied:3",
+    "fit_video_to_voice_requested_but_no_voice_duration",
+    "audio_missing_silent_render"
+  ],
+  "blocking_reasons": [],
+  "voice_used": false,
+  "voice_mode": "elevenlabs",
+  "voice_text_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_3\\voiceover_text.txt",
+  "voice_file_path": null,
+  "voice_duration_seconds": null,
+  "audio_stream_expected": false,
+  "voice_warnings": [
+    "elevenlabs_chunk_0_retry_0:elevenlabs_http_401",
+    "elevenlabs_chunk_0_retry_1:elevenlabs_http_401",
+    "elevenlabs_chunk_failed:0:elevenlabs_http_401"
+  ],
+  "voice_blocking_reasons": [
+    "elevenlabs_mid_run_failed"
+  ],
+  "fit_video_to_voice": true,
+  "voice_fit_padding_seconds": 0.75,
+  "fitted_video_duration_seconds": null,
+  "original_requested_duration_seconds": 30
+}

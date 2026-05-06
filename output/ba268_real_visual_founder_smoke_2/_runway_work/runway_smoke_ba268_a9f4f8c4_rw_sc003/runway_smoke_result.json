@@ -1,0 +1,22 @@
+{
+  "schema_version": "runway_image_to_video_smoke_v1",
+  "run_id": "ba268_a9f4f8c4_rw_sc003",
+  "ok": false,
+  "status": "timeout",
+  "image_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_2\\generated_assets_ba268_a9f4f8c4\\scene_003.png",
+  "prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Struktur. Textauszug: Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.",
+  "output_video_path": "",
+  "warnings": [
+    "runway_poll_transient",
+    "runway_task_poll_timeout"
+  ],
+  "blocking_reasons": [],
+  "metadata": {
+    "provider": "runway",
+    "duration_seconds": 5,
+    "task_id": "363ee2b8-0f72-4bd7-9f7a-db5d5a913662",
+    "task_url": "https://api.dev.runwayml.com/v1/tasks/363ee2b8-0f72-4bd7-9f7a-db5d5a913662"
+  },
+  "message": "Runway task may still be processing. Re-run status check later.",
+  "recommended_action": "Runway task may still be processing. Re-run status check later."
+}

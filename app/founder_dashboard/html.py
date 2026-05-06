@@ -721,6 +721,14 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
     <h2>Production Ready Checklist</h2>
     <div id="prod-checklist-badge" class="checklist-badge blocked">BLOCKED</div>
     <ul id="prod-checklist-items"></ul>
+    <h2 class="subh">Production Pack (read-only)</h2>
+    <p class="muted" id="prod-pack-meta" style="margin:0.25rem 0 0.5rem;font-size:0.82rem">Noch kein Production Pack Summary im geladenen JSON.</p>
+    <div class="out-toolbar">
+      <button type="button" class="sm tb-copy" data-pre="out-prod-pack-summary">Copy</button>
+      <button type="button" class="sm tb-json" data-pre="out-prod-pack-summary" data-dlname="production_summary.json">JSON</button>
+      <button type="button" class="sm tb-txt" data-pre="out-prod-pack-summary" data-dlname="production_summary.txt">TXT</button>
+    </div>
+    <pre class="out out-empty" id="out-prod-pack-summary">Noch kein Ergebnis. (Optional) In Export/Run-Snapshots kann ein Production Summary eingebettet sein.</pre>
     <h2 class="subh">Export Ops (lokal)</h2>
     <p class="muted">Download Production Bundle: mehrere Dateien nacheinander (kein ZIP). Session Snapshot: localStorage Key <code>fd_session_snapshot_v1</code>.</p>
     <div class="actions">
@@ -835,6 +843,10 @@ body.dashboard-mode-operator pre.out { max-height: 220px; }
       </div>
       <h2 class="subh">Provider Prompt Cards</h2>
       <p class="muted">Nach „Optimize Provider Prompts“ — je Szene Leonardo / Kling / OpenAI mit Copy.</p>
+      <div id="visual-policy-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem">
+        <strong>Visual Policy Summary (BA 26.4b/26.4c)</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Optimize-Daten — Summary erscheint nach „Optimize Provider Prompts“.</p>
+      </div>
       <div id="provider-prompt-cards" class="prompt-cards-wrap"></div>
     </div>
   </details>
@@ -1423,6 +1435,22 @@ try {
     addRow(hasOpt, "Optimize vorhanden: " + (hasOpt ? "ja" : "nein"));
     addRow(hasCtr, "CTR vorhanden: " + (hasCtr ? "ja" : "nein"));
     addRow(wCount === 0, "Warnings (gesamt): " + wCount);
+    // BA 27.0–27.4: read-only production pack summary (only if embedded in loaded JSON)
+    var ps = extractProductionPackSummary();
+    var meta = $("prod-pack-meta");
+    if (meta) {
+      var rs = ps && ps.reference_library_summary ? ps.reference_library_summary : null;
+      var rcount = rs && rs.reference_assets_count != null ? String(rs.reference_assets_count) : "0";
+      var cs = ps && ps.continuity_wiring_summary ? ps.continuity_wiring_summary : null;
+      var cprep = cs && cs.prepared_count != null ? String(cs.prepared_count) : "0";
+      var cmiss = cs && cs.missing_reference_count != null ? String(cs.missing_reference_count) : "0";
+      var rps = ps && ps.reference_provider_payload_summary ? ps.reference_provider_payload_summary : null;
+      var rpPrep = rps && rps.prepared_count != null ? String(rps.prepared_count) : "0";
+      meta.textContent = ps
+        ? ("Production Summary gefunden (read-only). References: " + rcount + " · Continuity prepared: " + cprep + " · Missing refs: " + cmiss + " · Referenz-Provider vorbereitet: " + rpPrep)
+        : "Noch kein Production Pack Summary im geladenen JSON.";
+    }
+    setOut("out-prod-pack-summary", ps);
     refreshFounderInterpretation();
   }
 
@@ -2006,10 +2034,112 @@ try {
     if (!host) return;
     host.innerHTML = "";
     promptCardCopyData = [];
+    var pol = $("visual-policy-summary");
+    // BA 26.4d — Fallback-Reihenfolge:
+    // 1) lastOptimize.optimized_prompts
+    // 2) lastExport.provider_prompts
+    // 3) lastExport.scene_prompts.scenes
+    function resolveVisualPolicySource() {
+      if (lastOptimize && lastOptimize.optimized_prompts) {
+        return { source: "Optimize", kind: "opt", p: lastOptimize.optimized_prompts };
+      }
+      if (lastExport && lastExport.provider_prompts) {
+        return { source: "Export Package", kind: "stub", p: lastExport.provider_prompts };
+      }
+      if (lastExport && lastExport.scene_prompts && Array.isArray(lastExport.scene_prompts.scenes)) {
+        return { source: "Story Pack", kind: "scene", p: lastExport.scene_prompts.scenes };
+      }
+      return { source: "Not available", kind: "none", p: null };
+    }
+
+    function extractPolicyItems(vps) {
+      var out = [];
+      if (!vps) return out;
+      // provider bundles: { leonardo:[], openai:[], kling:[] }
+      if (typeof vps === "object" && !Array.isArray(vps) && (vps.leonardo || vps.openai || vps.kling)) {
+        function pushArr(arr, providerName) {
+          if (!Array.isArray(arr)) return;
+          for (var ii = 0; ii < arr.length; ii++) {
+            var it = arr[ii] || {};
+            var routed = String(it.routed_visual_provider || it.routed_provider || it.provider || "").toLowerCase();
+            var st = String(it.visual_policy_status || "");
+            var ts2 = !!it.text_sensitive;
+            var oi = it.overlay_intent || [];
+            var ovc = (Array.isArray(oi) ? oi.length : 0);
+            var txt = String(it.positive_optimized || it.positive_expanded || it.visual_prompt_effective || it.visual_prompt || "");
+            var guard2 = txt.indexOf("[visual_no_text_guard_v26_4]") >= 0;
+            out.push({ provider: providerName, routed: routed, status: st, text_sensitive: ts2, overlay_count: ovc, guard_applied: guard2 });
+          }
+        }
+        pushArr(vps.leonardo, "leonardo");
+        pushArr(vps.openai, "openai");
+        pushArr(vps.kling, "kling");
+        return out;
+      }
+      // scene list
+      if (Array.isArray(vps)) {
+        for (var k = 0; k < vps.length; k++) {
+          var it2 = vps[k] || {};
+          var routed2 = String(it2.routed_visual_provider || it2.routed_provider || it2.provider || "").toLowerCase();
+          var st2 = String(it2.visual_policy_status || "");
+          var ts3 = !!it2.text_sensitive;
+          var oi2 = it2.overlay_intent || [];
+          var ovc2 = (Array.isArray(oi2) ? oi2.length : 0);
+          var txt2 = String(it2.positive_expanded || it2.visual_prompt_effective || it2.visual_prompt || "");
+          var guard3 = txt2.indexOf("[visual_no_text_guard_v26_4]") >= 0;
+          out.push({ provider: "scene", routed: routed2, status: st2, text_sensitive: ts3, overlay_count: ovc2, guard_applied: guard3 });
+        }
+      }
+      return out;
+    }
+
+    function renderVisualPolicySummary() {
+      if (!pol) return;
+      var src = resolveVisualPolicySource();
+      var items = extractPolicyItems(src.p);
+      var rows = [];
+      var tot = 0, ts = 0, ov = 0, guard = 0, need = 0, oai = 0, leo = 0, rw = 0, rl = 0;
+      for (var j = 0; j < items.length; j++) {
+        var it = items[j] || {};
+        tot++;
+        if (String(it.status || "") === "needs_review") need++;
+        if (it.text_sensitive) ts++;
+        ov += Number(it.overlay_count || 0);
+        if (it.guard_applied) guard++;
+        var rp = String(it.routed || "").toLowerCase();
+        if (rp === "openai_images") oai++;
+        else if (rp === "leonardo") leo++;
+        else if (rp === "runway") rw++;
+        else if (rp === "render_layer") rl++;
+      }
+      rows.push("<div class='muted' style='font-size:0.82rem;margin-top:0.15rem'>Visual Policy Source: <strong>" + escapeHtml(String(src.source || "Not available")) + "</strong></div>");
+      rows.push("<div class='muted' style='font-size:0.82rem;margin-top:0.15rem'>Visual Text Guard: aktiv (Marker <code>[visual_no_text_guard_v26_4]</code>)</div>");
+      rows.push("<div style='display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.35rem'>");
+      function pill(label, val) {
+        return \"<span style='display:inline-block;padding:0.15rem 0.45rem;border:1px solid var(--border);border-radius:999px;background:var(--surface2);font-size:0.82rem'><strong>\" + escapeHtml(label) + \":</strong> \" + escapeHtml(String(val)) + \"</span>\";
+      }
+      rows.push(pill("Scenes", tot));
+      rows.push(pill("Text-sensitive", ts));
+      rows.push(pill("Overlay intents", ov));
+      rows.push(pill("Guard applied", guard));
+      rows.push(pill("OpenAI Images routed", oai));
+      rows.push(pill("Leonardo routed", leo));
+      rows.push(pill("Runway routed", rw));
+      rows.push(pill("Render Layer overlays", rl));
+      rows.push(pill("Needs review", need));
+      rows.push("</div>");
+      pol.innerHTML = "<strong>Visual Policy Summary (BA 26.4b/26.4c/26.4d)</strong>" + rows.join(\"\\n\");
+    }
+
+    // Summary immer rendern, auch ohne Optimize (Export-Fallback).
+    renderVisualPolicySummary();
+
+    // Prompt Cards bleiben Optimize-first (weil sie die optimierten Texte zeigen).
     if (!lastOptimize || !lastOptimize.optimized_prompts) {
-      host.innerHTML = '<p class="muted">Noch keine Optimize-Daten — zuerst „Optimize Provider Prompts“ ausführen.</p>';
+      host.innerHTML = '<p class="muted">Noch keine Optimize-Daten — Prompt Cards erscheinen nach „Optimize Provider Prompts“. (Summary nutzt Export-Fallback.)</p>';
       return;
     }
+
     var op = lastOptimize.optimized_prompts;
     var max = Math.max((op.leonardo || []).length, (op.openai || []).length, (op.kling || []).length);
     for (var i = 0; i < max; i++) {
@@ -2025,8 +2155,151 @@ try {
       promptCardCopyData.push({ leo: leoT, openai: oaiT, kling: kT });
       var card = document.createElement("div");
       card.className = "prompt-card";
+      var polLine = "";
+      var polSrc = leo || oai || {};
+      if (polSrc) {
+        var stx = String(polSrc.visual_policy_status || "").trim();
+        var ovn = (polSrc.overlay_intent && Array.isArray(polSrc.overlay_intent)) ? polSrc.overlay_intent.length : 0;
+        var rpv = String(polSrc.routed_visual_provider || \"\");
+        if (stx || ovn || rpv) {
+          polLine = '<div class=\"muted\" style=\"font-size:0.78rem;margin:-0.25rem 0 0.4rem\">Policy: <strong>' + escapeHtml(stx || \"—\") + '</strong> · Routed: <strong>' + escapeHtml(rpv || \"—\") + '</strong> · Overlay: <strong>' + escapeHtml(String(ovn)) + '</strong></div>';
+        }
+      }
+      var cmpLine = "";
+      if (polSrc) {
+        var rec = String(polSrc.recommended_provider || "").trim();
+        var cst = String(polSrc.provider_compare_status || "").trim();
+        var creason = String(polSrc.provider_quality_reason || "").trim();
+        var cc = (polSrc.provider_candidates && Array.isArray(polSrc.provider_candidates)) ? polSrc.provider_candidates.length : 0;
+        if (rec || cst || creason || cc) {
+          cmpLine =
+            '<div class=\"muted\" style=\"font-size:0.78rem;margin:-0.15rem 0 0.4rem\">' +
+            'Compare: <strong>' + escapeHtml(rec || \"—\") + '</strong>' +
+            ' · Status: <strong>' + escapeHtml(cst || \"—\") + '</strong>' +
+            ' · Candidates: <strong>' + escapeHtml(String(cc)) + '</strong>' +
+            (creason ? (' · <span title=\"' + escapeHtml(creason) + '\">Reason</span>') : \"\") +
+            '</div>';
+        }
+      }
+      // BA 27.3 — Continuity line (read-only, only if fields exist)
+      var contLine = "";
+      if (polSrc) {
+        var cst2 = String(polSrc.continuity_provider_preparation_status || "").trim();
+        var cids = polSrc.reference_asset_ids;
+        var cc2 = (Array.isArray(cids) ? cids.length : 0);
+        var cstr = String(polSrc.continuity_strength || "").trim();
+        var ch = String(polSrc.continuity_prompt_hint || "").trim();
+        if (cst2 || cc2 || cstr || ch) {
+          var hintShort = ch ? (ch.length > 140 ? ch.slice(0, 139) + "…" : ch) : "";
+          // display only: translate to German labels, keep raw status values intact elsewhere
+          var cstDe = cst2;
+          if (cst2 === "prepared") cstDe = "vorbereitet";
+          else if (cst2 === "missing_reference") cstDe = "Referenz fehlt";
+          else if (cst2 === "needs_review") cstDe = "Prüfung nötig";
+          else if (!cst2 && cc2) cstDe = "vorbereitet";
+          else if (!cst2) cstDe = "keine";
+          var cstrDe = cstr;
+          if (cstr === "low") cstrDe = "niedrig";
+          else if (cstr === "medium") cstrDe = "mittel";
+          else if (cstr === "high") cstrDe = "hoch";
+          contLine =
+            '<div class="muted" style="font-size:0.78rem;margin:-0.15rem 0 0.4rem">' +
+            'Kontinuität: <strong>' + escapeHtml(cstDe) + '</strong>' +
+            ' · Referenzen: <strong>' + escapeHtml(String(cc2)) + '</strong>' +
+            (cstr ? (' · Stärke: <strong>' + escapeHtml(cstrDe) + '</strong>') : '') +
+            (hintShort ? (' · <span title="' + escapeHtml(ch) + '">Hint</span>') : '') +
+            '</div>';
+        }
+      }
+      // BA 27.5b — Reference Provider payload line (read-only, only if fields exist)
+      var refProvLine = "";
+      if (polSrc) {
+        function mapRefStatusDe(st) {
+          if (st === "prepared") return "vorbereitet";
+          if (st === "missing_reference") return "Referenz fehlt";
+          if (st === "needs_review") return "Prüfung nötig";
+          if (st === "not_supported") return "nicht unterstützt";
+          return "keine";
+        }
+        function mapRefModeDe(m) {
+          if (m === "image_reference_prepared") return "Bildreferenz vorbereitet";
+          if (m === "image_to_video_reference_prepared") return "Bild-zu-Video-Referenz vorbereitet";
+          if (m === "prompt_hint_only") return "nur Prompt-Hinweis";
+          return "keine";
+        }
+        function mapRefProviderDe(p) {
+          if (p === "openai_images") return "OpenAI Images";
+          if (p === "leonardo") return "Leonardo";
+          if (p === "runway") return "Runway";
+          if (p === "seedance") return "Seedance";
+          if (p === "render_layer") return "Render-Layer";
+          return p ? p : "—";
+        }
+        function pickRefPayload(src) {
+          var rec = src && src.recommended_reference_provider_payload ? src.recommended_reference_provider_payload : null;
+          if (rec && typeof rec === "object") return rec;
+          var all = src && src.reference_provider_payloads ? src.reference_provider_payloads : null;
+          if (all && typeof all === "object") {
+            var oai = all.openai_images;
+            if (oai && typeof oai === "object") return oai;
+            var keys = Object.keys(all);
+            for (var kk = 0; kk < keys.length; kk++) {
+              var v = all[keys[kk]];
+              if (v && typeof v === "object") return v;
+            }
+          }
+          return null;
+        }
+        function findAssetLikeForScene(sceneNumber) {
+          try {
+            var exp = lastExport && lastExport.asset_manifest ? lastExport.asset_manifest : null;
+            var man = exp && exp.assets && Array.isArray(exp.assets) ? exp : null;
+            if (!man) return null;
+            for (var ai = 0; ai < man.assets.length; ai++) {
+              var a = man.assets[ai] || {};
+              var sn = Number(a.scene_number || a.scene_index || 0);
+              if (sn === sceneNumber) return a;
+            }
+            return null;
+          } catch (e) {
+            return null;
+          }
+        }
+        var rpp = pickRefPayload(polSrc);
+        var rps = String(polSrc.reference_provider_payload_status || (rpp && rpp.status) || "").trim();
+        if (!rpp || !rps) {
+          // BA 27.6: fallback to asset_manifest if prompt object has no reference fields
+          var assetLike = findAssetLikeForScene(i + 1);
+          if (assetLike && !rpp) rpp = pickRefPayload(assetLike);
+          if (assetLike && !rps) rps = String(assetLike.reference_provider_payload_status || (rpp && rpp.status) || "").trim();
+        }
+        var rpsDe = mapRefStatusDe(rps);
+        var provRaw = String((rpp && rpp.provider) || "").toLowerCase();
+        var provDe = mapRefProviderDe(provRaw);
+        var modeRaw = String((rpp && rpp.supported_mode) || "").trim();
+        var modeDe = mapRefModeDe(modeRaw);
+        var fmt = String((rpp && rpp.payload_format) || "").trim();
+        var noLive = (rpp && rpp.no_live_upload) === true;
+        var refCount = 0;
+        if (rpp && rpp.payload && typeof rpp.payload === "object" && Array.isArray(rpp.payload.reference_images)) {
+          refCount = rpp.payload.reference_images.length;
+        } else if (rpp && Array.isArray(rpp.reference_paths)) {
+          refCount = rpp.reference_paths.length;
+        }
+        if (rps || rpp) {
+          refProvLine =
+            '<div class="muted" style="font-size:0.78rem;margin:-0.15rem 0 0.4rem">' +
+            'Referenz-Provider: <strong>' + escapeHtml(rpsDe) + '</strong>' +
+            (provRaw ? (' · Provider: <strong>' + escapeHtml(provDe) + '</strong>') : '') +
+            (modeRaw ? (' · Modus: <strong>' + escapeHtml(modeDe) + '</strong>') : '') +
+            (refCount ? (' · Referenzen: <strong>' + escapeHtml(String(refCount)) + '</strong>') : '') +
+            (fmt ? (' · <span title="' + escapeHtml(fmt) + '">Format</span>') : '') +
+            (noLive ? (' · <strong>Kein Live-Upload</strong>') : '') +
+            '</div>';
+        }
+      }
       card.innerHTML =
-        "<h3>Szene " + (i + 1) + "</h3>" +
+        "<h3>Szene " + (i + 1) + "</h3>" + polLine + cmpLine + contLine + refProvLine +
         '<div class="pc-block"><label>Leonardo</label><pre class="pc-pre">' + escapeHtml(leoT || "—") + "</pre>" +
         '<button type="button" class="sm pc-copy-btn" data-pc-idx="' + i + '" data-pc-kind="leo">Copy</button></div>' +
         '<div class="pc-block"><label>Kling Motion / Kamera / Keyframe</label><pre class="pc-pre">' + escapeHtml(kT || "—") + "</pre>" +
@@ -2035,6 +2308,18 @@ try {
         '<button type="button" class="sm pc-copy-btn" data-pc-idx="' + i + '" data-pc-kind="openai">Copy</button></div>';
       host.appendChild(card);
     }
+  }
+
+  // BA 26.9c — helper for read-only display (if JSON contains production_asset_approval_result)
+  function extractProductionAssetApproval() {
+    if (!lastExport) return null;
+    return lastExport.production_asset_approval_result || null;
+  }
+
+  // BA 27.0 — read-only: show if a production summary is embedded in JSON
+  function extractProductionPackSummary() {
+    if (!lastExport) return null;
+    return lastExport.production_summary || lastExport.production_pack_summary || null;
   }
 
   function getInputSnapshot() {

@@ -5,6 +5,7 @@ Minimaler Eingangs-Pack für den **Real Video Build Orchestrator** (`scripts/run
 Inhalt:
 
 - `scene_asset_pack.json` — 3 Szenen-Beats, lokale/placeholder-fähige Prompts, ohne Binärdateien.
+- `assets/scene_001.png` — kleines Beispielbild (kopiert aus `fixtures/local_preview_mini`) für **BA 26.2** Runway Image-to-Video Smoke (`--image-path`).
 
 ## Zweck
 

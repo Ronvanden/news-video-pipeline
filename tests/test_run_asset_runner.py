@@ -119,7 +119,61 @@ def test_placeholder_creates_pngs_and_manifest(asset_runner_mod, tmp_path):
     assert man["assets"][0]["scene_number"] == 1
     assert man["assets"][0]["image_path"] == "scene_001.png"
     assert "visual_prompt" in man["assets"][0]
+    # BA 26.4c: Operator-Transparenz (additiv)
+    a0 = man["assets"][0]
+    assert "visual_prompt_raw" in a0
+    assert "visual_prompt_effective" in a0
+    assert "visual_text_guard_applied" in a0
+    assert "visual_policy_status" in a0
+    assert "visual_policy_warnings" in a0
+    assert "provider_routing_reason" in a0
+    assert "[visual_no_text_guard_v26_4]" in str(a0.get("visual_prompt_effective") or "")
     assert man["assets"][0]["generation_mode"] == "placeholder"
+
+
+def test_openai_images_routed_uses_adapter_dry_run(asset_runner_mod, tmp_path, monkeypatch):
+    # No key required for dry-run; ensure no accidental live calls.
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    pack = {
+        "export_version": "18.2-v1",
+        "scene_expansion": {
+            "expanded_scene_assets": [
+                {
+                    "chapter_index": 0,
+                    "beat_index": 0,
+                    "visual_prompt": "Thumbnail base frame, clean negative space reserved for later editorial overlay.",
+                    "visual_prompt_effective": "Thumbnail base frame, clean negative space reserved for later editorial overlay.\n\n[visual_no_text_guard_v26_4]\nNo readable text.",
+                    "visual_prompt_raw": "Thumbnail base frame, clean negative space reserved for later editorial overlay.",
+                    "overlay_intent": [],
+                    "text_sensitive": False,
+                    "visual_asset_kind": "thumbnail_base",
+                    "routed_visual_provider": "openai_images",
+                    "routed_image_provider": "",
+                    "camera_motion_hint": "static",
+                    "duration_seconds": 6,
+                    "asset_type": "thumbnail_base",
+                    "continuity_note": "",
+                    "safety_notes": [],
+                }
+            ]
+        },
+    }
+    p = tmp_path / "scene_asset_pack_openai.json"
+    p.write_text(json.dumps(pack), encoding="utf-8")
+    meta = asset_runner_mod.run_local_asset_runner(
+        p,
+        tmp_path / "out",
+        run_id="oai_dry",
+        mode="placeholder",
+    )
+    out_dir = Path(meta["output_dir"])
+    man = json.loads((out_dir / "asset_manifest.json").read_text(encoding="utf-8"))
+    a0 = man["assets"][0]
+    assert a0.get("provider_used") == "openai_images"
+    assert a0.get("provider_status") == "dry_run_ready"
+    assert a0.get("generation_mode") == "openai_images_dry_run"
+    assert "[visual_no_text_guard_v26_4]" in str(a0.get("prompt_used_effective") or "")
+    assert (out_dir / "scene_001.png").is_file()
 
 
 def test_missing_pack_raises_cleanly_via_runner(asset_runner_mod, tmp_path):

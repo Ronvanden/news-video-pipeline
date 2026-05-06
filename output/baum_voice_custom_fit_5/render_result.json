@@ -1,0 +1,14 @@
+{
+  "video_created": true,
+  "output_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_5\\final_video.mp4",
+  "duration_seconds": 16.04,
+  "scene_count": 3,
+  "motion_mode": "basic",
+  "motion_applied": true,
+  "warnings": [],
+  "blocking_reasons": [],
+  "subtitle_path_requested": null,
+  "subtitles_burned": false,
+  "run_id": "baum_voice_custom_fit_5",
+  "render_output_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\baum_voice_custom_fit_5\\render_baum_voice_custom_fit_5\\render_output_manifest.json"
+}

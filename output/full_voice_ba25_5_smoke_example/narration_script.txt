@@ -1,0 +1,12 @@
+# BA 25.1 — REAL VIDEO BUILD VOICEOVER (smoke)
+# Narration aus scene_asset_pack abgeleitet; kein TTS-Live in BA 25.1.
+
+Hast du dich jemals gefragt, welche Rolle spezielle Domänen in der digitalen Welt spielen? Heute klären wir das!
+
+Dokumentationsdomänen sind spezielle Internetadressen, die für Schulungs- und Beispielzwecke verwendet werden. Sie sind nicht für den realen Betrieb gedacht, sondern dienen dazu, Entwicklern und Nutzern zu zeigen, wie bestimmte Technologien oder Systeme funktionieren.
+
+Die Verwendung dieser Domänen erfordert keine Genehmigung, da sie speziell für diesen Zweck geschaffen wurden. Das bedeutet, dass jeder sie nutzen kann, um Beispiele zu erstellen oder zu demonstrieren, ohne rechtliche Bedenken.
+
+Es ist wichtig, diese Domänen nicht im operativen Geschäft zu verwenden. Sie sind nicht zuverlässig und können zu Verwirrung oder Sicherheitsproblemen führen. Daher sollten sie ausschließlich für Dokumentationszwecke genutzt werden.
+
+Zusammenfassend lässt sich sagen, dass Dokumentationsdomänen eine wertvolle Ressource sind, solange sie richtig eingesetzt werden. In Zukunft könnten wir jedoch neue Standards sehen, die die Nutzung solcher Domänen weiter regulieren.

@@ -17,6 +17,7 @@ from app.visual_plan.builder import build_scene_blueprint_plan
 from app.visual_plan.policy import SAFETY_NEGATIVE_SEGMENTS_V1
 from app.visual_plan.prompt_engine import build_scene_prompts_from_blueprint
 from app.visual_plan.provider_formatter import build_all_provider_prompts
+from app.visual_plan.visual_no_text import append_no_text_guard
 
 
 def _dedupe_warnings(ws: List[str]) -> List[str]:
@@ -51,7 +52,7 @@ def build_thumbnail_prompt_v1(req: ExportPackageRequest) -> tuple[str, List[str]
         "constraints: single focal subject, high contrast, no_legible_trademark_text, "
         "no_fake_news_tickers, no_identifiable_real_person_likeness_claims"
     )
-    return " | ".join(parts), []
+    return append_no_text_guard(" | ".join(parts)), []
 
 
 def build_export_package_v1(req: ExportPackageRequest) -> ExportPackageResponse:

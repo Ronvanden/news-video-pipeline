@@ -1,0 +1,16 @@
+{
+  "video_created": true,
+  "output_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke\\final_video.mp4",
+  "duration_seconds": 30.0,
+  "scene_count": 3,
+  "motion_mode": "static",
+  "motion_applied": false,
+  "warnings": [
+    "audio_missing_silent_render"
+  ],
+  "blocking_reasons": [],
+  "subtitle_path_requested": null,
+  "subtitles_burned": false,
+  "run_id": "ba265_founder_smoke",
+  "render_output_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke\\render_ba265_founder_smoke\\render_output_manifest.json"
+}

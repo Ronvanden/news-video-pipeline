@@ -1,0 +1,74 @@
+{
+  "export_version": "18.2-v1",
+  "source_label": "ba265_url_to_final",
+  "template_type": "documentary_news",
+  "title": "Mini-Testskript (BA 25.2)",
+  "hook": "Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+  "metadata": {
+    "ba265": {
+      "pipeline": "url_to_final_mp4",
+      "script_sources": [],
+      "script_warnings": []
+    }
+  },
+  "scene_expansion": {
+    "expanded_scene_assets": [
+      {
+        "chapter_index": 0,
+        "beat_index": 0,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Hook. Textauszug: Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+        "camera_motion_hint": "static",
+        "duration_seconds": 6,
+        "asset_type": "broll",
+        "continuity_note": "",
+        "safety_notes": [],
+        "narration": "Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+        "voiceover_text": "Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+        "scene_title": "Hook",
+        "runway_clip_path": "visual_assets/merged/scene_001.mp4"
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 1,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 1: Einstieg. Textauszug: Wir zeigen, wie ein Story-Text in Szenen zerlegt wird.",
+        "camera_motion_hint": "static",
+        "duration_seconds": 6,
+        "asset_type": "broll",
+        "continuity_note": "",
+        "safety_notes": [],
+        "narration": "Wir zeigen, wie ein Story-Text in Szenen zerlegt wird.",
+        "voiceover_text": "Wir zeigen, wie ein Story-Text in Szenen zerlegt wird.",
+        "scene_title": "Kapitel 1: Einstieg",
+        "runway_clip_path": "visual_assets/merged/scene_002.mp4"
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 2,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Struktur. Textauszug: Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.",
+        "camera_motion_hint": "static",
+        "duration_seconds": 6,
+        "asset_type": "broll",
+        "continuity_note": "",
+        "safety_notes": [],
+        "narration": "Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.",
+        "voiceover_text": "Jede Szene erhält eine Narration, damit der Orchestrator daraus einen Sprechertext bauen kann.",
+        "scene_title": "Kapitel 2: Struktur",
+        "runway_clip_path": "visual_assets/merged/scene_002.mp4"
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 3,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 3: Abschluss. Textauszug: Am Ende entsteht ein scene_asset_pack.json, das der Real Video Build Orchestrator direkt nutzen kann.",
+        "camera_motion_hint": "static",
+        "duration_seconds": 5,
+        "asset_type": "broll",
+        "continuity_note": "",
+        "safety_notes": [],
+        "narration": "Am Ende entsteht ein scene_asset_pack.json, das der Real Video Build Orchestrator direkt nutzen kann.",
+        "voiceover_text": "Am Ende entsteht ein scene_asset_pack.json, das der Real Video Build Orchestrator direkt nutzen kann.",
+        "scene_title": "Kapitel 3: Abschluss",
+        "runway_clip_path": "visual_assets/merged/scene_002.mp4"
+      }
+    ]
+  }
+}

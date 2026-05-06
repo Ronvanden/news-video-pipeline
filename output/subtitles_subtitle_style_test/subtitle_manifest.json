@@ -1,0 +1,31 @@
+{
+  "run_id": "subtitle_style_test",
+  "source_narration_script": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_211e0d0a-802e-4312-ac1e-f4a48c8c6ed6\\narration_script.txt",
+  "timeline_manifest": null,
+  "subtitle_count": 73,
+  "estimated_duration_seconds": 163.862,
+  "subtitle_mode": "simple",
+  "subtitle_source": "narration",
+  "subtitle_style": "typewriter",
+  "subtitle_render_contract": {
+    "style": "typewriter",
+    "recommended_renderer": "future_typewriter_renderer",
+    "requires_word_timing": false,
+    "requires_character_timing": true,
+    "max_words_per_cue": 6,
+    "fallback_style": "word_by_word",
+    "warnings": [
+      "typewriter_v1_contract_only_srt_has_line_timing_only"
+    ]
+  },
+  "transcription_provider": "",
+  "transcription_used": false,
+  "fallback_used": false,
+  "audio_path": null,
+  "warnings": [
+    "subtitle_duration_estimate_used"
+  ],
+  "blocking_reasons": [],
+  "subtitles_srt_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_subtitle_style_test\\subtitles.srt",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_subtitle_style_test"
+}

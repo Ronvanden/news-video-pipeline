@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "run_id": "b25932f7-c38d-4066-b881-1f6a601221e2",
+  "clean_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba263r_reality_check\\ba263r_clean.mp4",
+  "clean_video_role": "clean_video",
+  "subtitle_burnin_video_path": "",
+  "subtitle_sidecar_srt_path": "",
+  "subtitle_sidecar_ass_path": "",
+  "subtitle_delivery_mode": "none",
+  "subtitle_style": "none",
+  "renderer_used": "none",
+  "warnings": [
+    "audio_missing_silent_render"
+  ],
+  "blocking_reasons": []
+}

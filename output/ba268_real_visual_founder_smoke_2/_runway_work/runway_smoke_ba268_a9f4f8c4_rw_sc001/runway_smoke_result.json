@@ -1,0 +1,17 @@
+{
+  "schema_version": "runway_image_to_video_smoke_v1",
+  "run_id": "ba268_a9f4f8c4_rw_sc001",
+  "ok": true,
+  "status": "completed",
+  "image_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_2\\generated_assets_ba268_a9f4f8c4\\scene_001.png",
+  "prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Hook. Textauszug: Das ist ein kurzer Testtext für den lokalen Adapter – ohne echte News-Claims.",
+  "output_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_2\\_runway_work\\runway_smoke_ba268_a9f4f8c4_rw_sc001\\runway_clip.mp4",
+  "warnings": [],
+  "blocking_reasons": [],
+  "metadata": {
+    "provider": "runway",
+    "duration_seconds": 5,
+    "task_id": "d277ff21-2f3e-4ce7-a90f-9349df6130b0",
+    "task_url": "https://api.dev.runwayml.com/v1/tasks/d277ff21-2f3e-4ce7-a90f-9349df6130b0"
+  }
+}

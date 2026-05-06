@@ -17,6 +17,13 @@ from app.models import (
 )
 from app.story_engine.export_package import _dedupe_warnings, build_export_package_v1
 from app.story_engine.thumbnail_ctr import build_thumbnail_variants
+from app.visual_plan.visual_no_text import (
+    append_no_text_guard,
+    strip_visual_no_text_guard,
+    visual_no_text_guard_overhead,
+)
+from app.visual_plan.reference_payload_mirror import extract_reference_payload_fields, merge_reference_payload_fields
+
 
 _LEO_REALISM = (
     "cinematic photoreal still, volumetric atmosphere, natural skin micro-detail, "
@@ -64,6 +71,11 @@ def _truncate(s: str, cap: int) -> str:
     return t[: cap - 1].rsplit(" ", 1)[0].strip() + "…"
 
 
+def _truncate_preserving_guard_budget(inner: str, cap: int) -> str:
+    overhead = visual_no_text_guard_overhead()
+    return _truncate(inner, max(120, cap - overhead))
+
+
 _OAI_REPLACE = (
     (re.compile(r"\bgore\b", re.I), "stylised abstract tension"),
     (re.compile(r"\bblood\b", re.I), "muted documentary red accent"),
@@ -75,20 +87,32 @@ _OAI_REPLACE = (
 
 
 def _optimize_leonardo_scene(sp: SceneExpandedPrompt) -> OptimizedProviderScenePrompt:
-    base = _norm_space(sp.positive_expanded or "")
+    base = _norm_space(strip_visual_no_text_guard(sp.positive_expanded or ""))
     cont = _norm_space(sp.continuity_token or "")
     extra = f" {_LEO_CONT}: {cont}." if cont else f" {_LEO_CONT}."
-    merged = _norm_space(f"{_LEO_REALISM}. {base} {extra} {_LEO_STYLE}")
-    return OptimizedProviderScenePrompt(
+    overhead = visual_no_text_guard_overhead()
+    fixed = (
+        len(_norm_space(f"{_LEO_REALISM}. {_LEO_STYLE} {extra}"))
+        + overhead
+        + 12
+    )
+    base_cap = max(180, 920 - fixed)
+    base_t = _truncate(base, base_cap)
+    merged = _norm_space(f"{_LEO_REALISM}. {base_t} {extra} {_LEO_STYLE}")
+    merged = _truncate_preserving_guard_budget(merged, 920)
+    base = OptimizedProviderScenePrompt(
         scene_number=int(sp.scene_number),
-        positive_optimized=_truncate(merged, 920),
+        positive_optimized=append_no_text_guard(merged),
         negative_prompt=sp.negative_prompt or "",
         continuity_token=cont,
+    )
+    return OptimizedProviderScenePrompt.model_validate(
+        merge_reference_payload_fields(base.model_dump(), extract_reference_payload_fields(sp.model_dump()))
     )
 
 
 def _optimize_openai_scene(sp: SceneExpandedPrompt) -> OptimizedProviderScenePrompt:
-    text = _norm_space(sp.positive_expanded or "")
+    text = _norm_space(strip_visual_no_text_guard(sp.positive_expanded or ""))
     for rx, rep in _OAI_REPLACE:
         text = rx.sub(rep, text)
     cont = _norm_space(sp.continuity_token or "")
@@ -96,11 +120,14 @@ def _optimize_openai_scene(sp: SceneExpandedPrompt) -> OptimizedProviderScenePro
     merged = _norm_space(
         f"{_OPENAI_SAFE_PREFIX}. {text} {_OPENAI_HIERARCHY}.{cont_chunk}"
     )
-    return OptimizedProviderScenePrompt(
+    base = OptimizedProviderScenePrompt(
         scene_number=int(sp.scene_number),
-        positive_optimized=_truncate(merged, 920),
+        positive_optimized=append_no_text_guard(_truncate_preserving_guard_budget(merged, 920)),
         negative_prompt=sp.negative_prompt or "",
         continuity_token=cont,
+    )
+    return OptimizedProviderScenePrompt.model_validate(
+        merge_reference_payload_fields(base.model_dump(), extract_reference_payload_fields(sp.model_dump()))
     )
 
 
@@ -113,9 +140,10 @@ def _kling_motion_for_scene(
     sn = int(sp.scene_number)
     path = _CAMERA_PATHS[idx % len(_CAMERA_PATHS)]
     verb = _MOTION_VERBS[idx % len(_MOTION_VERBS)]
-    pos = _norm_space(sp.positive_expanded or "")
+    pos = _norm_space(strip_visual_no_text_guard(sp.positive_expanded or ""))
     motion = _norm_space(
-        f"{verb}; camera {path}; subject readable; motion-safe cuts; beat:{beat_label or 'n/a'}"
+        f"{verb}; camera {path}; subject visually clear without on-image text; "
+        f"motion-safe cuts; beat:{beat_label or 'n/a'}"
     )
     th = _truncate(
         _norm_space(
@@ -124,12 +152,16 @@ def _kling_motion_for_scene(
         ),
         220,
     )
-    return KlingMotionScenePrompt(
+    base = KlingMotionScenePrompt(
         scene_number=sn,
-        motion_prompt=_truncate(motion, 420),
+        motion_prompt=append_no_text_guard(_truncate_preserving_guard_budget(motion, 420)),
         camera_path=path,
         transition_hint=th,
-        keyframe_positive=_truncate(pos, 480),
+        keyframe_positive=append_no_text_guard(_truncate_preserving_guard_budget(pos, 480)),
+        routed_visual_provider="runway",
+    )
+    return KlingMotionScenePrompt.model_validate(
+        merge_reference_payload_fields(base.model_dump(), extract_reference_payload_fields(sp.model_dump()))
     )
 
 

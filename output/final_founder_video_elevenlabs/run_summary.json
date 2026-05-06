@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "input_mode": "script_json",
+  "url": null,
+  "script_json": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba266_visual_founder_smoke\\script.json",
+  "title": "Mini-Testskript (BA 25.2)",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs",
+  "script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs\\script.json",
+  "scene_plan_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs\\scene_plan.json",
+  "scene_asset_pack_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs\\scene_asset_pack.json",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs\\generated_assets_final_founder_video_elevenlabs\\asset_manifest.json",
+  "timeline_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs\\timeline_final_founder_video_elevenlabs\\timeline_manifest.json",
+  "final_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs\\final_video.mp4",
+  "used_existing_assets": true,
+  "used_video_assets_count": 3,
+  "used_image_assets_count": 0,
+  "warnings": [
+    "ba266_video_reuse_for_remaining_scenes",
+    "existing_asset_used",
+    "ba266_cinematic_placeholder_applied:3",
+    "audio_missing_silent_render"
+  ],
+  "blocking_reasons": [],
+  "voice_used": false,
+  "voice_mode": "elevenlabs",
+  "voice_text_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs\\voiceover_text.txt",
+  "voice_file_path": null,
+  "voice_duration_seconds": null,
+  "audio_stream_expected": false,
+  "voice_warnings": [],
+  "voice_blocking_reasons": [
+    "elevenlabs_missing_api_key"
+  ]
+}

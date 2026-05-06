@@ -5,6 +5,10 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from app.visual_plan.visual_no_text import append_no_text_guard, partition_visual_overlay_text
+from app.visual_plan.visual_provider_router import route_visual_provider
+from app.visual_plan.visual_policy_report import build_visual_policy_fields, ensure_effective_prompt
+
 
 def build_scene_asset_pack_from_generate_script_response(
     data: dict,
@@ -288,18 +292,25 @@ def _estimate_duration_seconds(text: str) -> int:
     return max(4, min(25, sec)) if sec else 4
 
 
-def _visual_prompt_from_text(title: str, narration: str) -> str:
+def _visual_prompt_from_text(title: str, narration: str) -> Tuple[str, str, List[str], bool]:
     """
-    Deterministischer Placeholder-Visual-Prompt, ohne neue Fakten zu erfinden:
-    nur „Textkarte/Abstrakt“ + kurze Stichworte aus vorhandenem Text.
+    Textfreier Mood-Prompt + Overlay-Auszüge. Narration löst ``text_sensitive`` für Routing aus.
     """
-    base = (title or "").strip()
-    snippet = _collapse_ws(narration)[:160]
-    if base and snippet:
-        return f"Textkarte, neutrale dokumentarische Bildsprache. Kapitel: {base}. Textauszug: {snippet}"
-    if snippet:
-        return f"Textkarte, neutrale dokumentarische Bildsprache. Textauszug: {snippet}"
-    return "Textkarte, neutrale dokumentarische Bildsprache."
+    t = _s(title)
+    narr = _collapse_ws(narration)
+    combo = f"{t}. {narr}" if t and narr else (t or narr)
+    cleaned, overlay, ts_part = partition_visual_overlay_text(combo)
+    ts = bool(ts_part or narr)
+    if overlay:
+        visual_core = cleaned
+    else:
+        label = t or "Kapitel"
+        visual_core = (
+            f"Cinematic editorial B-roll für „{label}“, symbolisches Motiv, dramatisches Licht, "
+            "großzügige Freiflächen für spätere Text-Overlays — keine eingezeichnete Schrift."
+        )
+    eff = append_no_text_guard(_collapse_ws(visual_core))
+    return combo, eff, overlay, ts
 
 
 def _build_scene_asset_pack(
@@ -316,11 +327,15 @@ def _build_scene_asset_pack(
     # Optional: hook as first beat if present (keeps orchestration narration useful)
     beat_index = 0
     if hook:
+        vp_raw, vp_eff, ov_int, ts = _visual_prompt_from_text("Hook", hook)
+        still_route = route_visual_provider("keyframe_still", text_sensitive=ts)
+        vid_route = route_visual_provider("motion_clip", text_sensitive=False)
+        vp_eff2, _ = ensure_effective_prompt(vp_eff)
         expanded.append(
             {
                 "chapter_index": 0,
                 "beat_index": beat_index,
-                "visual_prompt": _visual_prompt_from_text("Hook", hook),
+                "visual_prompt": vp_eff2,
                 "camera_motion_hint": "static",
                 "duration_seconds": _estimate_duration_seconds(hook),
                 "asset_type": "hook_text",
@@ -330,6 +345,21 @@ def _build_scene_asset_pack(
                 "narration": hook,
                 "voiceover_text": hook,
                 "scene_title": "Hook",
+                "overlay_intent": ov_int,
+                "text_sensitive": ts,
+                "routed_visual_provider": still_route.get("provider"),
+                "routed_image_provider": still_route.get("image_provider"),
+                "video_provider_routed": vid_route.get("provider"),
+                "visual_asset_kind": "keyframe_still",
+                **build_visual_policy_fields(
+                    visual_prompt_raw=vp_raw,
+                    visual_prompt_effective=vp_eff2,
+                    overlay_intent=ov_int,
+                    text_sensitive=ts,
+                    visual_asset_kind="keyframe_still",
+                    routed_visual_provider=str(still_route.get("provider") or ""),
+                    routed_image_provider=str(still_route.get("image_provider") or ""),
+                ),
             }
         )
         beat_index += 1
@@ -339,11 +369,19 @@ def _build_scene_asset_pack(
         if not narration:
             continue
         sc_title = _s((sc or {}).get("title")) or f"Szene {i}"
+        vp_raw, vp_eff, ov_int, ts = _visual_prompt_from_text(sc_title, narration)
+        if hook:
+            still_kind = "keyframe_still" if beat_index == 1 else "cinematic_broll"
+        else:
+            still_kind = "keyframe_still" if beat_index == 0 else "cinematic_broll"
+        still_route = route_visual_provider(still_kind, text_sensitive=ts)
+        vid_route = route_visual_provider("motion_clip", text_sensitive=False)
+        vp_eff2, _ = ensure_effective_prompt(vp_eff)
         expanded.append(
             {
                 "chapter_index": 0,
                 "beat_index": beat_index,
-                "visual_prompt": _visual_prompt_from_text(sc_title, narration),
+                "visual_prompt": vp_eff2,
                 "camera_motion_hint": "static",
                 "duration_seconds": _estimate_duration_seconds(narration),
                 "asset_type": "story_text",
@@ -354,6 +392,21 @@ def _build_scene_asset_pack(
                 "voiceover_text": narration,
                 "scene_title": sc_title,
                 "estimated_duration_seconds": _estimate_duration_seconds(narration),
+                "overlay_intent": ov_int,
+                "text_sensitive": ts,
+                "routed_visual_provider": still_route.get("provider"),
+                "routed_image_provider": still_route.get("image_provider"),
+                "video_provider_routed": vid_route.get("provider"),
+                "visual_asset_kind": still_kind,
+                **build_visual_policy_fields(
+                    visual_prompt_raw=vp_raw,
+                    visual_prompt_effective=vp_eff2,
+                    overlay_intent=ov_int,
+                    text_sensitive=ts,
+                    visual_asset_kind=still_kind,
+                    routed_visual_provider=str(still_route.get("provider") or ""),
+                    routed_image_provider=str(still_route.get("image_provider") or ""),
+                ),
             }
         )
         beat_index += 1

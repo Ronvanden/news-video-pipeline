@@ -1,0 +1,39 @@
+{
+  "run_id": "real_mini_001",
+  "source_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\fixtures\\real_video_build_mini\\scene_asset_pack.json",
+  "asset_count": 3,
+  "generation_mode": "placeholder",
+  "warnings": [],
+  "assets": [
+    {
+      "scene_number": 1,
+      "chapter_index": 0,
+      "beat_index": 0,
+      "asset_type": "establishing",
+      "image_path": "scene_001.png",
+      "visual_prompt": "Establishing shot: ruhige Stadtlinie am frühen Morgen, weiches Tageslicht, dokumentarische Bildsprache.",
+      "camera_motion_hint": "slow push-in",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 2,
+      "chapter_index": 0,
+      "beat_index": 1,
+      "asset_type": "detail",
+      "image_path": "scene_002.png",
+      "visual_prompt": "Detailaufnahme: Schreibtisch mit Notizen und Stift, neutraler Hintergrund, Fokus auf Hände beim Schreiben.",
+      "camera_motion_hint": "static",
+      "generation_mode": "placeholder"
+    },
+    {
+      "scene_number": 3,
+      "chapter_index": 0,
+      "beat_index": 2,
+      "asset_type": "broll",
+      "image_path": "scene_003.png",
+      "visual_prompt": "B-roll: belebte Straße aus erhöhter Perspektive, leichte Kamerabewegung, alltägliche Szene ohne Konflikt.",
+      "camera_motion_hint": "pan right",
+      "generation_mode": "placeholder"
+    }
+  ]
+}

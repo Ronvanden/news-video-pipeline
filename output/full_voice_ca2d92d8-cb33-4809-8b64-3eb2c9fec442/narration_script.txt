@@ -1,0 +1,36 @@
+# BA 20.0 / BA 20.1 — FULL VOICEOVER
+# Smoke: Stille/Länge-Näherung; elevenlabs|openai: echte TTS (siehe voice_manifest).
+
+Kapitel 1: Die Vorwürfe der EU-Kommission
+
+Die EU-Kommission hat in einer vorläufigen Untersuchung festgestellt, dass Meta, das Unternehmen hinter Facebook und Instagram, nicht ausreichend Maßnahmen ergreift, um Kinder unter 13 Jahren von seinen Plattformen fernzuhalten. Offiziell dürfen Kinder erst ab 13 Jahren diese sozialen Medien nutzen, doch die Realität sieht anders aus. Viele Kinder sind bereits früher aktiv und die Kommission sieht hierin eine klare Gefährdung. Die Vorwürfe sind ernst und könnten weitreichende Konsequenzen für Meta haben.
+
+---
+
+Kapitel 2: Die Gefahren für Kinder
+
+Die Nutzung von sozialen Medien birgt zahlreiche Risiken, insbesondere für Kinder. Cybermobbing, unangemessene Inhalte und der Verlust der Privatsphäre sind nur einige der Gefahren, denen Kinder ausgesetzt sind. Die EU-Kommission hat festgestellt, dass Meta nicht genug tut, um diese Risiken zu minimieren. Die Plattformen bieten zwar einige Schutzmaßnahmen, doch diese scheinen nicht ausreichend zu sein, um Kinder effektiv zu schützen. Die Frage bleibt: Wie können wir Kinder besser schützen?
+
+---
+
+Kapitel 3: Der Digital Services Act (DSA)
+
+Der Digital Services Act (DSA) ist ein Gesetz, das Plattformen dazu verpflichtet, ihre eigenen Regeln durchzusetzen. Die EU-Kommission hat festgestellt, dass Meta gegen dieses Gesetz verstößt, indem es nicht genügend Maßnahmen ergreift, um Kinder unter 13 Jahren zu identifizieren und von seinen Plattformen fernzuhalten. Digitalkommissarin Henna Virkkunen betont, dass die eigenen Allgemeinen Geschäftsbedingungen von Meta klarstellen, dass ihre Dienste nicht für Minderjährige unter 13 Jahren bestimmt sind. Doch wie effektiv sind diese Regeln in der Praxis?
+
+---
+
+Kapitel 4: Metas Reaktion auf die Vorwürfe
+
+In einer ersten Reaktion wies Meta die Vorwürfe der EU-Kommission zurück. Eine Sprecherin des Unternehmens betonte, dass Instagram und Facebook bereits Maßnahmen implementiert haben, um Konten von Personen unter 13 Jahren zu erkennen und zu löschen. Doch viele Kritiker sind skeptisch. Sind diese Maßnahmen wirklich ausreichend? Oder handelt es sich nur um ein Lippenbekenntnis, um den Druck der EU zu mindern? Die Diskussion über die Verantwortung von Plattformen in Bezug auf den Schutz von Kindern ist damit neu entfacht.
+
+---
+
+Kapitel 5: Mögliche Konsequenzen für Meta
+
+Sollte sich die Auffassung der EU-Kommission bestätigen, drohen Meta erhebliche Geldstrafen von bis zu sechs Prozent des weltweiten Jahresumsatzes. Dies könnte für das Unternehmen eine massive finanzielle Belastung darstellen. Darüber hinaus könnte es zu weiteren regulatorischen Maßnahmen kommen, die die Art und Weise, wie soziale Medien betrieben werden, grundlegend verändern könnten. Die Frage ist, ob Meta bereit ist, die notwendigen Änderungen vorzunehmen, um die Sicherheit von Kindern zu gewährleisten.
+
+---
+
+Kapitel 6: Die Zukunft der sozialen Medien und den Schutz von Kindern
+
+Die Debatte über den Schutz von Kindern in sozialen Medien ist noch lange nicht beendet. Die EU-Kommission hat klare Erwartungen an Plattformen wie Meta, und es bleibt abzuwarten, wie das Unternehmen reagieren wird. In einer zunehmend digitalisierten Welt ist es entscheidend, dass wir als Gesellschaft sicherstellen, dass Kinder in einem geschützten Umfeld aufwachsen können. Welche Maßnahmen sollten ergriffen werden, um die Sicherheit von Kindern im Internet zu gewährleisten? Und wie können Eltern und Erziehungsberechtigte dabei unterstützen?

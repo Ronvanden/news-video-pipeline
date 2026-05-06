@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "run_id": "ba268_6dedde58",
+  "clean_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_3\\final_video.mp4",
+  "clean_video_role": "clean_video",
+  "subtitle_burnin_video_path": "",
+  "subtitle_sidecar_srt_path": "",
+  "subtitle_sidecar_ass_path": "",
+  "subtitle_delivery_mode": "none",
+  "subtitle_style": "none",
+  "renderer_used": "none",
+  "warnings": [],
+  "blocking_reasons": []
+}

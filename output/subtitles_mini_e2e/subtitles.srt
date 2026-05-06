@@ -1,0 +1,55 @@
+1
+00:00:00,000 --> 00:00:00,431
+Dies ist ein lokaler Mini-Preview-Test der
+
+2
+00:00:00,431 --> 00:00:00,863
+Video-Pipeline. Er prüft, ob aus einer
+
+3
+00:00:00,863 --> 00:00:01,294
+kurzen Timeline und diesem Text Untertitel
+
+4
+00:00:01,294 --> 00:00:01,726
+entstehen und ob anschließend ein cleanes
+
+5
+00:00:01,726 --> 00:00:02,157
+Video sowie eine Preview mit eingebrannten
+
+6
+00:00:02,157 --> 00:00:02,586
+Untertiteln gebaut werden können. Der
+
+7
+00:00:02,586 --> 00:00:03,014
+Ablauf nutzt nur kleine Platzhalter-Bilder
+
+8
+00:00:03,014 --> 00:00:03,443
+und bewusst keinen separaten Audiotrack.
+
+9
+00:00:03,443 --> 00:00:03,872
+Wenn ffmpeg oder Bilddateien fehlen,
+
+10
+00:00:03,872 --> 00:00:04,303
+erscheinen Warnungen — das ist erwartbar
+
+11
+00:00:04,303 --> 00:00:04,732
+und kein Produktionsfehler. Zum Abschluss
+
+12
+00:00:04,732 --> 00:00:05,163
+solltest du OPEN_ME.md und den Founder
+
+13
+00:00:05,163 --> 00:00:05,592
+Report im Ordner local_preview_<run_id>
+
+14
+00:00:05,592 --> 00:00:06,000
+öffnen und die Pfade

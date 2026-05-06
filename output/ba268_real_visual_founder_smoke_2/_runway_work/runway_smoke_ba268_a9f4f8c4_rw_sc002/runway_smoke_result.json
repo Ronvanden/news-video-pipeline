@@ -1,0 +1,17 @@
+{
+  "schema_version": "runway_image_to_video_smoke_v1",
+  "run_id": "ba268_a9f4f8c4_rw_sc002",
+  "ok": true,
+  "status": "completed",
+  "image_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_2\\generated_assets_ba268_a9f4f8c4\\scene_002.png",
+  "prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 1: Einstieg. Textauszug: Wir zeigen, wie ein Story-Text in Szenen zerlegt wird.",
+  "output_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba268_real_visual_founder_smoke_2\\_runway_work\\runway_smoke_ba268_a9f4f8c4_rw_sc002\\runway_clip.mp4",
+  "warnings": [],
+  "blocking_reasons": [],
+  "metadata": {
+    "provider": "runway",
+    "duration_seconds": 5,
+    "task_id": "51cb1044-b1bb-4971-a8c5-9f4149eaf086",
+    "task_url": "https://api.dev.runwayml.com/v1/tasks/51cb1044-b1bb-4971-a8c5-9f4149eaf086"
+  }
+}

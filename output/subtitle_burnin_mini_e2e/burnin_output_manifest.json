@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "clean_input_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_mini_e2e\\clean_video.mp4",
+  "subtitle_burnin_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_mini_e2e\\preview_with_subtitles.mp4",
+  "subtitle_delivery_mode": "burn_in",
+  "subtitle_style": "typewriter",
+  "renderer_used": "ass_typewriter",
+  "ass_subtitle_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_mini_e2e\\preview_typewriter.ass",
+  "subtitles_srt_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_mini_e2e\\subtitles.srt",
+  "input_video_role": "clean_candidate",
+  "clean_video_required": true,
+  "warnings": [
+    "subtitle_typewriter_ass_renderer_used",
+    "preview_with_subtitles_already_exists"
+  ]
+}

@@ -28,6 +28,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.visual_plan.visual_no_text import append_no_text_guard  # noqa: E402
+
 RESULT_SCHEMA = "runway_image_to_video_smoke_v1"
 RESULT_FILENAME = "runway_smoke_result.json"
 CLIP_FILENAME = "runway_clip.mp4"
@@ -242,6 +244,7 @@ def run_runway_image_to_video_smoke(
     Mit ``existing_task_id`` / ``existing_task_url`` wird kein Image-to-Video-POST ausgeführt,
     nur abgefragt (Resume). ``no_wait`` beendet nach erfolgreichem Create mit Status ``pending``.
     """
+    prompt = append_no_text_guard((prompt or "").strip())
     rid = (run_id or "").strip()
     warnings: List[str] = []
     blocking: List[str] = []

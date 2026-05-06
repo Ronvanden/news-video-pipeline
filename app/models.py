@@ -158,6 +158,38 @@ class SceneExpandedPrompt(BaseModel):
         default="",
         description="Kurz-Anker aus Szene 1 bei continuity_lock; sonst leer.",
     )
+    overlay_intent: List[str] = Field(
+        default_factory=list,
+        description="BA 26.4b — konkrete Overlay-Texte/Lesetexte, nicht ins Generator-Bild legen.",
+    )
+    text_sensitive: bool = Field(
+        default=False,
+        description="BA 26.4b — Motiv nahe an Lesetext/UI → Disposition openai_images.",
+    )
+    visual_asset_kind: str = Field(
+        default="",
+        description="BA 26.4b — Rolle z. B. keyframe_still, cinematic_broll (Disposition).",
+    )
+    routed_visual_provider: str = Field(
+        default="",
+        description="BA 26.4b — empfohlener Haupt-Visual-Generator (leonardo|openai_images|runway|render_layer).",
+    )
+    routed_image_provider: str = Field(
+        default="",
+        description="BA 26.4b — Basis-Still bei render_layer.",
+    )
+    # BA 27.6 — optional mirror/meta fields (additiv; no provider calls)
+    reference_asset_ids: List[str] = Field(default_factory=list)
+    continuity_strength: str = ""
+    continuity_prompt_hint: str = ""
+    continuity_reference_paths: List[str] = Field(default_factory=list)
+    continuity_reference_types: List[str] = Field(default_factory=list)
+    continuity_provider_preparation_status: str = ""
+    continuity_provider_payload_stub: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payloads: Dict[str, Any] = Field(default_factory=dict)
+    recommended_reference_provider_payload: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payload_status: str = ""
+    reference_provider_payload_version: str = ""
 
 
 class PromptQualitySceneEntry(BaseModel):
@@ -317,6 +349,18 @@ class OptimizedProviderScenePrompt(BaseModel):
     positive_optimized: str = ""
     negative_prompt: str = ""
     continuity_token: str = ""
+    # BA 27.6 — optional mirror/meta fields (additiv; no provider calls)
+    reference_asset_ids: List[str] = Field(default_factory=list)
+    continuity_strength: str = ""
+    continuity_prompt_hint: str = ""
+    continuity_reference_paths: List[str] = Field(default_factory=list)
+    continuity_reference_types: List[str] = Field(default_factory=list)
+    continuity_provider_preparation_status: str = ""
+    continuity_provider_payload_stub: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payloads: Dict[str, Any] = Field(default_factory=dict)
+    recommended_reference_provider_payload: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payload_status: str = ""
+    reference_provider_payload_version: str = ""
 
 
 class KlingMotionScenePrompt(BaseModel):
@@ -327,6 +371,22 @@ class KlingMotionScenePrompt(BaseModel):
     camera_path: str = ""
     transition_hint: str = ""
     keyframe_positive: str = ""
+    routed_visual_provider: str = Field(
+        default="runway",
+        description="BA 26.4b — Motion-Clips dispositioniert zu Runway (Stub bleibt Kling-kompatibel).",
+    )
+    # BA 27.6 — optional mirror/meta fields (additiv; no provider calls)
+    reference_asset_ids: List[str] = Field(default_factory=list)
+    continuity_strength: str = ""
+    continuity_prompt_hint: str = ""
+    continuity_reference_paths: List[str] = Field(default_factory=list)
+    continuity_reference_types: List[str] = Field(default_factory=list)
+    continuity_provider_preparation_status: str = ""
+    continuity_provider_payload_stub: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payloads: Dict[str, Any] = Field(default_factory=dict)
+    recommended_reference_provider_payload: Dict[str, Any] = Field(default_factory=dict)
+    reference_provider_payload_status: str = ""
+    reference_provider_payload_version: str = ""
 
 
 class ProviderOptimizedPromptsBundle(BaseModel):

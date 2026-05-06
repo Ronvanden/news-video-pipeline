@@ -10,6 +10,8 @@ from app.models import (
     SceneExpandedPrompt,
     ProviderPromptsBundle,
 )
+from app.visual_plan.visual_no_text import append_no_text_guard, partition_visual_overlay_text
+from app.visual_plan.visual_provider_router import route_visual_provider
 
 
 def _norm_space(s: str) -> str:
@@ -38,7 +40,7 @@ PROVIDER_STUBS: Dict[str, ProviderStub] = {
     ),
     "kling": ProviderStub(
         positive_prefix="Provider_stub Kling cinematic video keyframe, ",
-        positive_suffix=" Stable camera, readable focal subject.",
+        positive_suffix=" Stable camera, single clear focal subject without on-image text.",
         extra_negative_segments=("motion_blur_excess", "shaky_cam"),
     ),
 }
@@ -101,7 +103,12 @@ def expand_scenes_for_provider(
             stub.extra_negative_segments,
         )
 
-        pos_body = _norm_space(sc.prompt_pack.image_primary or "")
+        raw_primary = _norm_space(sc.prompt_pack.image_primary or "")
+        cleaned_body, overlay_intent, text_sensitive = partition_visual_overlay_text(raw_primary)
+        asset_kind = "keyframe_still" if sn == 1 else "cinematic_broll"
+        still_route = route_visual_provider(asset_kind, text_sensitive=text_sensitive)
+
+        pos_body = cleaned_body
         positive = _norm_space(f"{stub.positive_prefix}{pos_body}{stub.positive_suffix}")
 
         continuity_tok = ""
@@ -112,12 +119,19 @@ def expand_scenes_for_provider(
                     f"{positive} Continuity_lock: align with scene_1_anchor — {anchor}"
                 )
 
+        positive = append_no_text_guard(positive)
+
         scenes_out.append(
             SceneExpandedPrompt(
                 scene_number=sn,
                 positive_expanded=positive,
                 negative_prompt=neg_merged,
                 continuity_token=continuity_tok if continuity_lock else "",
+                overlay_intent=list(overlay_intent),
+                text_sensitive=bool(text_sensitive),
+                visual_asset_kind=asset_kind,
+                routed_visual_provider=str(still_route.get("provider") or ""),
+                routed_image_provider=str(still_route.get("image_provider") or ""),
             )
         )
 

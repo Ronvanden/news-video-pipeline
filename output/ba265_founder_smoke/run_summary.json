@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "input_mode": "script_json",
+  "url": null,
+  "script_json": "C:\\Users\\buicr\\news-to-video-pipeline\\fixtures\\real_video_build_mini\\generate_script_response.json",
+  "title": "Mini-Testskript (BA 25.2)",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke",
+  "script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke\\script.json",
+  "scene_plan_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke\\scene_plan.json",
+  "scene_asset_pack_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke\\scene_asset_pack.json",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke\\generated_assets_ba265_founder_smoke\\asset_manifest.json",
+  "timeline_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke\\timeline_ba265_founder_smoke\\timeline_manifest.json",
+  "final_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba265_founder_smoke\\final_video.mp4",
+  "used_existing_assets": true,
+  "used_video_assets_count": 1,
+  "used_image_assets_count": 0,
+  "warnings": [
+    "existing_asset_used",
+    "audio_missing_silent_render"
+  ],
+  "blocking_reasons": []
+}

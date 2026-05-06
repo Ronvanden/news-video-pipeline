@@ -99,3 +99,12 @@
 - Bei **Fehlern, Incidents oder wiederkehrenden Bugs** `ISSUES_LOG.md` aktualisieren (Bereich, Ursache, Fix, Status, Commit-Referenz — keine Secrets).
 - **Neue Module** idealerweise zuerst mit `MODULE_TEMPLATE.md` planen (Scope, Nicht-Ziele, Tests, Deployment-Risiken).
 - **Keine Commits** ohne die vereinbarten Checks (mindestens `python -m compileall app`, relevante Endpoint-Tests laut Testing Rules) und ohne **Abgleich** mit dem dokumentierten Phasenstatus, soweit die Änderung eine Pipeline-Phase betrifft.
+
+## 16. BA-Abschluss & Doku-Sync
+Jede abgeschlossene **BA** endet mit:
+- **Tests grün** für die betroffenen Module, mindestens `python -m compileall app`; bei Integrations-/CLI-BAs zusätzlich die zur BA passenden Test-Dateien (Windows: keine pytest-Glob-Wildcards in PowerShell — explizite Datei oder `-k <ba_id>`).
+- Bei Integrations-/CLI-BAs: ein dokumentierter **Reality-/Smoke-Lauf**, falls sinnvoll (Befehl, Output-Pfad, erwartete Warnings/Blockers).
+- **[PIPELINE_PLAN.md](PIPELINE_PLAN.md)** aktualisieren, wenn **Status**, **Akzeptanz**, **Grenzen** oder **nächste Schritte** der BA betroffen sind — kanonische Roadmap, nicht duplizieren.
+- Passendes **Runbook** unter `docs/runbooks/` aktualisieren, wenn **Befehle**, **Pfade**, **Gates** oder **Troubleshooting** betroffen sind (z. B. `docs/runbooks/real_video_build_wiring_map.md` für BA 26.x).
+- **[ISSUES_LOG.md](ISSUES_LOG.md)** **nur** bei echten **Bugs, Blockern oder Incidents** — nicht für reguläre Feature-BAs.
+- Eine **Difference-only Summary** als Abschlussbericht für den nächsten Agenten-Durchlauf (geänderte/neue Dateien, was die BA jetzt kann, gelaufene Checks, erwartbare Warnings, nächster Schritt).

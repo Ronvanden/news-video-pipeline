@@ -1,0 +1,24 @@
+{
+  "run_id": "8c3083d5-acc9-40bd-9ea1-2e08db03650b",
+  "source_type": "chapter_summaries",
+  "word_count": 698,
+  "estimated_duration_seconds": 289,
+  "voice_mode": "elevenlabs",
+  "voice_preset_requested": null,
+  "voice_preset_effective": "default",
+  "elevenlabs_voice_settings_from_preset": false,
+  "provider_used": "smoke",
+  "chunk_count": 0,
+  "real_tts_generated": false,
+  "fallback_used": true,
+  "warnings": [
+    "elevenlabs_chunk_0_retry_0:elevenlabs_http_401",
+    "elevenlabs_chunk_0_retry_1:elevenlabs_http_401",
+    "elevenlabs_chunk_failed:0:elevenlabs_http_401",
+    "elevenlabs_failed_using_smoke_fallback"
+  ],
+  "blocking_reasons": [],
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_8c3083d5-acc9-40bd-9ea1-2e08db03650b",
+  "narration_script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_8c3083d5-acc9-40bd-9ea1-2e08db03650b\\narration_script.txt",
+  "full_voiceover_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_8c3083d5-acc9-40bd-9ea1-2e08db03650b\\full_voiceover.mp3"
+}

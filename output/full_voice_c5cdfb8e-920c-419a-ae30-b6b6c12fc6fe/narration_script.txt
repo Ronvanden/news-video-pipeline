@@ -1,0 +1,37 @@
+# BA 20.0 — FULL VOICEOVER (SMOKE / PLACEHOLDER)
+# Die MP3 ist bewusst keine echte TTS-Stimme: Dauer orientiert sich an Wortzahl/WPM.
+# Für echte Stimme: voice_mode=provider + API (noch optional; siehe voice_manifest warnings).
+
+Kapitel 1: Die Vorwürfe der EU-Kommission
+
+Die EU-Kommission hat in einer vorläufigen Untersuchung festgestellt, dass Meta, der Mutterkonzern von Facebook und Instagram, nicht ausreichend Maßnahmen ergreift, um Kinder unter 13 Jahren von seinen Plattformen fernzuhalten. Offiziell sind diese sozialen Medien erst ab einem Alter von 13 Jahren zugänglich, doch viele Kinder nutzen sie bereits früher. Die Kommission wirft Meta vor, gegen den Digital Services Act (DSA) zu verstoßen, der Plattformen dazu verpflichtet, ihre eigenen Altersrichtlinien durchzusetzen.
+
+---
+
+Kapitel 2: Die Gefahren für Kinder
+
+Die Nutzung von sozialen Medien birgt zahlreiche Risiken für Kinder, darunter Cybermobbing, den Zugang zu unangemessenen Inhalten und die Gefahr von Online-Predatoren. Die EU-Kommission hat festgestellt, dass Instagram und Facebook nicht genug tun, um diese Gefahren zu minimieren. Kinder sind besonders verletzlich und benötigen einen besseren Schutz, um sicher in der digitalen Welt navigieren zu können.
+
+---
+
+Kapitel 3: Die Reaktion von Meta
+
+In einer ersten Reaktion wies Meta die Vorwürfe der EU zurück. Eine Sprecherin des Unternehmens betonte, dass Instagram und Facebook bereits Maßnahmen implementiert haben, um Konten von Nutzern unter 13 Jahren zu erkennen und zu löschen. Dennoch bleibt die Frage, ob diese Maßnahmen tatsächlich effektiv sind und ob sie den gesetzlichen Anforderungen genügen.
+
+---
+
+Kapitel 4: Die rechtlichen Konsequenzen
+
+Sollte sich die Auffassung der EU-Kommission bestätigen, drohen Meta erhebliche Geldstrafen von bis zu sechs Prozent des weltweiten Jahresumsatzes. Dies könnte für das Unternehmen eine massive finanzielle Belastung darstellen. Der Digital Services Act verpflichtet Plattformen, ihre eigenen Regeln durchzusetzen, und die Nichteinhaltung dieser Vorschriften könnte weitreichende Folgen haben.
+
+---
+
+Kapitel 5: Die Rolle der Eltern und Erziehungsberechtigten
+
+Eltern und Erziehungsberechtigte spielen eine entscheidende Rolle im Schutz ihrer Kinder im Internet. Es ist wichtig, dass sie sich aktiv mit den Online-Aktivitäten ihrer Kinder auseinandersetzen und sie über die Gefahren der sozialen Medien aufklären. Gleichzeitig müssen sie auch die Tools und Einstellungen nutzen, die Plattformen wie Instagram und Facebook anbieten, um den Zugang ihrer Kinder zu regulieren.
+
+---
+
+Kapitel 6: Zukünftige Entwicklungen und Lösungen
+
+Die Diskussion über den Schutz von Kindern in sozialen Medien wird in den kommenden Jahren weiter an Bedeutung gewinnen. Es ist zu erwarten, dass die EU-Kommission und andere Regulierungsbehörden strengere Richtlinien und Maßnahmen einführen werden, um Kinder besser zu schützen. Gleichzeitig müssen Unternehmen wie Meta innovative Lösungen entwickeln, um die Sicherheit ihrer Nutzer zu gewährleisten.

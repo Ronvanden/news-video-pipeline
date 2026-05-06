@@ -1,0 +1,11 @@
+{
+  "schema_version": "local_preview_human_approval_v1",
+  "run_id": "ba25_mvp_smoke",
+  "status": "approved",
+  "approved_at": "2026-05-05T18:39:34+00:00",
+  "approved_by": "ba25_5_smoke_runner",
+  "note": "Smoke/Dev auto-approval (BA 25.6). Nur für lokale MVP-Smoke-Tests; vor Publishing manuell prüfen.",
+  "source": "ba25_5_smoke",
+  "auto_approved": true,
+  "smoke_dev_flow": true
+}

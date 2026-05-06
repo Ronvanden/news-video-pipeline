@@ -1,10 +1,11 @@
-"""BA 19.0 / BA 20.2 — Local Asset Runner: scene_asset_pack.json → lokale Bilder + asset_manifest.json."""
+"""BA 19.0 / BA 20.2 / BA 26.3 — Local Asset Runner: scene_asset_pack.json → lokale Bilder/Video + asset_manifest.json."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import shutil
 import sys
 import time
 import uuid
@@ -24,7 +25,17 @@ from app.production_connectors.leonardo_generation_result import (
     fetch_leonardo_generation_result,
 )
 from app.founder_calibration.ba203_presets import apply_visual_style_to_prompt, resolve_visual_style_preset
+from app.visual_plan.visual_policy_report import (
+    build_visual_policy_fields,
+    ensure_effective_prompt,
+)
+from app.production_connectors.openai_images_adapter import generate_openai_image_from_prompt
+from app.config import settings
 from app.production_connectors.leonardo_live_connector import _build_leonardo_generation_payload
+from app.production_connectors.scene_pack_local_video import (
+    beat_duration_seconds,
+    pick_local_video_from_beat,
+)
 
 DEFAULT_LEONARDO_GENERATIONS_URL = "https://cloud.leonardo.ai/api/rest/v1/generations"
 DEFAULT_MAX_ASSETS_LIVE = 3
@@ -372,6 +383,7 @@ def run_local_asset_runner(
     max_assets_live: Optional[int] = None,
     visual_style_preset: Optional[str] = None,
     leonardo_beat_fn: Optional[Callable[[str, Path], Tuple[bool, List[str]]]] = None,
+    openai_images_live: bool = False,
 ) -> Dict[str, Any]:
     """
     Schreibt output/generated_assets_<run_id>/ und gibt Metadaten zurück.
@@ -407,18 +419,150 @@ def run_local_asset_runner(
 
     any_leonardo_ok = False
     beat_live_failed = False
+    local_video_scene_count = 0
 
     for i, b in enumerate(beats, start=1):
         ch = int(b.get("chapter_index", 0))
         bi = int(b.get("beat_index", 0))
         vp = str(b.get("visual_prompt") or "")
+        vp_raw = str(b.get("visual_prompt_raw") or vp)
+        ov_int = b.get("overlay_intent") if isinstance(b.get("overlay_intent"), list) else []
+        ts = bool(b.get("text_sensitive"))
+        asset_kind = str(b.get("visual_asset_kind") or "")
+        routed_v = str(b.get("routed_visual_provider") or b.get("image_provider_routed") or "")
+        routed_img = str(b.get("routed_image_provider") or b.get("image_base_provider_routed") or "")
         cam = str(b.get("camera_motion_hint") or "")
         atype = str(b.get("asset_type") or "image")
         fname = f"scene_{i:03d}.png"
         fpath = out_dir / fname
         snippet = vp[:180] if vp else f"{atype} beat"
+        beat_dur = beat_duration_seconds(b)
 
         gen_mode = "placeholder"
+        vid_src, vid_warns = pick_local_video_from_beat(b, pack_path)
+        warnings.extend(vid_warns)
+
+        if vid_src is not None:
+            dest_vid = out_dir / f"scene_{i:03d}{vid_src.suffix.lower()}"
+            try:
+                shutil.copy2(vid_src, dest_vid)
+            except OSError as exc:
+                warnings.append(f"local_video_copy_failed:{type(exc).__name__}:{i}")
+                vid_src = None
+
+        if vid_src is not None:
+            local_video_scene_count += 1
+            _draw_placeholder_png(
+                fpath,
+                scene_number=i,
+                chapter_index=ch,
+                beat_index=bi,
+                snippet=snippet,
+                asset_type=atype,
+                camera_motion_hint=cam,
+            )
+            gen_mode = "local_video_ingest"
+            eff_vp, _ = ensure_effective_prompt(str(b.get("visual_prompt_effective") or vp))
+            asset_row: Dict[str, Any] = {
+                "scene_number": i,
+                "chapter_index": ch,
+                "beat_index": bi,
+                "asset_type": "video",
+                "image_path": fname,
+                "video_path": dest_vid.name,
+                "visual_prompt": vp,
+                "camera_motion_hint": cam,
+                "generation_mode": gen_mode,
+                **build_visual_policy_fields(
+                    visual_prompt_raw=vp_raw,
+                    visual_prompt_effective=eff_vp,
+                    overlay_intent=ov_int,
+                    text_sensitive=ts,
+                    visual_asset_kind=asset_kind,
+                    routed_visual_provider=(str(b.get("video_provider_routed") or "") or "runway"),
+                    routed_image_provider=routed_img,
+                ),
+                "overlay_intent": ov_int,
+                "text_sensitive": ts,
+                "visual_asset_kind": asset_kind,
+                "routed_visual_provider": (str(b.get("video_provider_routed") or "") or "runway"),
+                "routed_image_provider": routed_img,
+            }
+            if beat_dur is not None:
+                asset_row["duration_seconds"] = beat_dur
+                asset_row["estimated_duration_seconds"] = beat_dur
+            assets.append(asset_row)
+            continue
+
+        # BA 26.5 — OpenAI Images Provider Integration V1 (safe default: dry-run)
+        routed_key = (routed_v or "").strip().lower()
+        routed_img_key = (routed_img or "").strip().lower()
+        wants_openai = routed_key == "openai_images" or routed_img_key == "openai_images"
+        wants_render_layer = routed_key == "render_layer"
+        if wants_openai or (wants_render_layer and routed_img_key == "openai_images"):
+            eff_prompt, _ = ensure_effective_prompt(str(b.get("visual_prompt_effective") or vp))
+            dry = True
+            if mode_l == "live" and bool(openai_images_live or getattr(settings, "enable_openai_images_live", False)):
+                dry = False
+            res = generate_openai_image_from_prompt(
+                eff_prompt,
+                fpath,
+                dry_run=dry,
+                size=getattr(settings, "openai_image_size", "1024x1024"),
+                model=getattr(settings, "openai_image_model", "gpt-image-1"),
+            )
+            warnings.extend(list(res.warnings or []))
+            if res.ok:
+                gen_mode = "openai_images_live" if not res.dry_run else "openai_images_dry_run"
+                asset_row_oai: Dict[str, Any] = {
+                    "scene_number": i,
+                    "chapter_index": ch,
+                    "beat_index": bi,
+                    "asset_type": atype,
+                    "image_path": fname,
+                    "visual_prompt": vp,
+                    "camera_motion_hint": cam,
+                    "generation_mode": gen_mode,
+                    "provider_used": "openai_images",
+                    "provider_status": "ok" if not res.dry_run else "dry_run_ready",
+                    "generated_image_path": fname,
+                    "prompt_used_effective": res.prompt_used,
+                    "openai_image_result": res.to_dict(),
+                }
+                asset_row_oai.update(
+                    build_visual_policy_fields(
+                        visual_prompt_raw=vp_raw,
+                        visual_prompt_effective=eff_prompt,
+                        overlay_intent=ov_int,
+                        text_sensitive=ts,
+                        visual_asset_kind=asset_kind,
+                        routed_visual_provider="openai_images",
+                        routed_image_provider=routed_img,
+                    )
+                )
+                asset_row_oai["overlay_intent"] = ov_int
+                asset_row_oai["text_sensitive"] = ts
+                asset_row_oai["visual_asset_kind"] = asset_kind
+                asset_row_oai["routed_visual_provider"] = "openai_images"
+                asset_row_oai["routed_image_provider"] = routed_img
+                if beat_dur is not None:
+                    asset_row_oai["duration_seconds"] = beat_dur
+                    asset_row_oai["estimated_duration_seconds"] = beat_dur
+                assets.append(asset_row_oai)
+                continue
+
+            gen_mode = "openai_images_failed_fallback_placeholder"
+            warnings.append(f"openai_images_failed_fallback_placeholder:{i}:{res.error_code or 'error'}")
+            _draw_placeholder_png(
+                fpath,
+                scene_number=i,
+                chapter_index=ch,
+                beat_index=bi,
+                snippet=snippet,
+                asset_type=atype,
+                camera_motion_hint=cam,
+            )
+
         use_leonardo = (
             mode_l == "live"
             and env_live
@@ -434,6 +578,7 @@ def run_local_asset_runner(
                 warnings.extend(style_warns)
             else:
                 vp_for_leonardo = vp
+            eff_vp = vp_for_leonardo
             if leonardo_beat_fn is not None:
                 ok_live, lw = leonardo_beat_fn(vp_for_leonardo, fpath)
                 warnings.extend(lw)
@@ -476,18 +621,46 @@ def run_local_asset_runner(
             else:
                 gen_mode = "placeholder"
 
-        assets.append(
-            {
-                "scene_number": i,
-                "chapter_index": ch,
-                "beat_index": bi,
-                "asset_type": atype,
-                "image_path": fname,
-                "visual_prompt": vp,
-                "camera_motion_hint": cam,
-                "generation_mode": gen_mode,
-            }
+        eff_vp_local = ""
+        if use_leonardo:
+            eff_vp_local = str(locals().get("eff_vp") or "")
+        asset_row2: Dict[str, Any] = {
+            "scene_number": i,
+            "chapter_index": ch,
+            "beat_index": bi,
+            "asset_type": atype,
+            "image_path": fname,
+            "visual_prompt": vp,
+            "camera_motion_hint": cam,
+            "generation_mode": gen_mode,
+        }
+        eff_vp2, _ = ensure_effective_prompt(
+            str(
+                eff_vp_local
+                or b.get("visual_prompt_effective")
+                or vp
+            )
         )
+        asset_row2.update(
+            build_visual_policy_fields(
+                visual_prompt_raw=vp_raw,
+                visual_prompt_effective=eff_vp2,
+                overlay_intent=ov_int,
+                text_sensitive=ts,
+                visual_asset_kind=asset_kind,
+                routed_visual_provider=routed_v,
+                routed_image_provider=routed_img,
+            )
+        )
+        asset_row2["overlay_intent"] = ov_int
+        asset_row2["text_sensitive"] = ts
+        asset_row2["visual_asset_kind"] = asset_kind
+        asset_row2["routed_visual_provider"] = routed_v
+        asset_row2["routed_image_provider"] = routed_img
+        if beat_dur is not None:
+            asset_row2["duration_seconds"] = beat_dur
+            asset_row2["estimated_duration_seconds"] = beat_dur
+        assets.append(asset_row2)
 
     if mode_l == "live" and env_live:
         if any_leonardo_ok and not beat_live_failed:
@@ -504,6 +677,7 @@ def run_local_asset_runner(
         "source_pack": str(pack_path),
         "asset_count": len(assets),
         "generation_mode": top_mode,
+        "local_video_scene_count": local_video_scene_count,
         "warnings": warnings,
         "assets": assets,
     }
@@ -552,6 +726,12 @@ def main() -> int:
         dest="visual_style_preset",
         help="BA 20.3 optional: documentary_news | cinematic_explainer | social_media_policy (nur Leonardo-Prompt)",
     )
+    parser.add_argument(
+        "--openai-images-live",
+        action="store_true",
+        dest="openai_images_live",
+        help="BA 26.5: OpenAI Images live calls aktivieren (Default: dry-run placeholder, auch im --mode live).",
+    )
     args = parser.parse_args()
 
     run_id = (args.run_id or "").strip() or str(uuid.uuid4())
@@ -563,6 +743,7 @@ def main() -> int:
             mode=args.mode,
             max_assets_live=args.max_assets,
             visual_style_preset=(args.visual_style_preset or "").strip() or None,
+            openai_images_live=bool(args.openai_images_live),
         )
     except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError) as e:
         err = {"ok": False, "error": type(e).__name__, "message": str(e), "run_id": run_id}

@@ -7,6 +7,7 @@ Bedienungsanleitung für **lokalen Preview-Start**, **Ergebnisprüfung**, **typi
 ## 1. Wann dieses Runbook nutzen
 
 - Du willst den **kompletten URL-zu-Final-Video-Smoke** (BA 25.5/25.6) laufen lassen: siehe [`real_video_build_wiring_map.md`](real_video_build_wiring_map.md) Abschnitt **BA 25.6** und `scripts/run_ba_25_5_url_to_final_video_smoke.py` (kein Publishing).
+- **Real Content Live Smoke** ist **[BA 26](../../PIPELINE_PLAN.md)** (**BA 26.0** Scope Freeze dokumentiert): zuerst **echte Artikel-URL** + **Leonardo Live-Bilder**; Video-Clips nach Spike **Runway vs. Google Veo** (ein Provider). **Local Preview** bleibt **Diagnose- und Bedienebene** (Mini-Fixture, Reports); **Live-Bilder** und **Clips** werden in BA 26 **schrittweise** getestet, nicht hier als Produktionsersatz.
 - Du willst **ohne Cloud** prüfen, ob Timeline + Narration + Render + Untertitel-Burn-in zu einem **Preview-Video** und **Operator-Artefakten** führen.
 - Du brauchst eine **reproduzierbare Smoke-Basis** (Mini-Fixture) oder einen Lauf mit **eigenen Manifest-/Skript-Pfaden**.
 - Du willst **alte `local_preview_*`-Ordner** sicher listen oder löschen (**BA 20.13**).

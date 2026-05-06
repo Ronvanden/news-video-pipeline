@@ -1,0 +1,22 @@
+{
+  "schema_version": "local_preview_result_smoke_v1",
+  "run_id": "ba25_mvp_no_approval",
+  "verdict": "PASS",
+  "quality_checklist": {
+    "status": "pass"
+  },
+  "founder_quality_decision": {
+    "decision_code": "GO_PREVIEW",
+    "top_issue": "",
+    "next_step": "BA 25.5/25.6 smoke created this snapshot; review preview manually."
+  },
+  "production_costs": {
+    "estimated_total_cost": 0.0,
+    "over_budget_flag": false
+  },
+  "warnings": [
+    "BA 25.5/25.6 smoke: local_preview_result.json ist ein minimales Snapshot-Stub für Final Render Gates.",
+    "BA 25.5/25.6 smoke: source_real_local_preview_result=C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_mvp_no_approval\\real_local_preview_result.json"
+  ],
+  "created_at_epoch": 1778006465
+}

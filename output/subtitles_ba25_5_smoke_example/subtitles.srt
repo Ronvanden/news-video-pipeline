@@ -1,0 +1,111 @@
+1
+00:00:00,000 --> 00:00:02,558
+Hast du dich jemals gefragt, welche Rolle
+
+2
+00:00:02,558 --> 00:00:04,751
+spezielle Domänen in der digitalen Welt
+
+3
+00:00:04,751 --> 00:00:06,751
+spielen? Heute klären wir das!
+
+4
+00:00:06,751 --> 00:00:08,751
+Dokumentationsdomänen sind spezielle
+
+5
+00:00:08,751 --> 00:00:10,751
+Internetadressen, die für Schulungs- und
+
+6
+00:00:10,751 --> 00:00:12,751
+Beispielzwecke verwendet werden. Sie sind
+
+7
+00:00:12,751 --> 00:00:14,944
+nicht für den realen Betrieb gedacht,
+
+8
+00:00:14,944 --> 00:00:16,944
+sondern dienen dazu, Entwicklern und
+
+9
+00:00:16,944 --> 00:00:18,944
+Nutzern zu zeigen, wie bestimmte
+
+10
+00:00:18,944 --> 00:00:20,944
+Technologien oder Systeme funktionieren.
+
+11
+00:00:20,944 --> 00:00:22,944
+Die Verwendung dieser Domänen erfordert
+
+12
+00:00:22,944 --> 00:00:25,137
+keine Genehmigung, da sie speziell für
+
+13
+00:00:25,137 --> 00:00:27,137
+diesen Zweck geschaffen wurden. Das
+
+14
+00:00:27,137 --> 00:00:29,696
+bedeutet, dass jeder sie nutzen kann, um
+
+15
+00:00:29,696 --> 00:00:31,696
+Beispiele zu erstellen oder zu
+
+16
+00:00:31,696 --> 00:00:33,696
+demonstrieren, ohne rechtliche Bedenken.
+
+17
+00:00:33,696 --> 00:00:36,254
+Es ist wichtig, diese Domänen nicht im
+
+18
+00:00:36,254 --> 00:00:38,447
+operativen Geschäft zu verwenden. Sie sind
+
+19
+00:00:38,447 --> 00:00:40,640
+nicht zuverlässig und können zu Verwirrung
+
+20
+00:00:40,640 --> 00:00:42,640
+oder Sicherheitsproblemen führen. Daher
+
+21
+00:00:42,640 --> 00:00:44,640
+sollten sie ausschließlich für
+
+22
+00:00:44,640 --> 00:00:46,640
+Dokumentationszwecke genutzt werden.
+
+23
+00:00:46,640 --> 00:00:48,640
+Zusammenfassend lässt sich sagen, dass
+
+24
+00:00:48,640 --> 00:00:50,640
+Dokumentationsdomänen eine wertvolle
+
+25
+00:00:50,640 --> 00:00:52,640
+Ressource sind, solange sie richtig
+
+26
+00:00:52,640 --> 00:00:54,833
+eingesetzt werden. In Zukunft könnten wir
+
+27
+00:00:54,833 --> 00:00:57,026
+jedoch neue Standards sehen, die die
+
+28
+00:00:57,026 --> 00:00:59,000
+Nutzung solcher Domänen weiter regulieren.

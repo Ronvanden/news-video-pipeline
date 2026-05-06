@@ -628,6 +628,26 @@ Aus einem **geprüften** und **freigegebenen** Local-Preview-Run soll später ei
 | BA 25.6 | URL-to-Final-Video Smoke Hardening | **done** | Stabilisierung/Idempotenz/strukturierte Fehler/Operator-OPEN_ME für `run_ba_25_5_url_to_final_video_smoke.py`; Auto-Approve klar gekennzeichnet; `--no-auto-approve` ohne Final Render. **Local URL-to-Final-Video MVP: completed.** |
 | BA 26.0 | Live Smoke Scope Freeze | **done** | Scope festgezurrt: echte Artikel-URL, Leonardo Live-Bilder, Video-Provider-Spike Runway vs. Google Veo (ein Provider), kein Sora-Primärpfad; lokal 2–3 Min., kein Upload. Details: **BA 26.0** unter Abschnitt **BA 26**. |
 | BA 26.2 | Runway Image-to-Video Smoke | **done** | Isolierter lokaler Testclip: `scripts/runway_image_to_video_smoke.py`, `RUNWAY_API_KEY`; keine Pipeline-Integration. |
+| BA 26.3 | Runway Clip Asset Ingest (lokal) | **done** | Lokale MP4/MOV/WebM aus `scene_asset_pack` → `asset_manifest` / `timeline_manifest` → `render_final_story_video.py`; kein neuer Provider-API-Call. |
+| BA 26.3R | Reality Check & Pipeline Plan Sync | **done** | Inventar BA 26.x vs. Code; dokumentierter Reality-Lauf mit vorhandenem lokalem Clip (kein neues Feature); siehe Abschnitt **BA 26.3R** unter **BA 26**. |
+| BA 26.4 | Real Provider Smoke Test Mode | **done** | **Ist:** Dry-Run Default (kein HTTP); **Runway Live** möglich mit Flags + `RUNWAY_API_KEY` (delegiert BA 26.2). **Veo:** nur Dry-Run-Stub, Live blockt. Details: **BA 26.4R** unter **BA 26.x**. |
+| BA 26.4b | Visual Provider Routing + No-Text Guard | **done** | Zentraler Router (`leonardo` / `openai_images` / `runway` / `render_layer`), No-Text-Guard an Prompts, `overlay_intent` bei Lesetext-Absicht; additive Felder in Prompt-/Watchlist-Modellen. Tests `tests/test_ba264b_visual_text_policy.py`. Siehe **Visual Text Policy** unter **BA 26**. |
+| BA 26.4c | Manifest Effective Prompt + Dashboard Visual Policy Summary | **done** | Manifeste spiegeln `visual_prompt_raw` vs. `visual_prompt_effective` + Policy-Ampel (`safe`/`text_extracted`/`needs_review`) + Routing-Grund. Founder Dashboard zeigt Visual Policy Summary + per Szene Policy-Line in Prompt Cards. |
+| BA 26.4d | Dashboard Visual Policy Fallback from Export | **done** | Dashboard-Summary nutzt Optimize-Daten bevorzugt, fällt aber auf `export-package.provider_prompts` und `scene_prompts.scenes` zurück; zeigt „Visual Policy Source: …“, damit Operator Policy auch vor Optimize sieht. |
+| BA 26.4e | Provider Routing Acceptance Smoke | **done** | Trockener Acceptance-Smoke (Test) prüft Routing/Guard/Overlay-Auslagerung/Policy-Felder und Dashboard-kompatible Key-Namen; **BA 26.5 hängt davon ab** (keine Live-Calls, keine Kosten). |
+| BA 26.4R | Real Provider Smoke Audit & Next-Step | **done** (Doku) | Code-/Test-Audit BA 26.4; keine neuen Features; Entscheidungsgrundlage für **BA 26.5** (siehe **Decision Summary** im Runbook / unten). |
+| BA 26.6c | Scene Image Replacement / Manual Override | **done** | Pure Dict-Helper + CLI-Patch für `asset_manifest.json` (accepted/rejected/locked/needs_regeneration + selected_asset_path + manual provider/prompt override + history). Dashboard bleibt read-only; keine Provider-Calls. Tests `tests/test_ba266c_asset_override.py`. |
+| BA 26.7c | Provider Quality Compare Smoke | **done** | Heuristischer Compare-Layer (keine Live-Calls) ergänzt `provider_candidates`, `recommended_provider`, `provider_compare_status` u. a. Optionales CLI `scripts/run_provider_quality_compare.py` patcht `asset_manifest.json`. Dashboard zeigt Compare-Line, falls Felder vorhanden. Tests `tests/test_ba267c_provider_quality_compare.py`. |
+| BA 26.8c | Visual Cost Tracking | **done** | Heuristische Kosten pro Asset + Summary (EUR), keine Billing-API. CLI `scripts/run_visual_cost_tracking.py` patcht `asset_manifest.json` mit `visual_cost_*` Feldern und `visual_cost_summary`. Compare-Kandidaten erhalten echte `estimated_cost`. Tests `tests/test_ba268c_visual_costs.py`. |
+| BA 26.9c | Production Asset Approval Gate | **done** | Gate prüft `asset_manifest.json` (Policy/Guard/Overrides/Overlay/Kostenwarnungen) und schreibt `production_asset_approval_result`. CLI `scripts/run_production_asset_approval_gate.py`. Tests `tests/test_ba269c_asset_approval_gate.py`. |
+| BA 27.0 | Real End-to-End Production Pack V1 | **done** | File-basierter Pack-Build unter `output/production_pack_<run_id>/` bündelt `script.json`, `scene_asset_pack.json`, `asset_manifest.json`, `production_asset_approval.json`, `production_summary.json`, `README_PRODUCTION_PACK.md` und kopiert referenzierte Assets nach `assets/`. `ready_for_render` ist **nur** true bei `approval_status=="approved"`. Helper `app/real_video_build/production_pack.py`, CLI `scripts/build_production_pack_v1.py`, Tests `tests/test_ba270_production_pack_v1.py`. |
+| BA 27.1 | Visual Reference Library / Continuity Anchors | **done** | File-basierte `reference_library.json` (Kontinuitätsanker) + additive Asset-Felder (`reference_asset_ids`, `continuity_strength`, `reference_policy_status`). Helper `app/visual_plan/reference_library.py`, CLI `scripts/build_reference_library_v1.py` (Attach unterstützt auch `prompt_hint` + `provider_status`). Production Pack kann optional `reference_library.json` kopieren und `reference_library_summary` in `production_summary.json` ergänzen. Tests `tests/test_ba271_reference_library.py`. |
+| BA 27.2 | Continuity-Aware Prompt Wiring | **done** | Continuity-Wiring patcht `asset_manifest.json` additiv mit `continuity_reference_paths`, `continuity_reference_types`, `continuity_provider_preparation_status`, `continuity_provider_payload_stub` und `continuity_wiring_version`. CLI `scripts/run_continuity_prompt_wiring.py`. Production Pack Summary enthält optional `continuity_wiring_summary`. Tests `tests/test_ba272_continuity_prompt_wiring.py`. |
+| BA 27.3 | Continuity Display in Prompt Cards / Exports | **done** | Operator-Sichtbarkeit für Continuity: Display-Helper `app/visual_plan/continuity_display.py`, Prompt Cards zeigen eine Continuity-Zeile wenn Felder vorhanden, Production Pack README enthält „Continuity“-Counts (aus `continuity_wiring_summary`). Tests `tests/test_ba273_continuity_display.py`. |
+| BA 27.4 | Reference-Aware Provider Adapter Preparation | **done** | Provider-kompatible Reference-Payload-Stubs ohne Live-Uploads: `reference_provider_payloads` (openai_images/leonardo/runway/seedance) + `recommended_reference_provider_payload` + Summary. CLI `scripts/run_reference_provider_payloads.py`. Production Pack Summary kann `reference_provider_payload_summary` spiegeln. Real Provider Smoke zeigt Status/Feld-Auszug im dry-run. Tests `tests/test_ba274_reference_provider_payloads.py`. |
+| BA 27.5 | Provider-Specific Reference Payload Formats | **done** | Verfeinert die BA‑27.4 Stubs provider-spezifisch (V1: `openai_images`): additiv `payload_format` + `payload` unter `reference_provider_payloads.openai_images`, ohne Live-Uploads/Calls. Tests erweitert in `tests/test_ba274_reference_provider_payloads.py`. |
+| BA 27.5b | Dashboard Scene-Level Reference Provider Display | **done** | Founder Dashboard zeigt pro Szene/Prompt Card eine deutsche Operator-Zeile aus `recommended_reference_provider_payload`/`reference_provider_payloads` (Status/Provider/Modus/Kein Live-Upload). Read-only; keine Writes/Calls. Test erweitert in `tests/test_phase10_founder_dashboard.py`. |
+| BA 27.6 | Reference Provider Payload Export/Pack Wiring | **done** | Additive Spiegelung/Pass-through der Reference-Payload-Felder entlang operator-sichtbarer Pfade: Mirror-Helper `app/visual_plan/reference_payload_mirror.py`, Production Pack Summary ergänzt `reference_payload_mirror_summary`, Provider Optimizer erhält Reference-Metafelder (wenn Source sie hat), Dashboard Prompt Cards können auf `asset_manifest` fallbacken. Tests `tests/test_ba276_reference_payload_wiring.py`. |
 
 ### BA 24.0 — Final Render Execution Plan (**done**)
 
@@ -791,7 +811,7 @@ Nach BA 24.6 wird der MVP-Block geschlossen (**Local Final Render MVP: completed
 
 ## BA 26 — Real Content Live Smoke
 
-**Status:** geplant — **BA 26.0 abgeschlossen** (Scope Freeze dokumentiert); Umsetzung **BA 26.1ff.** ausstehend.
+**Status:** **BA 26.0** + **BA 26.2–26.8** im Repo **umgesetzt**; **BA 26.1** weiter **planned**. Für Abgleich Code ↔ Dokumentation siehe **BA 26.3R**.
 
 **Ziel (Gesamtbild):**  
 Nach **BA 25.6** wird der Flow mit **echten Inhalten und angeschlossenen Provider-Assets** getestet. **Erster Bildpfad:** **Leonardo Live Images** (`run_asset_runner` / `--asset-mode live`, sofern Key und Live-Modus gesetzt). **Video-Clips:** nicht parallel mehrere Anbieter — zuerst **Provider-Spike Runway vs. Google Veo**, dann **ein** ausgewählter Connector. **Sora** wird **nicht** als Primär-Connector priorisiert (Anbieter-Doku: Videos-API deprecated/auslaufend). **Voice:** zunächst Smoke bzw. vorhandene/manuelle Audio-Option; echte Provider-TTS später separat. Output bleibt **lokal** (`final_video.mp4`). **Kein** YouTube-Upload, **kein** Publishing.
@@ -799,21 +819,123 @@ Nach **BA 25.6** wird der Flow mit **echten Inhalten und angeschlossenen Provide
 **Leitentscheidung:**  
 Nach **BA 25.6** werden **keine** weiteren internen Komfort-, Dashboard-, Cost-, Report- oder Quality-BAs eingeschoben, außer **echte Bugfixes**. Nächster inhaltlicher Block: **Real Content Live Smoke** gemäß **BA 26.0** Scope Freeze.
 
-**Ist-Stand im Repository (Dokumentation, kein Runtime-Test):**
+**Ist-Stand im Repository (Code + dokumentierte Smoke-Pfade):**
 
 | Thema | Stand |
 |-------|--------|
 | **Leonardo Live (Bilder)** | **Ausführbar:** `scripts/run_asset_runner.py` mit `--mode live` nutzt u. a. `LEONARDO_API_KEY` (Pflicht für Live), optional `LEONARDO_API_ENDPOINT`, optional `LEONARDO_MODEL_ID`. Ohne Key: Fallback Placeholder mit Warnungen. Zusätzlich `app/production_connectors/leonardo_live_connector.py` (HTTP mit Guard; Dry-Run möglich). |
-| **Runway (Video-Clips)** | **BA 26.2 Smoke-Skript:** `scripts/runway_image_to_video_smoke.py` — optional ein lokaler MP4 aus Bild+Prompt bei `RUNWAY_API_KEY`; **keine** Timeline-/Pipeline-Anbindung. |
-| **Google Veo (Video-Clips)** | **Nicht angebunden**; Abgleich mit Runway-Ergebnis in **BA 26.3** vor Connector-Wahl. |
+| **Runway (Video-Clips)** | **BA 26.2** Smoke-Skript erzeugt lokalen MP4; **BA 26.3** bindet **vorhandene** lokale Clips in Asset-Manifest, Timeline und Render ein (`video_path` u. a.) — **ohne** neuen Runway-Call in der Pipeline. |
+| **Google Veo (Video-Clips)** | **BA 26.4 Smoke-Modus:** `dry_run`-Stub + Live blockt mit `veo_provider_not_implemented` (kein HTTP-Client); Key-Env `GOOGLE_VEO_API_KEY` für spätere Anbindung dokumentiert. |
 | **Sora** | **Nicht als Primärpfad** geplant (Scope Freeze). |
 | **Kling** | `app/production_connectors/kling_connector.py` **Dry-Run only**; nicht Teil der BA-26-Video-Entscheidung. |
 | **`run_real_video_build` / BA 25.4** | Verarbeitet **Leonardo-Live-PNGs** bei `asset_mode=live`; Timeline/Render aktuell **Bildpfade** im `asset_manifest.json`. |
-| **Render** | `render_final_story_video.py`: **Stillimages** + optional ffmpeg-**basic**/**static** — **kein** Provider-Clip-Import bis **BA 26.4ff.** |
+| **Render** | `render_final_story_video.py`: Stillimages + optional **Video-Segmente** (lokal, **BA 26.3**) mit ffmpeg (`-stream_loop`/`filter_complex`); weiterhin **basic**/**static** für Bilder. |
 | **provider_configs / Guards** | Primär Produktions-/Dashboard-Pfade; lokaler Asset-Runner prüft Leonardo-ENV direkt (`run_asset_runner._live_env_ready`). |
 | **Outputs bei Live-Bildern** | `output/generated_assets_<run_id>/scene_XXX.png`, `asset_manifest.json` u. a. mit `generation_mode` `leonardo_live` / gemischt bei `--max-assets`-Cap. |
 
-**Lücke für echte Video-Clips in der Hauptpipeline:** **BA 26.2** liefert nur einen **isolierten** Runway-Testclip; **BA 26.3** Provider-Entscheidung (Veo vs. Runway), **BA 26.4** Ingest, **BA 26.5** Smoke mit Clips in der Kette. Bis dahin: **BA 26.1** = echte Artikel-URL + **Leonardo** + bestehender Render bis `final_video.mp4`.
+**Visual Text Policy (BA 26.4b):** Bild- und Video-**Generatoren** liefern **keine finale Lesetypografie** (keine Fake-UI, keine „echten“ Dokumenttexte im Bild). Konkrete Titel, Untertitel, Lower-Thirds und Listenzeilen werden im **Render-/Overlay-Layer** gesetzt. Stimmung, Szene, Motiv, Licht und Komposition gehen an **Leonardo** (cineastische B-Roll/Stills ohne Schrift), **OpenAI Images** (textnahe Schlüsselbilder / Thumbnail-Basis / text_sensitive), **Runway** (Motion aus sauberen Startframes ohne generierte Schrift). Reines Typo-/Label-Paket: Disposition **`render_layer`** plus optionales Basis-Still über `image_provider`.
+
+**Stand Video-Clips:** **BA 26.3** erlaubt **lokal vorliegende** Clips in der Render-Kette. **BA 26.4** ergänzt **kontrollierten** Provider-Smoke (`dry_run` / Live mit Sicherheitsflags, max. 1 echte Szene Default). **BA 26.5** liefert einen **Founder-Run** (URL oder `script.json` + optionales `--asset-dir`) bis **`final_video.mp4`** ohne Provider-Pflicht. **BA 26.6** entfernt aus dem Founder-Render sichtbare Debug-/Szenenlabels (textfreie cinematic Placeholder, Video-Reuse, Default `motion-mode=basic`). **BA 26.7** ergänzt den Founder-Run um **Voice** (`--voice-mode existing|elevenlabs|dummy|openai`); ohne `--voice-mode` bleibt das BA-26.5/26.6-Verhalten unverändert. **BA 26.7b** passt optional die Video-Timeline an die Voice-Länge an (`--fit-video-to-voice`). **BA 26.8** orchestriert den ersten **echten Visual-Durchstich**: Script → Leonardo-Bilder (live) → Runway-Videos (live) → ElevenLabs-Voice → `final_video.mp4` + `visual_summary.json`; Provider-Live nur bei ENV/Keys, ehrliche Blocker/Fallbacks. **BA 26.1** = echte Artikel-URL + **Leonardo** + Render bis `final_video.mp4`.
+
+### BA 26.x — Real Video Build (Ist-Code vs. Plan)
+
+| BA | Kurztitel | Implementiert | Kurzbeschreibung |
+|----|-----------|---------------|------------------|
+| **26.2** | Runway Image-to-Video Smoke | **ja** | `scripts/runway_image_to_video_smoke.py` → lokaler MP4 (ein Task), `RUNWAY_API_KEY` aus ENV. |
+| **26.3** | Local Video Clip Ingest | **ja** | `scripts/run_asset_runner.py` (Felder s. unten), `scene_pack_local_video.py`, `build_timeline_manifest.py`, `render_final_story_video.py`; Tests `tests/test_ba263_runway_clip_asset_ingest.py`. |
+| **26.3R** | Reality Check & Plan-Sync | **ja** (Doku) | Kein neues Produkt-Feature: Plan und Runbook an Realität; optionaler manueller Reality-Lauf mit vorhandenem Clip (siehe **Reality-Test Status**). |
+| **26.4** | Real Provider Smoke Test Mode | **ja** (siehe **26.4R**) | Orchestrierung Pack→Szenen; **Runway** Live = echter API-Pfad via `run_runway_image_to_video_smoke`. **Veo** = Stub / Blocking. |
+| **26.4b** | Visual Provider Routing + No-Text Guard | **ja** | `app/visual_plan/visual_provider_router.py`, `visual_no_text.py`; Prompt-/Pack-Pfade (Export, Scene Assets, Script-Adapter, Runway-Smoke, Leonardo-Stil-Preset); additive Model-Felder (`overlay_intent`, Routing). |
+| **26.4R** | Audit & Next-Step | **ja** (Doku) | Prüfung: BA 26.4 ist **nicht** „nur Stub“ für Runway, aber **nicht** voll Live für Veo; Anbindung an BA 26.3 nur manuell per Pfad. |
+| **26.5** | URL-to-final-MP4 Founder Run (vorhandene Assets) | **ja** | [`scripts/run_url_to_final_mp4.py`](scripts/run_url_to_final_mp4.py): `--url` oder `--script-json`, `--asset-dir` (rekursiv `.mp4`/…/Bilder), Placeholder-Asset-Runner, Timeline, Render → `final_video.mp4` + `run_summary.json`; **kein** Pflicht-Live-Provider. Tests `tests/test_ba265_url_to_final_mp4.py`. |
+| **26.6** | Visual Founder Upgrade | **ja** | Founder-`final_video.mp4` ohne sichtbare „SCENE 001"-Labels: textfreie cinematic Placeholder + Video-Reuse über Szenen + Default `motion-mode=basic`. Kein neuer Provider-Call. Detail unten. |
+| **26.7** | ElevenLabs Voice Founder Integration | **ja** | Founder-`final_video.mp4` mit Ton: `--voice-mode existing\|elevenlabs\|dummy\|openai`; `--voice-mode none` (Default) = altes Verhalten; ENV-getriebene Secrets, keine neuen Verträge. Detail unten. |
+| **26.7b** | Fit Video Duration to Voice | **ja** | Optional `--fit-video-to-voice` + `--voice-fit-padding-seconds` (Default 0,75): nach Voice-Erzeugung Szenen-Dauern/Timeline an Voice-Länge anpassen; `run_summary` mit `fitted_video_duration_seconds` u. a.; keine neue Voice-Integration. |
+| **26.8** | Real Visual Assets Founder Smoke | **ja** | [`scripts/run_real_visual_founder_smoke.py`](scripts/run_real_visual_founder_smoke.py): Script → Leonardo-Bilder (live) + Runway-Clips (live) → ElevenLabs Voice → `final_video.mp4` + `visual_summary.json`. Provider-Live nur bei ENV/Keys; saubere Blocker und Fallbacks. Tests `tests/test_ba268_real_visual_founder_smoke.py`. |
+
+**BA 26.3 — unterstützte Beat-/Pack-Felder für lokale Clips:** `video_path`, `local_video_path`, `clip_path`, `runway_clip_path`, `asset_video_path` (relativ zum Ordner der `scene_asset_pack.json` oder absolut); Datei muss existieren, reguläre Datei, Endung `.mp4` / `.mov` / `.webm`, kein Symlink (wo prüfbar). Ungültig → Warnung, Fallback Placeholder/Leonardo wie bisher.
+
+**BA 26.3 — Tests / Render mit MP4:** Unit-/Integrationspfad in `test_ba263`: Manifest/Timeline/Mock-ffmpeg; bei vorhandenem **ffmpeg** zusätzlich `test_render_creates_mp4_from_video_timeline` mit synthetischem Mini-MP4. **Kein** Pflicht-Check eines fest eingecheckten Runway-Binärclips im Repo (Artefakte liegen typ. unter `output/`).
+
+**Reality-Test Status (BA 26.3R, manuell im Workspace):** Unter `output/runway_smoke_runway_smoke_002/runway_clip.mp4` lag ein gültiger Clip (~862 KB). Kette **Asset Runner** → **Timeline** → **Render** (`--motion-mode static`) mit `scene_asset_pack.json`, das per `runway_clip_path` auf diesen Clip zeigt, lieferte u. a. `asset_manifest` mit `asset_type` `video` und `video_path` `scene_001.mp4` (Kopie im `generated_assets_*`‑Ordner), `timeline_manifest` mit `media_type` `video`, und `video_created: true` für `output/ba263r_reality_check/ba263r_clean.mp4` (Dauer gemäß Timeline ~6 s, ohne Audio → erwartete Warnung `audio_missing_silent_render`). Liegt **kein** lokaler Clip vor, entfällt dieser Schritt; **BA 26.3** bleibt im Code implementiert, der Reality-Lauf wird dann nicht ausgeführt.
+
+**BA 26.4R — Real Provider Smoke: Ist-Status (Audit, kein Code-Change)**
+
+| Aspekt | Befund |
+|--------|--------|
+| **Gesamteinschätzung** | **Live-fähig für Runway** (echter HTTP über BA 26.2); **Veo nur Dry-Run/Stub**, Live immer `veo_provider_not_implemented`. CLI-Default = **Dry-Run** → **kein** Provider-Call ohne `--live`. |
+| **Module / CLI** | `app/production_connectors/real_provider_smoke.py` (`run_real_provider_smoke`), `scripts/run_real_provider_smoke.py`. |
+| **Provider-Auswahl** | `--selected-provider runway \| veo` (Pflicht). |
+| **ENV** | Runway: `RUNWAY_API_KEY`. Veo (nur für spätere Nutzung dokumentiert): `GOOGLE_VEO_API_KEY` — Live nutzt sie **nicht** (Block vor HTTP). |
+| **Live-Runway-Gates** | `dry_run=false` (CLI: `--live`), `real_provider_enabled=true` (`--real-provider-enabled`), Key gesetzt, `max_real_scenes` nicht überschritten, pro Szene `scene_{i:03d}.png` unter `--assets-directory`, kein gültiger lokaler Clip im Beat **oder** `--force-provider`. |
+| **Dry-Run** | Runway: strukturierte `dry_run_request_summary` (URL, Body-Felder mit Platzhalter statt Base64). Veo: statischer TBD-Stub. **Kein** Netzwerk. |
+| **Output (CLI)** | `output/real_provider_smoke_<run_id>/real_provider_smoke_result.json` (+ stdout JSON). |
+| **Output (Runway Live)** | Zusätzlich Artefakte von `run_runway_image_to_video_smoke`: typ. `…/real_provider_smoke_<run_id>/runway_smoke_<run_id_scNNN>/runway_clip.mp4` und `runway_smoke_result.json` (Kontrakt BA 26.2). |
+| **Blocking / Warnings (Auszug)** | `invalid_run_id`, `invalid_selected_provider`; pro Szene u. a. `real_provider_not_enabled`, `runway_api_key_missing` / `veo_api_key_missing`, `max_real_scenes_reached`, `veo_provider_not_implemented`, `runway_scene_image_missing`, `runway_call_exception`; Warnung `local_clip_takes_precedence_skip_provider` wenn BA-26.3-Pfad Vorrang hat. |
+| **Tests** | `tests/test_ba264_real_provider_smoke.py`: Dry-Payload, Gates, fehlender Key, Cap, `force_provider`, lokale Priorität — **Live-Runway bewusst mit `runway_run_fn`-Mock**, kein optionaler CI-Live-Test gegen die echte API. |
+| **Anbindung BA 26.3** | **Kein** automatischer Schritt „26.4 → Manifest“. Ein erfolgreicher Live-Lauf liefert eine **lokale MP4-Datei**; für die Render-Pipeline trägt der Operator den Pfad in `scene_asset_pack` ein (`runway_clip_path` / `video_path` o. ä.) oder kopiert die Datei — identisch zum manuellen BA-26.3R-Pfad. |
+
+**BA 26.5 — Umsetzung (Option A umgesetzt):** [`scripts/run_url_to_final_mp4.py`](scripts/run_url_to_final_mp4.py) verdrahtet **URL** (`extract_text_from_url` + `build_script_response_from_extracted_text`) oder **`script.json`** → `script.json` / `scene_plan.json` / `scene_asset_pack.json` → `run_asset_runner` (**placeholder**, kein Leonardo-Pflicht) → `build_timeline_manifest` → `render_final_story_video` → **`final_video.mp4`**, dazu **`run_summary.json`** und **`render_result.json`**. Vorhandene Clips/Bilder aus **`--asset-dir`** (rekursive Suche) werden Szenen **der Reihe nach** als `runway_clip_path` bzw. nach dem Asset-Runner als zusätzliche Bilddatei ins Manifest gemappt; ohne Video im Ordner: Warnung `no_existing_video_asset_found_using_fallback` und Placeholder-Pfad. URL ohne extrahierbaren Text: **blocking** `url_extraction_empty_use_script_json`. **BA 26.4** bleibt **optional** (z. B. Runway-Clip erzeugen → Ordner als `--asset-dir` oder MP4 in denselben Ordner legen).
+
+**BA 26.5 — Reality-Lauf (manuell, ohne neuen Provider-Call):** Mit der Mini-Fixture `fixtures/real_video_build_mini/generate_script_response.json` und dem BA‑26.2-Clip `output/runway_smoke_runway_smoke_002/runway_clip.mp4` als `--asset-dir` liefert `scripts/run_url_to_final_mp4.py` (Script-JSON-Modus, `--max-scenes 3 --duration-seconds 30 --motion-mode static`) ein lokales `final_video.mp4` (~30 s) unter `output/ba265_founder_smoke/` mit `run_summary.json` (`ok: true`, `used_video_assets_count: 1`) und den erwartbaren Warnungen `existing_asset_used` / `audio_missing_silent_render`. Liegt **kein** Clip im `--asset-dir`, blockt nichts: Warnung `no_existing_video_asset_found_using_fallback` (Placeholder-Render).
+
+**Was möglich ist:** Vorhandene lokale Clips (z. B. BA-26.2-Output) in die gleiche Render-Kette wie Placeholder-Bilder einbinden; gemischte Bild-/Video-Timelines mit ffmpeg.
+
+**BA 26.6 — Visual Founder Upgrade (umgesetzt):** [`scripts/run_url_to_final_mp4.py`](scripts/run_url_to_final_mp4.py) überschreibt nach `run_asset_runner` alle Bild-Szenen-PNGs durch eine **textfreie cinematic Placeholder-Variante** (`_draw_cinematic_placeholder_png`, deterministisch identisch über alle Szenen — keine sichtbaren `SCENE NNN` / `Chapter X · Beat Y` / `BROLL` / `DRAFT PLACEHOLDER`-Texte aus BA 20.2b mehr im Founder-Render). Liegt **weniger** Videos in `--asset-dir` als Szenen vor, wird das **letzte vorhandene Video** für die restlichen Szenen wiederverwendet (Reuse-Loop, ffmpeg `-stream_loop`); Warnung `ba266_video_reuse_for_remaining_scenes`. CLI-Default `--motion-mode` wandert von `static` auf **`basic`** (Ken-Burns / xfade), damit reine Bild-Szenen nicht starr stehen. Asset-Runner / Render / `scene_asset_pack`-Vertrag bleiben unverändert (das textbeschriftete BA-20.2b-Placeholder wird nur **nach** dem Asset-Runner überschrieben, nicht ersetzt). Tests: `tests/test_ba266_visual_founder_upgrade.py`.
+
+**BA 26.6 — Reality-Lauf:** Mit derselben Mini-Fixture und demselben BA‑26.2-Clip (`output/runway_smoke_runway_smoke_002/runway_clip.mp4`) liefert `scripts/run_url_to_final_mp4.py --motion-mode basic` ein lokales `final_video.mp4` (~30 s, ~5,5 MB) unter `output/ba266_visual_founder_smoke/` mit `used_video_assets_count: 3` und drei **bytegleichen** textfreien Placeholder-PNGs (~19 KB) im `generated_assets_*`-Ordner. Erwartete Warnungen: `ba266_video_reuse_for_remaining_scenes`, `existing_asset_used`, `ba266_cinematic_placeholder_applied:3`, `audio_missing_silent_render`.
+
+**BA 26.7 — Umsetzung (ElevenLabs Voice Founder Integration):** [`scripts/run_url_to_final_mp4.py`](scripts/run_url_to_final_mp4.py) sammelt aus den geplanten Szenen einen **labelfreien** Voiceover-Text (Hook + Kapitel-Narration, **ohne** „Szene 1" / „Chapter 1" / IDs / JSON), schreibt ihn als `voiceover_text.txt` in den Output-Ordner und übergibt ihn — je nach `--voice-mode` — an einen Voice-Synthesizer:
+
+- **`none`** (Default) — altes Verhalten unverändert; `audio_missing_silent_render` weiterhin möglich.
+- **`existing`** — `--voice-file` (`.mp3`/`.wav`/`.m4a`) wird validiert und direkt als `audio_path` an die Timeline übergeben.
+- **`elevenlabs`** — wiederverwendet die vorhandene `synthesize_elevenlabs_mp3()` aus [`scripts/build_full_voiceover.py`](scripts/build_full_voiceover.py); ENV `ELEVENLABS_API_KEY`, optional `ELEVENLABS_VOICE_ID` / `ELEVENLABS_MODEL_ID`. Per CLI können `--elevenlabs-voice-id` / `--elevenlabs-model` die ENV überschreiben (Werte werden **nie** gelogged).
+- **`dummy`** — schreibt ein stilles MP3 via ffmpeg `anullsrc` (Smoke-Pfad ohne API-Kosten, klare Warnung `dummy_voice_used_not_real_tts`).
+- **`openai`** — optionaler Pfad über die vorhandene `synthesize_openai_mp3()`; nicht Hauptpfad.
+
+Audio-Pfad wandert **transparent** durch `build_timeline_manifest(audio_path=…)` → `render_final_story_video` → `final_video.mp4`. Bei `voice_used: true` enthält das Video einen Audio-Stream; `audio_missing_silent_render` verschwindet aus den Warnungen (es kann statt­dessen `audio_shorter_than_timeline_padded_or_continued` auftauchen, wenn die Audio-Dauer kürzer als das Video ist — wird vom bestehenden Render robust gehandhabt). Fehlt API-Key/Voice-ID, blockt der Pfad sauber mit z. B. `elevenlabs_missing_api_key` — **kein** Crash, **kein** Secret-Leak. `run_summary.json` enthält die neuen Felder `voice_used`, `voice_mode`, `voice_text_path`, `voice_file_path`, `voice_duration_seconds`, `audio_stream_expected`, `voice_warnings`, `voice_blocking_reasons`. Tests: `tests/test_ba267_elevenlabs_voice_founder_integration.py`.
+
+**BA 26.7 — Reality-Lauf (lokal, ohne ElevenLabs-Live, ENV nicht gesetzt):**
+
+- `output/ba267_dummy_voice_smoke/final_video.mp4` (~5,5 MB, Audio-Stream **vorhanden**) — `voice_mode: dummy`, `voice_used: true`, Warning `dummy_voice_used_not_real_tts`.
+- `output/ba267_existing_voice_smoke/final_video.mp4` (~5,5 MB, Audio-Stream **vorhanden**) — `voice_mode: existing`, `voice_used: true` aus einer demonstrativen lokalen MP3-Datei.
+- `output/ba267_voice_founder_smoke/` (`voice_mode: elevenlabs`) — sauber blockiert mit `voice_blocking_reasons: ["elevenlabs_missing_api_key"]`, `audio_stream_expected: false`; final_video.mp4 wird trotzdem erzeugt (silent), keine Secrets im Output.
+
+**BA 26.7 — Live-Smoke bestätigt (ElevenLabs + Fit, Operator-Lauf):** Unter **`output/baum_voice_custom_fit_5/`** liegt ein erfolgreicher Founder-Run mit **`voice_mode: elevenlabs`**, **`voice_used: true`**, leeren **`voice_blocking_reasons`**, **`audio_stream_expected: true`**, **`fit_video_to_voice: true`**. **`run_summary.json`** (ohne Secrets): `ok: true`, **`voice_duration_seconds`** ≈ **15,23** (ffprobe Voice), **`fitted_video_duration_seconds`** **16**, **`original_requested_duration_seconds`** **30**; **`voice_warnings`:** leer. **`final_video.mp4`** und **`voiceover.mp3`** vorhanden und nicht leer; **ffprobe:** Audio-Stream im MP4, Video-Dauer ≈ **16,0 s** (statt ~30 s ohne Fit). Erwartete **nicht-sensitive** Warnings: u. a. `ba266_*`, `existing_asset_used`, `ba267_video_fitted_to_voice:…target_total=16s…`. **Bekannte frühere Blocker (ohne Key-Werte):** `elevenlabs_missing_api_key`, HTTP **401** oder Key **ohne** passende **Text-to-Speech-Berechtigung** bei ElevenLabs. **Lösung:** gültiger Account/API-Zugang mit **TTS-Berechtigung** plus **korrekte Voice-ID** (per ENV oder `--elevenlabs-voice-id`); keine Schlüssel oder IDs im Repo oder in Logs dokumentieren.
+
+**BA 26.7b — Fit Video Duration to Voice (`--fit-video-to-voice`, done):** Wenn nach der Voice-Erzeugung eine nutzbare `voice_duration_seconds` vorliegt, verteilt der Founder-Run die Szenen-Dauern so, dass Σ(Szenen) ≈ **Voice + Padding** (ganze Sekunden, Untergrenze `max(3, n_scenes×2, n_scenes×min_per_scene)`). Padding per **`--voice-fit-padding-seconds`** (Default **0,75**). Patch erfolgt **nach** Voice (weil die Dauer erst dann zuverlässig ist), **vor** `build_timeline_manifest` — [`scripts/run_url_to_final_mp4.py`](scripts/run_url_to_final_mp4.py): `_apply_fit_to_voice_durations` aktualisiert `asset_manifest.json` sowie konsistent `scene_plan.json` / `scene_asset_pack.json`; `timeline_manifest.json` spiegelt die gefitteten `duration_seconds`. **`run_summary.json`:** `fit_video_to_voice`, `voice_fit_padding_seconds`, `fitted_video_duration_seconds`, `original_requested_duration_seconds`. Ohne Voice oder ohne messbare Dauer: **`fit_video_to_voice_requested_but_no_voice_duration`**, kein Crash; übliches Verhalten ohne Timeline-Verkürzung. Render: leichte Toleranz für „Audio kürzer als Timeline“ ([`scripts/render_final_story_video.py`](scripts/render_final_story_video.py), Slop ≈ **1,05 s**), damit kurzes Padding nicht dauernd `audio_shorter_than_timeline_padded_or_continued` auslöst; bei großem Mismatch (z. B. langes Video, kurze Voice ohne Fit) bleibt die Warnung.
+
+**Reality-Smoke (BA 26.7b):** `output/ba267b_fit_voice_smoke/final_video.mp4` — z. B. `--script-json output/ba266_visual_founder_smoke/script.json`, `--asset-dir output/runway_smoke_runway_smoke_002`, `--max-scenes 3`, `--duration-seconds 30`, `--voice-mode elevenlabs` (wenn ENV) oder `--voice-mode dummy`, plus **`--fit-video-to-voice`**. Erwartung: `fitted_video_duration_seconds` gesetzt, Timeline-Szenen summieren zur Zieldauer, keine lange stumme Reststrecke wie bei ungefittetem 30‑s‑Video mit ~16 s Voice.
+
+Tests: `tests/test_ba267b_fit_video_to_voice.py`, weiterhin Fit-/Voice-Helfer in `tests/test_ba267_elevenlabs_voice_founder_integration.py`.
+
+**BA 26.8 — Real Visual Assets Founder Smoke (umgesetzt):** [`scripts/run_real_visual_founder_smoke.py`](scripts/run_real_visual_founder_smoke.py) orchestriert den ersten **echten visuellen Durchstich**:
+
+1. **Script** → `scene_plan.json` / `scene_asset_pack.json` (Wiederverwendung der BA-26.5-Logik)
+2. **Leonardo-Bilder** (live) — `run_asset_runner` mit `--mode live` und `LEONARDO_API_KEY`; pro Szene `scene_NNN.png`; ohne Key: sauberer Blocker `leonardo_missing_api_key`, kein Fake
+3. **Runway-Videos** (live) — `run_runway_image_to_video_smoke` pro Szene (max. `--max-runway-scenes`, Default 3); Input = Leonardo-Bild; ohne Key: Blocker `runway_missing_api_key`
+4. **Merged Asset-Dir** — Priorität: Runway-Video > Leonardo-Bild > Fallback-Clip > cinematic Placeholder; kein sichtbarer Draft-Text
+5. **Voice** — bestehender BA-26.7-Pfad (`--voice-mode elevenlabs`); `--fit-video-to-voice`
+6. **Render** — `run_ba265_url_to_final` mit dem merged Asset-Dir → `final_video.mp4`
+7. **`visual_summary.json`** — `used_leonardo_images_count`, `used_runway_videos_count`, `fallback_assets_used`, `scenes`, `warnings`, `blocking_reasons`, `provider_env_detected` (ohne Secret-Werte), `output_paths`
+
+CLI-Beispiel (PowerShell):
+```
+python scripts/run_real_visual_founder_smoke.py `
+  --script-json output/ba266_visual_founder_smoke/script.json `
+  --out-dir output/ba268_real_visual_founder_smoke `
+  --max-scenes 5 --duration-seconds 60 `
+  --use-leonardo --use-runway --max-runway-scenes 3 `
+  --voice-mode elevenlabs --fit-video-to-voice
+```
+
+ENV-Variablen (ohne Werte): `LEONARDO_API_KEY`, `RUNWAY_API_KEY`, `ELEVENLABS_API_KEY`, optional `LEONARDO_API_ENDPOINT`, `LEONARDO_MODEL_ID`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_ID`.
+
+Tests: `tests/test_ba268_real_visual_founder_smoke.py` (8 Tests: visual_summary-Erzeugung, Provider-Blocker ohne ENV, Fallback-Markierung, Priorität Video>Bild>Fallback, BA-26.5-Baseline, missing script, Leonardo-only, disable flags).
+
+**Was (noch) nicht möglich ist:** Paralleler Multi-Provider-Betrieb; Veo-Live; durchgängiger 10‑Minuten-Longform-Smoke; automatisches Re-Render bei partiellen Provider-Fehlern.
+
+**Nächster logischer Schritt:** **BA 26.9** (geplant): Longform / Längen-Stabilität (3–5 Min), oder **BA 27.0** (Founder-Button / Dashboard-Flow) — Reihenfolge nach Priorität.
 
 ### BA 26.0 — Live Smoke Scope Freeze
 
@@ -849,11 +971,15 @@ Den ersten echten Live-Test klar begrenzen: **echte Artikel-URL**, **lokale** Vi
 | BA 26.0 | Live Smoke Scope Freeze | **done** | Scope festlegen: echte Artikel-URL, Leonardo-Bilder, Video-Provider-Spike, lokal, kein Upload. |
 | BA 26.1 | Real Article URL + Leonardo Image Smoke | planned | Echte Artikel-URL mit Leonardo Live-Bildern bis lokales `final_video.mp4` testen. |
 | BA 26.2 | Runway Image-to-Video Smoke | **done** | `scripts/runway_image_to_video_smoke.py`: optional mit `RUNWAY_API_KEY` ein kurzer lokaler MP4 aus Bild+Prompt; **keine** Pipeline-Integration, **kein** Upload. |
-| BA 26.3 | Selected Video Provider Connector | planned | **Vor** Implementierung: Runway-Spike vs. **Google Veo** (API, Kosten, Output) abgleichen; **einen** Video-Provider als kontrollierten Connector anbinden. |
-| BA 26.4 | Real Clip Asset Ingest | planned | Provider-Clips als lokale Assets speichern und in Timeline/Render nutzbar machen. |
-| BA 26.5 | 2–3 Min Real Video Smoke with Clips | planned | Echte Quelle + Bilder + erste Clips bis lokales `final_video.mp4` testen. |
-| BA 26.6 | 5-Minute Local Video Smoke | planned | Dauer erhöhen und Stabilität prüfen. |
-| BA 26.7 | 10-Minute Local Video Smoke | planned | Zieltest: ca. 10 Minuten lokales `final_video.mp4`. |
+| BA 26.3 | Runway Clip Asset Ingest (lokal) | **done** | Lokale Clips per `scene_asset_pack`-Feldern (`video_path`, `runway_clip_path`, …) → `asset_manifest` / `timeline_manifest` → `render_final_story_video.py`; kein neuer Provider-Call; Fallback Bild/Placeholder. |
+| BA 26.3R | Reality Check & Pipeline Plan Sync | **done** | Abgleich BA-26.x mit Code/Tests; dokumentierter optionaler Reality-Lauf mit lokalem Clip; siehe Abschnitt **BA 26.x — Real Video Build**. |
+| BA 26.4 | Real Provider Smoke Test Mode | **done** | Wie **BA 26.4R**: Runway Live über BA 26.2 möglich; Default Dry-Run; Veo Stub-only. |
+| BA 26.4R | Real Provider Smoke Audit & Next-Step | **done** (Doku) | Audit + Entscheidungshilfe **BA 26.5**; siehe Abschnitt **BA 26.4R** unter **BA 26.x — Real Video Build**. |
+| BA 26.5 | OpenAI Images Provider Integration V1 | **done** | `openai_images`-Disposition wird zu echtem Provider-Pfad (dry-run default, Live nur mit Flag/ENV). Asset Runner nutzt `visual_prompt_effective` + Guard, schreibt `openai_image_result`/`provider_used`/`provider_status` ins `asset_manifest.json`. Tests: `tests/test_ba265_openai_images_adapter.py`, Erweiterung `tests/test_run_asset_runner.py`. |
+| BA 26.6 | Visual Founder Upgrade | **done** | Textfreie cinematic Placeholder im Founder-Render, Video-Reuse über Szenen, Default `motion-mode=basic`; kein Render-Refactor, kein neuer Provider; Tests `tests/test_ba266_visual_founder_upgrade.py`. |
+| BA 26.7 | ElevenLabs Voice Founder Integration | **done** | `--voice-mode none\|existing\|elevenlabs\|dummy\|openai` für [`scripts/run_url_to_final_mp4.py`](scripts/run_url_to_final_mp4.py); Wiederverwendung `synthesize_elevenlabs_mp3` / `synthesize_openai_mp3`; ENV-Secrets, keine Vertragsänderung; Tests `tests/test_ba267_elevenlabs_voice_founder_integration.py`. |
+| BA 26.7b | Fit Video Duration to Voice | **done** | Optional `--fit-video-to-voice`, `--voice-fit-padding-seconds` (Default 0,75), `--fit-min-seconds-per-scene`; `run_summary`-Felder `fitted_video_duration_seconds` u. a.; Tests `tests/test_ba267b_fit_video_to_voice.py`. |
+| BA 26.8 | Length-Stability / Longform Smoke (5–10 Min) | planned | Dauer-Stabilität: 5- bis 10-Minuten lokales `final_video.mp4` als ein Folge-Schritt (BA 26.6/26.7/26.7b vorausgesetzt). |
 
 **Nicht-Ziele (Scope Freeze / gesamte BA 26):**
 
@@ -873,7 +999,7 @@ Den ersten echten Live-Test klar begrenzen: **echte Artikel-URL**, **lokale** Vi
 - **BA 26.1–26.7** sind als Reihenfolge festgelegt.  
 - **Keine** Code-Änderungen.  
 
-**Definition of Done für BA 26 (Gesamtabnahme, nach Umsetzung von 26.1ff.):** Eine echte Quelle verarbeitet; **Leonardo Live** im Smoke-Pfad genutzt oder dokumentiert blockiert; nach Clip-Integration (**26.5**): `final_video.mp4` lokal, abspielbar, klare Warnungen in Result/Report; **26.6/26.7** für Längen-Stabilität.
+**Definition of Done für BA 26 (Gesamtabnahme, nach Umsetzung von 26.1ff.):** Eine echte Quelle verarbeitet; **Leonardo Live** im Smoke-Pfad genutzt oder dokumentiert blockiert; **BA 26.5** liefert einen Founder-Pfad bis lokales `final_video.mp4` (optional vorhandene Clips); **BA 26.6** liefert Founder-Render ohne sichtbare Debug-/Szenenlabels; **BA 26.7** liefert Founder-Render **mit echter Voice** (ElevenLabs bei vorhandener ENV, sonst sauberes Blocking + dummy/existing als technischer Smoke); **BA 26.7b** erlaubt optional (`--fit-video-to-voice`) die Ausrichtung der Video-Timeline an die Voice-Länge; **26.8** für Längen-Stabilität.
 
 ### BA 9.10 — Prompt Planning System V1 (**done**)
 

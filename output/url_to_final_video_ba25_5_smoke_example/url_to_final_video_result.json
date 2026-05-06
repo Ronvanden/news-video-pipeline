@@ -1,0 +1,262 @@
+{
+  "schema_version": "ba_25_5_url_to_final_video_result_v1",
+  "ok": true,
+  "status": "completed",
+  "run_id": "ba25_5_smoke_example",
+  "url": "https://example.com",
+  "metadata": {
+    "target_language": "de",
+    "duration_minutes": 1,
+    "source_type": "auto",
+    "asset_mode": "placeholder",
+    "voice_mode": "smoke",
+    "motion_mode": "static",
+    "subtitle_style": "typewriter",
+    "subtitle_mode": "simple",
+    "force": false,
+    "auto_approve": true
+  },
+  "steps": {
+    "ba25_3_url_to_script": {
+      "ok": true,
+      "status": "completed",
+      "run_id": "ba25_5_smoke_example",
+      "source_url": "https://example.com",
+      "source_type": "article",
+      "target_language": "de",
+      "duration_minutes": 1,
+      "build_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\url_script_ba25_5_smoke_example",
+      "generate_script_response_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\url_script_ba25_5_smoke_example\\generate_script_response.json",
+      "open_me_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\url_script_ba25_5_smoke_example\\URL_SCRIPT_OPEN_ME.md",
+      "warnings": [
+        "URL appears to be a homepage or index page. Use a specific article URL for better results.",
+        "Extracted content is very short. The URL may not contain sufficient article text.",
+        "Target word count: 140, Actual word count: 143",
+        "Generated using LLM mode",
+        "LLM output shorter than target"
+      ],
+      "blocking_reasons": [],
+      "exit_code": 0
+    },
+    "ba25_4_real_local_preview": {
+      "schema_version": "real_local_preview_result_v1",
+      "run_id": "ba25_5_smoke_example",
+      "ok": true,
+      "status": "completed",
+      "build_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_5_smoke_example",
+      "metadata": {
+        "adapter": "generate_script_response",
+        "asset_mode": "placeholder",
+        "voice_mode": "smoke",
+        "motion_mode": "static",
+        "subtitle_style": "typewriter",
+        "subtitle_mode": "simple",
+        "force": false,
+        "beat_count": 5,
+        "title": "Diese Domäne ist für die Verwendung in Dokumentationsbeispielen vorgesehen, ohne dass eine Genehmigung erforderlich ist",
+        "hook_present": true
+      },
+      "paths": {
+        "script_json": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\url_script_ba25_5_smoke_example\\generate_script_response.json",
+        "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_5_smoke_example\\scene_asset_pack.json",
+        "real_build_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_5_smoke_example",
+        "real_video_build_result": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_5_smoke_example\\real_video_build_result.json",
+        "preview_with_subtitles": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_ba25_5_smoke_example\\preview_with_subtitles.mp4",
+        "clean_video": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_5_smoke_example\\clean_video.mp4",
+        "subtitle_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_5_smoke_example\\subtitle_manifest.json",
+        "subtitle_file": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_5_smoke_example\\subtitles.srt",
+        "narration_script": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_5_smoke_example\\narration_script.txt",
+        "voiceover_audio": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_5_smoke_example\\full_voiceover.mp3",
+        "local_preview_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_5_smoke_example",
+        "open_me": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_5_smoke_example\\REAL_LOCAL_PREVIEW_OPEN_ME.md"
+      },
+      "real_build_result": {
+        "schema_version": "real_video_build_result_v1",
+        "run_id": "ba25_5_smoke_example",
+        "ok": true,
+        "status": "completed",
+        "build_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_5_smoke_example",
+        "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_5_smoke_example\\scene_asset_pack.json",
+        "metadata": {
+          "asset_mode": "placeholder",
+          "voice_mode": "smoke",
+          "motion_mode": "static",
+          "subtitle_style": "typewriter",
+          "subtitle_mode": "simple",
+          "force": false
+        },
+        "steps": [
+          {
+            "name": "asset_runner",
+            "ok": true,
+            "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_ba25_5_smoke_example\\asset_manifest.json",
+            "warnings": [],
+            "blocking_reasons": [],
+            "extra": {
+              "asset_count": 5
+            }
+          },
+          {
+            "name": "voiceover_smoke",
+            "ok": true,
+            "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_5_smoke_example\\full_voiceover.mp3",
+            "warnings": [],
+            "blocking_reasons": [],
+            "extra": {
+              "voice_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_5_smoke_example\\voice_manifest.json",
+              "estimated_duration_seconds": 59,
+              "word_count": 143,
+              "real_tts_generated": false
+            }
+          },
+          {
+            "name": "timeline_builder",
+            "ok": true,
+            "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\timeline_ba25_5_smoke_example\\timeline_manifest.json",
+            "warnings": [],
+            "blocking_reasons": [],
+            "extra": {
+              "audio_path_set": true
+            }
+          },
+          {
+            "name": "clean_render",
+            "ok": true,
+            "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_5_smoke_example\\clean_video.mp4",
+            "warnings": [],
+            "blocking_reasons": []
+          },
+          {
+            "name": "subtitle_build",
+            "ok": true,
+            "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_5_smoke_example\\subtitle_manifest.json",
+            "warnings": [
+              "subtitle_audio_duration_used"
+            ],
+            "blocking_reasons": []
+          },
+          {
+            "name": "burn_in_preview",
+            "ok": true,
+            "output": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_ba25_5_smoke_example\\preview_with_subtitles.mp4",
+            "warnings": [
+              "subtitle_typewriter_ass_renderer_used"
+            ],
+            "blocking_reasons": [],
+            "extra": {
+              "skipped": false
+            }
+          }
+        ],
+        "paths": {
+          "scene_asset_pack": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_5_smoke_example\\scene_asset_pack.json",
+          "asset_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\generated_assets_ba25_5_smoke_example\\asset_manifest.json",
+          "timeline_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\timeline_ba25_5_smoke_example\\timeline_manifest.json",
+          "voiceover_audio": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_5_smoke_example\\full_voiceover.mp3",
+          "narration_script": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_5_smoke_example\\narration_script.txt",
+          "clean_video": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_5_smoke_example\\clean_video.mp4",
+          "subtitle_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_5_smoke_example\\subtitle_manifest.json",
+          "subtitle_file": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ba25_5_smoke_example\\subtitles.srt",
+          "preview_with_subtitles": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_ba25_5_smoke_example\\preview_with_subtitles.mp4",
+          "local_preview_dir": "",
+          "final_render_dir": "",
+          "final_video": ""
+        },
+        "warnings": [
+          "subtitle_audio_duration_used",
+          "subtitle_typewriter_ass_renderer_used"
+        ],
+        "blocking_reasons": [],
+        "next_step": "Öffne preview_with_subtitles.mp4 im Indexpaket; Final Render bleibt BA 24.x-Flow (run_final_render.py).",
+        "created_at_epoch": 1777993112.7839766,
+        "paths_self": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_build_ba25_5_smoke_example\\real_video_build_result.json"
+      },
+      "warnings": [
+        "subtitle_audio_duration_used",
+        "subtitle_typewriter_ass_renderer_used"
+      ],
+      "blocking_reasons": [],
+      "next_step": "Öffne preview_with_subtitles.mp4 (siehe Pfad im Result). Final Render bleibt der bestehende BA 24.x-Flow (run_final_render.py).",
+      "exit_code": 0,
+      "created_at_epoch": 1777993112
+    },
+    "ba24_3_final_render": {
+      "ok": true,
+      "run_id": "ba25_5_smoke_example",
+      "status": "completed",
+      "message": "Final Render abgeschlossen.",
+      "recommended_action": "Öffne final_video.mp4 und prüfe es manuell.",
+      "result": {
+        "contract_id": "final_render_result",
+        "schema_version": "final_render_result_v1",
+        "run_id": "ba25_5_smoke_example",
+        "status": "completed",
+        "created_at": "2026-05-05T14:58:32+00:00",
+        "updated_at": "2026-05-05T14:58:32+00:00",
+        "source": {
+          "preview_package_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_ba25_5_smoke_example",
+          "input_preview_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_ba25_5_smoke_example\\preview_with_subtitles.mp4",
+          "local_preview_result_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_ba25_5_smoke_example\\local_preview_result.json",
+          "human_approval_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_ba25_5_smoke_example\\human_approval.json"
+        },
+        "output": {
+          "final_render_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example",
+          "final_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\final_video.mp4",
+          "final_open_me_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\FINAL_OPEN_ME.md",
+          "final_report_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\final_render_report.md",
+          "export_manifest_path": ""
+        },
+        "gates": {
+          "preview_available": "pass",
+          "quality_not_fail": "pass",
+          "founder_not_block": "pass",
+          "human_approved": "pass",
+          "cost_not_over_budget": "pass"
+        },
+        "warnings": [
+          "Cost status unknown; review recommended."
+        ],
+        "blocking_reasons": [],
+        "metadata": {
+          "execution_mode": "copy_preview_v1",
+          "force": false,
+          "dry_run": false
+        }
+      },
+      "paths": {
+        "final_render_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example",
+        "final_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\final_video.mp4",
+        "final_result_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\final_render_result.json",
+        "final_open_me_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\FINAL_OPEN_ME.md",
+        "final_report_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\final_render_report.md"
+      },
+      "warnings": [
+        "Cost status unknown; review recommended."
+      ],
+      "blocking_reasons": []
+    }
+  },
+  "paths": {
+    "result_json": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\url_to_final_video_ba25_5_smoke_example\\url_to_final_video_result.json",
+    "url_script_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\url_script_ba25_5_smoke_example",
+    "generate_script_response": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\url_script_ba25_5_smoke_example\\generate_script_response.json",
+    "real_local_preview_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_5_smoke_example",
+    "real_local_preview_result": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\real_local_preview_ba25_5_smoke_example\\real_local_preview_result.json",
+    "preview_with_subtitles": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitle_burnin_ba25_5_smoke_example\\preview_with_subtitles.mp4",
+    "local_preview_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_ba25_5_smoke_example",
+    "local_preview_result": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_ba25_5_smoke_example\\local_preview_result.json",
+    "human_approval": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\local_preview_ba25_5_smoke_example\\human_approval.json",
+    "final_render_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example",
+    "final_video": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\final_video.mp4",
+    "final_render_result": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_render_ba25_5_smoke_example\\final_render_result.json"
+  },
+  "warnings": [
+    "subtitle_audio_duration_used",
+    "subtitle_typewriter_ass_renderer_used",
+    "ba25_5_auto_approved_for_smoke",
+    "Cost status unknown; review recommended."
+  ],
+  "blocking_reasons": [],
+  "exit_code": 0,
+  "created_at_epoch": 1777993112
+}

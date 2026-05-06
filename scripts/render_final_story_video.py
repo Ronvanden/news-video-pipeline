@@ -21,6 +21,9 @@ MOTION_FPS = 25
 DEFAULT_XFADE_FADE_SEC = 0.35
 CUT_XFADE_SEC = 0.06
 
+# Ab wann „Audio kürzer als Timeline“ gewarnt wird (Deckt BA-26.7b Voice-Fit-Padding ~1s + Container-Drift ab.)
+_AUDIO_SHORTER_THAN_TIMELINE_SLOP_SEC = 1.05
+
 # libass force_style (Kommas im Filter escaped)
 SUBTITLE_FORCE_STYLE = (
     "FontName=Arial,FontSize=22,"
@@ -155,6 +158,25 @@ def _xfade_offset_sequence(durs: List[float], fades: List[float]) -> List[float]
     return offsets
 
 
+def _media_file_usable(p: Path) -> bool:
+    try:
+        if p.is_symlink():
+            return False
+        return p.is_file()
+    except OSError:
+        return False
+
+
+def _segment_video_branch(d_sec: float, fps: int) -> str:
+    """Normiert Video-Segment auf 1920×1080, Ziel-Länge d_sec (Input per -t bereits begrenzt)."""
+    d_str = f"{d_sec:.6f}"
+    return (
+        f"fps={fps},format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
+        f"pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,"
+        f"trim=duration={d_str},setpts=PTS-STARTPTS"
+    )
+
+
 def _segment_motion_filter(d_sec: float, zoom_type: str, pan_direction: str, fps: int) -> str:
     """Filterkette ohne Eingabe-Label: fps → Motion → setpts (einheitlich 1920×1080 yuv420p)."""
     frames = max(3, int(round(d_sec * float(fps))))
@@ -278,21 +300,28 @@ def _build_basic_motion_filter_script(
     timeline_seconds: float,
     has_audio: bool,
     audio_input_index: int,
+    segment_kinds: Optional[List[str]] = None,
 ) -> str:
     n = len(scenes)
+    kinds = segment_kinds if segment_kinds is not None else ["image"] * n
+    if len(kinds) != n:
+        kinds = ["image"] * n
     durs = [float(s.get("duration_seconds") or 6) for s in scenes]
     fades = [_boundary_fade_seconds(scenes[k + 1]) for k in range(n - 1)]
     offs = _xfade_offset_sequence(durs, fades)
 
     parts: List[str] = []
     for i, sc in enumerate(scenes):
-        zt = _scene_zoom_type(sc)
-        pd = _scene_pan_direction(sc)
-        if zt in ("slow_push", "slow_pull"):
-            pd_eff = "none"
+        if kinds[i] == "video":
+            vf = _segment_video_branch(durs[i], fps)
         else:
-            pd_eff = pd
-        vf = _segment_motion_filter(durs[i], zt, pd_eff, fps)
+            zt = _scene_zoom_type(sc)
+            pd = _scene_pan_direction(sc)
+            if zt in ("slow_push", "slow_pull"):
+                pd_eff = "none"
+            else:
+                pd_eff = pd
+            vf = _segment_motion_filter(durs[i], zt, pd_eff, fps)
         parts.append(f"[{i}:v]{vf}[b{i}]")
 
     if n == 1:
@@ -367,7 +396,7 @@ def _run_ffmpeg_static_concat(
             if ffprobe:
                 audio_d, aw = _probe_audio_duration(audio_file, ffprobe)
                 warnings.extend(aw)
-            if audio_d is not None and audio_d + 0.1 < td:
+            if audio_d is not None and audio_d + _AUDIO_SHORTER_THAN_TIMELINE_SLOP_SEC < td:
                 warnings.append("audio_shorter_than_timeline_padded_or_continued")
             cmd.extend(
                 [
@@ -409,7 +438,43 @@ def _run_ffmpeg_static_concat(
     return True, warnings, blocking
 
 
-def _run_ffmpeg_basic_motion(
+def _build_hybrid_static_filter_script(
+    scenes: List[Dict[str, Any]],
+    kinds: List[str],
+    *,
+    fps: int,
+    timeline_seconds: float,
+    has_audio: bool,
+    audio_input_index: int,
+) -> str:
+    """Statische Kette ohne xfade: normalisierte Segmente → concat (BA 26.3 Video-Segmente)."""
+    n = len(scenes)
+    durs = [float(s.get("duration_seconds") or 6) for s in scenes]
+    parts: List[str] = []
+    for i in range(n):
+        d_str = f"{durs[i]:.6f}"
+        vf = (
+            f"fps={fps},format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
+            f"pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,"
+            f"trim=duration={d_str},setpts=PTS-STARTPTS"
+        )
+        parts.append(f"[{i}:v]{vf}[seg{i}]")
+    concat_in = "".join(f"[seg{i}]" for i in range(n))
+    parts.append(f"{concat_in}concat=n={n}:v=1:a=0[vcore]")
+    produced = sum(durs)
+    gap = max(0.0, float(timeline_seconds) - float(produced))
+    if gap > 0.02:
+        parts.append(f"[vcore]tpad=stop_mode=clone:stop_duration={gap:.4f}[vfin]")
+    else:
+        parts.append("[vcore]null[vfin]")
+    if has_audio:
+        td = max(float(timeline_seconds), 0.04)
+        td_s = f"{td:.6f}"
+        parts.append(f"[{audio_input_index}:a]atrim=duration={td_s},apad=whole_dur={td_s}[aout]")
+    return ";".join(parts) + "\n"
+
+
+def _run_ffmpeg_hybrid_static(
     scenes: List[Dict[str, Any]],
     assets_dir: Path,
     output_video: Path,
@@ -420,20 +485,23 @@ def _run_ffmpeg_basic_motion(
     warnings: List[str],
     *,
     subtitle_path: Optional[Path] = None,
+    segment_kinds: List[str],
 ) -> Tuple[bool, List[str], List[str]]:
-    """BA 20.4: Ken-Burns-ähnlich + xfade; Audio wie BA 19.2; optional BA 20.5 subtitles."""
+    """BA 26.3: statischer Render mit gemischten Bild-/Video-Segmenten (filter_complex concat)."""
     blocking: List[str] = []
     n = len(scenes)
     fps = MOTION_FPS
     has_audio = audio_file is not None
     audio_idx = n if has_audio else -1
+    kinds = segment_kinds if len(segment_kinds) == n else ["image"] * n
 
-    fd, script_name = tempfile.mkstemp(suffix="_motion.fc", text=True)
+    fd, script_name = tempfile.mkstemp(suffix="_hybrid_static.fc", text=True)
     os.close(fd)
     script_path = Path(script_name)
     try:
-        body = _build_basic_motion_filter_script(
+        body = _build_hybrid_static_filter_script(
             scenes,
+            kinds,
             fps=fps,
             timeline_seconds=timeline_seconds,
             has_audio=has_audio,
@@ -447,10 +515,14 @@ def _run_ffmpeg_basic_motion(
         script_path.write_text(body, encoding="utf-8")
 
         cmd: List[str] = [ffmpeg, "-y"]
-        for sc in scenes:
-            img = assets_dir / str(sc.get("image_path") or "")
+        for i, sc in enumerate(scenes):
             d = float(sc.get("duration_seconds") or 6)
-            cmd.extend(["-loop", "1", "-framerate", str(fps), "-t", f"{d:.6f}", "-i", str(img)])
+            if kinds[i] == "video":
+                vid = assets_dir / str(sc.get("video_path") or "").strip()
+                cmd.extend(["-stream_loop", "-1", "-t", f"{d:.6f}", "-i", str(vid)])
+            else:
+                img = assets_dir / str(sc.get("image_path") or "")
+                cmd.extend(["-loop", "1", "-framerate", str(fps), "-t", f"{d:.6f}", "-i", str(img)])
         if audio_file:
             cmd.extend(["-i", str(audio_file)])
 
@@ -460,7 +532,114 @@ def _run_ffmpeg_basic_motion(
             if ffprobe:
                 audio_d, aw = _probe_audio_duration(audio_file, ffprobe)
                 warnings.extend(aw)
-                if audio_d is not None and audio_d + 0.1 < td:
+                if audio_d is not None and audio_d + _AUDIO_SHORTER_THAN_TIMELINE_SLOP_SEC < td:
+                    warnings.append("audio_shorter_than_timeline_padded_or_continued")
+            cmd.extend(
+                [
+                    "-map",
+                    f"[{v_out}]",
+                    "-map",
+                    "[aout]",
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "192k",
+                    str(output_video),
+                ]
+            )
+        else:
+            cmd.extend(
+                [
+                    "-map",
+                    f"[{v_out}]",
+                    "-an",
+                    "-c:v",
+                    "libx264",
+                    "-pix_fmt",
+                    "yuv420p",
+                    str(output_video),
+                ]
+            )
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        err = (e.stderr or e.stdout or "")[:800]
+        return False, warnings + [f"ffmpeg_hybrid_static_failed:{err}"], ["ffmpeg_encode_failed"]
+    except OSError as e:
+        return False, warnings + [f"hybrid_static_script_failed:{type(e).__name__}"], ["ffmpeg_encode_failed"]
+    finally:
+        try:
+            script_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+    return True, warnings, blocking
+
+
+def _run_ffmpeg_basic_motion(
+    scenes: List[Dict[str, Any]],
+    assets_dir: Path,
+    output_video: Path,
+    ffmpeg: str,
+    ffprobe: Optional[str],
+    audio_file: Optional[Path],
+    timeline_seconds: float,
+    warnings: List[str],
+    *,
+    subtitle_path: Optional[Path] = None,
+    segment_kinds: Optional[List[str]] = None,
+) -> Tuple[bool, List[str], List[str]]:
+    """BA 20.4: Ken-Burns-ähnlich + xfade; Audio wie BA 19.2; optional BA 20.5 subtitles."""
+    blocking: List[str] = []
+    n = len(scenes)
+    fps = MOTION_FPS
+    has_audio = audio_file is not None
+    audio_idx = n if has_audio else -1
+    kinds = segment_kinds if segment_kinds is not None else ["image"] * n
+    if len(kinds) != n:
+        kinds = ["image"] * n
+
+    fd, script_name = tempfile.mkstemp(suffix="_motion.fc", text=True)
+    os.close(fd)
+    script_path = Path(script_name)
+    try:
+        body = _build_basic_motion_filter_script(
+            scenes,
+            fps=fps,
+            timeline_seconds=timeline_seconds,
+            has_audio=has_audio,
+            audio_input_index=audio_idx,
+            segment_kinds=kinds,
+        )
+        v_out = "vfin"
+        if subtitle_path is not None and subtitle_path.is_file() and subtitle_path.stat().st_size > 0:
+            frag = _subtitles_vf_fragment(subtitle_path)
+            body = body.rstrip() + f";[vfin]{frag}[vsubout]\n"
+            v_out = "vsubout"
+        script_path.write_text(body, encoding="utf-8")
+
+        cmd: List[str] = [ffmpeg, "-y"]
+        for i, sc in enumerate(scenes):
+            d = float(sc.get("duration_seconds") or 6)
+            if kinds[i] == "video":
+                vid = assets_dir / str(sc.get("video_path") or "").strip()
+                cmd.extend(["-stream_loop", "-1", "-t", f"{d:.6f}", "-i", str(vid)])
+            else:
+                img = assets_dir / str(sc.get("image_path") or "")
+                cmd.extend(["-loop", "1", "-framerate", str(fps), "-t", f"{d:.6f}", "-i", str(img)])
+        if audio_file:
+            cmd.extend(["-i", str(audio_file)])
+
+        cmd.extend(["-filter_complex_script", str(script_path)])
+        if has_audio:
+            td = max(timeline_seconds, 0.04)
+            if ffprobe:
+                audio_d, aw = _probe_audio_duration(audio_file, ffprobe)
+                warnings.extend(aw)
+                if audio_d is not None and audio_d + _AUDIO_SHORTER_THAN_TIMELINE_SLOP_SEC < td:
                     warnings.append("audio_shorter_than_timeline_padded_or_continued")
             cmd.extend(
                 [
@@ -700,9 +879,27 @@ def render_final_story_video(
         r.update(_sub_meta())
         return _merge_207(r, video_created=False, burned=False)
 
+    segment_kinds: List[str] = []
     for sc in scenes:
-        ip = assets_dir / str(sc.get("image_path") or "")
-        if not ip.is_file():
+        vp = str(sc.get("video_path") or "").strip()
+        ip = str(sc.get("image_path") or "").strip()
+        vfull = assets_dir / vp if vp else None
+        ifull = assets_dir / ip if ip else None
+        video_ok = vfull is not None and _media_file_usable(vfull)
+        image_ok = ifull is not None and _media_file_usable(ifull)
+        mt = str(sc.get("media_type") or "").strip().lower()
+        want_v = mt == "video" or bool(vp)
+
+        if want_v and video_ok:
+            segment_kinds.append("video")
+        elif image_ok:
+            if want_v and not video_ok:
+                warnings.append(f"video_asset_unusable_fallback_image:{sc.get('scene_number')}")
+            segment_kinds.append("image")
+        elif video_ok:
+            segment_kinds.append("video")
+        else:
+            miss = vp or ip or sc.get("scene_number")
             r = {
                 "video_created": False,
                 "output_path": str(output_video),
@@ -710,10 +907,12 @@ def render_final_story_video(
                 "scene_count": n_scenes,
                 "motion_mode": motion_eff,
                 "warnings": warnings,
-                "blocking_reasons": [f"missing_image:{sc.get('image_path')}"],
+                "blocking_reasons": [f"missing_scene_media:{miss}"],
             }
             r.update(_sub_meta())
             return _merge_207(r, video_created=False, burned=False)
+
+    any_video = any(k == "video" for k in segment_kinds)
 
     audio_path = (tl.get("audio_path") or "").strip()
     audio_file: Optional[Path] = Path(audio_path) if audio_path else None
@@ -756,12 +955,96 @@ def render_final_story_video(
                 timeline_seconds,
                 warnings,
                 subtitle_path=sub_file if sub_on else None,
+                segment_kinds=segment_kinds,
             )
             if ok:
                 burned_subtitles = bool(sub_on)
                 break
         if not ok:
             warnings.append("motion_render_failed_fallback_static")
+            used_motion = False
+            for sub_on in sub_tries:
+                if any_video:
+                    ok, warnings, blocking = _run_ffmpeg_hybrid_static(
+                        scenes,
+                        assets_dir,
+                        output_video,
+                        ffmpeg,
+                        ffprobe,
+                        audio_file,
+                        timeline_seconds,
+                        warnings,
+                        subtitle_path=sub_file if sub_on else None,
+                        segment_kinds=segment_kinds,
+                    )
+                else:
+                    ok, warnings, blocking = _run_ffmpeg_static_concat(
+                        scenes,
+                        assets_dir,
+                        output_video,
+                        ffmpeg,
+                        ffprobe,
+                        audio_file,
+                        timeline_seconds,
+                        warnings,
+                        subtitle_path=sub_file if sub_on else None,
+                    )
+                if ok:
+                    burned_subtitles = bool(sub_on)
+                    break
+    else:
+        for sub_on in sub_tries:
+            if any_video:
+                ok, warnings, blocking = _run_ffmpeg_hybrid_static(
+                    scenes,
+                    assets_dir,
+                    output_video,
+                    ffmpeg,
+                    ffprobe,
+                    audio_file,
+                    timeline_seconds,
+                    warnings,
+                    subtitle_path=sub_file if sub_on else None,
+                    segment_kinds=segment_kinds,
+                )
+            else:
+                ok, warnings, blocking = _run_ffmpeg_static_concat(
+                    scenes,
+                    assets_dir,
+                    output_video,
+                    ffmpeg,
+                    ffprobe,
+                    audio_file,
+                    timeline_seconds,
+                    warnings,
+                    subtitle_path=sub_file if sub_on else None,
+                )
+            if ok:
+                burned_subtitles = bool(sub_on)
+                break
+
+    if not ok and any_video:
+        warnings.append("video_render_failed_retry_image_only")
+        image_kinds = ["image"] * n_scenes
+        if motion_eff == "basic":
+            for sub_on in sub_tries:
+                ok, warnings, blocking = _run_ffmpeg_basic_motion(
+                    scenes,
+                    assets_dir,
+                    output_video,
+                    ffmpeg,
+                    ffprobe,
+                    audio_file,
+                    timeline_seconds,
+                    warnings,
+                    subtitle_path=sub_file if sub_on else None,
+                    segment_kinds=image_kinds,
+                )
+                if ok:
+                    burned_subtitles = bool(sub_on)
+                    used_motion = True
+                    break
+        if not ok:
             used_motion = False
             for sub_on in sub_tries:
                 ok, warnings, blocking = _run_ffmpeg_static_concat(
@@ -778,22 +1061,6 @@ def render_final_story_video(
                 if ok:
                     burned_subtitles = bool(sub_on)
                     break
-    else:
-        for sub_on in sub_tries:
-            ok, warnings, blocking = _run_ffmpeg_static_concat(
-                scenes,
-                assets_dir,
-                output_video,
-                ffmpeg,
-                ffprobe,
-                audio_file,
-                timeline_seconds,
-                warnings,
-                subtitle_path=sub_file if sub_on else None,
-            )
-            if ok:
-                burned_subtitles = bool(sub_on)
-                break
 
     if ok and use_sub and not burned_subtitles:
         warnings.append("subtitle_burn_failed_fallback_no_subtitles")

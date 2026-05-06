@@ -1,0 +1,12 @@
+{
+  "run_id": "ec245d42-1485-4f53-ba34-49d631d65bbe",
+  "source_narration_script": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_211e0d0a-802e-4312-ac1e-f4a48c8c6ed6\\narration_script.txt",
+  "timeline_manifest": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\timeline_85674819-3166-48d1-8b19-efdbaf1dbf6c\\timeline_manifest.json",
+  "subtitle_count": 47,
+  "estimated_duration_seconds": 108.0,
+  "subtitle_mode": "simple",
+  "warnings": [],
+  "blocking_reasons": [],
+  "subtitles_srt_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ec245d42-1485-4f53-ba34-49d631d65bbe\\subtitles.srt",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\subtitles_ec245d42-1485-4f53-ba34-49d631d65bbe"
+}

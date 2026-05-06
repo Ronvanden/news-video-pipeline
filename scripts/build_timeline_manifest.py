@@ -55,33 +55,59 @@ def build_timeline_manifest_data(
 
     scenes: List[Dict[str, Any]] = []
     t = 0.0
-    dur = max(1, int(scene_duration_seconds))
+    default_dur = max(1, int(scene_duration_seconds))
 
     for a in sorted(raw_assets, key=lambda x: int(x.get("scene_number", 0))):
         sn = int(a.get("scene_number", len(scenes) + 1))
-        img = str(a.get("image_path") or "")
-        if not img:
-            raise ValueError(f"asset missing image_path for scene_number={sn}")
+        img = str(a.get("image_path") or "").strip()
+        vid_rel = str(a.get("video_path") or "").strip()
         ch = int(a.get("chapter_index", 0))
         bi = int(a.get("beat_index", 0))
         cam = str(a.get("camera_motion_hint") or "")
+        adur = a.get("duration_seconds")
+        if adur is None:
+            adur = a.get("estimated_duration_seconds")
+        try:
+            dur = max(1, int(adur)) if adur is not None else default_dur
+        except (TypeError, ValueError):
+            dur = default_dur
         start = round(t, 3)
         end = round(t + dur, 3)
-        scenes.append(
-            {
-                "scene_number": sn,
-                "image_path": img,
-                "start_time": start,
-                "end_time": end,
-                "duration_seconds": dur,
-                "transition": "fade",
-                "camera_motion_hint": cam,
-                "zoom_type": _zoom_from_camera_hint(cam),
-                "pan_direction": _pan_from_camera_hint(cam),
-                "chapter_index": ch,
-                "beat_index": bi,
-            }
-        )
+
+        use_video = False
+        if vid_rel:
+            vfull = assets_dir / vid_rel
+            if vfull.is_file():
+                use_video = True
+            elif img:
+                pass
+            else:
+                raise ValueError(f"asset video_path not found for scene_number={sn}: {vid_rel}")
+
+        if not use_video and not img:
+            raise ValueError(f"asset missing image_path for scene_number={sn}")
+
+        row: Dict[str, Any] = {
+            "scene_number": sn,
+            "start_time": start,
+            "end_time": end,
+            "duration_seconds": dur,
+            "transition": "fade",
+            "camera_motion_hint": cam,
+            "zoom_type": _zoom_from_camera_hint(cam),
+            "pan_direction": _pan_from_camera_hint(cam),
+            "chapter_index": ch,
+            "beat_index": bi,
+        }
+        if use_video:
+            row["media_type"] = "video"
+            row["video_path"] = vid_rel
+            if img:
+                row["image_path"] = img
+        else:
+            row["media_type"] = "image"
+            row["image_path"] = img
+        scenes.append(row)
         t += dur
 
     audio_resolved = str(audio_path.resolve()) if audio_path else ""
@@ -93,7 +119,7 @@ def build_timeline_manifest_data(
         "audio_path": audio_resolved,
         "total_scenes": total,
         "estimated_duration_seconds": int(round(t)),
-        "scene_duration_default_seconds": dur,
+        "scene_duration_default_seconds": default_dur,
         "scenes": scenes,
     }
 

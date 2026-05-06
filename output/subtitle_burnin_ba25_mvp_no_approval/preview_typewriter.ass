@@ -1,0 +1,2166 @@
+[Script Info]
+Title: preview_typewriter
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,22,&H00FFFFFF,&H00000000,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,1,2,40,40,{margin_v},1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:00.07,Default,,0,0,0,,{\an2}H
+Dialogue: 0,0:00:00.07,0:00:00.13,Default,,0,0,0,,{\an2}Ha
+Dialogue: 0,0:00:00.13,0:00:00.20,Default,,0,0,0,,{\an2}Has
+Dialogue: 0,0:00:00.20,0:00:00.26,Default,,0,0,0,,{\an2}Hast
+Dialogue: 0,0:00:00.26,0:00:00.33,Default,,0,0,0,,{\an2}Hast 
+Dialogue: 0,0:00:00.33,0:00:00.39,Default,,0,0,0,,{\an2}Hast d
+Dialogue: 0,0:00:00.39,0:00:00.46,Default,,0,0,0,,{\an2}Hast du
+Dialogue: 0,0:00:00.46,0:00:00.52,Default,,0,0,0,,{\an2}Hast du 
+Dialogue: 0,0:00:00.52,0:00:00.59,Default,,0,0,0,,{\an2}Hast du d
+Dialogue: 0,0:00:00.59,0:00:00.65,Default,,0,0,0,,{\an2}Hast du di
+Dialogue: 0,0:00:00.65,0:00:00.72,Default,,0,0,0,,{\an2}Hast du dic
+Dialogue: 0,0:00:00.72,0:00:00.78,Default,,0,0,0,,{\an2}Hast du dich
+Dialogue: 0,0:00:00.78,0:00:00.85,Default,,0,0,0,,{\an2}Hast du dich 
+Dialogue: 0,0:00:00.85,0:00:00.91,Default,,0,0,0,,{\an2}Hast du dich j
+Dialogue: 0,0:00:00.91,0:00:00.98,Default,,0,0,0,,{\an2}Hast du dich je
+Dialogue: 0,0:00:00.98,0:00:01.04,Default,,0,0,0,,{\an2}Hast du dich jem
+Dialogue: 0,0:00:01.04,0:00:01.11,Default,,0,0,0,,{\an2}Hast du dich jema
+Dialogue: 0,0:00:01.11,0:00:01.17,Default,,0,0,0,,{\an2}Hast du dich jemal
+Dialogue: 0,0:00:01.17,0:00:01.24,Default,,0,0,0,,{\an2}Hast du dich jemals
+Dialogue: 0,0:00:01.24,0:00:01.30,Default,,0,0,0,,{\an2}Hast du dich jemals 
+Dialogue: 0,0:00:01.30,0:00:01.37,Default,,0,0,0,,{\an2}Hast du dich jemals g
+Dialogue: 0,0:00:01.37,0:00:01.43,Default,,0,0,0,,{\an2}Hast du dich jemals ge
+Dialogue: 0,0:00:01.43,0:00:01.50,Default,,0,0,0,,{\an2}Hast du dich jemals gef
+Dialogue: 0,0:00:01.50,0:00:01.56,Default,,0,0,0,,{\an2}Hast du dich jemals gefr
+Dialogue: 0,0:00:01.56,0:00:01.63,Default,,0,0,0,,{\an2}Hast du dich jemals gefra
+Dialogue: 0,0:00:01.63,0:00:01.69,Default,,0,0,0,,{\an2}Hast du dich jemals gefrag
+Dialogue: 0,0:00:01.69,0:00:01.76,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt
+Dialogue: 0,0:00:01.76,0:00:01.82,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt,
+Dialogue: 0,0:00:01.82,0:00:01.89,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt, 
+Dialogue: 0,0:00:01.89,0:00:01.95,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt, w
+Dialogue: 0,0:00:01.95,0:00:02.02,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt, we
+Dialogue: 0,0:00:02.02,0:00:02.08,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt, wel
+Dialogue: 0,0:00:02.08,0:00:02.15,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt, welc
+Dialogue: 0,0:00:02.15,0:00:02.21,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt, welch
+Dialogue: 0,0:00:02.21,0:00:02.28,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt,\\Nwelche
+Dialogue: 0,0:00:02.28,0:00:02.34,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt,\\Nwelche 
+Dialogue: 0,0:00:02.34,0:00:02.41,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt,\\Nwelche R
+Dialogue: 0,0:00:02.41,0:00:02.47,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt,\\Nwelche Ro
+Dialogue: 0,0:00:02.47,0:00:02.54,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt,\\Nwelche Rol
+Dialogue: 0,0:00:02.54,0:00:02.60,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt,\\Nwelche Roll
+Dialogue: 0,0:00:02.60,0:00:02.67,Default,,0,0,0,,{\an2}Hast du dich jemals gefragt,\\Nwelche Rolle
+Dialogue: 0,0:00:02.67,0:00:02.72,Default,,0,0,0,,{\an2}s
+Dialogue: 0,0:00:02.72,0:00:02.78,Default,,0,0,0,,{\an2}sp
+Dialogue: 0,0:00:02.78,0:00:02.84,Default,,0,0,0,,{\an2}spe
+Dialogue: 0,0:00:02.84,0:00:02.90,Default,,0,0,0,,{\an2}spez
+Dialogue: 0,0:00:02.90,0:00:02.96,Default,,0,0,0,,{\an2}spezi
+Dialogue: 0,0:00:02.96,0:00:03.02,Default,,0,0,0,,{\an2}spezie
+Dialogue: 0,0:00:03.02,0:00:03.08,Default,,0,0,0,,{\an2}speziel
+Dialogue: 0,0:00:03.08,0:00:03.13,Default,,0,0,0,,{\an2}speziell
+Dialogue: 0,0:00:03.13,0:00:03.19,Default,,0,0,0,,{\an2}spezielle
+Dialogue: 0,0:00:03.19,0:00:03.25,Default,,0,0,0,,{\an2}spezielle 
+Dialogue: 0,0:00:03.25,0:00:03.31,Default,,0,0,0,,{\an2}spezielle D
+Dialogue: 0,0:00:03.31,0:00:03.37,Default,,0,0,0,,{\an2}spezielle Do
+Dialogue: 0,0:00:03.37,0:00:03.43,Default,,0,0,0,,{\an2}spezielle Dom
+Dialogue: 0,0:00:03.43,0:00:03.49,Default,,0,0,0,,{\an2}spezielle Domä
+Dialogue: 0,0:00:03.49,0:00:03.54,Default,,0,0,0,,{\an2}spezielle Domän
+Dialogue: 0,0:00:03.54,0:00:03.60,Default,,0,0,0,,{\an2}spezielle Domäne
+Dialogue: 0,0:00:03.60,0:00:03.66,Default,,0,0,0,,{\an2}spezielle Domänen
+Dialogue: 0,0:00:03.66,0:00:03.72,Default,,0,0,0,,{\an2}spezielle Domänen 
+Dialogue: 0,0:00:03.72,0:00:03.78,Default,,0,0,0,,{\an2}spezielle Domänen i
+Dialogue: 0,0:00:03.78,0:00:03.84,Default,,0,0,0,,{\an2}spezielle Domänen in
+Dialogue: 0,0:00:03.84,0:00:03.90,Default,,0,0,0,,{\an2}spezielle Domänen in 
+Dialogue: 0,0:00:03.90,0:00:03.95,Default,,0,0,0,,{\an2}spezielle Domänen in d
+Dialogue: 0,0:00:03.95,0:00:04.01,Default,,0,0,0,,{\an2}spezielle Domänen in de
+Dialogue: 0,0:00:04.01,0:00:04.07,Default,,0,0,0,,{\an2}spezielle Domänen in der
+Dialogue: 0,0:00:04.07,0:00:04.13,Default,,0,0,0,,{\an2}spezielle Domänen in der 
+Dialogue: 0,0:00:04.13,0:00:04.19,Default,,0,0,0,,{\an2}spezielle Domänen in der d
+Dialogue: 0,0:00:04.19,0:00:04.25,Default,,0,0,0,,{\an2}spezielle Domänen in der di
+Dialogue: 0,0:00:04.25,0:00:04.31,Default,,0,0,0,,{\an2}spezielle Domänen in der dig
+Dialogue: 0,0:00:04.31,0:00:04.36,Default,,0,0,0,,{\an2}spezielle Domänen in der digi
+Dialogue: 0,0:00:04.36,0:00:04.42,Default,,0,0,0,,{\an2}spezielle Domänen in der digit
+Dialogue: 0,0:00:04.42,0:00:04.48,Default,,0,0,0,,{\an2}spezielle Domänen in der digita
+Dialogue: 0,0:00:04.48,0:00:04.54,Default,,0,0,0,,{\an2}spezielle Domänen in der digital
+Dialogue: 0,0:00:04.54,0:00:04.60,Default,,0,0,0,,{\an2}spezielle Domänen in der digitale
+Dialogue: 0,0:00:04.60,0:00:04.66,Default,,0,0,0,,{\an2}spezielle Domänen in der digitalen
+Dialogue: 0,0:00:04.66,0:00:04.72,Default,,0,0,0,,{\an2}spezielle Domänen in der digitalen\\N
+Dialogue: 0,0:00:04.72,0:00:04.77,Default,,0,0,0,,{\an2}spezielle Domänen in der digitalen\\NW
+Dialogue: 0,0:00:04.77,0:00:04.83,Default,,0,0,0,,{\an2}spezielle Domänen in der digitalen\\NWe
+Dialogue: 0,0:00:04.83,0:00:04.89,Default,,0,0,0,,{\an2}spezielle Domänen in der digitalen\\NWel
+Dialogue: 0,0:00:04.89,0:00:04.95,Default,,0,0,0,,{\an2}spezielle Domänen in der digitalen\\NWelt
+Dialogue: 0,0:00:04.95,0:00:05.02,Default,,0,0,0,,{\an2}s
+Dialogue: 0,0:00:05.02,0:00:05.09,Default,,0,0,0,,{\an2}sp
+Dialogue: 0,0:00:05.09,0:00:05.16,Default,,0,0,0,,{\an2}spi
+Dialogue: 0,0:00:05.16,0:00:05.23,Default,,0,0,0,,{\an2}spie
+Dialogue: 0,0:00:05.23,0:00:05.30,Default,,0,0,0,,{\an2}spiel
+Dialogue: 0,0:00:05.30,0:00:05.37,Default,,0,0,0,,{\an2}spiele
+Dialogue: 0,0:00:05.37,0:00:05.43,Default,,0,0,0,,{\an2}spielen
+Dialogue: 0,0:00:05.43,0:00:05.50,Default,,0,0,0,,{\an2}spielen?
+Dialogue: 0,0:00:05.50,0:00:05.57,Default,,0,0,0,,{\an2}spielen? 
+Dialogue: 0,0:00:05.57,0:00:05.64,Default,,0,0,0,,{\an2}spielen? H
+Dialogue: 0,0:00:05.64,0:00:05.71,Default,,0,0,0,,{\an2}spielen? He
+Dialogue: 0,0:00:05.71,0:00:05.78,Default,,0,0,0,,{\an2}spielen? Heu
+Dialogue: 0,0:00:05.78,0:00:05.85,Default,,0,0,0,,{\an2}spielen? Heut
+Dialogue: 0,0:00:05.85,0:00:05.92,Default,,0,0,0,,{\an2}spielen? Heute
+Dialogue: 0,0:00:05.92,0:00:05.99,Default,,0,0,0,,{\an2}spielen? Heute 
+Dialogue: 0,0:00:05.99,0:00:06.06,Default,,0,0,0,,{\an2}spielen? Heute t
+Dialogue: 0,0:00:06.06,0:00:06.13,Default,,0,0,0,,{\an2}spielen? Heute ta
+Dialogue: 0,0:00:06.13,0:00:06.20,Default,,0,0,0,,{\an2}spielen? Heute tau
+Dialogue: 0,0:00:06.20,0:00:06.27,Default,,0,0,0,,{\an2}spielen? Heute tauc
+Dialogue: 0,0:00:06.27,0:00:06.33,Default,,0,0,0,,{\an2}spielen? Heute tauch
+Dialogue: 0,0:00:06.33,0:00:06.40,Default,,0,0,0,,{\an2}spielen? Heute tauche
+Dialogue: 0,0:00:06.40,0:00:06.47,Default,,0,0,0,,{\an2}spielen? Heute tauchen
+Dialogue: 0,0:00:06.47,0:00:06.54,Default,,0,0,0,,{\an2}spielen? Heute tauchen 
+Dialogue: 0,0:00:06.54,0:00:06.61,Default,,0,0,0,,{\an2}spielen? Heute tauchen w
+Dialogue: 0,0:00:06.61,0:00:06.68,Default,,0,0,0,,{\an2}spielen? Heute tauchen wi
+Dialogue: 0,0:00:06.68,0:00:06.75,Default,,0,0,0,,{\an2}spielen? Heute tauchen wir
+Dialogue: 0,0:00:06.75,0:00:06.82,Default,,0,0,0,,{\an2}spielen? Heute tauchen wir 
+Dialogue: 0,0:00:06.82,0:00:06.89,Default,,0,0,0,,{\an2}spielen? Heute tauchen wir i
+Dialogue: 0,0:00:06.89,0:00:06.96,Default,,0,0,0,,{\an2}spielen? Heute tauchen wir in
+Dialogue: 0,0:00:06.96,0:00:07.03,Default,,0,0,0,,{\an2}spielen? Heute tauchen wir in 
+Dialogue: 0,0:00:07.03,0:00:07.10,Default,,0,0,0,,{\an2}spielen? Heute tauchen wir in d
+Dialogue: 0,0:00:07.10,0:00:07.17,Default,,0,0,0,,{\an2}spielen? Heute tauchen wir in di
+Dialogue: 0,0:00:07.17,0:00:07.24,Default,,0,0,0,,{\an2}spielen? Heute tauchen wir in die
+Dialogue: 0,0:00:07.24,0:00:07.33,Default,,0,0,0,,{\an2}f
+Dialogue: 0,0:00:07.33,0:00:07.42,Default,,0,0,0,,{\an2}fa
+Dialogue: 0,0:00:07.42,0:00:07.51,Default,,0,0,0,,{\an2}fas
+Dialogue: 0,0:00:07.51,0:00:07.60,Default,,0,0,0,,{\an2}fasz
+Dialogue: 0,0:00:07.60,0:00:07.69,Default,,0,0,0,,{\an2}faszi
+Dialogue: 0,0:00:07.69,0:00:07.78,Default,,0,0,0,,{\an2}faszin
+Dialogue: 0,0:00:07.78,0:00:07.87,Default,,0,0,0,,{\an2}faszini
+Dialogue: 0,0:00:07.87,0:00:07.96,Default,,0,0,0,,{\an2}faszinie
+Dialogue: 0,0:00:07.96,0:00:08.05,Default,,0,0,0,,{\an2}faszinier
+Dialogue: 0,0:00:08.05,0:00:08.14,Default,,0,0,0,,{\an2}fasziniere
+Dialogue: 0,0:00:08.14,0:00:08.24,Default,,0,0,0,,{\an2}faszinieren
+Dialogue: 0,0:00:08.24,0:00:08.33,Default,,0,0,0,,{\an2}faszinierend
+Dialogue: 0,0:00:08.33,0:00:08.42,Default,,0,0,0,,{\an2}faszinierende
+Dialogue: 0,0:00:08.42,0:00:08.51,Default,,0,0,0,,{\an2}faszinierende 
+Dialogue: 0,0:00:08.51,0:00:08.60,Default,,0,0,0,,{\an2}faszinierende W
+Dialogue: 0,0:00:08.60,0:00:08.69,Default,,0,0,0,,{\an2}faszinierende We
+Dialogue: 0,0:00:08.69,0:00:08.78,Default,,0,0,0,,{\an2}faszinierende Wel
+Dialogue: 0,0:00:08.78,0:00:08.87,Default,,0,0,0,,{\an2}faszinierende Welt
+Dialogue: 0,0:00:08.87,0:00:08.96,Default,,0,0,0,,{\an2}faszinierende Welt 
+Dialogue: 0,0:00:08.96,0:00:09.05,Default,,0,0,0,,{\an2}faszinierende Welt d
+Dialogue: 0,0:00:09.05,0:00:09.14,Default,,0,0,0,,{\an2}faszinierende Welt de
+Dialogue: 0,0:00:09.14,0:00:09.24,Default,,0,0,0,,{\an2}faszinierende Welt der
+Dialogue: 0,0:00:09.24,0:00:09.31,Default,,0,0,0,,{\an2}D
+Dialogue: 0,0:00:09.31,0:00:09.38,Default,,0,0,0,,{\an2}Do
+Dialogue: 0,0:00:09.38,0:00:09.45,Default,,0,0,0,,{\an2}Dok
+Dialogue: 0,0:00:09.45,0:00:09.52,Default,,0,0,0,,{\an2}Doku
+Dialogue: 0,0:00:09.52,0:00:09.59,Default,,0,0,0,,{\an2}Dokum
+Dialogue: 0,0:00:09.59,0:00:09.66,Default,,0,0,0,,{\an2}Dokume
+Dialogue: 0,0:00:09.66,0:00:09.74,Default,,0,0,0,,{\an2}Dokumen
+Dialogue: 0,0:00:09.74,0:00:09.81,Default,,0,0,0,,{\an2}Dokument
+Dialogue: 0,0:00:09.81,0:00:09.88,Default,,0,0,0,,{\an2}Dokumenta
+Dialogue: 0,0:00:09.88,0:00:09.95,Default,,0,0,0,,{\an2}Dokumentat
+Dialogue: 0,0:00:09.95,0:00:10.02,Default,,0,0,0,,{\an2}Dokumentati
+Dialogue: 0,0:00:10.02,0:00:10.09,Default,,0,0,0,,{\an2}Dokumentatio
+Dialogue: 0,0:00:10.09,0:00:10.16,Default,,0,0,0,,{\an2}Dokumentation
+Dialogue: 0,0:00:10.16,0:00:10.24,Default,,0,0,0,,{\an2}Dokumentations
+Dialogue: 0,0:00:10.24,0:00:10.31,Default,,0,0,0,,{\an2}Dokumentationsb
+Dialogue: 0,0:00:10.31,0:00:10.38,Default,,0,0,0,,{\an2}Dokumentationsbe
+Dialogue: 0,0:00:10.38,0:00:10.45,Default,,0,0,0,,{\an2}Dokumentationsbei
+Dialogue: 0,0:00:10.45,0:00:10.52,Default,,0,0,0,,{\an2}Dokumentationsbeis
+Dialogue: 0,0:00:10.52,0:00:10.59,Default,,0,0,0,,{\an2}Dokumentationsbeisp
+Dialogue: 0,0:00:10.59,0:00:10.66,Default,,0,0,0,,{\an2}Dokumentationsbeispi
+Dialogue: 0,0:00:10.66,0:00:10.74,Default,,0,0,0,,{\an2}Dokumentationsbeispie
+Dialogue: 0,0:00:10.74,0:00:10.81,Default,,0,0,0,,{\an2}Dokumentationsbeispiel
+Dialogue: 0,0:00:10.81,0:00:10.88,Default,,0,0,0,,{\an2}Dokumentationsbeispiele
+Dialogue: 0,0:00:10.88,0:00:10.95,Default,,0,0,0,,{\an2}Dokumentationsbeispiele 
+Dialogue: 0,0:00:10.95,0:00:11.02,Default,,0,0,0,,{\an2}Dokumentationsbeispiele e
+Dialogue: 0,0:00:11.02,0:00:11.09,Default,,0,0,0,,{\an2}Dokumentationsbeispiele ei
+Dialogue: 0,0:00:11.09,0:00:11.16,Default,,0,0,0,,{\an2}Dokumentationsbeispiele ein
+Dialogue: 0,0:00:11.16,0:00:11.24,Default,,0,0,0,,{\an2}Dokumentationsbeispiele ein!
+Dialogue: 0,0:00:11.24,0:00:11.29,Default,,0,0,0,,{\an2}D
+Dialogue: 0,0:00:11.29,0:00:11.34,Default,,0,0,0,,{\an2}Do
+Dialogue: 0,0:00:11.34,0:00:11.39,Default,,0,0,0,,{\an2}Dok
+Dialogue: 0,0:00:11.39,0:00:11.43,Default,,0,0,0,,{\an2}Doku
+Dialogue: 0,0:00:11.43,0:00:11.49,Default,,0,0,0,,{\an2}Dokum
+Dialogue: 0,0:00:11.49,0:00:11.54,Default,,0,0,0,,{\an2}Dokume
+Dialogue: 0,0:00:11.54,0:00:11.59,Default,,0,0,0,,{\an2}Dokumen
+Dialogue: 0,0:00:11.59,0:00:11.64,Default,,0,0,0,,{\an2}Dokument
+Dialogue: 0,0:00:11.64,0:00:11.68,Default,,0,0,0,,{\an2}Dokumenta
+Dialogue: 0,0:00:11.68,0:00:11.74,Default,,0,0,0,,{\an2}Dokumentat
+Dialogue: 0,0:00:11.74,0:00:11.79,Default,,0,0,0,,{\an2}Dokumentati
+Dialogue: 0,0:00:11.79,0:00:11.84,Default,,0,0,0,,{\an2}Dokumentatio
+Dialogue: 0,0:00:11.84,0:00:11.89,Default,,0,0,0,,{\an2}Dokumentation
+Dialogue: 0,0:00:11.89,0:00:11.93,Default,,0,0,0,,{\an2}Dokumentations
+Dialogue: 0,0:00:11.93,0:00:11.99,Default,,0,0,0,,{\an2}Dokumentationsb
+Dialogue: 0,0:00:11.99,0:00:12.04,Default,,0,0,0,,{\an2}Dokumentationsbe
+Dialogue: 0,0:00:12.04,0:00:12.09,Default,,0,0,0,,{\an2}Dokumentationsbei
+Dialogue: 0,0:00:12.09,0:00:12.14,Default,,0,0,0,,{\an2}Dokumentationsbeis
+Dialogue: 0,0:00:12.14,0:00:12.18,Default,,0,0,0,,{\an2}Dokumentationsbeisp
+Dialogue: 0,0:00:12.18,0:00:12.24,Default,,0,0,0,,{\an2}Dokumentationsbeispi
+Dialogue: 0,0:00:12.24,0:00:12.29,Default,,0,0,0,,{\an2}Dokumentationsbeispie
+Dialogue: 0,0:00:12.29,0:00:12.34,Default,,0,0,0,,{\an2}Dokumentationsbeispiel
+Dialogue: 0,0:00:12.34,0:00:12.39,Default,,0,0,0,,{\an2}Dokumentationsbeispiele
+Dialogue: 0,0:00:12.39,0:00:12.43,Default,,0,0,0,,{\an2}Dokumentationsbeispiele 
+Dialogue: 0,0:00:12.43,0:00:12.49,Default,,0,0,0,,{\an2}Dokumentationsbeispiele s
+Dialogue: 0,0:00:12.49,0:00:12.54,Default,,0,0,0,,{\an2}Dokumentationsbeispiele si
+Dialogue: 0,0:00:12.54,0:00:12.59,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sin
+Dialogue: 0,0:00:12.59,0:00:12.64,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind
+Dialogue: 0,0:00:12.64,0:00:12.68,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind 
+Dialogue: 0,0:00:12.68,0:00:12.74,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind e
+Dialogue: 0,0:00:12.74,0:00:12.79,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind es
+Dialogue: 0,0:00:12.79,0:00:12.84,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind ess
+Dialogue: 0,0:00:12.84,0:00:12.89,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind esse
+Dialogue: 0,0:00:12.89,0:00:12.93,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind essen
+Dialogue: 0,0:00:12.93,0:00:12.99,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind\\Nessent
+Dialogue: 0,0:00:12.99,0:00:13.04,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind\\Nessenti
+Dialogue: 0,0:00:13.04,0:00:13.09,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind\\Nessentie
+Dialogue: 0,0:00:13.09,0:00:13.14,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind\\Nessentiel
+Dialogue: 0,0:00:13.14,0:00:13.18,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind\\Nessentiell
+Dialogue: 0,0:00:13.18,0:00:13.24,Default,,0,0,0,,{\an2}Dokumentationsbeispiele sind\\Nessentielle
+Dialogue: 0,0:00:13.24,0:00:13.29,Default,,0,0,0,,{\an2}W
+Dialogue: 0,0:00:13.29,0:00:13.34,Default,,0,0,0,,{\an2}We
+Dialogue: 0,0:00:13.34,0:00:13.39,Default,,0,0,0,,{\an2}Wer
+Dialogue: 0,0:00:13.39,0:00:13.43,Default,,0,0,0,,{\an2}Werk
+Dialogue: 0,0:00:13.43,0:00:13.49,Default,,0,0,0,,{\an2}Werkz
+Dialogue: 0,0:00:13.49,0:00:13.54,Default,,0,0,0,,{\an2}Werkze
+Dialogue: 0,0:00:13.54,0:00:13.59,Default,,0,0,0,,{\an2}Werkzeu
+Dialogue: 0,0:00:13.59,0:00:13.64,Default,,0,0,0,,{\an2}Werkzeug
+Dialogue: 0,0:00:13.64,0:00:13.68,Default,,0,0,0,,{\an2}Werkzeuge
+Dialogue: 0,0:00:13.68,0:00:13.74,Default,,0,0,0,,{\an2}Werkzeuge 
+Dialogue: 0,0:00:13.74,0:00:13.79,Default,,0,0,0,,{\an2}Werkzeuge i
+Dialogue: 0,0:00:13.79,0:00:13.84,Default,,0,0,0,,{\an2}Werkzeuge in
+Dialogue: 0,0:00:13.84,0:00:13.89,Default,,0,0,0,,{\an2}Werkzeuge in 
+Dialogue: 0,0:00:13.89,0:00:13.93,Default,,0,0,0,,{\an2}Werkzeuge in d
+Dialogue: 0,0:00:13.93,0:00:13.99,Default,,0,0,0,,{\an2}Werkzeuge in de
+Dialogue: 0,0:00:13.99,0:00:14.04,Default,,0,0,0,,{\an2}Werkzeuge in der
+Dialogue: 0,0:00:14.04,0:00:14.09,Default,,0,0,0,,{\an2}Werkzeuge in der 
+Dialogue: 0,0:00:14.09,0:00:14.14,Default,,0,0,0,,{\an2}Werkzeuge in der S
+Dialogue: 0,0:00:14.14,0:00:14.18,Default,,0,0,0,,{\an2}Werkzeuge in der So
+Dialogue: 0,0:00:14.18,0:00:14.24,Default,,0,0,0,,{\an2}Werkzeuge in der Sof
+Dialogue: 0,0:00:14.24,0:00:14.29,Default,,0,0,0,,{\an2}Werkzeuge in der Soft
+Dialogue: 0,0:00:14.29,0:00:14.34,Default,,0,0,0,,{\an2}Werkzeuge in der Softw
+Dialogue: 0,0:00:14.34,0:00:14.39,Default,,0,0,0,,{\an2}Werkzeuge in der Softwa
+Dialogue: 0,0:00:14.39,0:00:14.43,Default,,0,0,0,,{\an2}Werkzeuge in der Softwar
+Dialogue: 0,0:00:14.43,0:00:14.49,Default,,0,0,0,,{\an2}Werkzeuge in der Software
+Dialogue: 0,0:00:14.49,0:00:14.54,Default,,0,0,0,,{\an2}Werkzeuge in der Softwaree
+Dialogue: 0,0:00:14.54,0:00:14.59,Default,,0,0,0,,{\an2}Werkzeuge in der Softwareen
+Dialogue: 0,0:00:14.59,0:00:14.64,Default,,0,0,0,,{\an2}Werkzeuge in der Softwareent
+Dialogue: 0,0:00:14.64,0:00:14.68,Default,,0,0,0,,{\an2}Werkzeuge in der Softwareentw
+Dialogue: 0,0:00:14.68,0:00:14.74,Default,,0,0,0,,{\an2}Werkzeuge in der Softwareentwi
+Dialogue: 0,0:00:14.74,0:00:14.79,Default,,0,0,0,,{\an2}Werkzeuge in der Softwareentwic
+Dialogue: 0,0:00:14.79,0:00:14.84,Default,,0,0,0,,{\an2}Werkzeuge in der Softwareentwick
+Dialogue: 0,0:00:14.84,0:00:14.89,Default,,0,0,0,,{\an2}Werkzeuge in der Softwareentwickl
+Dialogue: 0,0:00:14.89,0:00:14.93,Default,,0,0,0,,{\an2}Werkzeuge in der Softwareentwicklu
+Dialogue: 0,0:00:14.93,0:00:14.99,Default,,0,0,0,,{\an2}Werkzeuge in der\\NSoftwareentwicklun
+Dialogue: 0,0:00:14.99,0:00:15.04,Default,,0,0,0,,{\an2}Werkzeuge in der\\NSoftwareentwicklung
+Dialogue: 0,0:00:15.04,0:00:15.09,Default,,0,0,0,,{\an2}Werkzeuge in der\\NSoftwareentwicklung 
+Dialogue: 0,0:00:15.09,0:00:15.14,Default,,0,0,0,,{\an2}Werkzeuge in der\\NSoftwareentwicklung u
+Dialogue: 0,0:00:15.14,0:00:15.18,Default,,0,0,0,,{\an2}Werkzeuge in der\\NSoftwareentwicklung un
+Dialogue: 0,0:00:15.18,0:00:15.24,Default,,0,0,0,,{\an2}Werkzeuge in der\\NSoftwareentwicklung und
+Dialogue: 0,0:00:15.24,0:00:15.29,Default,,0,0,0,,{\an2}I
+Dialogue: 0,0:00:15.29,0:00:15.35,Default,,0,0,0,,{\an2}IT
+Dialogue: 0,0:00:15.35,0:00:15.40,Default,,0,0,0,,{\an2}IT.
+Dialogue: 0,0:00:15.40,0:00:15.46,Default,,0,0,0,,{\an2}IT. 
+Dialogue: 0,0:00:15.46,0:00:15.51,Default,,0,0,0,,{\an2}IT. S
+Dialogue: 0,0:00:15.51,0:00:15.57,Default,,0,0,0,,{\an2}IT. Si
+Dialogue: 0,0:00:15.57,0:00:15.63,Default,,0,0,0,,{\an2}IT. Sie
+Dialogue: 0,0:00:15.63,0:00:15.68,Default,,0,0,0,,{\an2}IT. Sie 
+Dialogue: 0,0:00:15.68,0:00:15.74,Default,,0,0,0,,{\an2}IT. Sie d
+Dialogue: 0,0:00:15.74,0:00:15.79,Default,,0,0,0,,{\an2}IT. Sie di
+Dialogue: 0,0:00:15.79,0:00:15.85,Default,,0,0,0,,{\an2}IT. Sie die
+Dialogue: 0,0:00:15.85,0:00:15.90,Default,,0,0,0,,{\an2}IT. Sie dien
+Dialogue: 0,0:00:15.90,0:00:15.96,Default,,0,0,0,,{\an2}IT. Sie diene
+Dialogue: 0,0:00:15.96,0:00:16.02,Default,,0,0,0,,{\an2}IT. Sie dienen
+Dialogue: 0,0:00:16.02,0:00:16.07,Default,,0,0,0,,{\an2}IT. Sie dienen 
+Dialogue: 0,0:00:16.07,0:00:16.13,Default,,0,0,0,,{\an2}IT. Sie dienen d
+Dialogue: 0,0:00:16.13,0:00:16.18,Default,,0,0,0,,{\an2}IT. Sie dienen da
+Dialogue: 0,0:00:16.18,0:00:16.24,Default,,0,0,0,,{\an2}IT. Sie dienen daz
+Dialogue: 0,0:00:16.24,0:00:16.29,Default,,0,0,0,,{\an2}IT. Sie dienen dazu
+Dialogue: 0,0:00:16.29,0:00:16.35,Default,,0,0,0,,{\an2}IT. Sie dienen dazu,
+Dialogue: 0,0:00:16.35,0:00:16.41,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, 
+Dialogue: 0,0:00:16.41,0:00:16.46,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, K
+Dialogue: 0,0:00:16.46,0:00:16.52,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Ko
+Dialogue: 0,0:00:16.52,0:00:16.57,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Kon
+Dialogue: 0,0:00:16.57,0:00:16.63,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konz
+Dialogue: 0,0:00:16.63,0:00:16.68,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konze
+Dialogue: 0,0:00:16.68,0:00:16.74,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzep
+Dialogue: 0,0:00:16.74,0:00:16.80,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzept
+Dialogue: 0,0:00:16.80,0:00:16.85,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte
+Dialogue: 0,0:00:16.85,0:00:16.91,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte,
+Dialogue: 0,0:00:16.91,0:00:16.96,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte, 
+Dialogue: 0,0:00:16.96,0:00:17.02,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte, F
+Dialogue: 0,0:00:17.02,0:00:17.07,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte, Fu
+Dialogue: 0,0:00:17.07,0:00:17.13,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte, Fun
+Dialogue: 0,0:00:17.13,0:00:17.19,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte,\\NFunk
+Dialogue: 0,0:00:17.19,0:00:17.24,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte,\\NFunkt
+Dialogue: 0,0:00:17.24,0:00:17.30,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte,\\NFunkti
+Dialogue: 0,0:00:17.30,0:00:17.35,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte,\\NFunktio
+Dialogue: 0,0:00:17.35,0:00:17.41,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte,\\NFunktion
+Dialogue: 0,0:00:17.41,0:00:17.46,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte,\\NFunktione
+Dialogue: 0,0:00:17.46,0:00:17.52,Default,,0,0,0,,{\an2}IT. Sie dienen dazu, Konzepte,\\NFunktionen
+Dialogue: 0,0:00:17.52,0:00:17.57,Default,,0,0,0,,{\an2}u
+Dialogue: 0,0:00:17.57,0:00:17.62,Default,,0,0,0,,{\an2}un
+Dialogue: 0,0:00:17.62,0:00:17.67,Default,,0,0,0,,{\an2}und
+Dialogue: 0,0:00:17.67,0:00:17.72,Default,,0,0,0,,{\an2}und 
+Dialogue: 0,0:00:17.72,0:00:17.77,Default,,0,0,0,,{\an2}und A
+Dialogue: 0,0:00:17.77,0:00:17.82,Default,,0,0,0,,{\an2}und An
+Dialogue: 0,0:00:17.82,0:00:17.87,Default,,0,0,0,,{\an2}und Anw
+Dialogue: 0,0:00:17.87,0:00:17.92,Default,,0,0,0,,{\an2}und Anwe
+Dialogue: 0,0:00:17.92,0:00:17.97,Default,,0,0,0,,{\an2}und Anwen
+Dialogue: 0,0:00:17.97,0:00:18.02,Default,,0,0,0,,{\an2}und Anwend
+Dialogue: 0,0:00:18.02,0:00:18.07,Default,,0,0,0,,{\an2}und Anwendu
+Dialogue: 0,0:00:18.07,0:00:18.12,Default,,0,0,0,,{\an2}und Anwendun
+Dialogue: 0,0:00:18.12,0:00:18.17,Default,,0,0,0,,{\an2}und Anwendung
+Dialogue: 0,0:00:18.17,0:00:18.22,Default,,0,0,0,,{\an2}und Anwendungs
+Dialogue: 0,0:00:18.22,0:00:18.27,Default,,0,0,0,,{\an2}und Anwendungsf
+Dialogue: 0,0:00:18.27,0:00:18.32,Default,,0,0,0,,{\an2}und Anwendungsfä
+Dialogue: 0,0:00:18.32,0:00:18.37,Default,,0,0,0,,{\an2}und Anwendungsfäl
+Dialogue: 0,0:00:18.37,0:00:18.42,Default,,0,0,0,,{\an2}und Anwendungsfäll
+Dialogue: 0,0:00:18.42,0:00:18.47,Default,,0,0,0,,{\an2}und Anwendungsfälle
+Dialogue: 0,0:00:18.47,0:00:18.52,Default,,0,0,0,,{\an2}und Anwendungsfälle 
+Dialogue: 0,0:00:18.52,0:00:18.57,Default,,0,0,0,,{\an2}und Anwendungsfälle z
+Dialogue: 0,0:00:18.57,0:00:18.62,Default,,0,0,0,,{\an2}und Anwendungsfälle zu
+Dialogue: 0,0:00:18.62,0:00:18.67,Default,,0,0,0,,{\an2}und Anwendungsfälle zu 
+Dialogue: 0,0:00:18.67,0:00:18.72,Default,,0,0,0,,{\an2}und Anwendungsfälle zu v
+Dialogue: 0,0:00:18.72,0:00:18.77,Default,,0,0,0,,{\an2}und Anwendungsfälle zu ve
+Dialogue: 0,0:00:18.77,0:00:18.82,Default,,0,0,0,,{\an2}und Anwendungsfälle zu ver
+Dialogue: 0,0:00:18.82,0:00:18.87,Default,,0,0,0,,{\an2}und Anwendungsfälle zu vera
+Dialogue: 0,0:00:18.87,0:00:18.92,Default,,0,0,0,,{\an2}und Anwendungsfälle zu veran
+Dialogue: 0,0:00:18.92,0:00:18.97,Default,,0,0,0,,{\an2}und Anwendungsfälle zu verans
+Dialogue: 0,0:00:18.97,0:00:19.02,Default,,0,0,0,,{\an2}und Anwendungsfälle zu veransc
+Dialogue: 0,0:00:19.02,0:00:19.07,Default,,0,0,0,,{\an2}und Anwendungsfälle zu veransch
+Dialogue: 0,0:00:19.07,0:00:19.12,Default,,0,0,0,,{\an2}und Anwendungsfälle zu veranscha
+Dialogue: 0,0:00:19.12,0:00:19.17,Default,,0,0,0,,{\an2}und Anwendungsfälle zu veranschau
+Dialogue: 0,0:00:19.17,0:00:19.22,Default,,0,0,0,,{\an2}und Anwendungsfälle zu veranschaul
+Dialogue: 0,0:00:19.22,0:00:19.27,Default,,0,0,0,,{\an2}und Anwendungsfälle zu\\Nveranschauli
+Dialogue: 0,0:00:19.27,0:00:19.32,Default,,0,0,0,,{\an2}und Anwendungsfälle zu\\Nveranschaulic
+Dialogue: 0,0:00:19.32,0:00:19.37,Default,,0,0,0,,{\an2}und Anwendungsfälle zu\\Nveranschaulich
+Dialogue: 0,0:00:19.37,0:00:19.42,Default,,0,0,0,,{\an2}und Anwendungsfälle zu\\Nveranschauliche
+Dialogue: 0,0:00:19.42,0:00:19.47,Default,,0,0,0,,{\an2}und Anwendungsfälle zu\\Nveranschaulichen
+Dialogue: 0,0:00:19.47,0:00:19.52,Default,,0,0,0,,{\an2}und Anwendungsfälle zu\\Nveranschaulichen.
+Dialogue: 0,0:00:19.52,0:00:19.58,Default,,0,0,0,,{\an2}O
+Dialogue: 0,0:00:19.58,0:00:19.63,Default,,0,0,0,,{\an2}Of
+Dialogue: 0,0:00:19.63,0:00:19.69,Default,,0,0,0,,{\an2}Oft
+Dialogue: 0,0:00:19.69,0:00:19.75,Default,,0,0,0,,{\an2}Oft 
+Dialogue: 0,0:00:19.75,0:00:19.81,Default,,0,0,0,,{\an2}Oft w
+Dialogue: 0,0:00:19.81,0:00:19.86,Default,,0,0,0,,{\an2}Oft we
+Dialogue: 0,0:00:19.86,0:00:19.92,Default,,0,0,0,,{\an2}Oft wer
+Dialogue: 0,0:00:19.92,0:00:19.98,Default,,0,0,0,,{\an2}Oft werd
+Dialogue: 0,0:00:19.98,0:00:20.03,Default,,0,0,0,,{\an2}Oft werde
+Dialogue: 0,0:00:20.03,0:00:20.09,Default,,0,0,0,,{\an2}Oft werden
+Dialogue: 0,0:00:20.09,0:00:20.15,Default,,0,0,0,,{\an2}Oft werden 
+Dialogue: 0,0:00:20.15,0:00:20.21,Default,,0,0,0,,{\an2}Oft werden s
+Dialogue: 0,0:00:20.21,0:00:20.26,Default,,0,0,0,,{\an2}Oft werden si
+Dialogue: 0,0:00:20.26,0:00:20.32,Default,,0,0,0,,{\an2}Oft werden sie
+Dialogue: 0,0:00:20.32,0:00:20.38,Default,,0,0,0,,{\an2}Oft werden sie 
+Dialogue: 0,0:00:20.38,0:00:20.43,Default,,0,0,0,,{\an2}Oft werden sie i
+Dialogue: 0,0:00:20.43,0:00:20.49,Default,,0,0,0,,{\an2}Oft werden sie in
+Dialogue: 0,0:00:20.49,0:00:20.55,Default,,0,0,0,,{\an2}Oft werden sie in 
+Dialogue: 0,0:00:20.55,0:00:20.60,Default,,0,0,0,,{\an2}Oft werden sie in H
+Dialogue: 0,0:00:20.60,0:00:20.66,Default,,0,0,0,,{\an2}Oft werden sie in Ha
+Dialogue: 0,0:00:20.66,0:00:20.72,Default,,0,0,0,,{\an2}Oft werden sie in Han
+Dialogue: 0,0:00:20.72,0:00:20.78,Default,,0,0,0,,{\an2}Oft werden sie in Hand
+Dialogue: 0,0:00:20.78,0:00:20.83,Default,,0,0,0,,{\an2}Oft werden sie in Handb
+Dialogue: 0,0:00:20.83,0:00:20.89,Default,,0,0,0,,{\an2}Oft werden sie in Handbü
+Dialogue: 0,0:00:20.89,0:00:20.95,Default,,0,0,0,,{\an2}Oft werden sie in Handbüc
+Dialogue: 0,0:00:20.95,0:00:21.00,Default,,0,0,0,,{\an2}Oft werden sie in Handbüch
+Dialogue: 0,0:00:21.00,0:00:21.06,Default,,0,0,0,,{\an2}Oft werden sie in Handbüche
+Dialogue: 0,0:00:21.06,0:00:21.12,Default,,0,0,0,,{\an2}Oft werden sie in Handbücher
+Dialogue: 0,0:00:21.12,0:00:21.18,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern
+Dialogue: 0,0:00:21.18,0:00:21.23,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern,
+Dialogue: 0,0:00:21.23,0:00:21.29,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern, 
+Dialogue: 0,0:00:21.29,0:00:21.35,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern, T
+Dialogue: 0,0:00:21.35,0:00:21.40,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern, Tu
+Dialogue: 0,0:00:21.40,0:00:21.46,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern, Tut
+Dialogue: 0,0:00:21.46,0:00:21.52,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern,\\NTuto
+Dialogue: 0,0:00:21.52,0:00:21.58,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern,\\NTutor
+Dialogue: 0,0:00:21.58,0:00:21.63,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern,\\NTutori
+Dialogue: 0,0:00:21.63,0:00:21.69,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern,\\NTutoria
+Dialogue: 0,0:00:21.69,0:00:21.75,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern,\\NTutorial
+Dialogue: 0,0:00:21.75,0:00:21.80,Default,,0,0,0,,{\an2}Oft werden sie in Handbüchern,\\NTutorials
+Dialogue: 0,0:00:21.80,0:00:21.86,Default,,0,0,0,,{\an2}o
+Dialogue: 0,0:00:21.86,0:00:21.92,Default,,0,0,0,,{\an2}od
+Dialogue: 0,0:00:21.92,0:00:21.97,Default,,0,0,0,,{\an2}ode
+Dialogue: 0,0:00:21.97,0:00:22.03,Default,,0,0,0,,{\an2}oder
+Dialogue: 0,0:00:22.03,0:00:22.08,Default,,0,0,0,,{\an2}oder 
+Dialogue: 0,0:00:22.08,0:00:22.14,Default,,0,0,0,,{\an2}oder S
+Dialogue: 0,0:00:22.14,0:00:22.19,Default,,0,0,0,,{\an2}oder Sc
+Dialogue: 0,0:00:22.19,0:00:22.25,Default,,0,0,0,,{\an2}oder Sch
+Dialogue: 0,0:00:22.25,0:00:22.31,Default,,0,0,0,,{\an2}oder Schu
+Dialogue: 0,0:00:22.31,0:00:22.36,Default,,0,0,0,,{\an2}oder Schul
+Dialogue: 0,0:00:22.36,0:00:22.42,Default,,0,0,0,,{\an2}oder Schulu
+Dialogue: 0,0:00:22.42,0:00:22.47,Default,,0,0,0,,{\an2}oder Schulun
+Dialogue: 0,0:00:22.47,0:00:22.53,Default,,0,0,0,,{\an2}oder Schulung
+Dialogue: 0,0:00:22.53,0:00:22.58,Default,,0,0,0,,{\an2}oder Schulunge
+Dialogue: 0,0:00:22.58,0:00:22.64,Default,,0,0,0,,{\an2}oder Schulungen
+Dialogue: 0,0:00:22.64,0:00:22.70,Default,,0,0,0,,{\an2}oder Schulungen 
+Dialogue: 0,0:00:22.70,0:00:22.75,Default,,0,0,0,,{\an2}oder Schulungen v
+Dialogue: 0,0:00:22.75,0:00:22.81,Default,,0,0,0,,{\an2}oder Schulungen ve
+Dialogue: 0,0:00:22.81,0:00:22.86,Default,,0,0,0,,{\an2}oder Schulungen ver
+Dialogue: 0,0:00:22.86,0:00:22.92,Default,,0,0,0,,{\an2}oder Schulungen verw
+Dialogue: 0,0:00:22.92,0:00:22.97,Default,,0,0,0,,{\an2}oder Schulungen verwe
+Dialogue: 0,0:00:22.97,0:00:23.03,Default,,0,0,0,,{\an2}oder Schulungen verwen
+Dialogue: 0,0:00:23.03,0:00:23.09,Default,,0,0,0,,{\an2}oder Schulungen verwend
+Dialogue: 0,0:00:23.09,0:00:23.14,Default,,0,0,0,,{\an2}oder Schulungen verwende
+Dialogue: 0,0:00:23.14,0:00:23.20,Default,,0,0,0,,{\an2}oder Schulungen verwendet
+Dialogue: 0,0:00:23.20,0:00:23.25,Default,,0,0,0,,{\an2}oder Schulungen verwendet,
+Dialogue: 0,0:00:23.25,0:00:23.31,Default,,0,0,0,,{\an2}oder Schulungen verwendet, 
+Dialogue: 0,0:00:23.31,0:00:23.36,Default,,0,0,0,,{\an2}oder Schulungen verwendet, u
+Dialogue: 0,0:00:23.36,0:00:23.42,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um
+Dialogue: 0,0:00:23.42,0:00:23.48,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um 
+Dialogue: 0,0:00:23.48,0:00:23.53,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um d
+Dialogue: 0,0:00:23.53,0:00:23.59,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um de
+Dialogue: 0,0:00:23.59,0:00:23.64,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den
+Dialogue: 0,0:00:23.64,0:00:23.70,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den 
+Dialogue: 0,0:00:23.70,0:00:23.75,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den\\NN
+Dialogue: 0,0:00:23.75,0:00:23.81,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den\\NNu
+Dialogue: 0,0:00:23.81,0:00:23.87,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den\\NNut
+Dialogue: 0,0:00:23.87,0:00:23.92,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den\\NNutz
+Dialogue: 0,0:00:23.92,0:00:23.98,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den\\NNutze
+Dialogue: 0,0:00:23.98,0:00:24.03,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den\\NNutzer
+Dialogue: 0,0:00:24.03,0:00:24.09,Default,,0,0,0,,{\an2}oder Schulungen verwendet, um den\\NNutzern
+Dialogue: 0,0:00:24.09,0:00:24.14,Default,,0,0,0,,{\an2}e
+Dialogue: 0,0:00:24.14,0:00:24.19,Default,,0,0,0,,{\an2}ei
+Dialogue: 0,0:00:24.19,0:00:24.24,Default,,0,0,0,,{\an2}ein
+Dialogue: 0,0:00:24.24,0:00:24.29,Default,,0,0,0,,{\an2}ein 
+Dialogue: 0,0:00:24.29,0:00:24.35,Default,,0,0,0,,{\an2}ein b
+Dialogue: 0,0:00:24.35,0:00:24.40,Default,,0,0,0,,{\an2}ein be
+Dialogue: 0,0:00:24.40,0:00:24.45,Default,,0,0,0,,{\an2}ein bes
+Dialogue: 0,0:00:24.45,0:00:24.50,Default,,0,0,0,,{\an2}ein bess
+Dialogue: 0,0:00:24.50,0:00:24.55,Default,,0,0,0,,{\an2}ein besse
+Dialogue: 0,0:00:24.55,0:00:24.60,Default,,0,0,0,,{\an2}ein besser
+Dialogue: 0,0:00:24.60,0:00:24.65,Default,,0,0,0,,{\an2}ein bessere
+Dialogue: 0,0:00:24.65,0:00:24.70,Default,,0,0,0,,{\an2}ein besseres
+Dialogue: 0,0:00:24.70,0:00:24.76,Default,,0,0,0,,{\an2}ein besseres 
+Dialogue: 0,0:00:24.76,0:00:24.81,Default,,0,0,0,,{\an2}ein besseres V
+Dialogue: 0,0:00:24.81,0:00:24.86,Default,,0,0,0,,{\an2}ein besseres Ve
+Dialogue: 0,0:00:24.86,0:00:24.91,Default,,0,0,0,,{\an2}ein besseres Ver
+Dialogue: 0,0:00:24.91,0:00:24.96,Default,,0,0,0,,{\an2}ein besseres Vers
+Dialogue: 0,0:00:24.96,0:00:25.01,Default,,0,0,0,,{\an2}ein besseres Verst
+Dialogue: 0,0:00:25.01,0:00:25.06,Default,,0,0,0,,{\an2}ein besseres Verstä
+Dialogue: 0,0:00:25.06,0:00:25.11,Default,,0,0,0,,{\an2}ein besseres Verstän
+Dialogue: 0,0:00:25.11,0:00:25.17,Default,,0,0,0,,{\an2}ein besseres Verständ
+Dialogue: 0,0:00:25.17,0:00:25.22,Default,,0,0,0,,{\an2}ein besseres Verständn
+Dialogue: 0,0:00:25.22,0:00:25.27,Default,,0,0,0,,{\an2}ein besseres Verständni
+Dialogue: 0,0:00:25.27,0:00:25.32,Default,,0,0,0,,{\an2}ein besseres Verständnis
+Dialogue: 0,0:00:25.32,0:00:25.37,Default,,0,0,0,,{\an2}ein besseres Verständnis 
+Dialogue: 0,0:00:25.37,0:00:25.42,Default,,0,0,0,,{\an2}ein besseres Verständnis z
+Dialogue: 0,0:00:25.42,0:00:25.47,Default,,0,0,0,,{\an2}ein besseres Verständnis zu
+Dialogue: 0,0:00:25.47,0:00:25.52,Default,,0,0,0,,{\an2}ein besseres Verständnis zu 
+Dialogue: 0,0:00:25.52,0:00:25.58,Default,,0,0,0,,{\an2}ein besseres Verständnis zu v
+Dialogue: 0,0:00:25.58,0:00:25.63,Default,,0,0,0,,{\an2}ein besseres Verständnis zu ve
+Dialogue: 0,0:00:25.63,0:00:25.68,Default,,0,0,0,,{\an2}ein besseres Verständnis zu ver
+Dialogue: 0,0:00:25.68,0:00:25.73,Default,,0,0,0,,{\an2}ein besseres Verständnis zu verm
+Dialogue: 0,0:00:25.73,0:00:25.78,Default,,0,0,0,,{\an2}ein besseres Verständnis zu vermi
+Dialogue: 0,0:00:25.78,0:00:25.83,Default,,0,0,0,,{\an2}ein besseres Verständnis zu vermit
+Dialogue: 0,0:00:25.83,0:00:25.88,Default,,0,0,0,,{\an2}ein besseres Verständnis zu\\Nvermitt
+Dialogue: 0,0:00:25.88,0:00:25.94,Default,,0,0,0,,{\an2}ein besseres Verständnis zu\\Nvermitte
+Dialogue: 0,0:00:25.94,0:00:25.99,Default,,0,0,0,,{\an2}ein besseres Verständnis zu\\Nvermittel
+Dialogue: 0,0:00:25.99,0:00:26.04,Default,,0,0,0,,{\an2}ein besseres Verständnis zu\\Nvermitteln
+Dialogue: 0,0:00:26.04,0:00:26.09,Default,,0,0,0,,{\an2}ein besseres Verständnis zu\\Nvermitteln.
+Dialogue: 0,0:00:26.09,0:00:26.15,Default,,0,0,0,,{\an2}E
+Dialogue: 0,0:00:26.15,0:00:26.22,Default,,0,0,0,,{\an2}Ei
+Dialogue: 0,0:00:26.22,0:00:26.28,Default,,0,0,0,,{\an2}Ein
+Dialogue: 0,0:00:26.28,0:00:26.34,Default,,0,0,0,,{\an2}Eine
+Dialogue: 0,0:00:26.34,0:00:26.41,Default,,0,0,0,,{\an2}Eine 
+Dialogue: 0,0:00:26.41,0:00:26.47,Default,,0,0,0,,{\an2}Eine s
+Dialogue: 0,0:00:26.47,0:00:26.53,Default,,0,0,0,,{\an2}Eine sp
+Dialogue: 0,0:00:26.53,0:00:26.60,Default,,0,0,0,,{\an2}Eine spe
+Dialogue: 0,0:00:26.60,0:00:26.66,Default,,0,0,0,,{\an2}Eine spez
+Dialogue: 0,0:00:26.66,0:00:26.72,Default,,0,0,0,,{\an2}Eine spezi
+Dialogue: 0,0:00:26.72,0:00:26.79,Default,,0,0,0,,{\an2}Eine spezie
+Dialogue: 0,0:00:26.79,0:00:26.85,Default,,0,0,0,,{\an2}Eine speziel
+Dialogue: 0,0:00:26.85,0:00:26.91,Default,,0,0,0,,{\an2}Eine speziell
+Dialogue: 0,0:00:26.91,0:00:26.98,Default,,0,0,0,,{\an2}Eine spezielle
+Dialogue: 0,0:00:26.98,0:00:27.04,Default,,0,0,0,,{\an2}Eine spezielle 
+Dialogue: 0,0:00:27.04,0:00:27.10,Default,,0,0,0,,{\an2}Eine spezielle D
+Dialogue: 0,0:00:27.10,0:00:27.17,Default,,0,0,0,,{\an2}Eine spezielle Do
+Dialogue: 0,0:00:27.17,0:00:27.23,Default,,0,0,0,,{\an2}Eine spezielle Dom
+Dialogue: 0,0:00:27.23,0:00:27.29,Default,,0,0,0,,{\an2}Eine spezielle Domä
+Dialogue: 0,0:00:27.29,0:00:27.36,Default,,0,0,0,,{\an2}Eine spezielle Domän
+Dialogue: 0,0:00:27.36,0:00:27.42,Default,,0,0,0,,{\an2}Eine spezielle Domäne
+Dialogue: 0,0:00:27.42,0:00:27.49,Default,,0,0,0,,{\an2}Eine spezielle Domäne,
+Dialogue: 0,0:00:27.49,0:00:27.55,Default,,0,0,0,,{\an2}Eine spezielle Domäne, 
+Dialogue: 0,0:00:27.55,0:00:27.61,Default,,0,0,0,,{\an2}Eine spezielle Domäne, d
+Dialogue: 0,0:00:27.61,0:00:27.68,Default,,0,0,0,,{\an2}Eine spezielle Domäne, di
+Dialogue: 0,0:00:27.68,0:00:27.74,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die
+Dialogue: 0,0:00:27.74,0:00:27.80,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die 
+Dialogue: 0,0:00:27.80,0:00:27.87,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die h
+Dialogue: 0,0:00:27.87,0:00:27.93,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die hä
+Dialogue: 0,0:00:27.93,0:00:27.99,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die häu
+Dialogue: 0,0:00:27.99,0:00:28.06,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die häuf
+Dialogue: 0,0:00:28.06,0:00:28.12,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die häufi
+Dialogue: 0,0:00:28.12,0:00:28.18,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die häufig
+Dialogue: 0,0:00:28.18,0:00:28.25,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die häufig 
+Dialogue: 0,0:00:28.25,0:00:28.31,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die häufig\\Ni
+Dialogue: 0,0:00:28.31,0:00:28.37,Default,,0,0,0,,{\an2}Eine spezielle Domäne, die häufig\\Nin
+Dialogue: 0,0:00:28.37,0:00:28.43,Default,,0,0,0,,{\an2}d
+Dialogue: 0,0:00:28.43,0:00:28.49,Default,,0,0,0,,{\an2}di
+Dialogue: 0,0:00:28.49,0:00:28.54,Default,,0,0,0,,{\an2}die
+Dialogue: 0,0:00:28.54,0:00:28.60,Default,,0,0,0,,{\an2}dies
+Dialogue: 0,0:00:28.60,0:00:28.65,Default,,0,0,0,,{\an2}diese
+Dialogue: 0,0:00:28.65,0:00:28.71,Default,,0,0,0,,{\an2}diesen
+Dialogue: 0,0:00:28.71,0:00:28.76,Default,,0,0,0,,{\an2}diesen 
+Dialogue: 0,0:00:28.76,0:00:28.82,Default,,0,0,0,,{\an2}diesen B
+Dialogue: 0,0:00:28.82,0:00:28.88,Default,,0,0,0,,{\an2}diesen Be
+Dialogue: 0,0:00:28.88,0:00:28.93,Default,,0,0,0,,{\an2}diesen Bei
+Dialogue: 0,0:00:28.93,0:00:28.99,Default,,0,0,0,,{\an2}diesen Beis
+Dialogue: 0,0:00:28.99,0:00:29.04,Default,,0,0,0,,{\an2}diesen Beisp
+Dialogue: 0,0:00:29.04,0:00:29.10,Default,,0,0,0,,{\an2}diesen Beispi
+Dialogue: 0,0:00:29.10,0:00:29.15,Default,,0,0,0,,{\an2}diesen Beispie
+Dialogue: 0,0:00:29.15,0:00:29.21,Default,,0,0,0,,{\an2}diesen Beispiel
+Dialogue: 0,0:00:29.21,0:00:29.27,Default,,0,0,0,,{\an2}diesen Beispiele
+Dialogue: 0,0:00:29.27,0:00:29.32,Default,,0,0,0,,{\an2}diesen Beispielen
+Dialogue: 0,0:00:29.32,0:00:29.38,Default,,0,0,0,,{\an2}diesen Beispielen 
+Dialogue: 0,0:00:29.38,0:00:29.43,Default,,0,0,0,,{\an2}diesen Beispielen v
+Dialogue: 0,0:00:29.43,0:00:29.49,Default,,0,0,0,,{\an2}diesen Beispielen ve
+Dialogue: 0,0:00:29.49,0:00:29.54,Default,,0,0,0,,{\an2}diesen Beispielen ver
+Dialogue: 0,0:00:29.54,0:00:29.60,Default,,0,0,0,,{\an2}diesen Beispielen verw
+Dialogue: 0,0:00:29.60,0:00:29.66,Default,,0,0,0,,{\an2}diesen Beispielen verwe
+Dialogue: 0,0:00:29.66,0:00:29.71,Default,,0,0,0,,{\an2}diesen Beispielen verwen
+Dialogue: 0,0:00:29.71,0:00:29.77,Default,,0,0,0,,{\an2}diesen Beispielen verwend
+Dialogue: 0,0:00:29.77,0:00:29.82,Default,,0,0,0,,{\an2}diesen Beispielen verwende
+Dialogue: 0,0:00:29.82,0:00:29.88,Default,,0,0,0,,{\an2}diesen Beispielen verwendet
+Dialogue: 0,0:00:29.88,0:00:29.93,Default,,0,0,0,,{\an2}diesen Beispielen verwendet 
+Dialogue: 0,0:00:29.93,0:00:29.99,Default,,0,0,0,,{\an2}diesen Beispielen verwendet w
+Dialogue: 0,0:00:29.99,0:00:30.05,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wi
+Dialogue: 0,0:00:30.05,0:00:30.10,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wir
+Dialogue: 0,0:00:30.10,0:00:30.16,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird
+Dialogue: 0,0:00:30.16,0:00:30.21,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird,
+Dialogue: 0,0:00:30.21,0:00:30.27,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird, 
+Dialogue: 0,0:00:30.27,0:00:30.32,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird,\\Ni
+Dialogue: 0,0:00:30.32,0:00:30.38,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird,\\Nis
+Dialogue: 0,0:00:30.38,0:00:30.44,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird,\\Nist
+Dialogue: 0,0:00:30.44,0:00:30.49,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird,\\Nist 
+Dialogue: 0,0:00:30.49,0:00:30.55,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird,\\Nist d
+Dialogue: 0,0:00:30.55,0:00:30.60,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird,\\Nist di
+Dialogue: 0,0:00:30.60,0:00:30.66,Default,,0,0,0,,{\an2}diesen Beispielen verwendet wird,\\Nist die
+Dialogue: 0,0:00:30.66,0:00:30.71,Default,,0,0,0,,{\an2}s
+Dialogue: 0,0:00:30.71,0:00:30.75,Default,,0,0,0,,{\an2}so
+Dialogue: 0,0:00:30.75,0:00:30.80,Default,,0,0,0,,{\an2}sog
+Dialogue: 0,0:00:30.80,0:00:30.85,Default,,0,0,0,,{\an2}soge
+Dialogue: 0,0:00:30.85,0:00:30.90,Default,,0,0,0,,{\an2}sogen
+Dialogue: 0,0:00:30.90,0:00:30.94,Default,,0,0,0,,{\an2}sogena
+Dialogue: 0,0:00:30.94,0:00:30.99,Default,,0,0,0,,{\an2}sogenan
+Dialogue: 0,0:00:30.99,0:00:31.04,Default,,0,0,0,,{\an2}sogenann
+Dialogue: 0,0:00:31.04,0:00:31.09,Default,,0,0,0,,{\an2}sogenannt
+Dialogue: 0,0:00:31.09,0:00:31.14,Default,,0,0,0,,{\an2}sogenannte
+Dialogue: 0,0:00:31.14,0:00:31.18,Default,,0,0,0,,{\an2}sogenannte 
+Dialogue: 0,0:00:31.18,0:00:31.23,Default,,0,0,0,,{\an2}sogenannte '
+Dialogue: 0,0:00:31.23,0:00:31.28,Default,,0,0,0,,{\an2}sogenannte 'e
+Dialogue: 0,0:00:31.28,0:00:31.33,Default,,0,0,0,,{\an2}sogenannte 'ex
+Dialogue: 0,0:00:31.33,0:00:31.37,Default,,0,0,0,,{\an2}sogenannte 'exa
+Dialogue: 0,0:00:31.37,0:00:31.42,Default,,0,0,0,,{\an2}sogenannte 'exam
+Dialogue: 0,0:00:31.42,0:00:31.47,Default,,0,0,0,,{\an2}sogenannte 'examp
+Dialogue: 0,0:00:31.47,0:00:31.52,Default,,0,0,0,,{\an2}sogenannte 'exampl
+Dialogue: 0,0:00:31.52,0:00:31.56,Default,,0,0,0,,{\an2}sogenannte 'example
+Dialogue: 0,0:00:31.56,0:00:31.61,Default,,0,0,0,,{\an2}sogenannte 'example.
+Dialogue: 0,0:00:31.61,0:00:31.66,Default,,0,0,0,,{\an2}sogenannte 'example.c
+Dialogue: 0,0:00:31.66,0:00:31.71,Default,,0,0,0,,{\an2}sogenannte 'example.co
+Dialogue: 0,0:00:31.71,0:00:31.75,Default,,0,0,0,,{\an2}sogenannte 'example.com
+Dialogue: 0,0:00:31.75,0:00:31.80,Default,,0,0,0,,{\an2}sogenannte 'example.com'
+Dialogue: 0,0:00:31.80,0:00:31.85,Default,,0,0,0,,{\an2}sogenannte 'example.com'.
+Dialogue: 0,0:00:31.85,0:00:31.90,Default,,0,0,0,,{\an2}sogenannte 'example.com'. 
+Dialogue: 0,0:00:31.90,0:00:31.94,Default,,0,0,0,,{\an2}sogenannte 'example.com'. D
+Dialogue: 0,0:00:31.94,0:00:31.99,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Di
+Dialogue: 0,0:00:31.99,0:00:32.04,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Die
+Dialogue: 0,0:00:32.04,0:00:32.09,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Dies
+Dialogue: 0,0:00:32.09,0:00:32.14,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese
+Dialogue: 0,0:00:32.14,0:00:32.18,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese 
+Dialogue: 0,0:00:32.18,0:00:32.23,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese D
+Dialogue: 0,0:00:32.23,0:00:32.28,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese Do
+Dialogue: 0,0:00:32.28,0:00:32.33,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese\\NDom
+Dialogue: 0,0:00:32.33,0:00:32.37,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese\\NDomä
+Dialogue: 0,0:00:32.37,0:00:32.42,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese\\NDomän
+Dialogue: 0,0:00:32.42,0:00:32.47,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese\\NDomäne
+Dialogue: 0,0:00:32.47,0:00:32.52,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese\\NDomäne 
+Dialogue: 0,0:00:32.52,0:00:32.56,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese\\NDomäne i
+Dialogue: 0,0:00:32.56,0:00:32.61,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese\\NDomäne is
+Dialogue: 0,0:00:32.61,0:00:32.66,Default,,0,0,0,,{\an2}sogenannte 'example.com'. Diese\\NDomäne ist
+Dialogue: 0,0:00:32.66,0:00:32.73,Default,,0,0,0,,{\an2}n
+Dialogue: 0,0:00:32.73,0:00:32.79,Default,,0,0,0,,{\an2}ni
+Dialogue: 0,0:00:32.79,0:00:32.86,Default,,0,0,0,,{\an2}nic
+Dialogue: 0,0:00:32.86,0:00:32.93,Default,,0,0,0,,{\an2}nich
+Dialogue: 0,0:00:32.93,0:00:32.99,Default,,0,0,0,,{\an2}nicht
+Dialogue: 0,0:00:32.99,0:00:33.06,Default,,0,0,0,,{\an2}nicht 
+Dialogue: 0,0:00:33.06,0:00:33.13,Default,,0,0,0,,{\an2}nicht n
+Dialogue: 0,0:00:33.13,0:00:33.19,Default,,0,0,0,,{\an2}nicht nu
+Dialogue: 0,0:00:33.19,0:00:33.26,Default,,0,0,0,,{\an2}nicht nur
+Dialogue: 0,0:00:33.26,0:00:33.33,Default,,0,0,0,,{\an2}nicht nur 
+Dialogue: 0,0:00:33.33,0:00:33.39,Default,,0,0,0,,{\an2}nicht nur l
+Dialogue: 0,0:00:33.39,0:00:33.46,Default,,0,0,0,,{\an2}nicht nur le
+Dialogue: 0,0:00:33.46,0:00:33.53,Default,,0,0,0,,{\an2}nicht nur lei
+Dialogue: 0,0:00:33.53,0:00:33.59,Default,,0,0,0,,{\an2}nicht nur leic
+Dialogue: 0,0:00:33.59,0:00:33.66,Default,,0,0,0,,{\an2}nicht nur leich
+Dialogue: 0,0:00:33.66,0:00:33.73,Default,,0,0,0,,{\an2}nicht nur leicht
+Dialogue: 0,0:00:33.73,0:00:33.79,Default,,0,0,0,,{\an2}nicht nur leicht 
+Dialogue: 0,0:00:33.79,0:00:33.86,Default,,0,0,0,,{\an2}nicht nur leicht z
+Dialogue: 0,0:00:33.86,0:00:33.92,Default,,0,0,0,,{\an2}nicht nur leicht zu
+Dialogue: 0,0:00:33.92,0:00:33.99,Default,,0,0,0,,{\an2}nicht nur leicht zu 
+Dialogue: 0,0:00:33.99,0:00:34.06,Default,,0,0,0,,{\an2}nicht nur leicht zu m
+Dialogue: 0,0:00:34.06,0:00:34.12,Default,,0,0,0,,{\an2}nicht nur leicht zu me
+Dialogue: 0,0:00:34.12,0:00:34.19,Default,,0,0,0,,{\an2}nicht nur leicht zu mer
+Dialogue: 0,0:00:34.19,0:00:34.26,Default,,0,0,0,,{\an2}nicht nur leicht zu merk
+Dialogue: 0,0:00:34.26,0:00:34.32,Default,,0,0,0,,{\an2}nicht nur leicht zu merke
+Dialogue: 0,0:00:34.32,0:00:34.39,Default,,0,0,0,,{\an2}nicht nur leicht zu merken
+Dialogue: 0,0:00:34.39,0:00:34.46,Default,,0,0,0,,{\an2}nicht nur leicht zu merken,
+Dialogue: 0,0:00:34.46,0:00:34.52,Default,,0,0,0,,{\an2}nicht nur leicht zu merken, 
+Dialogue: 0,0:00:34.52,0:00:34.59,Default,,0,0,0,,{\an2}nicht nur leicht zu merken, s
+Dialogue: 0,0:00:34.59,0:00:34.66,Default,,0,0,0,,{\an2}nicht nur leicht zu merken, so
+Dialogue: 0,0:00:34.66,0:00:34.72,Default,,0,0,0,,{\an2}nicht nur leicht zu merken, son
+Dialogue: 0,0:00:34.72,0:00:34.79,Default,,0,0,0,,{\an2}nicht nur leicht zu merken, sond
+Dialogue: 0,0:00:34.79,0:00:34.86,Default,,0,0,0,,{\an2}nicht nur leicht zu merken, sonde
+Dialogue: 0,0:00:34.86,0:00:34.92,Default,,0,0,0,,{\an2}nicht nur leicht zu merken, sonder
+Dialogue: 0,0:00:34.92,0:00:34.99,Default,,0,0,0,,{\an2}nicht nur leicht zu merken,\\Nsondern
+Dialogue: 0,0:00:34.99,0:00:35.06,Default,,0,0,0,,{\an2}nicht nur leicht zu merken,\\Nsondern 
+Dialogue: 0,0:00:35.06,0:00:35.12,Default,,0,0,0,,{\an2}nicht nur leicht zu merken,\\Nsondern a
+Dialogue: 0,0:00:35.12,0:00:35.19,Default,,0,0,0,,{\an2}nicht nur leicht zu merken,\\Nsondern au
+Dialogue: 0,0:00:35.19,0:00:35.26,Default,,0,0,0,,{\an2}nicht nur leicht zu merken,\\Nsondern auc
+Dialogue: 0,0:00:35.26,0:00:35.32,Default,,0,0,0,,{\an2}nicht nur leicht zu merken,\\Nsondern auch
+Dialogue: 0,0:00:35.32,0:00:35.39,Default,,0,0,0,,{\an2}v
+Dialogue: 0,0:00:35.39,0:00:35.45,Default,,0,0,0,,{\an2}vo
+Dialogue: 0,0:00:35.45,0:00:35.52,Default,,0,0,0,,{\an2}vol
+Dialogue: 0,0:00:35.52,0:00:35.58,Default,,0,0,0,,{\an2}voll
+Dialogue: 0,0:00:35.58,0:00:35.65,Default,,0,0,0,,{\an2}vollk
+Dialogue: 0,0:00:35.65,0:00:35.71,Default,,0,0,0,,{\an2}vollko
+Dialogue: 0,0:00:35.71,0:00:35.78,Default,,0,0,0,,{\an2}vollkom
+Dialogue: 0,0:00:35.78,0:00:35.84,Default,,0,0,0,,{\an2}vollkomm
+Dialogue: 0,0:00:35.84,0:00:35.90,Default,,0,0,0,,{\an2}vollkomme
+Dialogue: 0,0:00:35.90,0:00:35.97,Default,,0,0,0,,{\an2}vollkommen
+Dialogue: 0,0:00:35.97,0:00:36.03,Default,,0,0,0,,{\an2}vollkommen 
+Dialogue: 0,0:00:36.03,0:00:36.10,Default,,0,0,0,,{\an2}vollkommen f
+Dialogue: 0,0:00:36.10,0:00:36.16,Default,,0,0,0,,{\an2}vollkommen fr
+Dialogue: 0,0:00:36.16,0:00:36.23,Default,,0,0,0,,{\an2}vollkommen fre
+Dialogue: 0,0:00:36.23,0:00:36.29,Default,,0,0,0,,{\an2}vollkommen frei
+Dialogue: 0,0:00:36.29,0:00:36.36,Default,,0,0,0,,{\an2}vollkommen frei 
+Dialogue: 0,0:00:36.36,0:00:36.42,Default,,0,0,0,,{\an2}vollkommen frei v
+Dialogue: 0,0:00:36.42,0:00:36.49,Default,,0,0,0,,{\an2}vollkommen frei vo
+Dialogue: 0,0:00:36.49,0:00:36.55,Default,,0,0,0,,{\an2}vollkommen frei von
+Dialogue: 0,0:00:36.55,0:00:36.61,Default,,0,0,0,,{\an2}vollkommen frei von 
+Dialogue: 0,0:00:36.61,0:00:36.68,Default,,0,0,0,,{\an2}vollkommen frei von r
+Dialogue: 0,0:00:36.68,0:00:36.74,Default,,0,0,0,,{\an2}vollkommen frei von re
+Dialogue: 0,0:00:36.74,0:00:36.81,Default,,0,0,0,,{\an2}vollkommen frei von rec
+Dialogue: 0,0:00:36.81,0:00:36.87,Default,,0,0,0,,{\an2}vollkommen frei von rech
+Dialogue: 0,0:00:36.87,0:00:36.94,Default,,0,0,0,,{\an2}vollkommen frei von recht
+Dialogue: 0,0:00:36.94,0:00:37.00,Default,,0,0,0,,{\an2}vollkommen frei von rechtl
+Dialogue: 0,0:00:37.00,0:00:37.07,Default,,0,0,0,,{\an2}vollkommen frei von rechtli
+Dialogue: 0,0:00:37.07,0:00:37.13,Default,,0,0,0,,{\an2}vollkommen frei von rechtlic
+Dialogue: 0,0:00:37.13,0:00:37.19,Default,,0,0,0,,{\an2}vollkommen frei von rechtlich
+Dialogue: 0,0:00:37.19,0:00:37.26,Default,,0,0,0,,{\an2}vollkommen frei von rechtliche
+Dialogue: 0,0:00:37.26,0:00:37.32,Default,,0,0,0,,{\an2}vollkommen frei von rechtlichen
+Dialogue: 0,0:00:37.32,0:00:37.38,Default,,0,0,0,,{\an2}E
+Dialogue: 0,0:00:37.38,0:00:37.43,Default,,0,0,0,,{\an2}Ei
+Dialogue: 0,0:00:37.43,0:00:37.49,Default,,0,0,0,,{\an2}Ein
+Dialogue: 0,0:00:37.49,0:00:37.54,Default,,0,0,0,,{\an2}Eins
+Dialogue: 0,0:00:37.54,0:00:37.59,Default,,0,0,0,,{\an2}Einsc
+Dialogue: 0,0:00:37.59,0:00:37.65,Default,,0,0,0,,{\an2}Einsch
+Dialogue: 0,0:00:37.65,0:00:37.70,Default,,0,0,0,,{\an2}Einschr
+Dialogue: 0,0:00:37.70,0:00:37.76,Default,,0,0,0,,{\an2}Einschrä
+Dialogue: 0,0:00:37.76,0:00:37.81,Default,,0,0,0,,{\an2}Einschrän
+Dialogue: 0,0:00:37.81,0:00:37.86,Default,,0,0,0,,{\an2}Einschränk
+Dialogue: 0,0:00:37.86,0:00:37.92,Default,,0,0,0,,{\an2}Einschränku
+Dialogue: 0,0:00:37.92,0:00:37.97,Default,,0,0,0,,{\an2}Einschränkun
+Dialogue: 0,0:00:37.97,0:00:38.03,Default,,0,0,0,,{\an2}Einschränkung
+Dialogue: 0,0:00:38.03,0:00:38.08,Default,,0,0,0,,{\an2}Einschränkunge
+Dialogue: 0,0:00:38.08,0:00:38.13,Default,,0,0,0,,{\an2}Einschränkungen
+Dialogue: 0,0:00:38.13,0:00:38.19,Default,,0,0,0,,{\an2}Einschränkungen.
+Dialogue: 0,0:00:38.19,0:00:38.24,Default,,0,0,0,,{\an2}Einschränkungen. 
+Dialogue: 0,0:00:38.24,0:00:38.30,Default,,0,0,0,,{\an2}Einschränkungen. B
+Dialogue: 0,0:00:38.30,0:00:38.35,Default,,0,0,0,,{\an2}Einschränkungen. Be
+Dialogue: 0,0:00:38.35,0:00:38.41,Default,,0,0,0,,{\an2}Einschränkungen. Bei
+Dialogue: 0,0:00:38.41,0:00:38.46,Default,,0,0,0,,{\an2}Einschränkungen. Beis
+Dialogue: 0,0:00:38.46,0:00:38.51,Default,,0,0,0,,{\an2}Einschränkungen. Beisp
+Dialogue: 0,0:00:38.51,0:00:38.57,Default,,0,0,0,,{\an2}Einschränkungen. Beispi
+Dialogue: 0,0:00:38.57,0:00:38.62,Default,,0,0,0,,{\an2}Einschränkungen. Beispie
+Dialogue: 0,0:00:38.62,0:00:38.68,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel
+Dialogue: 0,0:00:38.68,0:00:38.73,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-
+Dialogue: 0,0:00:38.73,0:00:38.78,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-D
+Dialogue: 0,0:00:38.78,0:00:38.84,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Do
+Dialogue: 0,0:00:38.84,0:00:38.89,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Dom
+Dialogue: 0,0:00:38.89,0:00:38.95,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Domä
+Dialogue: 0,0:00:38.95,0:00:39.00,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Domän
+Dialogue: 0,0:00:39.00,0:00:39.05,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Domäne
+Dialogue: 0,0:00:39.05,0:00:39.11,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Domänen
+Dialogue: 0,0:00:39.11,0:00:39.16,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Domänen 
+Dialogue: 0,0:00:39.16,0:00:39.22,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Domänen\\Nw
+Dialogue: 0,0:00:39.22,0:00:39.27,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Domänen\\Nwi
+Dialogue: 0,0:00:39.27,0:00:39.32,Default,,0,0,0,,{\an2}Einschränkungen. Beispiel-Domänen\\Nwie
+Dialogue: 0,0:00:39.32,0:00:39.37,Default,,0,0,0,,{\an2}'
+Dialogue: 0,0:00:39.37,0:00:39.42,Default,,0,0,0,,{\an2}'e
+Dialogue: 0,0:00:39.42,0:00:39.47,Default,,0,0,0,,{\an2}'ex
+Dialogue: 0,0:00:39.47,0:00:39.52,Default,,0,0,0,,{\an2}'exa
+Dialogue: 0,0:00:39.52,0:00:39.57,Default,,0,0,0,,{\an2}'exam
+Dialogue: 0,0:00:39.57,0:00:39.62,Default,,0,0,0,,{\an2}'examp
+Dialogue: 0,0:00:39.62,0:00:39.67,Default,,0,0,0,,{\an2}'exampl
+Dialogue: 0,0:00:39.67,0:00:39.72,Default,,0,0,0,,{\an2}'example
+Dialogue: 0,0:00:39.72,0:00:39.77,Default,,0,0,0,,{\an2}'example.
+Dialogue: 0,0:00:39.77,0:00:39.82,Default,,0,0,0,,{\an2}'example.c
+Dialogue: 0,0:00:39.82,0:00:39.87,Default,,0,0,0,,{\an2}'example.co
+Dialogue: 0,0:00:39.87,0:00:39.92,Default,,0,0,0,,{\an2}'example.com
+Dialogue: 0,0:00:39.92,0:00:39.97,Default,,0,0,0,,{\an2}'example.com'
+Dialogue: 0,0:00:39.97,0:00:40.02,Default,,0,0,0,,{\an2}'example.com' 
+Dialogue: 0,0:00:40.02,0:00:40.07,Default,,0,0,0,,{\an2}'example.com' s
+Dialogue: 0,0:00:40.07,0:00:40.12,Default,,0,0,0,,{\an2}'example.com' si
+Dialogue: 0,0:00:40.12,0:00:40.17,Default,,0,0,0,,{\an2}'example.com' sin
+Dialogue: 0,0:00:40.17,0:00:40.22,Default,,0,0,0,,{\an2}'example.com' sind
+Dialogue: 0,0:00:40.22,0:00:40.27,Default,,0,0,0,,{\an2}'example.com' sind 
+Dialogue: 0,0:00:40.27,0:00:40.32,Default,,0,0,0,,{\an2}'example.com' sind v
+Dialogue: 0,0:00:40.32,0:00:40.37,Default,,0,0,0,,{\an2}'example.com' sind vo
+Dialogue: 0,0:00:40.37,0:00:40.42,Default,,0,0,0,,{\an2}'example.com' sind von
+Dialogue: 0,0:00:40.42,0:00:40.47,Default,,0,0,0,,{\an2}'example.com' sind von 
+Dialogue: 0,0:00:40.47,0:00:40.52,Default,,0,0,0,,{\an2}'example.com' sind von g
+Dialogue: 0,0:00:40.52,0:00:40.57,Default,,0,0,0,,{\an2}'example.com' sind von gr
+Dialogue: 0,0:00:40.57,0:00:40.62,Default,,0,0,0,,{\an2}'example.com' sind von gro
+Dialogue: 0,0:00:40.62,0:00:40.67,Default,,0,0,0,,{\an2}'example.com' sind von groß
+Dialogue: 0,0:00:40.67,0:00:40.72,Default,,0,0,0,,{\an2}'example.com' sind von große
+Dialogue: 0,0:00:40.72,0:00:40.77,Default,,0,0,0,,{\an2}'example.com' sind von großer
+Dialogue: 0,0:00:40.77,0:00:40.82,Default,,0,0,0,,{\an2}'example.com' sind von großer 
+Dialogue: 0,0:00:40.82,0:00:40.87,Default,,0,0,0,,{\an2}'example.com' sind von großer B
+Dialogue: 0,0:00:40.87,0:00:40.92,Default,,0,0,0,,{\an2}'example.com' sind von großer Be
+Dialogue: 0,0:00:40.92,0:00:40.97,Default,,0,0,0,,{\an2}'example.com' sind von großer Bed
+Dialogue: 0,0:00:40.97,0:00:41.02,Default,,0,0,0,,{\an2}'example.com' sind von großer Bede
+Dialogue: 0,0:00:41.02,0:00:41.07,Default,,0,0,0,,{\an2}'example.com' sind von großer\\NBedeu
+Dialogue: 0,0:00:41.07,0:00:41.12,Default,,0,0,0,,{\an2}'example.com' sind von großer\\NBedeut
+Dialogue: 0,0:00:41.12,0:00:41.17,Default,,0,0,0,,{\an2}'example.com' sind von großer\\NBedeutu
+Dialogue: 0,0:00:41.17,0:00:41.22,Default,,0,0,0,,{\an2}'example.com' sind von großer\\NBedeutun
+Dialogue: 0,0:00:41.22,0:00:41.27,Default,,0,0,0,,{\an2}'example.com' sind von großer\\NBedeutung
+Dialogue: 0,0:00:41.27,0:00:41.32,Default,,0,0,0,,{\an2}'example.com' sind von großer\\NBedeutung,
+Dialogue: 0,0:00:41.32,0:00:41.39,Default,,0,0,0,,{\an2}d
+Dialogue: 0,0:00:41.39,0:00:41.45,Default,,0,0,0,,{\an2}da
+Dialogue: 0,0:00:41.45,0:00:41.52,Default,,0,0,0,,{\an2}da 
+Dialogue: 0,0:00:41.52,0:00:41.59,Default,,0,0,0,,{\an2}da s
+Dialogue: 0,0:00:41.59,0:00:41.65,Default,,0,0,0,,{\an2}da si
+Dialogue: 0,0:00:41.65,0:00:41.72,Default,,0,0,0,,{\an2}da sie
+Dialogue: 0,0:00:41.72,0:00:41.78,Default,,0,0,0,,{\an2}da sie 
+Dialogue: 0,0:00:41.78,0:00:41.85,Default,,0,0,0,,{\an2}da sie E
+Dialogue: 0,0:00:41.85,0:00:41.91,Default,,0,0,0,,{\an2}da sie En
+Dialogue: 0,0:00:41.91,0:00:41.98,Default,,0,0,0,,{\an2}da sie Ent
+Dialogue: 0,0:00:41.98,0:00:42.04,Default,,0,0,0,,{\an2}da sie Entw
+Dialogue: 0,0:00:42.04,0:00:42.11,Default,,0,0,0,,{\an2}da sie Entwi
+Dialogue: 0,0:00:42.11,0:00:42.17,Default,,0,0,0,,{\an2}da sie Entwic
+Dialogue: 0,0:00:42.17,0:00:42.24,Default,,0,0,0,,{\an2}da sie Entwick
+Dialogue: 0,0:00:42.24,0:00:42.30,Default,,0,0,0,,{\an2}da sie Entwickl
+Dialogue: 0,0:00:42.30,0:00:42.37,Default,,0,0,0,,{\an2}da sie Entwickle
+Dialogue: 0,0:00:42.37,0:00:42.43,Default,,0,0,0,,{\an2}da sie Entwickler
+Dialogue: 0,0:00:42.43,0:00:42.50,Default,,0,0,0,,{\an2}da sie Entwicklern
+Dialogue: 0,0:00:42.50,0:00:42.56,Default,,0,0,0,,{\an2}da sie Entwicklern 
+Dialogue: 0,0:00:42.56,0:00:42.63,Default,,0,0,0,,{\an2}da sie Entwicklern u
+Dialogue: 0,0:00:42.63,0:00:42.70,Default,,0,0,0,,{\an2}da sie Entwicklern un
+Dialogue: 0,0:00:42.70,0:00:42.76,Default,,0,0,0,,{\an2}da sie Entwicklern und
+Dialogue: 0,0:00:42.76,0:00:42.83,Default,,0,0,0,,{\an2}da sie Entwicklern und 
+Dialogue: 0,0:00:42.83,0:00:42.89,Default,,0,0,0,,{\an2}da sie Entwicklern und A
+Dialogue: 0,0:00:42.89,0:00:42.96,Default,,0,0,0,,{\an2}da sie Entwicklern und Au
+Dialogue: 0,0:00:42.96,0:00:43.02,Default,,0,0,0,,{\an2}da sie Entwicklern und Aut
+Dialogue: 0,0:00:43.02,0:00:43.09,Default,,0,0,0,,{\an2}da sie Entwicklern und Auto
+Dialogue: 0,0:00:43.09,0:00:43.15,Default,,0,0,0,,{\an2}da sie Entwicklern und Autor
+Dialogue: 0,0:00:43.15,0:00:43.22,Default,,0,0,0,,{\an2}da sie Entwicklern und Autore
+Dialogue: 0,0:00:43.22,0:00:43.28,Default,,0,0,0,,{\an2}da sie Entwicklern und Autoren
+Dialogue: 0,0:00:43.28,0:00:43.35,Default,,0,0,0,,{\an2}da sie Entwicklern und Autoren 
+Dialogue: 0,0:00:43.35,0:00:43.41,Default,,0,0,0,,{\an2}da sie Entwicklern und Autoren e
+Dialogue: 0,0:00:43.41,0:00:43.48,Default,,0,0,0,,{\an2}da sie Entwicklern und Autoren ei
+Dialogue: 0,0:00:43.48,0:00:43.54,Default,,0,0,0,,{\an2}da sie Entwicklern und Autoren ein
+Dialogue: 0,0:00:43.54,0:00:43.61,Default,,0,0,0,,{\an2}da sie Entwicklern und Autoren\\Neine
+Dialogue: 0,0:00:43.61,0:00:43.67,Default,,0,0,0,,{\an2}s
+Dialogue: 0,0:00:43.67,0:00:43.74,Default,,0,0,0,,{\an2}si
+Dialogue: 0,0:00:43.74,0:00:43.80,Default,,0,0,0,,{\an2}sic
+Dialogue: 0,0:00:43.80,0:00:43.87,Default,,0,0,0,,{\an2}sich
+Dialogue: 0,0:00:43.87,0:00:43.93,Default,,0,0,0,,{\an2}siche
+Dialogue: 0,0:00:43.93,0:00:44.00,Default,,0,0,0,,{\an2}sicher
+Dialogue: 0,0:00:44.00,0:00:44.06,Default,,0,0,0,,{\an2}sichere
+Dialogue: 0,0:00:44.06,0:00:44.13,Default,,0,0,0,,{\an2}sichere 
+Dialogue: 0,0:00:44.13,0:00:44.19,Default,,0,0,0,,{\an2}sichere U
+Dialogue: 0,0:00:44.19,0:00:44.26,Default,,0,0,0,,{\an2}sichere Um
+Dialogue: 0,0:00:44.26,0:00:44.32,Default,,0,0,0,,{\an2}sichere Umg
+Dialogue: 0,0:00:44.32,0:00:44.39,Default,,0,0,0,,{\an2}sichere Umge
+Dialogue: 0,0:00:44.39,0:00:44.45,Default,,0,0,0,,{\an2}sichere Umgeb
+Dialogue: 0,0:00:44.45,0:00:44.52,Default,,0,0,0,,{\an2}sichere Umgebu
+Dialogue: 0,0:00:44.52,0:00:44.58,Default,,0,0,0,,{\an2}sichere Umgebun
+Dialogue: 0,0:00:44.58,0:00:44.65,Default,,0,0,0,,{\an2}sichere Umgebung
+Dialogue: 0,0:00:44.65,0:00:44.71,Default,,0,0,0,,{\an2}sichere Umgebung 
+Dialogue: 0,0:00:44.71,0:00:44.78,Default,,0,0,0,,{\an2}sichere Umgebung b
+Dialogue: 0,0:00:44.78,0:00:44.84,Default,,0,0,0,,{\an2}sichere Umgebung bi
+Dialogue: 0,0:00:44.84,0:00:44.91,Default,,0,0,0,,{\an2}sichere Umgebung bie
+Dialogue: 0,0:00:44.91,0:00:44.97,Default,,0,0,0,,{\an2}sichere Umgebung biet
+Dialogue: 0,0:00:44.97,0:00:45.04,Default,,0,0,0,,{\an2}sichere Umgebung biete
+Dialogue: 0,0:00:45.04,0:00:45.10,Default,,0,0,0,,{\an2}sichere Umgebung bieten
+Dialogue: 0,0:00:45.10,0:00:45.17,Default,,0,0,0,,{\an2}sichere Umgebung bieten,
+Dialogue: 0,0:00:45.17,0:00:45.23,Default,,0,0,0,,{\an2}sichere Umgebung bieten, 
+Dialogue: 0,0:00:45.23,0:00:45.30,Default,,0,0,0,,{\an2}sichere Umgebung bieten, u
+Dialogue: 0,0:00:45.30,0:00:45.36,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um
+Dialogue: 0,0:00:45.36,0:00:45.43,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um 
+Dialogue: 0,0:00:45.43,0:00:45.49,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um i
+Dialogue: 0,0:00:45.49,0:00:45.56,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ih
+Dialogue: 0,0:00:45.56,0:00:45.62,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihr
+Dialogue: 0,0:00:45.62,0:00:45.69,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre
+Dialogue: 0,0:00:45.69,0:00:45.75,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre 
+Dialogue: 0,0:00:45.75,0:00:45.82,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre I
+Dialogue: 0,0:00:45.82,0:00:45.88,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre\\NId
+Dialogue: 0,0:00:45.88,0:00:45.95,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre\\NIde
+Dialogue: 0,0:00:45.95,0:00:46.01,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre\\NIdee
+Dialogue: 0,0:00:46.01,0:00:46.08,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre\\NIdeen
+Dialogue: 0,0:00:46.08,0:00:46.14,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre\\NIdeen 
+Dialogue: 0,0:00:46.14,0:00:46.21,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre\\NIdeen z
+Dialogue: 0,0:00:46.21,0:00:46.28,Default,,0,0,0,,{\an2}sichere Umgebung bieten, um ihre\\NIdeen zu
+Dialogue: 0,0:00:46.28,0:00:46.33,Default,,0,0,0,,{\an2}p
+Dialogue: 0,0:00:46.33,0:00:46.38,Default,,0,0,0,,{\an2}pr
+Dialogue: 0,0:00:46.38,0:00:46.44,Default,,0,0,0,,{\an2}prä
+Dialogue: 0,0:00:46.44,0:00:46.49,Default,,0,0,0,,{\an2}präs
+Dialogue: 0,0:00:46.49,0:00:46.55,Default,,0,0,0,,{\an2}präse
+Dialogue: 0,0:00:46.55,0:00:46.60,Default,,0,0,0,,{\an2}präsen
+Dialogue: 0,0:00:46.60,0:00:46.65,Default,,0,0,0,,{\an2}präsent
+Dialogue: 0,0:00:46.65,0:00:46.71,Default,,0,0,0,,{\an2}präsenti
+Dialogue: 0,0:00:46.71,0:00:46.76,Default,,0,0,0,,{\an2}präsentie
+Dialogue: 0,0:00:46.76,0:00:46.82,Default,,0,0,0,,{\an2}präsentier
+Dialogue: 0,0:00:46.82,0:00:46.87,Default,,0,0,0,,{\an2}präsentiere
+Dialogue: 0,0:00:46.87,0:00:46.92,Default,,0,0,0,,{\an2}präsentieren
+Dialogue: 0,0:00:46.92,0:00:46.98,Default,,0,0,0,,{\an2}präsentieren.
+Dialogue: 0,0:00:46.98,0:00:47.03,Default,,0,0,0,,{\an2}präsentieren. 
+Dialogue: 0,0:00:47.03,0:00:47.09,Default,,0,0,0,,{\an2}präsentieren. S
+Dialogue: 0,0:00:47.09,0:00:47.14,Default,,0,0,0,,{\an2}präsentieren. Si
+Dialogue: 0,0:00:47.14,0:00:47.19,Default,,0,0,0,,{\an2}präsentieren. Sie
+Dialogue: 0,0:00:47.19,0:00:47.25,Default,,0,0,0,,{\an2}präsentieren. Sie 
+Dialogue: 0,0:00:47.25,0:00:47.30,Default,,0,0,0,,{\an2}präsentieren. Sie s
+Dialogue: 0,0:00:47.30,0:00:47.36,Default,,0,0,0,,{\an2}präsentieren. Sie si
+Dialogue: 0,0:00:47.36,0:00:47.41,Default,,0,0,0,,{\an2}präsentieren. Sie sin
+Dialogue: 0,0:00:47.41,0:00:47.46,Default,,0,0,0,,{\an2}präsentieren. Sie sind
+Dialogue: 0,0:00:47.46,0:00:47.52,Default,,0,0,0,,{\an2}präsentieren. Sie sind 
+Dialogue: 0,0:00:47.52,0:00:47.57,Default,,0,0,0,,{\an2}präsentieren. Sie sind s
+Dialogue: 0,0:00:47.57,0:00:47.63,Default,,0,0,0,,{\an2}präsentieren. Sie sind sp
+Dialogue: 0,0:00:47.63,0:00:47.68,Default,,0,0,0,,{\an2}präsentieren. Sie sind spe
+Dialogue: 0,0:00:47.68,0:00:47.73,Default,,0,0,0,,{\an2}präsentieren. Sie sind spez
+Dialogue: 0,0:00:47.73,0:00:47.79,Default,,0,0,0,,{\an2}präsentieren. Sie sind spezi
+Dialogue: 0,0:00:47.79,0:00:47.84,Default,,0,0,0,,{\an2}präsentieren. Sie sind spezie
+Dialogue: 0,0:00:47.84,0:00:47.90,Default,,0,0,0,,{\an2}präsentieren. Sie sind speziel
+Dialogue: 0,0:00:47.90,0:00:47.95,Default,,0,0,0,,{\an2}präsentieren. Sie sind speziell
+Dialogue: 0,0:00:47.95,0:00:48.00,Default,,0,0,0,,{\an2}präsentieren. Sie sind speziell 
+Dialogue: 0,0:00:48.00,0:00:48.06,Default,,0,0,0,,{\an2}präsentieren. Sie sind speziell d
+Dialogue: 0,0:00:48.06,0:00:48.11,Default,,0,0,0,,{\an2}präsentieren. Sie sind speziell da
+Dialogue: 0,0:00:48.11,0:00:48.17,Default,,0,0,0,,{\an2}präsentieren. Sie sind speziell\\Ndaf
+Dialogue: 0,0:00:48.17,0:00:48.22,Default,,0,0,0,,{\an2}präsentieren. Sie sind speziell\\Ndafü
+Dialogue: 0,0:00:48.22,0:00:48.28,Default,,0,0,0,,{\an2}präsentieren. Sie sind speziell\\Ndafür
+Dialogue: 0,0:00:48.28,0:00:48.33,Default,,0,0,0,,{\an2}k
+Dialogue: 0,0:00:48.33,0:00:48.38,Default,,0,0,0,,{\an2}ko
+Dialogue: 0,0:00:48.38,0:00:48.43,Default,,0,0,0,,{\an2}kon
+Dialogue: 0,0:00:48.43,0:00:48.48,Default,,0,0,0,,{\an2}konz
+Dialogue: 0,0:00:48.48,0:00:48.53,Default,,0,0,0,,{\an2}konzi
+Dialogue: 0,0:00:48.53,0:00:48.58,Default,,0,0,0,,{\an2}konzip
+Dialogue: 0,0:00:48.58,0:00:48.63,Default,,0,0,0,,{\an2}konzipi
+Dialogue: 0,0:00:48.63,0:00:48.68,Default,,0,0,0,,{\an2}konzipie
+Dialogue: 0,0:00:48.68,0:00:48.73,Default,,0,0,0,,{\an2}konzipier
+Dialogue: 0,0:00:48.73,0:00:48.78,Default,,0,0,0,,{\an2}konzipiert
+Dialogue: 0,0:00:48.78,0:00:48.83,Default,,0,0,0,,{\an2}konzipiert,
+Dialogue: 0,0:00:48.83,0:00:48.88,Default,,0,0,0,,{\an2}konzipiert, 
+Dialogue: 0,0:00:48.88,0:00:48.93,Default,,0,0,0,,{\an2}konzipiert, i
+Dialogue: 0,0:00:48.93,0:00:48.98,Default,,0,0,0,,{\an2}konzipiert, in
+Dialogue: 0,0:00:48.98,0:00:49.03,Default,,0,0,0,,{\an2}konzipiert, in 
+Dialogue: 0,0:00:49.03,0:00:49.08,Default,,0,0,0,,{\an2}konzipiert, in D
+Dialogue: 0,0:00:49.08,0:00:49.13,Default,,0,0,0,,{\an2}konzipiert, in Do
+Dialogue: 0,0:00:49.13,0:00:49.18,Default,,0,0,0,,{\an2}konzipiert, in Dok
+Dialogue: 0,0:00:49.18,0:00:49.23,Default,,0,0,0,,{\an2}konzipiert, in Doku
+Dialogue: 0,0:00:49.23,0:00:49.28,Default,,0,0,0,,{\an2}konzipiert, in Dokum
+Dialogue: 0,0:00:49.28,0:00:49.33,Default,,0,0,0,,{\an2}konzipiert, in Dokume
+Dialogue: 0,0:00:49.33,0:00:49.38,Default,,0,0,0,,{\an2}konzipiert, in Dokumen
+Dialogue: 0,0:00:49.38,0:00:49.43,Default,,0,0,0,,{\an2}konzipiert, in Dokument
+Dialogue: 0,0:00:49.43,0:00:49.48,Default,,0,0,0,,{\an2}konzipiert, in Dokumenta
+Dialogue: 0,0:00:49.48,0:00:49.53,Default,,0,0,0,,{\an2}konzipiert, in Dokumentat
+Dialogue: 0,0:00:49.53,0:00:49.58,Default,,0,0,0,,{\an2}konzipiert, in Dokumentati
+Dialogue: 0,0:00:49.58,0:00:49.63,Default,,0,0,0,,{\an2}konzipiert, in Dokumentatio
+Dialogue: 0,0:00:49.63,0:00:49.68,Default,,0,0,0,,{\an2}konzipiert, in Dokumentation
+Dialogue: 0,0:00:49.68,0:00:49.73,Default,,0,0,0,,{\an2}konzipiert, in Dokumentatione
+Dialogue: 0,0:00:49.73,0:00:49.78,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen
+Dialogue: 0,0:00:49.78,0:00:49.83,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen 
+Dialogue: 0,0:00:49.83,0:00:49.88,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen v
+Dialogue: 0,0:00:49.88,0:00:49.93,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen ve
+Dialogue: 0,0:00:49.93,0:00:49.98,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen ver
+Dialogue: 0,0:00:49.98,0:00:50.03,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen\\Nverw
+Dialogue: 0,0:00:50.03,0:00:50.08,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen\\Nverwe
+Dialogue: 0,0:00:50.08,0:00:50.13,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen\\Nverwen
+Dialogue: 0,0:00:50.13,0:00:50.18,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen\\Nverwend
+Dialogue: 0,0:00:50.18,0:00:50.23,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen\\Nverwende
+Dialogue: 0,0:00:50.23,0:00:50.28,Default,,0,0,0,,{\an2}konzipiert, in Dokumentationen\\Nverwendet
+Dialogue: 0,0:00:50.28,0:00:50.34,Default,,0,0,0,,{\an2}z
+Dialogue: 0,0:00:50.34,0:00:50.40,Default,,0,0,0,,{\an2}zu
+Dialogue: 0,0:00:50.40,0:00:50.46,Default,,0,0,0,,{\an2}zu 
+Dialogue: 0,0:00:50.46,0:00:50.52,Default,,0,0,0,,{\an2}zu w
+Dialogue: 0,0:00:50.52,0:00:50.58,Default,,0,0,0,,{\an2}zu we
+Dialogue: 0,0:00:50.58,0:00:50.65,Default,,0,0,0,,{\an2}zu wer
+Dialogue: 0,0:00:50.65,0:00:50.71,Default,,0,0,0,,{\an2}zu werd
+Dialogue: 0,0:00:50.71,0:00:50.77,Default,,0,0,0,,{\an2}zu werde
+Dialogue: 0,0:00:50.77,0:00:50.83,Default,,0,0,0,,{\an2}zu werden
+Dialogue: 0,0:00:50.83,0:00:50.89,Default,,0,0,0,,{\an2}zu werden,
+Dialogue: 0,0:00:50.89,0:00:50.95,Default,,0,0,0,,{\an2}zu werden, 
+Dialogue: 0,0:00:50.95,0:00:51.02,Default,,0,0,0,,{\an2}zu werden, o
+Dialogue: 0,0:00:51.02,0:00:51.08,Default,,0,0,0,,{\an2}zu werden, oh
+Dialogue: 0,0:00:51.08,0:00:51.14,Default,,0,0,0,,{\an2}zu werden, ohn
+Dialogue: 0,0:00:51.14,0:00:51.20,Default,,0,0,0,,{\an2}zu werden, ohne
+Dialogue: 0,0:00:51.20,0:00:51.26,Default,,0,0,0,,{\an2}zu werden, ohne 
+Dialogue: 0,0:00:51.26,0:00:51.32,Default,,0,0,0,,{\an2}zu werden, ohne d
+Dialogue: 0,0:00:51.32,0:00:51.39,Default,,0,0,0,,{\an2}zu werden, ohne da
+Dialogue: 0,0:00:51.39,0:00:51.45,Default,,0,0,0,,{\an2}zu werden, ohne das
+Dialogue: 0,0:00:51.45,0:00:51.51,Default,,0,0,0,,{\an2}zu werden, ohne dass
+Dialogue: 0,0:00:51.51,0:00:51.57,Default,,0,0,0,,{\an2}zu werden, ohne dass 
+Dialogue: 0,0:00:51.57,0:00:51.63,Default,,0,0,0,,{\an2}zu werden, ohne dass e
+Dialogue: 0,0:00:51.63,0:00:51.69,Default,,0,0,0,,{\an2}zu werden, ohne dass ei
+Dialogue: 0,0:00:51.69,0:00:51.76,Default,,0,0,0,,{\an2}zu werden, ohne dass ein
+Dialogue: 0,0:00:51.76,0:00:51.82,Default,,0,0,0,,{\an2}zu werden, ohne dass eine
+Dialogue: 0,0:00:51.82,0:00:51.88,Default,,0,0,0,,{\an2}zu werden, ohne dass eine 
+Dialogue: 0,0:00:51.88,0:00:51.94,Default,,0,0,0,,{\an2}zu werden, ohne dass eine G
+Dialogue: 0,0:00:51.94,0:00:52.00,Default,,0,0,0,,{\an2}zu werden, ohne dass eine Ge
+Dialogue: 0,0:00:52.00,0:00:52.07,Default,,0,0,0,,{\an2}zu werden, ohne dass eine Gen
+Dialogue: 0,0:00:52.07,0:00:52.13,Default,,0,0,0,,{\an2}zu werden, ohne dass eine Gene
+Dialogue: 0,0:00:52.13,0:00:52.19,Default,,0,0,0,,{\an2}zu werden, ohne dass eine Geneh
+Dialogue: 0,0:00:52.19,0:00:52.25,Default,,0,0,0,,{\an2}zu werden, ohne dass eine Genehm
+Dialogue: 0,0:00:52.25,0:00:52.31,Default,,0,0,0,,{\an2}zu werden, ohne dass eine Genehmi
+Dialogue: 0,0:00:52.31,0:00:52.37,Default,,0,0,0,,{\an2}zu werden, ohne dass eine Genehmig
+Dialogue: 0,0:00:52.37,0:00:52.44,Default,,0,0,0,,{\an2}zu werden, ohne dass eine\\NGenehmigu
+Dialogue: 0,0:00:52.44,0:00:52.50,Default,,0,0,0,,{\an2}zu werden, ohne dass eine\\NGenehmigun
+Dialogue: 0,0:00:52.50,0:00:52.56,Default,,0,0,0,,{\an2}zu werden, ohne dass eine\\NGenehmigung
+Dialogue: 0,0:00:52.56,0:00:52.62,Default,,0,0,0,,{\an2}e
+Dialogue: 0,0:00:52.62,0:00:52.68,Default,,0,0,0,,{\an2}er
+Dialogue: 0,0:00:52.68,0:00:52.74,Default,,0,0,0,,{\an2}erf
+Dialogue: 0,0:00:52.74,0:00:52.79,Default,,0,0,0,,{\an2}erfo
+Dialogue: 0,0:00:52.79,0:00:52.85,Default,,0,0,0,,{\an2}erfor
+Dialogue: 0,0:00:52.85,0:00:52.91,Default,,0,0,0,,{\an2}erford
+Dialogue: 0,0:00:52.91,0:00:52.97,Default,,0,0,0,,{\an2}erforde
+Dialogue: 0,0:00:52.97,0:00:53.03,Default,,0,0,0,,{\an2}erforder
+Dialogue: 0,0:00:53.03,0:00:53.09,Default,,0,0,0,,{\an2}erforderl
+Dialogue: 0,0:00:53.09,0:00:53.15,Default,,0,0,0,,{\an2}erforderli
+Dialogue: 0,0:00:53.15,0:00:53.21,Default,,0,0,0,,{\an2}erforderlic
+Dialogue: 0,0:00:53.21,0:00:53.26,Default,,0,0,0,,{\an2}erforderlich
+Dialogue: 0,0:00:53.26,0:00:53.32,Default,,0,0,0,,{\an2}erforderlich 
+Dialogue: 0,0:00:53.32,0:00:53.38,Default,,0,0,0,,{\an2}erforderlich i
+Dialogue: 0,0:00:53.38,0:00:53.44,Default,,0,0,0,,{\an2}erforderlich is
+Dialogue: 0,0:00:53.44,0:00:53.50,Default,,0,0,0,,{\an2}erforderlich ist
+Dialogue: 0,0:00:53.50,0:00:53.56,Default,,0,0,0,,{\an2}erforderlich ist.
+Dialogue: 0,0:00:53.56,0:00:53.62,Default,,0,0,0,,{\an2}erforderlich ist. 
+Dialogue: 0,0:00:53.62,0:00:53.68,Default,,0,0,0,,{\an2}erforderlich ist. D
+Dialogue: 0,0:00:53.68,0:00:53.74,Default,,0,0,0,,{\an2}erforderlich ist. Di
+Dialogue: 0,0:00:53.74,0:00:53.79,Default,,0,0,0,,{\an2}erforderlich ist. Die
+Dialogue: 0,0:00:53.79,0:00:53.85,Default,,0,0,0,,{\an2}erforderlich ist. Dies
+Dialogue: 0,0:00:53.85,0:00:53.91,Default,,0,0,0,,{\an2}erforderlich ist. Dies 
+Dialogue: 0,0:00:53.91,0:00:53.97,Default,,0,0,0,,{\an2}erforderlich ist. Dies f
+Dialogue: 0,0:00:53.97,0:00:54.03,Default,,0,0,0,,{\an2}erforderlich ist. Dies fö
+Dialogue: 0,0:00:54.03,0:00:54.09,Default,,0,0,0,,{\an2}erforderlich ist. Dies för
+Dialogue: 0,0:00:54.09,0:00:54.15,Default,,0,0,0,,{\an2}erforderlich ist. Dies förd
+Dialogue: 0,0:00:54.15,0:00:54.21,Default,,0,0,0,,{\an2}erforderlich ist. Dies förde
+Dialogue: 0,0:00:54.21,0:00:54.26,Default,,0,0,0,,{\an2}erforderlich ist. Dies förder
+Dialogue: 0,0:00:54.26,0:00:54.32,Default,,0,0,0,,{\an2}erforderlich ist. Dies fördert
+Dialogue: 0,0:00:54.32,0:00:54.38,Default,,0,0,0,,{\an2}erforderlich ist. Dies fördert 
+Dialogue: 0,0:00:54.38,0:00:54.44,Default,,0,0,0,,{\an2}erforderlich ist. Dies fördert d
+Dialogue: 0,0:00:54.44,0:00:54.50,Default,,0,0,0,,{\an2}erforderlich ist. Dies fördert di
+Dialogue: 0,0:00:54.50,0:00:54.56,Default,,0,0,0,,{\an2}erforderlich ist. Dies fördert die
+Dialogue: 0,0:00:54.56,0:00:54.61,Default,,0,0,0,,{\an2}K
+Dialogue: 0,0:00:54.61,0:00:54.66,Default,,0,0,0,,{\an2}Kr
+Dialogue: 0,0:00:54.66,0:00:54.71,Default,,0,0,0,,{\an2}Kre
+Dialogue: 0,0:00:54.71,0:00:54.76,Default,,0,0,0,,{\an2}Krea
+Dialogue: 0,0:00:54.76,0:00:54.82,Default,,0,0,0,,{\an2}Kreat
+Dialogue: 0,0:00:54.82,0:00:54.87,Default,,0,0,0,,{\an2}Kreati
+Dialogue: 0,0:00:54.87,0:00:54.92,Default,,0,0,0,,{\an2}Kreativ
+Dialogue: 0,0:00:54.92,0:00:54.97,Default,,0,0,0,,{\an2}Kreativi
+Dialogue: 0,0:00:54.97,0:00:55.02,Default,,0,0,0,,{\an2}Kreativit
+Dialogue: 0,0:00:55.02,0:00:55.07,Default,,0,0,0,,{\an2}Kreativitä
+Dialogue: 0,0:00:55.07,0:00:55.12,Default,,0,0,0,,{\an2}Kreativität
+Dialogue: 0,0:00:55.12,0:00:55.17,Default,,0,0,0,,{\an2}Kreativität 
+Dialogue: 0,0:00:55.17,0:00:55.23,Default,,0,0,0,,{\an2}Kreativität u
+Dialogue: 0,0:00:55.23,0:00:55.28,Default,,0,0,0,,{\an2}Kreativität un
+Dialogue: 0,0:00:55.28,0:00:55.33,Default,,0,0,0,,{\an2}Kreativität und
+Dialogue: 0,0:00:55.33,0:00:55.38,Default,,0,0,0,,{\an2}Kreativität und 
+Dialogue: 0,0:00:55.38,0:00:55.43,Default,,0,0,0,,{\an2}Kreativität und e
+Dialogue: 0,0:00:55.43,0:00:55.48,Default,,0,0,0,,{\an2}Kreativität und er
+Dialogue: 0,0:00:55.48,0:00:55.53,Default,,0,0,0,,{\an2}Kreativität und erm
+Dialogue: 0,0:00:55.53,0:00:55.58,Default,,0,0,0,,{\an2}Kreativität und ermö
+Dialogue: 0,0:00:55.58,0:00:55.64,Default,,0,0,0,,{\an2}Kreativität und ermög
+Dialogue: 0,0:00:55.64,0:00:55.69,Default,,0,0,0,,{\an2}Kreativität und ermögl
+Dialogue: 0,0:00:55.69,0:00:55.74,Default,,0,0,0,,{\an2}Kreativität und ermögli
+Dialogue: 0,0:00:55.74,0:00:55.79,Default,,0,0,0,,{\an2}Kreativität und ermöglic
+Dialogue: 0,0:00:55.79,0:00:55.84,Default,,0,0,0,,{\an2}Kreativität und ermöglich
+Dialogue: 0,0:00:55.84,0:00:55.89,Default,,0,0,0,,{\an2}Kreativität und ermöglicht
+Dialogue: 0,0:00:55.89,0:00:55.94,Default,,0,0,0,,{\an2}Kreativität und ermöglicht 
+Dialogue: 0,0:00:55.94,0:00:55.99,Default,,0,0,0,,{\an2}Kreativität und ermöglicht e
+Dialogue: 0,0:00:55.99,0:00:56.05,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es
+Dialogue: 0,0:00:56.05,0:00:56.10,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es,
+Dialogue: 0,0:00:56.10,0:00:56.15,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es, 
+Dialogue: 0,0:00:56.15,0:00:56.20,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es, k
+Dialogue: 0,0:00:56.20,0:00:56.25,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es, ko
+Dialogue: 0,0:00:56.25,0:00:56.30,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es, kom
+Dialogue: 0,0:00:56.30,0:00:56.35,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es,\\Nkomp
+Dialogue: 0,0:00:56.35,0:00:56.41,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es,\\Nkompl
+Dialogue: 0,0:00:56.41,0:00:56.46,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es,\\Nkomple
+Dialogue: 0,0:00:56.46,0:00:56.51,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es,\\Nkomplex
+Dialogue: 0,0:00:56.51,0:00:56.56,Default,,0,0,0,,{\an2}Kreativität und ermöglicht es,\\Nkomplexe
+Dialogue: 0,0:00:56.56,0:00:56.62,Default,,0,0,0,,{\an2}t
+Dialogue: 0,0:00:56.62,0:00:56.69,Default,,0,0,0,,{\an2}te
+Dialogue: 0,0:00:56.69,0:00:56.75,Default,,0,0,0,,{\an2}tec
+Dialogue: 0,0:00:56.75,0:00:56.82,Default,,0,0,0,,{\an2}tech
+Dialogue: 0,0:00:56.82,0:00:56.88,Default,,0,0,0,,{\an2}techn
+Dialogue: 0,0:00:56.88,0:00:56.95,Default,,0,0,0,,{\an2}techni
+Dialogue: 0,0:00:56.95,0:00:57.01,Default,,0,0,0,,{\an2}technis
+Dialogue: 0,0:00:57.01,0:00:57.08,Default,,0,0,0,,{\an2}technisc
+Dialogue: 0,0:00:57.08,0:00:57.14,Default,,0,0,0,,{\an2}technisch
+Dialogue: 0,0:00:57.14,0:00:57.20,Default,,0,0,0,,{\an2}technische
+Dialogue: 0,0:00:57.20,0:00:57.27,Default,,0,0,0,,{\an2}technische 
+Dialogue: 0,0:00:57.27,0:00:57.33,Default,,0,0,0,,{\an2}technische K
+Dialogue: 0,0:00:57.33,0:00:57.40,Default,,0,0,0,,{\an2}technische Ko
+Dialogue: 0,0:00:57.40,0:00:57.46,Default,,0,0,0,,{\an2}technische Kon
+Dialogue: 0,0:00:57.46,0:00:57.53,Default,,0,0,0,,{\an2}technische Konz
+Dialogue: 0,0:00:57.53,0:00:57.59,Default,,0,0,0,,{\an2}technische Konze
+Dialogue: 0,0:00:57.59,0:00:57.66,Default,,0,0,0,,{\an2}technische Konzep
+Dialogue: 0,0:00:57.66,0:00:57.72,Default,,0,0,0,,{\an2}technische Konzept
+Dialogue: 0,0:00:57.72,0:00:57.78,Default,,0,0,0,,{\an2}technische Konzepte
+Dialogue: 0,0:00:57.78,0:00:57.85,Default,,0,0,0,,{\an2}technische Konzepte 
+Dialogue: 0,0:00:57.85,0:00:57.91,Default,,0,0,0,,{\an2}technische Konzepte e
+Dialogue: 0,0:00:57.91,0:00:57.98,Default,,0,0,0,,{\an2}technische Konzepte ei
+Dialogue: 0,0:00:57.98,0:00:58.04,Default,,0,0,0,,{\an2}technische Konzepte ein
+Dialogue: 0,0:00:58.04,0:00:58.11,Default,,0,0,0,,{\an2}technische Konzepte einf
+Dialogue: 0,0:00:58.11,0:00:58.17,Default,,0,0,0,,{\an2}technische Konzepte einfa
+Dialogue: 0,0:00:58.17,0:00:58.24,Default,,0,0,0,,{\an2}technische Konzepte einfac
+Dialogue: 0,0:00:58.24,0:00:58.30,Default,,0,0,0,,{\an2}technische Konzepte einfach
+Dialogue: 0,0:00:58.30,0:00:58.37,Default,,0,0,0,,{\an2}technische Konzepte einfach 
+Dialogue: 0,0:00:58.37,0:00:58.43,Default,,0,0,0,,{\an2}technische Konzepte einfach u
+Dialogue: 0,0:00:58.43,0:00:58.49,Default,,0,0,0,,{\an2}technische Konzepte einfach un
+Dialogue: 0,0:00:58.49,0:00:58.56,Default,,0,0,0,,{\an2}technische Konzepte einfach und
+Dialogue: 0,0:00:58.56,0:00:58.61,Default,,0,0,0,,{\an2}v
+Dialogue: 0,0:00:58.61,0:00:58.66,Default,,0,0,0,,{\an2}ve
+Dialogue: 0,0:00:58.66,0:00:58.71,Default,,0,0,0,,{\an2}ver
+Dialogue: 0,0:00:58.71,0:00:58.76,Default,,0,0,0,,{\an2}vers
+Dialogue: 0,0:00:58.76,0:00:58.81,Default,,0,0,0,,{\an2}verst
+Dialogue: 0,0:00:58.81,0:00:58.86,Default,,0,0,0,,{\an2}verstä
+Dialogue: 0,0:00:58.86,0:00:58.91,Default,,0,0,0,,{\an2}verstän
+Dialogue: 0,0:00:58.91,0:00:58.96,Default,,0,0,0,,{\an2}verständ
+Dialogue: 0,0:00:58.96,0:00:59.01,Default,,0,0,0,,{\an2}verständl
+Dialogue: 0,0:00:59.01,0:00:59.06,Default,,0,0,0,,{\an2}verständli
+Dialogue: 0,0:00:59.06,0:00:59.11,Default,,0,0,0,,{\an2}verständlic
+Dialogue: 0,0:00:59.11,0:00:59.16,Default,,0,0,0,,{\an2}verständlich
+Dialogue: 0,0:00:59.16,0:00:59.21,Default,,0,0,0,,{\an2}verständlich 
+Dialogue: 0,0:00:59.21,0:00:59.26,Default,,0,0,0,,{\an2}verständlich d
+Dialogue: 0,0:00:59.26,0:00:59.31,Default,,0,0,0,,{\an2}verständlich da
+Dialogue: 0,0:00:59.31,0:00:59.36,Default,,0,0,0,,{\an2}verständlich dar
+Dialogue: 0,0:00:59.36,0:00:59.41,Default,,0,0,0,,{\an2}verständlich darz
+Dialogue: 0,0:00:59.41,0:00:59.46,Default,,0,0,0,,{\an2}verständlich darzu
+Dialogue: 0,0:00:59.46,0:00:59.51,Default,,0,0,0,,{\an2}verständlich darzus
+Dialogue: 0,0:00:59.51,0:00:59.56,Default,,0,0,0,,{\an2}verständlich darzust
+Dialogue: 0,0:00:59.56,0:00:59.61,Default,,0,0,0,,{\an2}verständlich darzuste
+Dialogue: 0,0:00:59.61,0:00:59.66,Default,,0,0,0,,{\an2}verständlich darzustel
+Dialogue: 0,0:00:59.66,0:00:59.71,Default,,0,0,0,,{\an2}verständlich darzustell
+Dialogue: 0,0:00:59.71,0:00:59.76,Default,,0,0,0,,{\an2}verständlich darzustelle
+Dialogue: 0,0:00:59.76,0:00:59.81,Default,,0,0,0,,{\an2}verständlich darzustellen
+Dialogue: 0,0:00:59.81,0:00:59.86,Default,,0,0,0,,{\an2}verständlich darzustellen.
+Dialogue: 0,0:00:59.86,0:00:59.91,Default,,0,0,0,,{\an2}verständlich darzustellen. 
+Dialogue: 0,0:00:59.91,0:00:59.96,Default,,0,0,0,,{\an2}verständlich darzustellen. E
+Dialogue: 0,0:00:59.96,0:01:00.01,Default,,0,0,0,,{\an2}verständlich darzustellen. Es
+Dialogue: 0,0:01:00.01,0:01:00.06,Default,,0,0,0,,{\an2}verständlich darzustellen. Es 
+Dialogue: 0,0:01:00.06,0:01:00.11,Default,,0,0,0,,{\an2}verständlich darzustellen. Es i
+Dialogue: 0,0:01:00.11,0:01:00.16,Default,,0,0,0,,{\an2}verständlich darzustellen. Es is
+Dialogue: 0,0:01:00.16,0:01:00.21,Default,,0,0,0,,{\an2}verständlich darzustellen. Es ist
+Dialogue: 0,0:01:00.21,0:01:00.26,Default,,0,0,0,,{\an2}verständlich darzustellen. Es ist 
+Dialogue: 0,0:01:00.26,0:01:00.31,Default,,0,0,0,,{\an2}verständlich darzustellen. Es ist\\Nj
+Dialogue: 0,0:01:00.31,0:01:00.36,Default,,0,0,0,,{\an2}verständlich darzustellen. Es ist\\Nje
+Dialogue: 0,0:01:00.36,0:01:00.41,Default,,0,0,0,,{\an2}verständlich darzustellen. Es ist\\Njed
+Dialogue: 0,0:01:00.41,0:01:00.46,Default,,0,0,0,,{\an2}verständlich darzustellen. Es ist\\Njedo
+Dialogue: 0,0:01:00.46,0:01:00.51,Default,,0,0,0,,{\an2}verständlich darzustellen. Es ist\\Njedoc
+Dialogue: 0,0:01:00.51,0:01:00.56,Default,,0,0,0,,{\an2}verständlich darzustellen. Es ist\\Njedoch
+Dialogue: 0,0:01:00.56,0:01:00.62,Default,,0,0,0,,{\an2}w
+Dialogue: 0,0:01:00.62,0:01:00.68,Default,,0,0,0,,{\an2}wi
+Dialogue: 0,0:01:00.68,0:01:00.74,Default,,0,0,0,,{\an2}wic
+Dialogue: 0,0:01:00.74,0:01:00.80,Default,,0,0,0,,{\an2}wich
+Dialogue: 0,0:01:00.80,0:01:00.86,Default,,0,0,0,,{\an2}wicht
+Dialogue: 0,0:01:00.86,0:01:00.92,Default,,0,0,0,,{\an2}wichti
+Dialogue: 0,0:01:00.92,0:01:00.98,Default,,0,0,0,,{\an2}wichtig
+Dialogue: 0,0:01:00.98,0:01:01.04,Default,,0,0,0,,{\an2}wichtig 
+Dialogue: 0,0:01:01.04,0:01:01.10,Default,,0,0,0,,{\an2}wichtig z
+Dialogue: 0,0:01:01.10,0:01:01.16,Default,,0,0,0,,{\an2}wichtig zu
+Dialogue: 0,0:01:01.16,0:01:01.22,Default,,0,0,0,,{\an2}wichtig zu 
+Dialogue: 0,0:01:01.22,0:01:01.28,Default,,0,0,0,,{\an2}wichtig zu b
+Dialogue: 0,0:01:01.28,0:01:01.34,Default,,0,0,0,,{\an2}wichtig zu be
+Dialogue: 0,0:01:01.34,0:01:01.40,Default,,0,0,0,,{\an2}wichtig zu bet
+Dialogue: 0,0:01:01.40,0:01:01.46,Default,,0,0,0,,{\an2}wichtig zu beto
+Dialogue: 0,0:01:01.46,0:01:01.52,Default,,0,0,0,,{\an2}wichtig zu beton
+Dialogue: 0,0:01:01.52,0:01:01.58,Default,,0,0,0,,{\an2}wichtig zu betone
+Dialogue: 0,0:01:01.58,0:01:01.64,Default,,0,0,0,,{\an2}wichtig zu betonen
+Dialogue: 0,0:01:01.64,0:01:01.70,Default,,0,0,0,,{\an2}wichtig zu betonen,
+Dialogue: 0,0:01:01.70,0:01:01.76,Default,,0,0,0,,{\an2}wichtig zu betonen, 
+Dialogue: 0,0:01:01.76,0:01:01.82,Default,,0,0,0,,{\an2}wichtig zu betonen, d
+Dialogue: 0,0:01:01.82,0:01:01.88,Default,,0,0,0,,{\an2}wichtig zu betonen, da
+Dialogue: 0,0:01:01.88,0:01:01.94,Default,,0,0,0,,{\an2}wichtig zu betonen, das
+Dialogue: 0,0:01:01.94,0:01:02.00,Default,,0,0,0,,{\an2}wichtig zu betonen, dass
+Dialogue: 0,0:01:02.00,0:01:02.06,Default,,0,0,0,,{\an2}wichtig zu betonen, dass 
+Dialogue: 0,0:01:02.06,0:01:02.12,Default,,0,0,0,,{\an2}wichtig zu betonen, dass d
+Dialogue: 0,0:01:02.12,0:01:02.18,Default,,0,0,0,,{\an2}wichtig zu betonen, dass di
+Dialogue: 0,0:01:02.18,0:01:02.24,Default,,0,0,0,,{\an2}wichtig zu betonen, dass die
+Dialogue: 0,0:01:02.24,0:01:02.30,Default,,0,0,0,,{\an2}wichtig zu betonen, dass dies
+Dialogue: 0,0:01:02.30,0:01:02.36,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese
+Dialogue: 0,0:01:02.36,0:01:02.42,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese 
+Dialogue: 0,0:01:02.42,0:01:02.48,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese D
+Dialogue: 0,0:01:02.48,0:01:02.54,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese Do
+Dialogue: 0,0:01:02.54,0:01:02.60,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese Dom
+Dialogue: 0,0:01:02.60,0:01:02.66,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese\\NDomä
+Dialogue: 0,0:01:02.66,0:01:02.72,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese\\NDomän
+Dialogue: 0,0:01:02.72,0:01:02.78,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese\\NDomäne
+Dialogue: 0,0:01:02.78,0:01:02.84,Default,,0,0,0,,{\an2}wichtig zu betonen, dass diese\\NDomänen
+Dialogue: 0,0:01:02.84,0:01:02.90,Default,,0,0,0,,{\an2}n
+Dialogue: 0,0:01:02.90,0:01:02.96,Default,,0,0,0,,{\an2}ni
+Dialogue: 0,0:01:02.96,0:01:03.01,Default,,0,0,0,,{\an2}nic
+Dialogue: 0,0:01:03.01,0:01:03.07,Default,,0,0,0,,{\an2}nich
+Dialogue: 0,0:01:03.07,0:01:03.12,Default,,0,0,0,,{\an2}nicht
+Dialogue: 0,0:01:03.12,0:01:03.18,Default,,0,0,0,,{\an2}nicht 
+Dialogue: 0,0:01:03.18,0:01:03.23,Default,,0,0,0,,{\an2}nicht f
+Dialogue: 0,0:01:03.23,0:01:03.29,Default,,0,0,0,,{\an2}nicht fü
+Dialogue: 0,0:01:03.29,0:01:03.35,Default,,0,0,0,,{\an2}nicht für
+Dialogue: 0,0:01:03.35,0:01:03.40,Default,,0,0,0,,{\an2}nicht für 
+Dialogue: 0,0:01:03.40,0:01:03.46,Default,,0,0,0,,{\an2}nicht für d
+Dialogue: 0,0:01:03.46,0:01:03.51,Default,,0,0,0,,{\an2}nicht für de
+Dialogue: 0,0:01:03.51,0:01:03.57,Default,,0,0,0,,{\an2}nicht für den
+Dialogue: 0,0:01:03.57,0:01:03.62,Default,,0,0,0,,{\an2}nicht für den 
+Dialogue: 0,0:01:03.62,0:01:03.68,Default,,0,0,0,,{\an2}nicht für den p
+Dialogue: 0,0:01:03.68,0:01:03.74,Default,,0,0,0,,{\an2}nicht für den pr
+Dialogue: 0,0:01:03.74,0:01:03.79,Default,,0,0,0,,{\an2}nicht für den pro
+Dialogue: 0,0:01:03.79,0:01:03.85,Default,,0,0,0,,{\an2}nicht für den prod
+Dialogue: 0,0:01:03.85,0:01:03.90,Default,,0,0,0,,{\an2}nicht für den produ
+Dialogue: 0,0:01:03.90,0:01:03.96,Default,,0,0,0,,{\an2}nicht für den produk
+Dialogue: 0,0:01:03.96,0:01:04.01,Default,,0,0,0,,{\an2}nicht für den produkt
+Dialogue: 0,0:01:04.01,0:01:04.07,Default,,0,0,0,,{\an2}nicht für den produkti
+Dialogue: 0,0:01:04.07,0:01:04.13,Default,,0,0,0,,{\an2}nicht für den produktiv
+Dialogue: 0,0:01:04.13,0:01:04.18,Default,,0,0,0,,{\an2}nicht für den produktive
+Dialogue: 0,0:01:04.18,0:01:04.24,Default,,0,0,0,,{\an2}nicht für den produktiven
+Dialogue: 0,0:01:04.24,0:01:04.29,Default,,0,0,0,,{\an2}nicht für den produktiven 
+Dialogue: 0,0:01:04.29,0:01:04.35,Default,,0,0,0,,{\an2}nicht für den produktiven E
+Dialogue: 0,0:01:04.35,0:01:04.40,Default,,0,0,0,,{\an2}nicht für den produktiven Ei
+Dialogue: 0,0:01:04.40,0:01:04.46,Default,,0,0,0,,{\an2}nicht für den produktiven Ein
+Dialogue: 0,0:01:04.46,0:01:04.52,Default,,0,0,0,,{\an2}nicht für den produktiven Eins
+Dialogue: 0,0:01:04.52,0:01:04.57,Default,,0,0,0,,{\an2}nicht für den produktiven Einsa
+Dialogue: 0,0:01:04.57,0:01:04.63,Default,,0,0,0,,{\an2}nicht für den produktiven Einsat
+Dialogue: 0,0:01:04.63,0:01:04.68,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz
+Dialogue: 0,0:01:04.68,0:01:04.74,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz 
+Dialogue: 0,0:01:04.74,0:01:04.79,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz\\Ng
+Dialogue: 0,0:01:04.79,0:01:04.85,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz\\Nge
+Dialogue: 0,0:01:04.85,0:01:04.91,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz\\Nged
+Dialogue: 0,0:01:04.91,0:01:04.96,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz\\Ngeda
+Dialogue: 0,0:01:04.96,0:01:05.02,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz\\Ngedac
+Dialogue: 0,0:01:05.02,0:01:05.07,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz\\Ngedach
+Dialogue: 0,0:01:05.07,0:01:05.13,Default,,0,0,0,,{\an2}nicht für den produktiven Einsatz\\Ngedacht
+Dialogue: 0,0:01:05.13,0:01:05.19,Default,,0,0,0,,{\an2}s
+Dialogue: 0,0:01:05.19,0:01:05.25,Default,,0,0,0,,{\an2}si
+Dialogue: 0,0:01:05.25,0:01:05.30,Default,,0,0,0,,{\an2}sin
+Dialogue: 0,0:01:05.30,0:01:05.36,Default,,0,0,0,,{\an2}sind
+Dialogue: 0,0:01:05.36,0:01:05.42,Default,,0,0,0,,{\an2}sind.
+Dialogue: 0,0:01:05.42,0:01:05.48,Default,,0,0,0,,{\an2}sind. 
+Dialogue: 0,0:01:05.48,0:01:05.54,Default,,0,0,0,,{\an2}sind. D
+Dialogue: 0,0:01:05.54,0:01:05.60,Default,,0,0,0,,{\an2}sind. De
+Dialogue: 0,0:01:05.60,0:01:05.66,Default,,0,0,0,,{\an2}sind. Der
+Dialogue: 0,0:01:05.66,0:01:05.71,Default,,0,0,0,,{\an2}sind. Der 
+Dialogue: 0,0:01:05.71,0:01:05.77,Default,,0,0,0,,{\an2}sind. Der E
+Dialogue: 0,0:01:05.77,0:01:05.83,Default,,0,0,0,,{\an2}sind. Der Ei
+Dialogue: 0,0:01:05.83,0:01:05.89,Default,,0,0,0,,{\an2}sind. Der Ein
+Dialogue: 0,0:01:05.89,0:01:05.95,Default,,0,0,0,,{\an2}sind. Der Eins
+Dialogue: 0,0:01:05.95,0:01:06.01,Default,,0,0,0,,{\an2}sind. Der Einsa
+Dialogue: 0,0:01:06.01,0:01:06.07,Default,,0,0,0,,{\an2}sind. Der Einsat
+Dialogue: 0,0:01:06.07,0:01:06.12,Default,,0,0,0,,{\an2}sind. Der Einsatz
+Dialogue: 0,0:01:06.12,0:01:06.18,Default,,0,0,0,,{\an2}sind. Der Einsatz 
+Dialogue: 0,0:01:06.18,0:01:06.24,Default,,0,0,0,,{\an2}sind. Der Einsatz i
+Dialogue: 0,0:01:06.24,0:01:06.30,Default,,0,0,0,,{\an2}sind. Der Einsatz in
+Dialogue: 0,0:01:06.30,0:01:06.36,Default,,0,0,0,,{\an2}sind. Der Einsatz in 
+Dialogue: 0,0:01:06.36,0:01:06.42,Default,,0,0,0,,{\an2}sind. Der Einsatz in r
+Dialogue: 0,0:01:06.42,0:01:06.48,Default,,0,0,0,,{\an2}sind. Der Einsatz in re
+Dialogue: 0,0:01:06.48,0:01:06.53,Default,,0,0,0,,{\an2}sind. Der Einsatz in rea
+Dialogue: 0,0:01:06.53,0:01:06.59,Default,,0,0,0,,{\an2}sind. Der Einsatz in real
+Dialogue: 0,0:01:06.59,0:01:06.65,Default,,0,0,0,,{\an2}sind. Der Einsatz in reale
+Dialogue: 0,0:01:06.65,0:01:06.71,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen
+Dialogue: 0,0:01:06.71,0:01:06.77,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen 
+Dialogue: 0,0:01:06.77,0:01:06.83,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen A
+Dialogue: 0,0:01:06.83,0:01:06.89,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen An
+Dialogue: 0,0:01:06.89,0:01:06.94,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen Anw
+Dialogue: 0,0:01:06.94,0:01:07.00,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen Anwe
+Dialogue: 0,0:01:07.00,0:01:07.06,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen Anwen
+Dialogue: 0,0:01:07.06,0:01:07.12,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen Anwend
+Dialogue: 0,0:01:07.12,0:01:07.18,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen\\NAnwendu
+Dialogue: 0,0:01:07.18,0:01:07.24,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen\\NAnwendun
+Dialogue: 0,0:01:07.24,0:01:07.30,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen\\NAnwendung
+Dialogue: 0,0:01:07.30,0:01:07.35,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen\\NAnwendunge
+Dialogue: 0,0:01:07.35,0:01:07.41,Default,,0,0,0,,{\an2}sind. Der Einsatz in realen\\NAnwendungen
+Dialogue: 0,0:01:07.41,0:01:07.47,Default,,0,0,0,,{\an2}k
+Dialogue: 0,0:01:07.47,0:01:07.53,Default,,0,0,0,,{\an2}ka
+Dialogue: 0,0:01:07.53,0:01:07.59,Default,,0,0,0,,{\an2}kan
+Dialogue: 0,0:01:07.59,0:01:07.65,Default,,0,0,0,,{\an2}kann
+Dialogue: 0,0:01:07.65,0:01:07.71,Default,,0,0,0,,{\an2}kann 
+Dialogue: 0,0:01:07.71,0:01:07.77,Default,,0,0,0,,{\an2}kann z
+Dialogue: 0,0:01:07.77,0:01:07.82,Default,,0,0,0,,{\an2}kann zu
+Dialogue: 0,0:01:07.82,0:01:07.88,Default,,0,0,0,,{\an2}kann zu 
+Dialogue: 0,0:01:07.88,0:01:07.94,Default,,0,0,0,,{\an2}kann zu V
+Dialogue: 0,0:01:07.94,0:01:08.00,Default,,0,0,0,,{\an2}kann zu Ve
+Dialogue: 0,0:01:08.00,0:01:08.06,Default,,0,0,0,,{\an2}kann zu Ver
+Dialogue: 0,0:01:08.06,0:01:08.12,Default,,0,0,0,,{\an2}kann zu Verw
+Dialogue: 0,0:01:08.12,0:01:08.18,Default,,0,0,0,,{\an2}kann zu Verwi
+Dialogue: 0,0:01:08.18,0:01:08.24,Default,,0,0,0,,{\an2}kann zu Verwir
+Dialogue: 0,0:01:08.24,0:01:08.30,Default,,0,0,0,,{\an2}kann zu Verwirr
+Dialogue: 0,0:01:08.30,0:01:08.35,Default,,0,0,0,,{\an2}kann zu Verwirru
+Dialogue: 0,0:01:08.35,0:01:08.41,Default,,0,0,0,,{\an2}kann zu Verwirrun
+Dialogue: 0,0:01:08.41,0:01:08.47,Default,,0,0,0,,{\an2}kann zu Verwirrung
+Dialogue: 0,0:01:08.47,0:01:08.53,Default,,0,0,0,,{\an2}kann zu Verwirrung 
+Dialogue: 0,0:01:08.53,0:01:08.59,Default,,0,0,0,,{\an2}kann zu Verwirrung u
+Dialogue: 0,0:01:08.59,0:01:08.65,Default,,0,0,0,,{\an2}kann zu Verwirrung un
+Dialogue: 0,0:01:08.65,0:01:08.71,Default,,0,0,0,,{\an2}kann zu Verwirrung und
+Dialogue: 0,0:01:08.71,0:01:08.77,Default,,0,0,0,,{\an2}kann zu Verwirrung und 
+Dialogue: 0,0:01:08.77,0:01:08.82,Default,,0,0,0,,{\an2}kann zu Verwirrung und r
+Dialogue: 0,0:01:08.82,0:01:08.88,Default,,0,0,0,,{\an2}kann zu Verwirrung und re
+Dialogue: 0,0:01:08.88,0:01:08.94,Default,,0,0,0,,{\an2}kann zu Verwirrung und rec
+Dialogue: 0,0:01:08.94,0:01:09.00,Default,,0,0,0,,{\an2}kann zu Verwirrung und rech
+Dialogue: 0,0:01:09.00,0:01:09.06,Default,,0,0,0,,{\an2}kann zu Verwirrung und recht
+Dialogue: 0,0:01:09.06,0:01:09.12,Default,,0,0,0,,{\an2}kann zu Verwirrung und rechtl
+Dialogue: 0,0:01:09.12,0:01:09.18,Default,,0,0,0,,{\an2}kann zu Verwirrung und rechtli
+Dialogue: 0,0:01:09.18,0:01:09.24,Default,,0,0,0,,{\an2}kann zu Verwirrung und rechtlic
+Dialogue: 0,0:01:09.24,0:01:09.30,Default,,0,0,0,,{\an2}kann zu Verwirrung und rechtlich
+Dialogue: 0,0:01:09.30,0:01:09.35,Default,,0,0,0,,{\an2}kann zu Verwirrung und rechtliche
+Dialogue: 0,0:01:09.35,0:01:09.41,Default,,0,0,0,,{\an2}kann zu Verwirrung und rechtlichen
+Dialogue: 0,0:01:09.41,0:01:09.47,Default,,0,0,0,,{\an2}P
+Dialogue: 0,0:01:09.47,0:01:09.52,Default,,0,0,0,,{\an2}Pr
+Dialogue: 0,0:01:09.52,0:01:09.58,Default,,0,0,0,,{\an2}Pro
+Dialogue: 0,0:01:09.58,0:01:09.64,Default,,0,0,0,,{\an2}Prob
+Dialogue: 0,0:01:09.64,0:01:09.69,Default,,0,0,0,,{\an2}Probl
+Dialogue: 0,0:01:09.69,0:01:09.75,Default,,0,0,0,,{\an2}Proble
+Dialogue: 0,0:01:09.75,0:01:09.80,Default,,0,0,0,,{\an2}Problem
+Dialogue: 0,0:01:09.80,0:01:09.86,Default,,0,0,0,,{\an2}Probleme
+Dialogue: 0,0:01:09.86,0:01:09.91,Default,,0,0,0,,{\an2}Problemen
+Dialogue: 0,0:01:09.91,0:01:09.97,Default,,0,0,0,,{\an2}Problemen 
+Dialogue: 0,0:01:09.97,0:01:10.02,Default,,0,0,0,,{\an2}Problemen f
+Dialogue: 0,0:01:10.02,0:01:10.08,Default,,0,0,0,,{\an2}Problemen fü
+Dialogue: 0,0:01:10.08,0:01:10.14,Default,,0,0,0,,{\an2}Problemen füh
+Dialogue: 0,0:01:10.14,0:01:10.19,Default,,0,0,0,,{\an2}Problemen führ
+Dialogue: 0,0:01:10.19,0:01:10.25,Default,,0,0,0,,{\an2}Problemen führe
+Dialogue: 0,0:01:10.25,0:01:10.30,Default,,0,0,0,,{\an2}Problemen führen
+Dialogue: 0,0:01:10.30,0:01:10.36,Default,,0,0,0,,{\an2}Problemen führen.
+Dialogue: 0,0:01:10.36,0:01:10.41,Default,,0,0,0,,{\an2}Problemen führen. 
+Dialogue: 0,0:01:10.41,0:01:10.47,Default,,0,0,0,,{\an2}Problemen führen. D
+Dialogue: 0,0:01:10.47,0:01:10.52,Default,,0,0,0,,{\an2}Problemen führen. Di
+Dialogue: 0,0:01:10.52,0:01:10.58,Default,,0,0,0,,{\an2}Problemen führen. Die
+Dialogue: 0,0:01:10.58,0:01:10.64,Default,,0,0,0,,{\an2}Problemen führen. Die 
+Dialogue: 0,0:01:10.64,0:01:10.69,Default,,0,0,0,,{\an2}Problemen führen. Die V
+Dialogue: 0,0:01:10.69,0:01:10.75,Default,,0,0,0,,{\an2}Problemen führen. Die Ve
+Dialogue: 0,0:01:10.75,0:01:10.80,Default,,0,0,0,,{\an2}Problemen führen. Die Ver
+Dialogue: 0,0:01:10.80,0:01:10.86,Default,,0,0,0,,{\an2}Problemen führen. Die Verw
+Dialogue: 0,0:01:10.86,0:01:10.91,Default,,0,0,0,,{\an2}Problemen führen. Die Verwe
+Dialogue: 0,0:01:10.91,0:01:10.97,Default,,0,0,0,,{\an2}Problemen führen. Die Verwen
+Dialogue: 0,0:01:10.97,0:01:11.02,Default,,0,0,0,,{\an2}Problemen führen. Die Verwend
+Dialogue: 0,0:01:11.02,0:01:11.08,Default,,0,0,0,,{\an2}Problemen führen. Die Verwendu
+Dialogue: 0,0:01:11.08,0:01:11.14,Default,,0,0,0,,{\an2}Problemen führen. Die Verwendun
+Dialogue: 0,0:01:11.14,0:01:11.19,Default,,0,0,0,,{\an2}Problemen führen. Die Verwendung
+Dialogue: 0,0:01:11.19,0:01:11.25,Default,,0,0,0,,{\an2}Problemen führen. Die Verwendung 
+Dialogue: 0,0:01:11.25,0:01:11.30,Default,,0,0,0,,{\an2}Problemen führen. Die Verwendung v
+Dialogue: 0,0:01:11.30,0:01:11.36,Default,,0,0,0,,{\an2}Problemen führen. Die Verwendung\\Nvo
+Dialogue: 0,0:01:11.36,0:01:11.41,Default,,0,0,0,,{\an2}Problemen führen. Die Verwendung\\Nvon
+Dialogue: 0,0:01:11.41,0:01:11.46,Default,,0,0,0,,{\an2}B
+Dialogue: 0,0:01:11.46,0:01:11.51,Default,,0,0,0,,{\an2}Be
+Dialogue: 0,0:01:11.51,0:01:11.56,Default,,0,0,0,,{\an2}Bei
+Dialogue: 0,0:01:11.56,0:01:11.60,Default,,0,0,0,,{\an2}Beis
+Dialogue: 0,0:01:11.60,0:01:11.65,Default,,0,0,0,,{\an2}Beisp
+Dialogue: 0,0:01:11.65,0:01:11.70,Default,,0,0,0,,{\an2}Beispi
+Dialogue: 0,0:01:11.70,0:01:11.75,Default,,0,0,0,,{\an2}Beispie
+Dialogue: 0,0:01:11.75,0:01:11.79,Default,,0,0,0,,{\an2}Beispiel
+Dialogue: 0,0:01:11.79,0:01:11.84,Default,,0,0,0,,{\an2}Beispiel-
+Dialogue: 0,0:01:11.84,0:01:11.89,Default,,0,0,0,,{\an2}Beispiel-D
+Dialogue: 0,0:01:11.89,0:01:11.94,Default,,0,0,0,,{\an2}Beispiel-Do
+Dialogue: 0,0:01:11.94,0:01:11.98,Default,,0,0,0,,{\an2}Beispiel-Dom
+Dialogue: 0,0:01:11.98,0:01:12.03,Default,,0,0,0,,{\an2}Beispiel-Domä
+Dialogue: 0,0:01:12.03,0:01:12.08,Default,,0,0,0,,{\an2}Beispiel-Domän
+Dialogue: 0,0:01:12.08,0:01:12.13,Default,,0,0,0,,{\an2}Beispiel-Domäne
+Dialogue: 0,0:01:12.13,0:01:12.17,Default,,0,0,0,,{\an2}Beispiel-Domänen
+Dialogue: 0,0:01:12.17,0:01:12.22,Default,,0,0,0,,{\an2}Beispiel-Domänen 
+Dialogue: 0,0:01:12.22,0:01:12.27,Default,,0,0,0,,{\an2}Beispiel-Domänen i
+Dialogue: 0,0:01:12.27,0:01:12.32,Default,,0,0,0,,{\an2}Beispiel-Domänen in
+Dialogue: 0,0:01:12.32,0:01:12.37,Default,,0,0,0,,{\an2}Beispiel-Domänen in 
+Dialogue: 0,0:01:12.37,0:01:12.41,Default,,0,0,0,,{\an2}Beispiel-Domänen in p
+Dialogue: 0,0:01:12.41,0:01:12.46,Default,,0,0,0,,{\an2}Beispiel-Domänen in pr
+Dialogue: 0,0:01:12.46,0:01:12.51,Default,,0,0,0,,{\an2}Beispiel-Domänen in pro
+Dialogue: 0,0:01:12.51,0:01:12.56,Default,,0,0,0,,{\an2}Beispiel-Domänen in prod
+Dialogue: 0,0:01:12.56,0:01:12.60,Default,,0,0,0,,{\an2}Beispiel-Domänen in produ
+Dialogue: 0,0:01:12.60,0:01:12.65,Default,,0,0,0,,{\an2}Beispiel-Domänen in produk
+Dialogue: 0,0:01:12.65,0:01:12.70,Default,,0,0,0,,{\an2}Beispiel-Domänen in produkt
+Dialogue: 0,0:01:12.70,0:01:12.75,Default,,0,0,0,,{\an2}Beispiel-Domänen in produkti
+Dialogue: 0,0:01:12.75,0:01:12.79,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiv
+Dialogue: 0,0:01:12.79,0:01:12.84,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktive
+Dialogue: 0,0:01:12.84,0:01:12.89,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven
+Dialogue: 0,0:01:12.89,0:01:12.94,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven 
+Dialogue: 0,0:01:12.94,0:01:12.98,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven U
+Dialogue: 0,0:01:12.98,0:01:13.03,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven Um
+Dialogue: 0,0:01:13.03,0:01:13.08,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven\\NUmg
+Dialogue: 0,0:01:13.08,0:01:13.13,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven\\NUmge
+Dialogue: 0,0:01:13.13,0:01:13.17,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven\\NUmgeb
+Dialogue: 0,0:01:13.17,0:01:13.22,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven\\NUmgebu
+Dialogue: 0,0:01:13.22,0:01:13.27,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven\\NUmgebun
+Dialogue: 0,0:01:13.27,0:01:13.32,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven\\NUmgebung
+Dialogue: 0,0:01:13.32,0:01:13.37,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven\\NUmgebunge
+Dialogue: 0,0:01:13.37,0:01:13.41,Default,,0,0,0,,{\an2}Beispiel-Domänen in produktiven\\NUmgebungen
+Dialogue: 0,0:01:13.41,0:01:13.47,Default,,0,0,0,,{\an2}k
+Dialogue: 0,0:01:13.47,0:01:13.52,Default,,0,0,0,,{\an2}ka
+Dialogue: 0,0:01:13.52,0:01:13.58,Default,,0,0,0,,{\an2}kan
+Dialogue: 0,0:01:13.58,0:01:13.64,Default,,0,0,0,,{\an2}kann
+Dialogue: 0,0:01:13.64,0:01:13.69,Default,,0,0,0,,{\an2}kann 
+Dialogue: 0,0:01:13.69,0:01:13.75,Default,,0,0,0,,{\an2}kann e
+Dialogue: 0,0:01:13.75,0:01:13.80,Default,,0,0,0,,{\an2}kann er
+Dialogue: 0,0:01:13.80,0:01:13.86,Default,,0,0,0,,{\an2}kann ern
+Dialogue: 0,0:01:13.86,0:01:13.91,Default,,0,0,0,,{\an2}kann erns
+Dialogue: 0,0:01:13.91,0:01:13.97,Default,,0,0,0,,{\an2}kann ernst
+Dialogue: 0,0:01:13.97,0:01:14.03,Default,,0,0,0,,{\an2}kann ernsth
+Dialogue: 0,0:01:14.03,0:01:14.08,Default,,0,0,0,,{\an2}kann ernstha
+Dialogue: 0,0:01:14.08,0:01:14.14,Default,,0,0,0,,{\an2}kann ernsthaf
+Dialogue: 0,0:01:14.14,0:01:14.19,Default,,0,0,0,,{\an2}kann ernsthaft
+Dialogue: 0,0:01:14.19,0:01:14.25,Default,,0,0,0,,{\an2}kann ernsthafte
+Dialogue: 0,0:01:14.25,0:01:14.30,Default,,0,0,0,,{\an2}kann ernsthafte 
+Dialogue: 0,0:01:14.30,0:01:14.36,Default,,0,0,0,,{\an2}kann ernsthafte R
+Dialogue: 0,0:01:14.36,0:01:14.42,Default,,0,0,0,,{\an2}kann ernsthafte Ri
+Dialogue: 0,0:01:14.42,0:01:14.47,Default,,0,0,0,,{\an2}kann ernsthafte Ris
+Dialogue: 0,0:01:14.47,0:01:14.53,Default,,0,0,0,,{\an2}kann ernsthafte Risi
+Dialogue: 0,0:01:14.53,0:01:14.58,Default,,0,0,0,,{\an2}kann ernsthafte Risik
+Dialogue: 0,0:01:14.58,0:01:14.64,Default,,0,0,0,,{\an2}kann ernsthafte Risike
+Dialogue: 0,0:01:14.64,0:01:14.69,Default,,0,0,0,,{\an2}kann ernsthafte Risiken
+Dialogue: 0,0:01:14.69,0:01:14.75,Default,,0,0,0,,{\an2}kann ernsthafte Risiken 
+Dialogue: 0,0:01:14.75,0:01:14.81,Default,,0,0,0,,{\an2}kann ernsthafte Risiken m
+Dialogue: 0,0:01:14.81,0:01:14.86,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mi
+Dialogue: 0,0:01:14.86,0:01:14.92,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit
+Dialogue: 0,0:01:14.92,0:01:14.97,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit 
+Dialogue: 0,0:01:14.97,0:01:15.03,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit s
+Dialogue: 0,0:01:15.03,0:01:15.08,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit si
+Dialogue: 0,0:01:15.08,0:01:15.14,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sic
+Dialogue: 0,0:01:15.14,0:01:15.20,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich
+Dialogue: 0,0:01:15.20,0:01:15.25,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich 
+Dialogue: 0,0:01:15.25,0:01:15.31,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich b
+Dialogue: 0,0:01:15.31,0:01:15.36,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich\\Nbr
+Dialogue: 0,0:01:15.36,0:01:15.42,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich\\Nbri
+Dialogue: 0,0:01:15.42,0:01:15.48,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich\\Nbrin
+Dialogue: 0,0:01:15.48,0:01:15.53,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich\\Nbring
+Dialogue: 0,0:01:15.53,0:01:15.59,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich\\Nbringe
+Dialogue: 0,0:01:15.59,0:01:15.64,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich\\Nbringen
+Dialogue: 0,0:01:15.64,0:01:15.70,Default,,0,0,0,,{\an2}kann ernsthafte Risiken mit sich\\Nbringen.
+Dialogue: 0,0:01:15.70,0:01:15.76,Default,,0,0,0,,{\an2}Z
+Dialogue: 0,0:01:15.76,0:01:15.83,Default,,0,0,0,,{\an2}Zu
+Dialogue: 0,0:01:15.83,0:01:15.89,Default,,0,0,0,,{\an2}Zum
+Dialogue: 0,0:01:15.89,0:01:15.96,Default,,0,0,0,,{\an2}Zum 
+Dialogue: 0,0:01:15.96,0:01:16.02,Default,,0,0,0,,{\an2}Zum e
+Dialogue: 0,0:01:16.02,0:01:16.09,Default,,0,0,0,,{\an2}Zum ei
+Dialogue: 0,0:01:16.09,0:01:16.15,Default,,0,0,0,,{\an2}Zum ein
+Dialogue: 0,0:01:16.15,0:01:16.22,Default,,0,0,0,,{\an2}Zum eine
+Dialogue: 0,0:01:16.22,0:01:16.28,Default,,0,0,0,,{\an2}Zum einen
+Dialogue: 0,0:01:16.28,0:01:16.35,Default,,0,0,0,,{\an2}Zum einen 
+Dialogue: 0,0:01:16.35,0:01:16.41,Default,,0,0,0,,{\an2}Zum einen b
+Dialogue: 0,0:01:16.41,0:01:16.48,Default,,0,0,0,,{\an2}Zum einen be
+Dialogue: 0,0:01:16.48,0:01:16.54,Default,,0,0,0,,{\an2}Zum einen bes
+Dialogue: 0,0:01:16.54,0:01:16.61,Default,,0,0,0,,{\an2}Zum einen best
+Dialogue: 0,0:01:16.61,0:01:16.67,Default,,0,0,0,,{\an2}Zum einen beste
+Dialogue: 0,0:01:16.67,0:01:16.74,Default,,0,0,0,,{\an2}Zum einen besteh
+Dialogue: 0,0:01:16.74,0:01:16.80,Default,,0,0,0,,{\an2}Zum einen besteht
+Dialogue: 0,0:01:16.80,0:01:16.87,Default,,0,0,0,,{\an2}Zum einen besteht 
+Dialogue: 0,0:01:16.87,0:01:16.93,Default,,0,0,0,,{\an2}Zum einen besteht d
+Dialogue: 0,0:01:16.93,0:01:17.00,Default,,0,0,0,,{\an2}Zum einen besteht di
+Dialogue: 0,0:01:17.00,0:01:17.06,Default,,0,0,0,,{\an2}Zum einen besteht die
+Dialogue: 0,0:01:17.06,0:01:17.13,Default,,0,0,0,,{\an2}Zum einen besteht die 
+Dialogue: 0,0:01:17.13,0:01:17.19,Default,,0,0,0,,{\an2}Zum einen besteht die G
+Dialogue: 0,0:01:17.19,0:01:17.26,Default,,0,0,0,,{\an2}Zum einen besteht die Ge
+Dialogue: 0,0:01:17.26,0:01:17.32,Default,,0,0,0,,{\an2}Zum einen besteht die Gef
+Dialogue: 0,0:01:17.32,0:01:17.39,Default,,0,0,0,,{\an2}Zum einen besteht die Gefa
+Dialogue: 0,0:01:17.39,0:01:17.45,Default,,0,0,0,,{\an2}Zum einen besteht die Gefah
+Dialogue: 0,0:01:17.45,0:01:17.52,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr
+Dialogue: 0,0:01:17.52,0:01:17.58,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr,
+Dialogue: 0,0:01:17.58,0:01:17.65,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, 
+Dialogue: 0,0:01:17.65,0:01:17.71,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, d
+Dialogue: 0,0:01:17.71,0:01:17.78,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, da
+Dialogue: 0,0:01:17.78,0:01:17.84,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, das
+Dialogue: 0,0:01:17.84,0:01:17.91,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, dass
+Dialogue: 0,0:01:17.91,0:01:17.97,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, dass\\N
+Dialogue: 0,0:01:17.97,0:01:18.04,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, dass\\NN
+Dialogue: 0,0:01:18.04,0:01:18.10,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, dass\\NNu
+Dialogue: 0,0:01:18.10,0:01:18.17,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, dass\\NNut
+Dialogue: 0,0:01:18.17,0:01:18.23,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, dass\\NNutz
+Dialogue: 0,0:01:18.23,0:01:18.30,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, dass\\NNutze
+Dialogue: 0,0:01:18.30,0:01:18.36,Default,,0,0,0,,{\an2}Zum einen besteht die Gefahr, dass\\NNutzer
+Dialogue: 0,0:01:18.36,0:01:18.42,Default,,0,0,0,,{\an2}a
+Dialogue: 0,0:01:18.42,0:01:18.48,Default,,0,0,0,,{\an2}au
+Dialogue: 0,0:01:18.48,0:01:18.54,Default,,0,0,0,,{\an2}auf
+Dialogue: 0,0:01:18.54,0:01:18.60,Default,,0,0,0,,{\an2}auf 
+Dialogue: 0,0:01:18.60,0:01:18.66,Default,,0,0,0,,{\an2}auf d
+Dialogue: 0,0:01:18.66,0:01:18.72,Default,,0,0,0,,{\an2}auf di
+Dialogue: 0,0:01:18.72,0:01:18.77,Default,,0,0,0,,{\an2}auf die
+Dialogue: 0,0:01:18.77,0:01:18.83,Default,,0,0,0,,{\an2}auf dies
+Dialogue: 0,0:01:18.83,0:01:18.89,Default,,0,0,0,,{\an2}auf diese
+Dialogue: 0,0:01:18.89,0:01:18.95,Default,,0,0,0,,{\an2}auf diese 
+Dialogue: 0,0:01:18.95,0:01:19.01,Default,,0,0,0,,{\an2}auf diese D
+Dialogue: 0,0:01:19.01,0:01:19.07,Default,,0,0,0,,{\an2}auf diese Do
+Dialogue: 0,0:01:19.07,0:01:19.13,Default,,0,0,0,,{\an2}auf diese Dom
+Dialogue: 0,0:01:19.13,0:01:19.18,Default,,0,0,0,,{\an2}auf diese Domä
+Dialogue: 0,0:01:19.18,0:01:19.24,Default,,0,0,0,,{\an2}auf diese Domän
+Dialogue: 0,0:01:19.24,0:01:19.30,Default,,0,0,0,,{\an2}auf diese Domäne
+Dialogue: 0,0:01:19.30,0:01:19.36,Default,,0,0,0,,{\an2}auf diese Domänen
+Dialogue: 0,0:01:19.36,0:01:19.42,Default,,0,0,0,,{\an2}auf diese Domänen 
+Dialogue: 0,0:01:19.42,0:01:19.48,Default,,0,0,0,,{\an2}auf diese Domänen z
+Dialogue: 0,0:01:19.48,0:01:19.54,Default,,0,0,0,,{\an2}auf diese Domänen zu
+Dialogue: 0,0:01:19.54,0:01:19.59,Default,,0,0,0,,{\an2}auf diese Domänen zug
+Dialogue: 0,0:01:19.59,0:01:19.65,Default,,0,0,0,,{\an2}auf diese Domänen zugr
+Dialogue: 0,0:01:19.65,0:01:19.71,Default,,0,0,0,,{\an2}auf diese Domänen zugre
+Dialogue: 0,0:01:19.71,0:01:19.77,Default,,0,0,0,,{\an2}auf diese Domänen zugrei
+Dialogue: 0,0:01:19.77,0:01:19.83,Default,,0,0,0,,{\an2}auf diese Domänen zugreif
+Dialogue: 0,0:01:19.83,0:01:19.89,Default,,0,0,0,,{\an2}auf diese Domänen zugreife
+Dialogue: 0,0:01:19.89,0:01:19.95,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen
+Dialogue: 0,0:01:19.95,0:01:20.00,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen 
+Dialogue: 0,0:01:20.00,0:01:20.06,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen u
+Dialogue: 0,0:01:20.06,0:01:20.12,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen un
+Dialogue: 0,0:01:20.12,0:01:20.18,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und
+Dialogue: 0,0:01:20.18,0:01:20.24,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und 
+Dialogue: 0,0:01:20.24,0:01:20.30,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und d
+Dialogue: 0,0:01:20.30,0:01:20.36,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und da
+Dialogue: 0,0:01:20.36,0:01:20.41,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und\\Ndad
+Dialogue: 0,0:01:20.41,0:01:20.47,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und\\Ndadu
+Dialogue: 0,0:01:20.47,0:01:20.53,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und\\Ndadur
+Dialogue: 0,0:01:20.53,0:01:20.59,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und\\Ndadurc
+Dialogue: 0,0:01:20.59,0:01:20.65,Default,,0,0,0,,{\an2}auf diese Domänen zugreifen und\\Ndadurch
+Dialogue: 0,0:01:20.65,0:01:20.71,Default,,0,0,0,,{\an2}f
+Dialogue: 0,0:01:20.71,0:01:20.76,Default,,0,0,0,,{\an2}fa
+Dialogue: 0,0:01:20.76,0:01:20.82,Default,,0,0,0,,{\an2}fal
+Dialogue: 0,0:01:20.82,0:01:20.88,Default,,0,0,0,,{\an2}fals
+Dialogue: 0,0:01:20.88,0:01:20.93,Default,,0,0,0,,{\an2}falsc
+Dialogue: 0,0:01:20.93,0:01:20.99,Default,,0,0,0,,{\an2}falsch
+Dialogue: 0,0:01:20.99,0:01:21.05,Default,,0,0,0,,{\an2}falsche
+Dialogue: 0,0:01:21.05,0:01:21.11,Default,,0,0,0,,{\an2}falsche 
+Dialogue: 0,0:01:21.11,0:01:21.16,Default,,0,0,0,,{\an2}falsche I
+Dialogue: 0,0:01:21.16,0:01:21.22,Default,,0,0,0,,{\an2}falsche In
+Dialogue: 0,0:01:21.22,0:01:21.28,Default,,0,0,0,,{\an2}falsche Inf
+Dialogue: 0,0:01:21.28,0:01:21.33,Default,,0,0,0,,{\an2}falsche Info
+Dialogue: 0,0:01:21.33,0:01:21.39,Default,,0,0,0,,{\an2}falsche Infor
+Dialogue: 0,0:01:21.39,0:01:21.45,Default,,0,0,0,,{\an2}falsche Inform
+Dialogue: 0,0:01:21.45,0:01:21.51,Default,,0,0,0,,{\an2}falsche Informa
+Dialogue: 0,0:01:21.51,0:01:21.56,Default,,0,0,0,,{\an2}falsche Informat
+Dialogue: 0,0:01:21.56,0:01:21.62,Default,,0,0,0,,{\an2}falsche Informati
+Dialogue: 0,0:01:21.62,0:01:21.68,Default,,0,0,0,,{\an2}falsche Informatio
+Dialogue: 0,0:01:21.68,0:01:21.73,Default,,0,0,0,,{\an2}falsche Information
+Dialogue: 0,0:01:21.73,0:01:21.79,Default,,0,0,0,,{\an2}falsche Informatione
+Dialogue: 0,0:01:21.79,0:01:21.85,Default,,0,0,0,,{\an2}falsche Informationen
+Dialogue: 0,0:01:21.85,0:01:21.91,Default,,0,0,0,,{\an2}falsche Informationen 
+Dialogue: 0,0:01:21.91,0:01:21.96,Default,,0,0,0,,{\an2}falsche Informationen e
+Dialogue: 0,0:01:21.96,0:01:22.02,Default,,0,0,0,,{\an2}falsche Informationen er
+Dialogue: 0,0:01:22.02,0:01:22.08,Default,,0,0,0,,{\an2}falsche Informationen erh
+Dialogue: 0,0:01:22.08,0:01:22.13,Default,,0,0,0,,{\an2}falsche Informationen erha
+Dialogue: 0,0:01:22.13,0:01:22.19,Default,,0,0,0,,{\an2}falsche Informationen erhal
+Dialogue: 0,0:01:22.19,0:01:22.25,Default,,0,0,0,,{\an2}falsche Informationen erhalt
+Dialogue: 0,0:01:22.25,0:01:22.31,Default,,0,0,0,,{\an2}falsche Informationen erhalte
+Dialogue: 0,0:01:22.31,0:01:22.36,Default,,0,0,0,,{\an2}falsche Informationen erhalten
+Dialogue: 0,0:01:22.36,0:01:22.42,Default,,0,0,0,,{\an2}falsche Informationen erhalten.
+Dialogue: 0,0:01:22.42,0:01:22.48,Default,,0,0,0,,{\an2}falsche Informationen erhalten. 
+Dialogue: 0,0:01:22.48,0:01:22.53,Default,,0,0,0,,{\an2}falsche Informationen erhalten. Z
+Dialogue: 0,0:01:22.53,0:01:22.59,Default,,0,0,0,,{\an2}falsche Informationen erhalten. Zu
+Dialogue: 0,0:01:22.59,0:01:22.65,Default,,0,0,0,,{\an2}falsche Informationen erhalten.\\NZum
+Dialogue: 0,0:01:22.65,0:01:22.70,Default,,0,0,0,,{\an2}a
+Dialogue: 0,0:01:22.70,0:01:22.75,Default,,0,0,0,,{\an2}an
+Dialogue: 0,0:01:22.75,0:01:22.81,Default,,0,0,0,,{\an2}and
+Dialogue: 0,0:01:22.81,0:01:22.86,Default,,0,0,0,,{\an2}ande
+Dialogue: 0,0:01:22.86,0:01:22.91,Default,,0,0,0,,{\an2}ander
+Dialogue: 0,0:01:22.91,0:01:22.96,Default,,0,0,0,,{\an2}andere
+Dialogue: 0,0:01:22.96,0:01:23.02,Default,,0,0,0,,{\an2}anderen
+Dialogue: 0,0:01:23.02,0:01:23.07,Default,,0,0,0,,{\an2}anderen 
+Dialogue: 0,0:01:23.07,0:01:23.12,Default,,0,0,0,,{\an2}anderen k
+Dialogue: 0,0:01:23.12,0:01:23.17,Default,,0,0,0,,{\an2}anderen kö
+Dialogue: 0,0:01:23.17,0:01:23.23,Default,,0,0,0,,{\an2}anderen kön
+Dialogue: 0,0:01:23.23,0:01:23.28,Default,,0,0,0,,{\an2}anderen könn
+Dialogue: 0,0:01:23.28,0:01:23.33,Default,,0,0,0,,{\an2}anderen könnt
+Dialogue: 0,0:01:23.33,0:01:23.38,Default,,0,0,0,,{\an2}anderen könnte
+Dialogue: 0,0:01:23.38,0:01:23.44,Default,,0,0,0,,{\an2}anderen könnte 
+Dialogue: 0,0:01:23.44,0:01:23.49,Default,,0,0,0,,{\an2}anderen könnte e
+Dialogue: 0,0:01:23.49,0:01:23.54,Default,,0,0,0,,{\an2}anderen könnte es
+Dialogue: 0,0:01:23.54,0:01:23.60,Default,,0,0,0,,{\an2}anderen könnte es 
+Dialogue: 0,0:01:23.60,0:01:23.65,Default,,0,0,0,,{\an2}anderen könnte es z
+Dialogue: 0,0:01:23.65,0:01:23.70,Default,,0,0,0,,{\an2}anderen könnte es zu
+Dialogue: 0,0:01:23.70,0:01:23.75,Default,,0,0,0,,{\an2}anderen könnte es zu 
+Dialogue: 0,0:01:23.75,0:01:23.81,Default,,0,0,0,,{\an2}anderen könnte es zu S
+Dialogue: 0,0:01:23.81,0:01:23.86,Default,,0,0,0,,{\an2}anderen könnte es zu Si
+Dialogue: 0,0:01:23.86,0:01:23.91,Default,,0,0,0,,{\an2}anderen könnte es zu Sic
+Dialogue: 0,0:01:23.91,0:01:23.96,Default,,0,0,0,,{\an2}anderen könnte es zu Sich
+Dialogue: 0,0:01:23.96,0:01:24.02,Default,,0,0,0,,{\an2}anderen könnte es zu Siche
+Dialogue: 0,0:01:24.02,0:01:24.07,Default,,0,0,0,,{\an2}anderen könnte es zu Sicher
+Dialogue: 0,0:01:24.07,0:01:24.12,Default,,0,0,0,,{\an2}anderen könnte es zu Sicherh
+Dialogue: 0,0:01:24.12,0:01:24.17,Default,,0,0,0,,{\an2}anderen könnte es zu Sicherhe
+Dialogue: 0,0:01:24.17,0:01:24.23,Default,,0,0,0,,{\an2}anderen könnte es zu Sicherhei
+Dialogue: 0,0:01:24.23,0:01:24.28,Default,,0,0,0,,{\an2}anderen könnte es zu Sicherheit
+Dialogue: 0,0:01:24.28,0:01:24.33,Default,,0,0,0,,{\an2}anderen könnte es zu Sicherheits
+Dialogue: 0,0:01:24.33,0:01:24.38,Default,,0,0,0,,{\an2}anderen könnte es zu Sicherheitsl
+Dialogue: 0,0:01:24.38,0:01:24.44,Default,,0,0,0,,{\an2}anderen könnte es zu Sicherheitslü
+Dialogue: 0,0:01:24.44,0:01:24.49,Default,,0,0,0,,{\an2}anderen könnte es zu\\NSicherheitslüc
+Dialogue: 0,0:01:24.49,0:01:24.54,Default,,0,0,0,,{\an2}anderen könnte es zu\\NSicherheitslück
+Dialogue: 0,0:01:24.54,0:01:24.60,Default,,0,0,0,,{\an2}anderen könnte es zu\\NSicherheitslücke
+Dialogue: 0,0:01:24.60,0:01:24.65,Default,,0,0,0,,{\an2}anderen könnte es zu\\NSicherheitslücken
+Dialogue: 0,0:01:24.65,0:01:24.71,Default,,0,0,0,,{\an2}k
+Dialogue: 0,0:01:24.71,0:01:24.77,Default,,0,0,0,,{\an2}ko
+Dialogue: 0,0:01:24.77,0:01:24.84,Default,,0,0,0,,{\an2}kom
+Dialogue: 0,0:01:24.84,0:01:24.90,Default,,0,0,0,,{\an2}komm
+Dialogue: 0,0:01:24.90,0:01:24.97,Default,,0,0,0,,{\an2}komme
+Dialogue: 0,0:01:24.97,0:01:25.03,Default,,0,0,0,,{\an2}kommen
+Dialogue: 0,0:01:25.03,0:01:25.09,Default,,0,0,0,,{\an2}kommen,
+Dialogue: 0,0:01:25.09,0:01:25.16,Default,,0,0,0,,{\an2}kommen, 
+Dialogue: 0,0:01:25.16,0:01:25.22,Default,,0,0,0,,{\an2}kommen, w
+Dialogue: 0,0:01:25.22,0:01:25.28,Default,,0,0,0,,{\an2}kommen, we
+Dialogue: 0,0:01:25.28,0:01:25.35,Default,,0,0,0,,{\an2}kommen, wen
+Dialogue: 0,0:01:25.35,0:01:25.41,Default,,0,0,0,,{\an2}kommen, wenn
+Dialogue: 0,0:01:25.41,0:01:25.47,Default,,0,0,0,,{\an2}kommen, wenn 
+Dialogue: 0,0:01:25.47,0:01:25.54,Default,,0,0,0,,{\an2}kommen, wenn s
+Dialogue: 0,0:01:25.54,0:01:25.60,Default,,0,0,0,,{\an2}kommen, wenn se
+Dialogue: 0,0:01:25.60,0:01:25.66,Default,,0,0,0,,{\an2}kommen, wenn sen
+Dialogue: 0,0:01:25.66,0:01:25.73,Default,,0,0,0,,{\an2}kommen, wenn sens
+Dialogue: 0,0:01:25.73,0:01:25.79,Default,,0,0,0,,{\an2}kommen, wenn sensi
+Dialogue: 0,0:01:25.79,0:01:25.85,Default,,0,0,0,,{\an2}kommen, wenn sensib
+Dialogue: 0,0:01:25.85,0:01:25.92,Default,,0,0,0,,{\an2}kommen, wenn sensibl
+Dialogue: 0,0:01:25.92,0:01:25.98,Default,,0,0,0,,{\an2}kommen, wenn sensible
+Dialogue: 0,0:01:25.98,0:01:26.04,Default,,0,0,0,,{\an2}kommen, wenn sensible 
+Dialogue: 0,0:01:26.04,0:01:26.11,Default,,0,0,0,,{\an2}kommen, wenn sensible D
+Dialogue: 0,0:01:26.11,0:01:26.17,Default,,0,0,0,,{\an2}kommen, wenn sensible Da
+Dialogue: 0,0:01:26.17,0:01:26.23,Default,,0,0,0,,{\an2}kommen, wenn sensible Dat
+Dialogue: 0,0:01:26.23,0:01:26.30,Default,,0,0,0,,{\an2}kommen, wenn sensible Date
+Dialogue: 0,0:01:26.30,0:01:26.36,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten
+Dialogue: 0,0:01:26.36,0:01:26.43,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten 
+Dialogue: 0,0:01:26.43,0:01:26.49,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten i
+Dialogue: 0,0:01:26.49,0:01:26.55,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in
+Dialogue: 0,0:01:26.55,0:01:26.62,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in 
+Dialogue: 0,0:01:26.62,0:01:26.68,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in e
+Dialogue: 0,0:01:26.68,0:01:26.74,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in ei
+Dialogue: 0,0:01:26.74,0:01:26.81,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in ein
+Dialogue: 0,0:01:26.81,0:01:26.87,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in\\Neine
+Dialogue: 0,0:01:26.87,0:01:26.93,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in\\Neiner
+Dialogue: 0,0:01:26.93,0:01:27.00,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in\\Neiner 
+Dialogue: 0,0:01:27.00,0:01:27.06,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in\\Neiner n
+Dialogue: 0,0:01:27.06,0:01:27.12,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in\\Neiner ni
+Dialogue: 0,0:01:27.12,0:01:27.19,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in\\Neiner nic
+Dialogue: 0,0:01:27.19,0:01:27.25,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in\\Neiner nich
+Dialogue: 0,0:01:27.25,0:01:27.31,Default,,0,0,0,,{\an2}kommen, wenn sensible Daten in\\Neiner nicht
+Dialogue: 0,0:01:27.31,0:01:27.36,Default,,0,0,0,,{\an2}g
+Dialogue: 0,0:01:27.36,0:01:27.41,Default,,0,0,0,,{\an2}ge
+Dialogue: 0,0:01:27.41,0:01:27.46,Default,,0,0,0,,{\an2}ges
+Dialogue: 0,0:01:27.46,0:01:27.51,Default,,0,0,0,,{\an2}gesc
+Dialogue: 0,0:01:27.51,0:01:27.56,Default,,0,0,0,,{\an2}gesch
+Dialogue: 0,0:01:27.56,0:01:27.61,Default,,0,0,0,,{\an2}geschü
+Dialogue: 0,0:01:27.61,0:01:27.66,Default,,0,0,0,,{\an2}geschüt
+Dialogue: 0,0:01:27.66,0:01:27.71,Default,,0,0,0,,{\an2}geschütz
+Dialogue: 0,0:01:27.71,0:01:27.76,Default,,0,0,0,,{\an2}geschützt
+Dialogue: 0,0:01:27.76,0:01:27.81,Default,,0,0,0,,{\an2}geschützte
+Dialogue: 0,0:01:27.81,0:01:27.86,Default,,0,0,0,,{\an2}geschützten
+Dialogue: 0,0:01:27.86,0:01:27.91,Default,,0,0,0,,{\an2}geschützten 
+Dialogue: 0,0:01:27.91,0:01:27.96,Default,,0,0,0,,{\an2}geschützten U
+Dialogue: 0,0:01:27.96,0:01:28.01,Default,,0,0,0,,{\an2}geschützten Um
+Dialogue: 0,0:01:28.01,0:01:28.06,Default,,0,0,0,,{\an2}geschützten Umg
+Dialogue: 0,0:01:28.06,0:01:28.11,Default,,0,0,0,,{\an2}geschützten Umge
+Dialogue: 0,0:01:28.11,0:01:28.16,Default,,0,0,0,,{\an2}geschützten Umgeb
+Dialogue: 0,0:01:28.16,0:01:28.21,Default,,0,0,0,,{\an2}geschützten Umgebu
+Dialogue: 0,0:01:28.21,0:01:28.26,Default,,0,0,0,,{\an2}geschützten Umgebun
+Dialogue: 0,0:01:28.26,0:01:28.31,Default,,0,0,0,,{\an2}geschützten Umgebung
+Dialogue: 0,0:01:28.31,0:01:28.36,Default,,0,0,0,,{\an2}geschützten Umgebung 
+Dialogue: 0,0:01:28.36,0:01:28.41,Default,,0,0,0,,{\an2}geschützten Umgebung v
+Dialogue: 0,0:01:28.41,0:01:28.46,Default,,0,0,0,,{\an2}geschützten Umgebung ve
+Dialogue: 0,0:01:28.46,0:01:28.51,Default,,0,0,0,,{\an2}geschützten Umgebung ver
+Dialogue: 0,0:01:28.51,0:01:28.56,Default,,0,0,0,,{\an2}geschützten Umgebung vera
+Dialogue: 0,0:01:28.56,0:01:28.61,Default,,0,0,0,,{\an2}geschützten Umgebung verar
+Dialogue: 0,0:01:28.61,0:01:28.66,Default,,0,0,0,,{\an2}geschützten Umgebung verarb
+Dialogue: 0,0:01:28.66,0:01:28.71,Default,,0,0,0,,{\an2}geschützten Umgebung verarbe
+Dialogue: 0,0:01:28.71,0:01:28.76,Default,,0,0,0,,{\an2}geschützten Umgebung verarbei
+Dialogue: 0,0:01:28.76,0:01:28.81,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeit
+Dialogue: 0,0:01:28.81,0:01:28.86,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeite
+Dialogue: 0,0:01:28.86,0:01:28.91,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet
+Dialogue: 0,0:01:28.91,0:01:28.96,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet 
+Dialogue: 0,0:01:28.96,0:01:29.01,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet w
+Dialogue: 0,0:01:29.01,0:01:29.06,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet\\Nwe
+Dialogue: 0,0:01:29.06,0:01:29.11,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet\\Nwer
+Dialogue: 0,0:01:29.11,0:01:29.16,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet\\Nwerd
+Dialogue: 0,0:01:29.16,0:01:29.21,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet\\Nwerde
+Dialogue: 0,0:01:29.21,0:01:29.26,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet\\Nwerden
+Dialogue: 0,0:01:29.26,0:01:29.31,Default,,0,0,0,,{\an2}geschützten Umgebung verarbeitet\\Nwerden.
+Dialogue: 0,0:01:29.31,0:01:29.37,Default,,0,0,0,,{\an2}D
+Dialogue: 0,0:01:29.37,0:01:29.42,Default,,0,0,0,,{\an2}Da
+Dialogue: 0,0:01:29.42,0:01:29.48,Default,,0,0,0,,{\an2}Dah
+Dialogue: 0,0:01:29.48,0:01:29.53,Default,,0,0,0,,{\an2}Dahe
+Dialogue: 0,0:01:29.53,0:01:29.59,Default,,0,0,0,,{\an2}Daher
+Dialogue: 0,0:01:29.59,0:01:29.64,Default,,0,0,0,,{\an2}Daher 
+Dialogue: 0,0:01:29.64,0:01:29.69,Default,,0,0,0,,{\an2}Daher i
+Dialogue: 0,0:01:29.69,0:01:29.75,Default,,0,0,0,,{\an2}Daher is
+Dialogue: 0,0:01:29.75,0:01:29.80,Default,,0,0,0,,{\an2}Daher ist
+Dialogue: 0,0:01:29.80,0:01:29.86,Default,,0,0,0,,{\an2}Daher ist 
+Dialogue: 0,0:01:29.86,0:01:29.91,Default,,0,0,0,,{\an2}Daher ist e
+Dialogue: 0,0:01:29.91,0:01:29.97,Default,,0,0,0,,{\an2}Daher ist es
+Dialogue: 0,0:01:29.97,0:01:30.02,Default,,0,0,0,,{\an2}Daher ist es 
+Dialogue: 0,0:01:30.02,0:01:30.08,Default,,0,0,0,,{\an2}Daher ist es e
+Dialogue: 0,0:01:30.08,0:01:30.13,Default,,0,0,0,,{\an2}Daher ist es en
+Dialogue: 0,0:01:30.13,0:01:30.18,Default,,0,0,0,,{\an2}Daher ist es ent
+Dialogue: 0,0:01:30.18,0:01:30.24,Default,,0,0,0,,{\an2}Daher ist es ents
+Dialogue: 0,0:01:30.24,0:01:30.29,Default,,0,0,0,,{\an2}Daher ist es entsc
+Dialogue: 0,0:01:30.29,0:01:30.35,Default,,0,0,0,,{\an2}Daher ist es entsch
+Dialogue: 0,0:01:30.35,0:01:30.40,Default,,0,0,0,,{\an2}Daher ist es entsche
+Dialogue: 0,0:01:30.40,0:01:30.46,Default,,0,0,0,,{\an2}Daher ist es entschei
+Dialogue: 0,0:01:30.46,0:01:30.51,Default,,0,0,0,,{\an2}Daher ist es entscheid
+Dialogue: 0,0:01:30.51,0:01:30.57,Default,,0,0,0,,{\an2}Daher ist es entscheide
+Dialogue: 0,0:01:30.57,0:01:30.62,Default,,0,0,0,,{\an2}Daher ist es entscheiden
+Dialogue: 0,0:01:30.62,0:01:30.67,Default,,0,0,0,,{\an2}Daher ist es entscheidend
+Dialogue: 0,0:01:30.67,0:01:30.73,Default,,0,0,0,,{\an2}Daher ist es entscheidend,
+Dialogue: 0,0:01:30.73,0:01:30.78,Default,,0,0,0,,{\an2}Daher ist es entscheidend, 
+Dialogue: 0,0:01:30.78,0:01:30.84,Default,,0,0,0,,{\an2}Daher ist es entscheidend, d
+Dialogue: 0,0:01:30.84,0:01:30.89,Default,,0,0,0,,{\an2}Daher ist es entscheidend, da
+Dialogue: 0,0:01:30.89,0:01:30.95,Default,,0,0,0,,{\an2}Daher ist es entscheidend, das
+Dialogue: 0,0:01:30.95,0:01:31.00,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass
+Dialogue: 0,0:01:31.00,0:01:31.05,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass 
+Dialogue: 0,0:01:31.05,0:01:31.11,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass E
+Dialogue: 0,0:01:31.11,0:01:31.16,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass En
+Dialogue: 0,0:01:31.16,0:01:31.22,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass\\NEnt
+Dialogue: 0,0:01:31.22,0:01:31.27,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass\\NEntw
+Dialogue: 0,0:01:31.27,0:01:31.33,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass\\NEntwi
+Dialogue: 0,0:01:31.33,0:01:31.38,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass\\NEntwic
+Dialogue: 0,0:01:31.38,0:01:31.44,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass\\NEntwick
+Dialogue: 0,0:01:31.44,0:01:31.49,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass\\NEntwickl
+Dialogue: 0,0:01:31.49,0:01:31.54,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass\\NEntwickle
+Dialogue: 0,0:01:31.54,0:01:31.60,Default,,0,0,0,,{\an2}Daher ist es entscheidend, dass\\NEntwickler
+Dialogue: 0,0:01:31.60,0:01:31.66,Default,,0,0,0,,{\an2}u
+Dialogue: 0,0:01:31.66,0:01:31.71,Default,,0,0,0,,{\an2}un
+Dialogue: 0,0:01:31.71,0:01:31.77,Default,,0,0,0,,{\an2}und
+Dialogue: 0,0:01:31.77,0:01:31.83,Default,,0,0,0,,{\an2}und 
+Dialogue: 0,0:01:31.83,0:01:31.88,Default,,0,0,0,,{\an2}und U
+Dialogue: 0,0:01:31.88,0:01:31.94,Default,,0,0,0,,{\an2}und Un
+Dialogue: 0,0:01:31.94,0:01:32.00,Default,,0,0,0,,{\an2}und Unt
+Dialogue: 0,0:01:32.00,0:01:32.06,Default,,0,0,0,,{\an2}und Unte
+Dialogue: 0,0:01:32.06,0:01:32.11,Default,,0,0,0,,{\an2}und Unter
+Dialogue: 0,0:01:32.11,0:01:32.17,Default,,0,0,0,,{\an2}und Untern
+Dialogue: 0,0:01:32.17,0:01:32.23,Default,,0,0,0,,{\an2}und Unterne
+Dialogue: 0,0:01:32.23,0:01:32.28,Default,,0,0,0,,{\an2}und Unterneh
+Dialogue: 0,0:01:32.28,0:01:32.34,Default,,0,0,0,,{\an2}und Unternehm
+Dialogue: 0,0:01:32.34,0:01:32.40,Default,,0,0,0,,{\an2}und Unternehme
+Dialogue: 0,0:01:32.40,0:01:32.46,Default,,0,0,0,,{\an2}und Unternehmen
+Dialogue: 0,0:01:32.46,0:01:32.51,Default,,0,0,0,,{\an2}und Unternehmen 
+Dialogue: 0,0:01:32.51,0:01:32.57,Default,,0,0,0,,{\an2}und Unternehmen s
+Dialogue: 0,0:01:32.57,0:01:32.63,Default,,0,0,0,,{\an2}und Unternehmen si
+Dialogue: 0,0:01:32.63,0:01:32.68,Default,,0,0,0,,{\an2}und Unternehmen sic
+Dialogue: 0,0:01:32.68,0:01:32.74,Default,,0,0,0,,{\an2}und Unternehmen sich
+Dialogue: 0,0:01:32.74,0:01:32.80,Default,,0,0,0,,{\an2}und Unternehmen sich 
+Dialogue: 0,0:01:32.80,0:01:32.86,Default,,0,0,0,,{\an2}und Unternehmen sich d
+Dialogue: 0,0:01:32.86,0:01:32.91,Default,,0,0,0,,{\an2}und Unternehmen sich de
+Dialogue: 0,0:01:32.91,0:01:32.97,Default,,0,0,0,,{\an2}und Unternehmen sich der
+Dialogue: 0,0:01:32.97,0:01:33.03,Default,,0,0,0,,{\an2}und Unternehmen sich der 
+Dialogue: 0,0:01:33.03,0:01:33.08,Default,,0,0,0,,{\an2}und Unternehmen sich der R
+Dialogue: 0,0:01:33.08,0:01:33.14,Default,,0,0,0,,{\an2}und Unternehmen sich der Ri
+Dialogue: 0,0:01:33.14,0:01:33.20,Default,,0,0,0,,{\an2}und Unternehmen sich der Ris
+Dialogue: 0,0:01:33.20,0:01:33.25,Default,,0,0,0,,{\an2}und Unternehmen sich der Risi
+Dialogue: 0,0:01:33.25,0:01:33.31,Default,,0,0,0,,{\an2}und Unternehmen sich der Risik
+Dialogue: 0,0:01:33.31,0:01:33.37,Default,,0,0,0,,{\an2}und Unternehmen sich der Risike
+Dialogue: 0,0:01:33.37,0:01:33.43,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken
+Dialogue: 0,0:01:33.43,0:01:33.48,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken 
+Dialogue: 0,0:01:33.48,0:01:33.54,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken b
+Dialogue: 0,0:01:33.54,0:01:33.60,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken\\Nbe
+Dialogue: 0,0:01:33.60,0:01:33.65,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken\\Nbew
+Dialogue: 0,0:01:33.65,0:01:33.71,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken\\Nbewu
+Dialogue: 0,0:01:33.71,0:01:33.77,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken\\Nbewus
+Dialogue: 0,0:01:33.77,0:01:33.83,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken\\Nbewuss
+Dialogue: 0,0:01:33.83,0:01:33.88,Default,,0,0,0,,{\an2}und Unternehmen sich der Risiken\\Nbewusst
+Dialogue: 0,0:01:33.88,0:01:33.94,Default,,0,0,0,,{\an2}s
+Dialogue: 0,0:01:33.94,0:01:33.99,Default,,0,0,0,,{\an2}si
+Dialogue: 0,0:01:33.99,0:01:34.05,Default,,0,0,0,,{\an2}sin
+Dialogue: 0,0:01:34.05,0:01:34.11,Default,,0,0,0,,{\an2}sind
+Dialogue: 0,0:01:34.11,0:01:34.16,Default,,0,0,0,,{\an2}sind 
+Dialogue: 0,0:01:34.16,0:01:34.22,Default,,0,0,0,,{\an2}sind u
+Dialogue: 0,0:01:34.22,0:01:34.27,Default,,0,0,0,,{\an2}sind un
+Dialogue: 0,0:01:34.27,0:01:34.33,Default,,0,0,0,,{\an2}sind und
+Dialogue: 0,0:01:34.33,0:01:34.38,Default,,0,0,0,,{\an2}sind und 
+Dialogue: 0,0:01:34.38,0:01:34.44,Default,,0,0,0,,{\an2}sind und d
+Dialogue: 0,0:01:34.44,0:01:34.50,Default,,0,0,0,,{\an2}sind und di
+Dialogue: 0,0:01:34.50,0:01:34.55,Default,,0,0,0,,{\an2}sind und die
+Dialogue: 0,0:01:34.55,0:01:34.61,Default,,0,0,0,,{\an2}sind und dies
+Dialogue: 0,0:01:34.61,0:01:34.66,Default,,0,0,0,,{\an2}sind und diese
+Dialogue: 0,0:01:34.66,0:01:34.72,Default,,0,0,0,,{\an2}sind und diese 
+Dialogue: 0,0:01:34.72,0:01:34.77,Default,,0,0,0,,{\an2}sind und diese D
+Dialogue: 0,0:01:34.77,0:01:34.83,Default,,0,0,0,,{\an2}sind und diese Do
+Dialogue: 0,0:01:34.83,0:01:34.89,Default,,0,0,0,,{\an2}sind und diese Dom
+Dialogue: 0,0:01:34.89,0:01:34.94,Default,,0,0,0,,{\an2}sind und diese Domä
+Dialogue: 0,0:01:34.94,0:01:35.00,Default,,0,0,0,,{\an2}sind und diese Domän
+Dialogue: 0,0:01:35.00,0:01:35.05,Default,,0,0,0,,{\an2}sind und diese Domäne
+Dialogue: 0,0:01:35.05,0:01:35.11,Default,,0,0,0,,{\an2}sind und diese Domänen
+Dialogue: 0,0:01:35.11,0:01:35.16,Default,,0,0,0,,{\an2}sind und diese Domänen 
+Dialogue: 0,0:01:35.16,0:01:35.22,Default,,0,0,0,,{\an2}sind und diese Domänen a
+Dialogue: 0,0:01:35.22,0:01:35.28,Default,,0,0,0,,{\an2}sind und diese Domänen au
+Dialogue: 0,0:01:35.28,0:01:35.33,Default,,0,0,0,,{\an2}sind und diese Domänen aus
+Dialogue: 0,0:01:35.33,0:01:35.39,Default,,0,0,0,,{\an2}sind und diese Domänen auss
+Dialogue: 0,0:01:35.39,0:01:35.44,Default,,0,0,0,,{\an2}sind und diese Domänen aussc
+Dialogue: 0,0:01:35.44,0:01:35.50,Default,,0,0,0,,{\an2}sind und diese Domänen aussch
+Dialogue: 0,0:01:35.50,0:01:35.55,Default,,0,0,0,,{\an2}sind und diese Domänen ausschl
+Dialogue: 0,0:01:35.55,0:01:35.61,Default,,0,0,0,,{\an2}sind und diese Domänen ausschli
+Dialogue: 0,0:01:35.61,0:01:35.67,Default,,0,0,0,,{\an2}sind und diese Domänen ausschlie
+Dialogue: 0,0:01:35.67,0:01:35.72,Default,,0,0,0,,{\an2}sind und diese Domänen ausschließ
+Dialogue: 0,0:01:35.72,0:01:35.78,Default,,0,0,0,,{\an2}sind und diese Domänen ausschließl
+Dialogue: 0,0:01:35.78,0:01:35.83,Default,,0,0,0,,{\an2}sind und diese Domänen\\Nausschließli
+Dialogue: 0,0:01:35.83,0:01:35.89,Default,,0,0,0,,{\an2}sind und diese Domänen\\Nausschließlic
+Dialogue: 0,0:01:35.89,0:01:35.95,Default,,0,0,0,,{\an2}sind und diese Domänen\\Nausschließlich
+Dialogue: 0,0:01:35.95,0:01:36.00,Default,,0,0,0,,{\an2}sind und diese Domänen\\Nausschließlich 
+Dialogue: 0,0:01:36.00,0:01:36.06,Default,,0,0,0,,{\an2}sind und diese Domänen\\Nausschließlich f
+Dialogue: 0,0:01:36.06,0:01:36.11,Default,,0,0,0,,{\an2}sind und diese Domänen\\Nausschließlich fü
+Dialogue: 0,0:01:36.11,0:01:36.17,Default,,0,0,0,,{\an2}sind und diese Domänen\\Nausschließlich für
+Dialogue: 0,0:01:36.17,0:01:36.23,Default,,0,0,0,,{\an2}S
+Dialogue: 0,0:01:36.23,0:01:36.28,Default,,0,0,0,,{\an2}Sc
+Dialogue: 0,0:01:36.28,0:01:36.34,Default,,0,0,0,,{\an2}Sch
+Dialogue: 0,0:01:36.34,0:01:36.40,Default,,0,0,0,,{\an2}Schu
+Dialogue: 0,0:01:36.40,0:01:36.45,Default,,0,0,0,,{\an2}Schul
+Dialogue: 0,0:01:36.45,0:01:36.51,Default,,0,0,0,,{\an2}Schulu
+Dialogue: 0,0:01:36.51,0:01:36.57,Default,,0,0,0,,{\an2}Schulun
+Dialogue: 0,0:01:36.57,0:01:36.63,Default,,0,0,0,,{\an2}Schulung
+Dialogue: 0,0:01:36.63,0:01:36.68,Default,,0,0,0,,{\an2}Schulungs
+Dialogue: 0,0:01:36.68,0:01:36.74,Default,,0,0,0,,{\an2}Schulungs-
+Dialogue: 0,0:01:36.74,0:01:36.80,Default,,0,0,0,,{\an2}Schulungs- 
+Dialogue: 0,0:01:36.80,0:01:36.85,Default,,0,0,0,,{\an2}Schulungs- u
+Dialogue: 0,0:01:36.85,0:01:36.91,Default,,0,0,0,,{\an2}Schulungs- un
+Dialogue: 0,0:01:36.91,0:01:36.97,Default,,0,0,0,,{\an2}Schulungs- und
+Dialogue: 0,0:01:36.97,0:01:37.03,Default,,0,0,0,,{\an2}Schulungs- und 
+Dialogue: 0,0:01:37.03,0:01:37.08,Default,,0,0,0,,{\an2}Schulungs- und D
+Dialogue: 0,0:01:37.08,0:01:37.14,Default,,0,0,0,,{\an2}Schulungs- und Do
+Dialogue: 0,0:01:37.14,0:01:37.20,Default,,0,0,0,,{\an2}Schulungs- und Dok
+Dialogue: 0,0:01:37.20,0:01:37.25,Default,,0,0,0,,{\an2}Schulungs- und Doku
+Dialogue: 0,0:01:37.25,0:01:37.31,Default,,0,0,0,,{\an2}Schulungs- und Dokum
+Dialogue: 0,0:01:37.31,0:01:37.37,Default,,0,0,0,,{\an2}Schulungs- und Dokume
+Dialogue: 0,0:01:37.37,0:01:37.43,Default,,0,0,0,,{\an2}Schulungs- und Dokumen
+Dialogue: 0,0:01:37.43,0:01:37.48,Default,,0,0,0,,{\an2}Schulungs- und Dokument
+Dialogue: 0,0:01:37.48,0:01:37.54,Default,,0,0,0,,{\an2}Schulungs- und Dokumenta
+Dialogue: 0,0:01:37.54,0:01:37.60,Default,,0,0,0,,{\an2}Schulungs- und Dokumentat
+Dialogue: 0,0:01:37.60,0:01:37.65,Default,,0,0,0,,{\an2}Schulungs- und Dokumentati
+Dialogue: 0,0:01:37.65,0:01:37.71,Default,,0,0,0,,{\an2}Schulungs- und Dokumentatio
+Dialogue: 0,0:01:37.71,0:01:37.77,Default,,0,0,0,,{\an2}Schulungs- und Dokumentation
+Dialogue: 0,0:01:37.77,0:01:37.83,Default,,0,0,0,,{\an2}Schulungs- und Dokumentations
+Dialogue: 0,0:01:37.83,0:01:37.88,Default,,0,0,0,,{\an2}Schulungs- und Dokumentationsz
+Dialogue: 0,0:01:37.88,0:01:37.94,Default,,0,0,0,,{\an2}Schulungs- und Dokumentationszw
+Dialogue: 0,0:01:37.94,0:01:38.00,Default,,0,0,0,,{\an2}Schulungs- und Dokumentationszwe
+Dialogue: 0,0:01:38.00,0:01:38.05,Default,,0,0,0,,{\an2}Schulungs- und Dokumentationszwec
+Dialogue: 0,0:01:38.05,0:01:38.11,Default,,0,0,0,,{\an2}Schulungs- und Dokumentationszweck
+Dialogue: 0,0:01:38.11,0:01:38.17,Default,,0,0,0,,{\an2}Schulungs- und\\NDokumentationszwecke
+Dialogue: 0,0:01:38.17,0:01:38.23,Default,,0,0,0,,{\an2}n
+Dialogue: 0,0:01:38.23,0:01:38.29,Default,,0,0,0,,{\an2}nu
+Dialogue: 0,0:01:38.29,0:01:38.36,Default,,0,0,0,,{\an2}nut
+Dialogue: 0,0:01:38.36,0:01:38.42,Default,,0,0,0,,{\an2}nutz
+Dialogue: 0,0:01:38.42,0:01:38.48,Default,,0,0,0,,{\an2}nutze
+Dialogue: 0,0:01:38.48,0:01:38.54,Default,,0,0,0,,{\an2}nutzen
+Dialogue: 0,0:01:38.54,0:01:38.61,Default,,0,0,0,,{\an2}nutzen.
+Dialogue: 0,0:01:38.61,0:01:38.67,Default,,0,0,0,,{\an2}nutzen. 
+Dialogue: 0,0:01:38.67,0:01:38.73,Default,,0,0,0,,{\an2}nutzen. M
+Dialogue: 0,0:01:38.73,0:01:38.79,Default,,0,0,0,,{\an2}nutzen. Mi
+Dialogue: 0,0:01:38.79,0:01:38.86,Default,,0,0,0,,{\an2}nutzen. Mit
+Dialogue: 0,0:01:38.86,0:01:38.92,Default,,0,0,0,,{\an2}nutzen. Mit 
+Dialogue: 0,0:01:38.92,0:01:38.98,Default,,0,0,0,,{\an2}nutzen. Mit d
+Dialogue: 0,0:01:38.98,0:01:39.04,Default,,0,0,0,,{\an2}nutzen. Mit de
+Dialogue: 0,0:01:39.04,0:01:39.11,Default,,0,0,0,,{\an2}nutzen. Mit der
+Dialogue: 0,0:01:39.11,0:01:39.17,Default,,0,0,0,,{\an2}nutzen. Mit der 
+Dialogue: 0,0:01:39.17,0:01:39.23,Default,,0,0,0,,{\an2}nutzen. Mit der f
+Dialogue: 0,0:01:39.23,0:01:39.29,Default,,0,0,0,,{\an2}nutzen. Mit der fo
+Dialogue: 0,0:01:39.29,0:01:39.36,Default,,0,0,0,,{\an2}nutzen. Mit der for
+Dialogue: 0,0:01:39.36,0:01:39.42,Default,,0,0,0,,{\an2}nutzen. Mit der fort
+Dialogue: 0,0:01:39.42,0:01:39.48,Default,,0,0,0,,{\an2}nutzen. Mit der forts
+Dialogue: 0,0:01:39.48,0:01:39.54,Default,,0,0,0,,{\an2}nutzen. Mit der fortsc
+Dialogue: 0,0:01:39.54,0:01:39.61,Default,,0,0,0,,{\an2}nutzen. Mit der fortsch
+Dialogue: 0,0:01:39.61,0:01:39.67,Default,,0,0,0,,{\an2}nutzen. Mit der fortschr
+Dialogue: 0,0:01:39.67,0:01:39.73,Default,,0,0,0,,{\an2}nutzen. Mit der fortschre
+Dialogue: 0,0:01:39.73,0:01:39.79,Default,,0,0,0,,{\an2}nutzen. Mit der fortschrei
+Dialogue: 0,0:01:39.79,0:01:39.86,Default,,0,0,0,,{\an2}nutzen. Mit der fortschreit
+Dialogue: 0,0:01:39.86,0:01:39.92,Default,,0,0,0,,{\an2}nutzen. Mit der fortschreite
+Dialogue: 0,0:01:39.92,0:01:39.98,Default,,0,0,0,,{\an2}nutzen. Mit der fortschreiten
+Dialogue: 0,0:01:39.98,0:01:40.04,Default,,0,0,0,,{\an2}nutzen. Mit der fortschreitend
+Dialogue: 0,0:01:40.04,0:01:40.11,Default,,0,0,0,,{\an2}nutzen. Mit der fortschreitende
+Dialogue: 0,0:01:40.11,0:01:40.17,Default,,0,0,0,,{\an2}nutzen. Mit der fortschreitenden
+Dialogue: 0,0:01:40.17,0:01:40.23,Default,,0,0,0,,{\an2}D
+Dialogue: 0,0:01:40.23,0:01:40.28,Default,,0,0,0,,{\an2}Di
+Dialogue: 0,0:01:40.28,0:01:40.34,Default,,0,0,0,,{\an2}Dig
+Dialogue: 0,0:01:40.34,0:01:40.40,Default,,0,0,0,,{\an2}Digi
+Dialogue: 0,0:01:40.40,0:01:40.45,Default,,0,0,0,,{\an2}Digit
+Dialogue: 0,0:01:40.45,0:01:40.51,Default,,0,0,0,,{\an2}Digita
+Dialogue: 0,0:01:40.51,0:01:40.57,Default,,0,0,0,,{\an2}Digital
+Dialogue: 0,0:01:40.57,0:01:40.63,Default,,0,0,0,,{\an2}Digitali
+Dialogue: 0,0:01:40.63,0:01:40.68,Default,,0,0,0,,{\an2}Digitalis
+Dialogue: 0,0:01:40.68,0:01:40.74,Default,,0,0,0,,{\an2}Digitalisi
+Dialogue: 0,0:01:40.74,0:01:40.80,Default,,0,0,0,,{\an2}Digitalisie
+Dialogue: 0,0:01:40.80,0:01:40.85,Default,,0,0,0,,{\an2}Digitalisier
+Dialogue: 0,0:01:40.85,0:01:40.91,Default,,0,0,0,,{\an2}Digitalisieru
+Dialogue: 0,0:01:40.91,0:01:40.97,Default,,0,0,0,,{\an2}Digitalisierun
+Dialogue: 0,0:01:40.97,0:01:41.03,Default,,0,0,0,,{\an2}Digitalisierung
+Dialogue: 0,0:01:41.03,0:01:41.08,Default,,0,0,0,,{\an2}Digitalisierung 
+Dialogue: 0,0:01:41.08,0:01:41.14,Default,,0,0,0,,{\an2}Digitalisierung u
+Dialogue: 0,0:01:41.14,0:01:41.20,Default,,0,0,0,,{\an2}Digitalisierung un
+Dialogue: 0,0:01:41.20,0:01:41.25,Default,,0,0,0,,{\an2}Digitalisierung und
+Dialogue: 0,0:01:41.25,0:01:41.31,Default,,0,0,0,,{\an2}Digitalisierung und 
+Dialogue: 0,0:01:41.31,0:01:41.37,Default,,0,0,0,,{\an2}Digitalisierung und d
+Dialogue: 0,0:01:41.37,0:01:41.43,Default,,0,0,0,,{\an2}Digitalisierung und de
+Dialogue: 0,0:01:41.43,0:01:41.48,Default,,0,0,0,,{\an2}Digitalisierung und der
+Dialogue: 0,0:01:41.48,0:01:41.54,Default,,0,0,0,,{\an2}Digitalisierung und der 
+Dialogue: 0,0:01:41.54,0:01:41.60,Default,,0,0,0,,{\an2}Digitalisierung und der z
+Dialogue: 0,0:01:41.60,0:01:41.65,Default,,0,0,0,,{\an2}Digitalisierung und der zu
+Dialogue: 0,0:01:41.65,0:01:41.71,Default,,0,0,0,,{\an2}Digitalisierung und der zun
+Dialogue: 0,0:01:41.71,0:01:41.77,Default,,0,0,0,,{\an2}Digitalisierung und der zune
+Dialogue: 0,0:01:41.77,0:01:41.83,Default,,0,0,0,,{\an2}Digitalisierung und der zuneh
+Dialogue: 0,0:01:41.83,0:01:41.88,Default,,0,0,0,,{\an2}Digitalisierung und der zunehm
+Dialogue: 0,0:01:41.88,0:01:41.94,Default,,0,0,0,,{\an2}Digitalisierung und der zunehme
+Dialogue: 0,0:01:41.94,0:01:42.00,Default,,0,0,0,,{\an2}Digitalisierung und der zunehmen
+Dialogue: 0,0:01:42.00,0:01:42.05,Default,,0,0,0,,{\an2}Digitalisierung und der zunehmend
+Dialogue: 0,0:01:42.05,0:01:42.11,Default,,0,0,0,,{\an2}Digitalisierung und der zunehmende
+Dialogue: 0,0:01:42.11,0:01:42.17,Default,,0,0,0,,{\an2}Digitalisierung und der\\Nzunehmenden
+Dialogue: 0,0:01:42.17,0:01:42.22,Default,,0,0,0,,{\an2}K
+Dialogue: 0,0:01:42.22,0:01:42.26,Default,,0,0,0,,{\an2}Ko
+Dialogue: 0,0:01:42.26,0:01:42.31,Default,,0,0,0,,{\an2}Kom
+Dialogue: 0,0:01:42.31,0:01:42.36,Default,,0,0,0,,{\an2}Komp
+Dialogue: 0,0:01:42.36,0:01:42.41,Default,,0,0,0,,{\an2}Kompl
+Dialogue: 0,0:01:42.41,0:01:42.45,Default,,0,0,0,,{\an2}Komple
+Dialogue: 0,0:01:42.45,0:01:42.50,Default,,0,0,0,,{\an2}Komplex
+Dialogue: 0,0:01:42.50,0:01:42.55,Default,,0,0,0,,{\an2}Komplexi
+Dialogue: 0,0:01:42.55,0:01:42.60,Default,,0,0,0,,{\an2}Komplexit
+Dialogue: 0,0:01:42.60,0:01:42.64,Default,,0,0,0,,{\an2}Komplexitä
+Dialogue: 0,0:01:42.64,0:01:42.69,Default,,0,0,0,,{\an2}Komplexität
+Dialogue: 0,0:01:42.69,0:01:42.74,Default,,0,0,0,,{\an2}Komplexität 
+Dialogue: 0,0:01:42.74,0:01:42.79,Default,,0,0,0,,{\an2}Komplexität v
+Dialogue: 0,0:01:42.79,0:01:42.83,Default,,0,0,0,,{\an2}Komplexität vo
+Dialogue: 0,0:01:42.83,0:01:42.88,Default,,0,0,0,,{\an2}Komplexität von
+Dialogue: 0,0:01:42.88,0:01:42.93,Default,,0,0,0,,{\an2}Komplexität von 
+Dialogue: 0,0:01:42.93,0:01:42.98,Default,,0,0,0,,{\an2}Komplexität von S
+Dialogue: 0,0:01:42.98,0:01:43.03,Default,,0,0,0,,{\an2}Komplexität von So
+Dialogue: 0,0:01:43.03,0:01:43.07,Default,,0,0,0,,{\an2}Komplexität von Sof
+Dialogue: 0,0:01:43.07,0:01:43.12,Default,,0,0,0,,{\an2}Komplexität von Soft
+Dialogue: 0,0:01:43.12,0:01:43.17,Default,,0,0,0,,{\an2}Komplexität von Softw
+Dialogue: 0,0:01:43.17,0:01:43.22,Default,,0,0,0,,{\an2}Komplexität von Softwa
+Dialogue: 0,0:01:43.22,0:01:43.26,Default,,0,0,0,,{\an2}Komplexität von Softwar
+Dialogue: 0,0:01:43.26,0:01:43.31,Default,,0,0,0,,{\an2}Komplexität von Software
+Dialogue: 0,0:01:43.31,0:01:43.36,Default,,0,0,0,,{\an2}Komplexität von Softwarep
+Dialogue: 0,0:01:43.36,0:01:43.41,Default,,0,0,0,,{\an2}Komplexität von Softwarepr
+Dialogue: 0,0:01:43.41,0:01:43.45,Default,,0,0,0,,{\an2}Komplexität von Softwarepro
+Dialogue: 0,0:01:43.45,0:01:43.50,Default,,0,0,0,,{\an2}Komplexität von Softwareproj
+Dialogue: 0,0:01:43.50,0:01:43.55,Default,,0,0,0,,{\an2}Komplexität von Softwareproje
+Dialogue: 0,0:01:43.55,0:01:43.60,Default,,0,0,0,,{\an2}Komplexität von Softwareprojek
+Dialogue: 0,0:01:43.60,0:01:43.64,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekt
+Dialogue: 0,0:01:43.64,0:01:43.69,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekte
+Dialogue: 0,0:01:43.69,0:01:43.74,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten
+Dialogue: 0,0:01:43.74,0:01:43.79,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten 
+Dialogue: 0,0:01:43.79,0:01:43.83,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten\\Nw
+Dialogue: 0,0:01:43.83,0:01:43.88,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten\\Nwi
+Dialogue: 0,0:01:43.88,0:01:43.93,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten\\Nwir
+Dialogue: 0,0:01:43.93,0:01:43.98,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten\\Nwird
+Dialogue: 0,0:01:43.98,0:01:44.03,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten\\Nwird 
+Dialogue: 0,0:01:44.03,0:01:44.07,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten\\Nwird d
+Dialogue: 0,0:01:44.07,0:01:44.12,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten\\Nwird di
+Dialogue: 0,0:01:44.12,0:01:44.17,Default,,0,0,0,,{\an2}Komplexität von Softwareprojekten\\Nwird die
+Dialogue: 0,0:01:44.17,0:01:44.22,Default,,0,0,0,,{\an2}B
+Dialogue: 0,0:01:44.22,0:01:44.27,Default,,0,0,0,,{\an2}Be
+Dialogue: 0,0:01:44.27,0:01:44.32,Default,,0,0,0,,{\an2}Bed
+Dialogue: 0,0:01:44.32,0:01:44.37,Default,,0,0,0,,{\an2}Bede
+Dialogue: 0,0:01:44.37,0:01:44.42,Default,,0,0,0,,{\an2}Bedeu
+Dialogue: 0,0:01:44.42,0:01:44.48,Default,,0,0,0,,{\an2}Bedeut
+Dialogue: 0,0:01:44.48,0:01:44.53,Default,,0,0,0,,{\an2}Bedeutu
+Dialogue: 0,0:01:44.53,0:01:44.58,Default,,0,0,0,,{\an2}Bedeutun
+Dialogue: 0,0:01:44.58,0:01:44.63,Default,,0,0,0,,{\an2}Bedeutung
+Dialogue: 0,0:01:44.63,0:01:44.68,Default,,0,0,0,,{\an2}Bedeutung 
+Dialogue: 0,0:01:44.68,0:01:44.73,Default,,0,0,0,,{\an2}Bedeutung v
+Dialogue: 0,0:01:44.73,0:01:44.78,Default,,0,0,0,,{\an2}Bedeutung vo
+Dialogue: 0,0:01:44.78,0:01:44.83,Default,,0,0,0,,{\an2}Bedeutung von
+Dialogue: 0,0:01:44.83,0:01:44.89,Default,,0,0,0,,{\an2}Bedeutung von 
+Dialogue: 0,0:01:44.89,0:01:44.94,Default,,0,0,0,,{\an2}Bedeutung von k
+Dialogue: 0,0:01:44.94,0:01:44.99,Default,,0,0,0,,{\an2}Bedeutung von kl
+Dialogue: 0,0:01:44.99,0:01:45.04,Default,,0,0,0,,{\an2}Bedeutung von kla
+Dialogue: 0,0:01:45.04,0:01:45.09,Default,,0,0,0,,{\an2}Bedeutung von klar
+Dialogue: 0,0:01:45.09,0:01:45.14,Default,,0,0,0,,{\an2}Bedeutung von klare
+Dialogue: 0,0:01:45.14,0:01:45.19,Default,,0,0,0,,{\an2}Bedeutung von klaren
+Dialogue: 0,0:01:45.19,0:01:45.24,Default,,0,0,0,,{\an2}Bedeutung von klaren 
+Dialogue: 0,0:01:45.24,0:01:45.30,Default,,0,0,0,,{\an2}Bedeutung von klaren u
+Dialogue: 0,0:01:45.30,0:01:45.35,Default,,0,0,0,,{\an2}Bedeutung von klaren un
+Dialogue: 0,0:01:45.35,0:01:45.40,Default,,0,0,0,,{\an2}Bedeutung von klaren und
+Dialogue: 0,0:01:45.40,0:01:45.45,Default,,0,0,0,,{\an2}Bedeutung von klaren und 
+Dialogue: 0,0:01:45.45,0:01:45.50,Default,,0,0,0,,{\an2}Bedeutung von klaren und v
+Dialogue: 0,0:01:45.50,0:01:45.55,Default,,0,0,0,,{\an2}Bedeutung von klaren und ve
+Dialogue: 0,0:01:45.55,0:01:45.60,Default,,0,0,0,,{\an2}Bedeutung von klaren und ver
+Dialogue: 0,0:01:45.60,0:01:45.66,Default,,0,0,0,,{\an2}Bedeutung von klaren und vers
+Dialogue: 0,0:01:45.66,0:01:45.71,Default,,0,0,0,,{\an2}Bedeutung von klaren und verst
+Dialogue: 0,0:01:45.71,0:01:45.76,Default,,0,0,0,,{\an2}Bedeutung von klaren und verstä
+Dialogue: 0,0:01:45.76,0:01:45.81,Default,,0,0,0,,{\an2}Bedeutung von klaren und verstän
+Dialogue: 0,0:01:45.81,0:01:45.86,Default,,0,0,0,,{\an2}Bedeutung von klaren und verständ
+Dialogue: 0,0:01:45.86,0:01:45.91,Default,,0,0,0,,{\an2}Bedeutung von klaren und verständl
+Dialogue: 0,0:01:45.91,0:01:45.96,Default,,0,0,0,,{\an2}Bedeutung von klaren und\\Nverständli
+Dialogue: 0,0:01:45.96,0:01:46.01,Default,,0,0,0,,{\an2}Bedeutung von klaren und\\Nverständlic
+Dialogue: 0,0:01:46.01,0:01:46.07,Default,,0,0,0,,{\an2}Bedeutung von klaren und\\Nverständlich
+Dialogue: 0,0:01:46.07,0:01:46.12,Default,,0,0,0,,{\an2}Bedeutung von klaren und\\Nverständliche
+Dialogue: 0,0:01:46.12,0:01:46.17,Default,,0,0,0,,{\an2}Bedeutung von klaren und\\Nverständlichen
+Dialogue: 0,0:01:46.17,0:01:46.22,Default,,0,0,0,,{\an2}D
+Dialogue: 0,0:01:46.22,0:01:46.28,Default,,0,0,0,,{\an2}Do
+Dialogue: 0,0:01:46.28,0:01:46.33,Default,,0,0,0,,{\an2}Dok
+Dialogue: 0,0:01:46.33,0:01:46.39,Default,,0,0,0,,{\an2}Doku
+Dialogue: 0,0:01:46.39,0:01:46.44,Default,,0,0,0,,{\an2}Dokum
+Dialogue: 0,0:01:46.44,0:01:46.49,Default,,0,0,0,,{\an2}Dokume
+Dialogue: 0,0:01:46.49,0:01:46.55,Default,,0,0,0,,{\an2}Dokumen
+Dialogue: 0,0:01:46.55,0:01:46.60,Default,,0,0,0,,{\an2}Dokument
+Dialogue: 0,0:01:46.60,0:01:46.66,Default,,0,0,0,,{\an2}Dokumenta
+Dialogue: 0,0:01:46.66,0:01:46.71,Default,,0,0,0,,{\an2}Dokumentat
+Dialogue: 0,0:01:46.71,0:01:46.77,Default,,0,0,0,,{\an2}Dokumentati
+Dialogue: 0,0:01:46.77,0:01:46.82,Default,,0,0,0,,{\an2}Dokumentatio
+Dialogue: 0,0:01:46.82,0:01:46.88,Default,,0,0,0,,{\an2}Dokumentation
+Dialogue: 0,0:01:46.88,0:01:46.93,Default,,0,0,0,,{\an2}Dokumentatione
+Dialogue: 0,0:01:46.93,0:01:46.98,Default,,0,0,0,,{\an2}Dokumentationen
+Dialogue: 0,0:01:46.98,0:01:47.04,Default,,0,0,0,,{\an2}Dokumentationen 
+Dialogue: 0,0:01:47.04,0:01:47.09,Default,,0,0,0,,{\an2}Dokumentationen w
+Dialogue: 0,0:01:47.09,0:01:47.15,Default,,0,0,0,,{\an2}Dokumentationen we
+Dialogue: 0,0:01:47.15,0:01:47.20,Default,,0,0,0,,{\an2}Dokumentationen wei
+Dialogue: 0,0:01:47.20,0:01:47.26,Default,,0,0,0,,{\an2}Dokumentationen weit
+Dialogue: 0,0:01:47.26,0:01:47.31,Default,,0,0,0,,{\an2}Dokumentationen weite
+Dialogue: 0,0:01:47.31,0:01:47.36,Default,,0,0,0,,{\an2}Dokumentationen weiter
+Dialogue: 0,0:01:47.36,0:01:47.42,Default,,0,0,0,,{\an2}Dokumentationen weiter 
+Dialogue: 0,0:01:47.42,0:01:47.47,Default,,0,0,0,,{\an2}Dokumentationen weiter z
+Dialogue: 0,0:01:47.47,0:01:47.53,Default,,0,0,0,,{\an2}Dokumentationen weiter zu
+Dialogue: 0,0:01:47.53,0:01:47.58,Default,,0,0,0,,{\an2}Dokumentationen weiter zun
+Dialogue: 0,0:01:47.58,0:01:47.64,Default,,0,0,0,,{\an2}Dokumentationen weiter zune
+Dialogue: 0,0:01:47.64,0:01:47.69,Default,,0,0,0,,{\an2}Dokumentationen weiter zuneh
+Dialogue: 0,0:01:47.69,0:01:47.75,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehm
+Dialogue: 0,0:01:47.75,0:01:47.80,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehme
+Dialogue: 0,0:01:47.80,0:01:47.85,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen
+Dialogue: 0,0:01:47.85,0:01:47.91,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.
+Dialogue: 0,0:01:47.91,0:01:47.96,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen. 
+Dialogue: 0,0:01:47.96,0:01:48.02,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen. E
+Dialogue: 0,0:01:48.02,0:01:48.07,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.\\NEs
+Dialogue: 0,0:01:48.07,0:01:48.13,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.\\NEs 
+Dialogue: 0,0:01:48.13,0:01:48.18,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.\\NEs i
+Dialogue: 0,0:01:48.18,0:01:48.24,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.\\NEs is
+Dialogue: 0,0:01:48.24,0:01:48.29,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.\\NEs ist
+Dialogue: 0,0:01:48.29,0:01:48.34,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.\\NEs ist 
+Dialogue: 0,0:01:48.34,0:01:48.40,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.\\NEs ist z
+Dialogue: 0,0:01:48.40,0:01:48.45,Default,,0,0,0,,{\an2}Dokumentationen weiter zunehmen.\\NEs ist zu
+Dialogue: 0,0:01:48.45,0:01:48.52,Default,,0,0,0,,{\an2}e
+Dialogue: 0,0:01:48.52,0:01:48.59,Default,,0,0,0,,{\an2}er
+Dialogue: 0,0:01:48.59,0:01:48.65,Default,,0,0,0,,{\an2}erw
+Dialogue: 0,0:01:48.65,0:01:48.72,Default,,0,0,0,,{\an2}erwa
+Dialogue: 0,0:01:48.72,0:01:48.79,Default,,0,0,0,,{\an2}erwar
+Dialogue: 0,0:01:48.79,0:01:48.85,Default,,0,0,0,,{\an2}erwart
+Dialogue: 0,0:01:48.85,0:01:48.92,Default,,0,0,0,,{\an2}erwarte
+Dialogue: 0,0:01:48.92,0:01:48.99,Default,,0,0,0,,{\an2}erwarten
+Dialogue: 0,0:01:48.99,0:01:49.05,Default,,0,0,0,,{\an2}erwarten,
+Dialogue: 0,0:01:49.05,0:01:49.12,Default,,0,0,0,,{\an2}erwarten, 
+Dialogue: 0,0:01:49.12,0:01:49.19,Default,,0,0,0,,{\an2}erwarten, d
+Dialogue: 0,0:01:49.19,0:01:49.25,Default,,0,0,0,,{\an2}erwarten, da
+Dialogue: 0,0:01:49.25,0:01:49.32,Default,,0,0,0,,{\an2}erwarten, das
+Dialogue: 0,0:01:49.32,0:01:49.39,Default,,0,0,0,,{\an2}erwarten, dass
+Dialogue: 0,0:01:49.39,0:01:49.45,Default,,0,0,0,,{\an2}erwarten, dass 
+Dialogue: 0,0:01:49.45,0:01:49.52,Default,,0,0,0,,{\an2}erwarten, dass d
+Dialogue: 0,0:01:49.52,0:01:49.59,Default,,0,0,0,,{\an2}erwarten, dass di
+Dialogue: 0,0:01:49.59,0:01:49.65,Default,,0,0,0,,{\an2}erwarten, dass die
+Dialogue: 0,0:01:49.65,0:01:49.72,Default,,0,0,0,,{\an2}erwarten, dass die 
+Dialogue: 0,0:01:49.72,0:01:49.79,Default,,0,0,0,,{\an2}erwarten, dass die N
+Dialogue: 0,0:01:49.79,0:01:49.85,Default,,0,0,0,,{\an2}erwarten, dass die Nu
+Dialogue: 0,0:01:49.85,0:01:49.92,Default,,0,0,0,,{\an2}erwarten, dass die Nut
+Dialogue: 0,0:01:49.92,0:01:49.99,Default,,0,0,0,,{\an2}erwarten, dass die Nutz
+Dialogue: 0,0:01:49.99,0:01:50.05,Default,,0,0,0,,{\an2}erwarten, dass die Nutzu
+Dialogue: 0,0:01:50.05,0:01:50.12,Default,,0,0,0,,{\an2}erwarten, dass die Nutzun
+Dialogue: 0,0:01:50.12,0:01:50.19,Default,,0,0,0,,{\an2}erwarten, dass die Nutzung
+Dialogue: 0,0:01:50.19,0:01:50.25,Default,,0,0,0,,{\an2}erwarten, dass die Nutzung 
+Dialogue: 0,0:01:50.25,0:01:50.32,Default,,0,0,0,,{\an2}erwarten, dass die Nutzung v
+Dialogue: 0,0:01:50.32,0:01:50.39,Default,,0,0,0,,{\an2}erwarten, dass die Nutzung vo
+Dialogue: 0,0:01:50.39,0:01:50.45,Default,,0,0,0,,{\an2}erwarten, dass die Nutzung von
+Dialogue: 0,0:01:50.45,0:01:50.51,Default,,0,0,0,,{\an2}B
+Dialogue: 0,0:01:50.51,0:01:50.56,Default,,0,0,0,,{\an2}Be
+Dialogue: 0,0:01:50.56,0:01:50.62,Default,,0,0,0,,{\an2}Bei
+Dialogue: 0,0:01:50.62,0:01:50.68,Default,,0,0,0,,{\an2}Beis
+Dialogue: 0,0:01:50.68,0:01:50.73,Default,,0,0,0,,{\an2}Beisp
+Dialogue: 0,0:01:50.73,0:01:50.79,Default,,0,0,0,,{\an2}Beispi
+Dialogue: 0,0:01:50.79,0:01:50.84,Default,,0,0,0,,{\an2}Beispie
+Dialogue: 0,0:01:50.84,0:01:50.90,Default,,0,0,0,,{\an2}Beispiel
+Dialogue: 0,0:01:50.90,0:01:50.95,Default,,0,0,0,,{\an2}Beispiel-
+Dialogue: 0,0:01:50.95,0:01:51.01,Default,,0,0,0,,{\an2}Beispiel-D
+Dialogue: 0,0:01:51.01,0:01:51.07,Default,,0,0,0,,{\an2}Beispiel-Do
+Dialogue: 0,0:01:51.07,0:01:51.12,Default,,0,0,0,,{\an2}Beispiel-Dom
+Dialogue: 0,0:01:51.12,0:01:51.18,Default,,0,0,0,,{\an2}Beispiel-Domä
+Dialogue: 0,0:01:51.18,0:01:51.23,Default,,0,0,0,,{\an2}Beispiel-Domän
+Dialogue: 0,0:01:51.23,0:01:51.29,Default,,0,0,0,,{\an2}Beispiel-Domäne
+Dialogue: 0,0:01:51.29,0:01:51.34,Default,,0,0,0,,{\an2}Beispiel-Domänen
+Dialogue: 0,0:01:51.34,0:01:51.40,Default,,0,0,0,,{\an2}Beispiel-Domänen 
+Dialogue: 0,0:01:51.40,0:01:51.46,Default,,0,0,0,,{\an2}Beispiel-Domänen i
+Dialogue: 0,0:01:51.46,0:01:51.51,Default,,0,0,0,,{\an2}Beispiel-Domänen in
+Dialogue: 0,0:01:51.51,0:01:51.57,Default,,0,0,0,,{\an2}Beispiel-Domänen in 
+Dialogue: 0,0:01:51.57,0:01:51.62,Default,,0,0,0,,{\an2}Beispiel-Domänen in d
+Dialogue: 0,0:01:51.62,0:01:51.68,Default,,0,0,0,,{\an2}Beispiel-Domänen in de
+Dialogue: 0,0:01:51.68,0:01:51.73,Default,,0,0,0,,{\an2}Beispiel-Domänen in der
+Dialogue: 0,0:01:51.73,0:01:51.79,Default,,0,0,0,,{\an2}Beispiel-Domänen in der 
+Dialogue: 0,0:01:51.79,0:01:51.85,Default,,0,0,0,,{\an2}Beispiel-Domänen in der A
+Dialogue: 0,0:01:51.85,0:01:51.90,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Au
+Dialogue: 0,0:01:51.90,0:01:51.96,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Aus
+Dialogue: 0,0:01:51.96,0:01:52.01,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausb
+Dialogue: 0,0:01:52.01,0:01:52.07,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbi
+Dialogue: 0,0:01:52.07,0:01:52.12,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbil
+Dialogue: 0,0:01:52.12,0:01:52.18,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbild
+Dialogue: 0,0:01:52.18,0:01:52.24,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildu
+Dialogue: 0,0:01:52.24,0:01:52.29,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildun
+Dialogue: 0,0:01:52.29,0:01:52.35,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildung
+Dialogue: 0,0:01:52.35,0:01:52.40,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildung\\N
+Dialogue: 0,0:01:52.40,0:01:52.46,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildung\\Nu
+Dialogue: 0,0:01:52.46,0:01:52.52,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildung\\Nun
+Dialogue: 0,0:01:52.52,0:01:52.57,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildung\\Nund
+Dialogue: 0,0:01:52.57,0:01:52.63,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildung\\Nund 
+Dialogue: 0,0:01:52.63,0:01:52.68,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildung\\Nund i
+Dialogue: 0,0:01:52.68,0:01:52.74,Default,,0,0,0,,{\an2}Beispiel-Domänen in der Ausbildung\\Nund in
+Dialogue: 0,0:01:52.74,0:01:52.80,Default,,0,0,0,,{\an2}d
+Dialogue: 0,0:01:52.80,0:01:52.86,Default,,0,0,0,,{\an2}de
+Dialogue: 0,0:01:52.86,0:01:52.92,Default,,0,0,0,,{\an2}der
+Dialogue: 0,0:01:52.92,0:01:52.98,Default,,0,0,0,,{\an2}der 
+Dialogue: 0,0:01:52.98,0:01:53.04,Default,,0,0,0,,{\an2}der S
+Dialogue: 0,0:01:53.04,0:01:53.10,Default,,0,0,0,,{\an2}der So
+Dialogue: 0,0:01:53.10,0:01:53.16,Default,,0,0,0,,{\an2}der Sof
+Dialogue: 0,0:01:53.16,0:01:53.22,Default,,0,0,0,,{\an2}der Soft
+Dialogue: 0,0:01:53.22,0:01:53.28,Default,,0,0,0,,{\an2}der Softw
+Dialogue: 0,0:01:53.28,0:01:53.34,Default,,0,0,0,,{\an2}der Softwa
+Dialogue: 0,0:01:53.34,0:01:53.40,Default,,0,0,0,,{\an2}der Softwar
+Dialogue: 0,0:01:53.40,0:01:53.47,Default,,0,0,0,,{\an2}der Software
+Dialogue: 0,0:01:53.47,0:01:53.53,Default,,0,0,0,,{\an2}der Softwaree
+Dialogue: 0,0:01:53.53,0:01:53.59,Default,,0,0,0,,{\an2}der Softwareen
+Dialogue: 0,0:01:53.59,0:01:53.65,Default,,0,0,0,,{\an2}der Softwareent
+Dialogue: 0,0:01:53.65,0:01:53.71,Default,,0,0,0,,{\an2}der Softwareentw
+Dialogue: 0,0:01:53.71,0:01:53.77,Default,,0,0,0,,{\an2}der Softwareentwi
+Dialogue: 0,0:01:53.77,0:01:53.83,Default,,0,0,0,,{\an2}der Softwareentwic
+Dialogue: 0,0:01:53.83,0:01:53.89,Default,,0,0,0,,{\an2}der Softwareentwick
+Dialogue: 0,0:01:53.89,0:01:53.95,Default,,0,0,0,,{\an2}der Softwareentwickl
+Dialogue: 0,0:01:53.95,0:01:54.01,Default,,0,0,0,,{\an2}der Softwareentwicklu
+Dialogue: 0,0:01:54.01,0:01:54.07,Default,,0,0,0,,{\an2}der Softwareentwicklun
+Dialogue: 0,0:01:54.07,0:01:54.13,Default,,0,0,0,,{\an2}der Softwareentwicklung
+Dialogue: 0,0:01:54.13,0:01:54.19,Default,,0,0,0,,{\an2}der Softwareentwicklung 
+Dialogue: 0,0:01:54.19,0:01:54.25,Default,,0,0,0,,{\an2}der Softwareentwicklung w
+Dialogue: 0,0:01:54.25,0:01:54.31,Default,,0,0,0,,{\an2}der Softwareentwicklung we
+Dialogue: 0,0:01:54.31,0:01:54.37,Default,,0,0,0,,{\an2}der Softwareentwicklung wei
+Dialogue: 0,0:01:54.37,0:01:54.43,Default,,0,0,0,,{\an2}der Softwareentwicklung weit
+Dialogue: 0,0:01:54.43,0:01:54.50,Default,,0,0,0,,{\an2}der Softwareentwicklung weite
+Dialogue: 0,0:01:54.50,0:01:54.56,Default,,0,0,0,,{\an2}der Softwareentwicklung weiter
+Dialogue: 0,0:01:54.56,0:01:54.62,Default,,0,0,0,,{\an2}der Softwareentwicklung weiter 
+Dialogue: 0,0:01:54.62,0:01:54.68,Default,,0,0,0,,{\an2}der Softwareentwicklung weiter a
+Dialogue: 0,0:01:54.68,0:01:54.74,Default,,0,0,0,,{\an2}der Softwareentwicklung weiter an
+Dialogue: 0,0:01:54.74,0:01:54.79,Default,,0,0,0,,{\an2}B
+Dialogue: 0,0:01:54.79,0:01:54.85,Default,,0,0,0,,{\an2}Be
+Dialogue: 0,0:01:54.85,0:01:54.90,Default,,0,0,0,,{\an2}Bed
+Dialogue: 0,0:01:54.90,0:01:54.95,Default,,0,0,0,,{\an2}Bede
+Dialogue: 0,0:01:54.95,0:01:55.01,Default,,0,0,0,,{\an2}Bedeu
+Dialogue: 0,0:01:55.01,0:01:55.06,Default,,0,0,0,,{\an2}Bedeut
+Dialogue: 0,0:01:55.06,0:01:55.12,Default,,0,0,0,,{\an2}Bedeutu
+Dialogue: 0,0:01:55.12,0:01:55.17,Default,,0,0,0,,{\an2}Bedeutun
+Dialogue: 0,0:01:55.17,0:01:55.22,Default,,0,0,0,,{\an2}Bedeutung
+Dialogue: 0,0:01:55.22,0:01:55.28,Default,,0,0,0,,{\an2}Bedeutung 
+Dialogue: 0,0:01:55.28,0:01:55.33,Default,,0,0,0,,{\an2}Bedeutung g
+Dialogue: 0,0:01:55.33,0:01:55.39,Default,,0,0,0,,{\an2}Bedeutung ge
+Dialogue: 0,0:01:55.39,0:01:55.44,Default,,0,0,0,,{\an2}Bedeutung gew
+Dialogue: 0,0:01:55.44,0:01:55.49,Default,,0,0,0,,{\an2}Bedeutung gewi
+Dialogue: 0,0:01:55.49,0:01:55.55,Default,,0,0,0,,{\an2}Bedeutung gewin
+Dialogue: 0,0:01:55.55,0:01:55.60,Default,,0,0,0,,{\an2}Bedeutung gewinn
+Dialogue: 0,0:01:55.60,0:01:55.66,Default,,0,0,0,,{\an2}Bedeutung gewinne
+Dialogue: 0,0:01:55.66,0:01:55.71,Default,,0,0,0,,{\an2}Bedeutung gewinnen
+Dialogue: 0,0:01:55.71,0:01:55.77,Default,,0,0,0,,{\an2}Bedeutung gewinnen 
+Dialogue: 0,0:01:55.77,0:01:55.82,Default,,0,0,0,,{\an2}Bedeutung gewinnen w
+Dialogue: 0,0:01:55.82,0:01:55.87,Default,,0,0,0,,{\an2}Bedeutung gewinnen wi
+Dialogue: 0,0:01:55.87,0:01:55.93,Default,,0,0,0,,{\an2}Bedeutung gewinnen wir
+Dialogue: 0,0:01:55.93,0:01:55.98,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird
+Dialogue: 0,0:01:55.98,0:01:56.04,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird.
+Dialogue: 0,0:01:56.04,0:01:56.09,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. 
+Dialogue: 0,0:01:56.09,0:01:56.14,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. G
+Dialogue: 0,0:01:56.14,0:01:56.20,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. Gl
+Dialogue: 0,0:01:56.20,0:01:56.25,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. Gle
+Dialogue: 0,0:01:56.25,0:01:56.31,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. Glei
+Dialogue: 0,0:01:56.31,0:01:56.36,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. Gleic
+Dialogue: 0,0:01:56.36,0:01:56.41,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. Gleich
+Dialogue: 0,0:01:56.41,0:01:56.47,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. Gleichz
+Dialogue: 0,0:01:56.47,0:01:56.52,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. Gleichze
+Dialogue: 0,0:01:56.52,0:01:56.58,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird. Gleichzei
+Dialogue: 0,0:01:56.58,0:01:56.63,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird.\\NGleichzeit
+Dialogue: 0,0:01:56.63,0:01:56.68,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird.\\NGleichzeiti
+Dialogue: 0,0:01:56.68,0:01:56.74,Default,,0,0,0,,{\an2}Bedeutung gewinnen wird.\\NGleichzeitig
+Dialogue: 0,0:01:56.74,0:01:56.79,Default,,0,0,0,,{\an2}m
+Dialogue: 0,0:01:56.79,0:01:56.85,Default,,0,0,0,,{\an2}mü
+Dialogue: 0,0:01:56.85,0:01:56.90,Default,,0,0,0,,{\an2}müs
+Dialogue: 0,0:01:56.90,0:01:56.95,Default,,0,0,0,,{\an2}müss
+Dialogue: 0,0:01:56.95,0:01:57.01,Default,,0,0,0,,{\an2}müsse
+Dialogue: 0,0:01:57.01,0:01:57.06,Default,,0,0,0,,{\an2}müssen
+Dialogue: 0,0:01:57.06,0:01:57.12,Default,,0,0,0,,{\an2}müssen 
+Dialogue: 0,0:01:57.12,0:01:57.17,Default,,0,0,0,,{\an2}müssen n
+Dialogue: 0,0:01:57.17,0:01:57.22,Default,,0,0,0,,{\an2}müssen ne
+Dialogue: 0,0:01:57.22,0:01:57.28,Default,,0,0,0,,{\an2}müssen neu
+Dialogue: 0,0:01:57.28,0:01:57.33,Default,,0,0,0,,{\an2}müssen neue
+Dialogue: 0,0:01:57.33,0:01:57.39,Default,,0,0,0,,{\an2}müssen neue 
+Dialogue: 0,0:01:57.39,0:01:57.44,Default,,0,0,0,,{\an2}müssen neue S
+Dialogue: 0,0:01:57.44,0:01:57.49,Default,,0,0,0,,{\an2}müssen neue St
+Dialogue: 0,0:01:57.49,0:01:57.55,Default,,0,0,0,,{\an2}müssen neue Sta
+Dialogue: 0,0:01:57.55,0:01:57.60,Default,,0,0,0,,{\an2}müssen neue Stan
+Dialogue: 0,0:01:57.60,0:01:57.66,Default,,0,0,0,,{\an2}müssen neue Stand
+Dialogue: 0,0:01:57.66,0:01:57.71,Default,,0,0,0,,{\an2}müssen neue Standa
+Dialogue: 0,0:01:57.71,0:01:57.77,Default,,0,0,0,,{\an2}müssen neue Standar
+Dialogue: 0,0:01:57.77,0:01:57.82,Default,,0,0,0,,{\an2}müssen neue Standard
+Dialogue: 0,0:01:57.82,0:01:57.87,Default,,0,0,0,,{\an2}müssen neue Standards
+Dialogue: 0,0:01:57.87,0:01:57.93,Default,,0,0,0,,{\an2}müssen neue Standards 
+Dialogue: 0,0:01:57.93,0:01:57.98,Default,,0,0,0,,{\an2}müssen neue Standards u
+Dialogue: 0,0:01:57.98,0:01:58.04,Default,,0,0,0,,{\an2}müssen neue Standards un
+Dialogue: 0,0:01:58.04,0:01:58.09,Default,,0,0,0,,{\an2}müssen neue Standards und
+Dialogue: 0,0:01:58.09,0:01:58.14,Default,,0,0,0,,{\an2}müssen neue Standards und 
+Dialogue: 0,0:01:58.14,0:01:58.20,Default,,0,0,0,,{\an2}müssen neue Standards und R
+Dialogue: 0,0:01:58.20,0:01:58.25,Default,,0,0,0,,{\an2}müssen neue Standards und Ri
+Dialogue: 0,0:01:58.25,0:01:58.31,Default,,0,0,0,,{\an2}müssen neue Standards und Ric
+Dialogue: 0,0:01:58.31,0:01:58.36,Default,,0,0,0,,{\an2}müssen neue Standards und Rich
+Dialogue: 0,0:01:58.36,0:01:58.41,Default,,0,0,0,,{\an2}müssen neue Standards und Richt
+Dialogue: 0,0:01:58.41,0:01:58.47,Default,,0,0,0,,{\an2}müssen neue Standards und Richtl
+Dialogue: 0,0:01:58.47,0:01:58.52,Default,,0,0,0,,{\an2}müssen neue Standards und Richtli
+Dialogue: 0,0:01:58.52,0:01:58.58,Default,,0,0,0,,{\an2}müssen neue Standards und Richtlin
+Dialogue: 0,0:01:58.58,0:01:58.63,Default,,0,0,0,,{\an2}müssen neue Standards und\\NRichtlini
+Dialogue: 0,0:01:58.63,0:01:58.68,Default,,0,0,0,,{\an2}müssen neue Standards und\\NRichtlinie
+Dialogue: 0,0:01:58.68,0:01:58.74,Default,,0,0,0,,{\an2}müssen neue Standards und\\NRichtlinien
+Dialogue: 0,0:01:58.74,0:01:58.79,Default,,0,0,0,,{\an2}e
+Dialogue: 0,0:01:58.79,0:01:58.85,Default,,0,0,0,,{\an2}en
+Dialogue: 0,0:01:58.85,0:01:58.91,Default,,0,0,0,,{\an2}ent
+Dialogue: 0,0:01:58.91,0:01:58.96,Default,,0,0,0,,{\an2}entw
+Dialogue: 0,0:01:58.96,0:01:59.02,Default,,0,0,0,,{\an2}entwi
+Dialogue: 0,0:01:59.02,0:01:59.07,Default,,0,0,0,,{\an2}entwic
+Dialogue: 0,0:01:59.07,0:01:59.13,Default,,0,0,0,,{\an2}entwick
+Dialogue: 0,0:01:59.13,0:01:59.18,Default,,0,0,0,,{\an2}entwicke
+Dialogue: 0,0:01:59.18,0:01:59.24,Default,,0,0,0,,{\an2}entwickel
+Dialogue: 0,0:01:59.24,0:01:59.30,Default,,0,0,0,,{\an2}entwickelt
+Dialogue: 0,0:01:59.30,0:01:59.35,Default,,0,0,0,,{\an2}entwickelt 
+Dialogue: 0,0:01:59.35,0:01:59.41,Default,,0,0,0,,{\an2}entwickelt w
+Dialogue: 0,0:01:59.41,0:01:59.46,Default,,0,0,0,,{\an2}entwickelt we
+Dialogue: 0,0:01:59.46,0:01:59.52,Default,,0,0,0,,{\an2}entwickelt wer
+Dialogue: 0,0:01:59.52,0:01:59.57,Default,,0,0,0,,{\an2}entwickelt werd
+Dialogue: 0,0:01:59.57,0:01:59.63,Default,,0,0,0,,{\an2}entwickelt werde
+Dialogue: 0,0:01:59.63,0:01:59.69,Default,,0,0,0,,{\an2}entwickelt werden
+Dialogue: 0,0:01:59.69,0:01:59.74,Default,,0,0,0,,{\an2}entwickelt werden,
+Dialogue: 0,0:01:59.74,0:01:59.80,Default,,0,0,0,,{\an2}entwickelt werden, 
+Dialogue: 0,0:01:59.80,0:01:59.85,Default,,0,0,0,,{\an2}entwickelt werden, u
+Dialogue: 0,0:01:59.85,0:01:59.91,Default,,0,0,0,,{\an2}entwickelt werden, um
+Dialogue: 0,0:01:59.91,0:01:59.96,Default,,0,0,0,,{\an2}entwickelt werden, um 
+Dialogue: 0,0:01:59.96,0:02:00.02,Default,,0,0,0,,{\an2}entwickelt werden, um d
+Dialogue: 0,0:02:00.02,0:02:00.07,Default,,0,0,0,,{\an2}entwickelt werden, um de
+Dialogue: 0,0:02:00.07,0:02:00.13,Default,,0,0,0,,{\an2}entwickelt werden, um den
+Dialogue: 0,0:02:00.13,0:02:00.19,Default,,0,0,0,,{\an2}entwickelt werden, um den 
+Dialogue: 0,0:02:00.19,0:02:00.24,Default,,0,0,0,,{\an2}entwickelt werden, um den s
+Dialogue: 0,0:02:00.24,0:02:00.30,Default,,0,0,0,,{\an2}entwickelt werden, um den si
+Dialogue: 0,0:02:00.30,0:02:00.35,Default,,0,0,0,,{\an2}entwickelt werden, um den sic
+Dialogue: 0,0:02:00.35,0:02:00.41,Default,,0,0,0,,{\an2}entwickelt werden, um den sich
+Dialogue: 0,0:02:00.41,0:02:00.46,Default,,0,0,0,,{\an2}entwickelt werden, um den siche
+Dialogue: 0,0:02:00.46,0:02:00.52,Default,,0,0,0,,{\an2}entwickelt werden, um den sicher
+Dialogue: 0,0:02:00.52,0:02:00.58,Default,,0,0,0,,{\an2}entwickelt werden, um den sichere
+Dialogue: 0,0:02:00.58,0:02:00.63,Default,,0,0,0,,{\an2}entwickelt werden, um den sicheren
+Dialogue: 0,0:02:00.63,0:02:00.69,Default,,0,0,0,,{\an2}entwickelt werden, um den sicheren\\N
+Dialogue: 0,0:02:00.69,0:02:00.74,Default,,0,0,0,,{\an2}entwickelt werden, um den sicheren\\NU
+Dialogue: 0,0:02:00.74,0:02:00.80,Default,,0,0,0,,{\an2}entwickelt werden, um den sicheren\\NUm
+Dialogue: 0,0:02:00.80,0:02:00.85,Default,,0,0,0,,{\an2}entwickelt werden, um den sicheren\\NUmg
+Dialogue: 0,0:02:00.85,0:02:00.91,Default,,0,0,0,,{\an2}entwickelt werden, um den sicheren\\NUmga
+Dialogue: 0,0:02:00.91,0:02:00.97,Default,,0,0,0,,{\an2}entwickelt werden, um den sicheren\\NUmgan
+Dialogue: 0,0:02:00.97,0:02:01.02,Default,,0,0,0,,{\an2}entwickelt werden, um den sicheren\\NUmgang
+Dialogue: 0,0:02:01.02,0:02:01.08,Default,,0,0,0,,{\an2}m
+Dialogue: 0,0:02:01.08,0:02:01.13,Default,,0,0,0,,{\an2}mi
+Dialogue: 0,0:02:01.13,0:02:01.19,Default,,0,0,0,,{\an2}mit
+Dialogue: 0,0:02:01.19,0:02:01.24,Default,,0,0,0,,{\an2}mit 
+Dialogue: 0,0:02:01.24,0:02:01.30,Default,,0,0,0,,{\an2}mit d
+Dialogue: 0,0:02:01.30,0:02:01.35,Default,,0,0,0,,{\an2}mit di
+Dialogue: 0,0:02:01.35,0:02:01.41,Default,,0,0,0,,{\an2}mit die
+Dialogue: 0,0:02:01.41,0:02:01.46,Default,,0,0,0,,{\an2}mit dies
+Dialogue: 0,0:02:01.46,0:02:01.52,Default,,0,0,0,,{\an2}mit diese
+Dialogue: 0,0:02:01.52,0:02:01.57,Default,,0,0,0,,{\an2}mit diesen
+Dialogue: 0,0:02:01.57,0:02:01.63,Default,,0,0,0,,{\an2}mit diesen 
+Dialogue: 0,0:02:01.63,0:02:01.68,Default,,0,0,0,,{\an2}mit diesen D
+Dialogue: 0,0:02:01.68,0:02:01.74,Default,,0,0,0,,{\an2}mit diesen Do
+Dialogue: 0,0:02:01.74,0:02:01.79,Default,,0,0,0,,{\an2}mit diesen Dom
+Dialogue: 0,0:02:01.79,0:02:01.85,Default,,0,0,0,,{\an2}mit diesen Domä
+Dialogue: 0,0:02:01.85,0:02:01.90,Default,,0,0,0,,{\an2}mit diesen Domän
+Dialogue: 0,0:02:01.90,0:02:01.96,Default,,0,0,0,,{\an2}mit diesen Domäne
+Dialogue: 0,0:02:01.96,0:02:02.01,Default,,0,0,0,,{\an2}mit diesen Domänen
+Dialogue: 0,0:02:02.01,0:02:02.07,Default,,0,0,0,,{\an2}mit diesen Domänen 
+Dialogue: 0,0:02:02.07,0:02:02.12,Default,,0,0,0,,{\an2}mit diesen Domänen z
+Dialogue: 0,0:02:02.12,0:02:02.18,Default,,0,0,0,,{\an2}mit diesen Domänen zu
+Dialogue: 0,0:02:02.18,0:02:02.23,Default,,0,0,0,,{\an2}mit diesen Domänen zu 
+Dialogue: 0,0:02:02.23,0:02:02.29,Default,,0,0,0,,{\an2}mit diesen Domänen zu g
+Dialogue: 0,0:02:02.29,0:02:02.34,Default,,0,0,0,,{\an2}mit diesen Domänen zu ge
+Dialogue: 0,0:02:02.34,0:02:02.40,Default,,0,0,0,,{\an2}mit diesen Domänen zu gew
+Dialogue: 0,0:02:02.40,0:02:02.45,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewä
+Dialogue: 0,0:02:02.45,0:02:02.51,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewäh
+Dialogue: 0,0:02:02.51,0:02:02.56,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewähr
+Dialogue: 0,0:02:02.56,0:02:02.62,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewährl
+Dialogue: 0,0:02:02.62,0:02:02.67,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewährle
+Dialogue: 0,0:02:02.67,0:02:02.73,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewährlei
+Dialogue: 0,0:02:02.73,0:02:02.78,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewährleis
+Dialogue: 0,0:02:02.78,0:02:02.84,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewährleist
+Dialogue: 0,0:02:02.84,0:02:02.89,Default,,0,0,0,,{\an2}mit diesen Domänen zu gewährleiste
+Dialogue: 0,0:02:02.89,0:02:02.95,Default,,0,0,0,,{\an2}mit diesen Domänen zu\\Ngewährleisten
+Dialogue: 0,0:02:02.95,0:02:03.00,Default,,0,0,0,,{\an2}mit diesen Domänen zu\\Ngewährleisten.

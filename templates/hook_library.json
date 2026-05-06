@@ -1,0 +1,230 @@
+{
+    "library_version": "1.0.0",
+    "description": "Reusable hook patterns for video pipeline templates. Hooks are selected by template, topic and emotional angle.",
+    "hook_types": {
+      "curiosity_gap": {
+        "label": "Curiosity Gap",
+        "purpose": "Creates an open question that makes viewers want the answer.",
+        "best_for": [
+          "mystery_history",
+          "true_crime",
+          "documentary",
+          "news_explainer"
+        ]
+      },
+      "contradiction": {
+        "label": "Contradiction",
+        "purpose": "Starts with a surprising contrast between appearance and reality.",
+        "best_for": [
+          "mystery_history",
+          "real_estate_story",
+          "news_explainer",
+          "documentary"
+        ]
+      },
+      "hidden_truth": {
+        "label": "Hidden Truth",
+        "purpose": "Suggests that the visible story hides a deeper layer.",
+        "best_for": [
+          "true_crime",
+          "mystery_history",
+          "documentary",
+          "real_estate_story"
+        ]
+      },
+      "consequence": {
+        "label": "Consequence",
+        "purpose": "Shows why the topic matters now and what could follow.",
+        "best_for": [
+          "news_explainer",
+          "documentary",
+          "real_estate_story"
+        ]
+      },
+      "emotional_turn": {
+        "label": "Emotional Turn",
+        "purpose": "Starts with a human shift, loss, hope or transformation.",
+        "best_for": [
+          "emotional_story",
+          "documentary",
+          "true_crime"
+        ]
+      },
+      "money_value": {
+        "label": "Money / Value Angle",
+        "purpose": "Frames the topic through price, value, investment, risk or opportunity.",
+        "best_for": [
+          "real_estate_story",
+          "news_explainer",
+          "documentary"
+        ]
+      }
+    },
+    "template_hooks": {
+      "true_crime": [
+        {
+          "hook_type": "curiosity_gap",
+          "patterns": [
+            "Was wie ein normaler Tag begann, endete mit einer Frage, die bis heute nicht vollständig beantwortet ist.",
+            "Niemand ahnte, dass hinter diesem scheinbar gewöhnlichen Fall ein Detail steckte, das alles verändern sollte.",
+            "Es gibt Geschichten, bei denen die wichtigste Spur nicht dort liegt, wo alle zuerst suchen."
+          ]
+        },
+        {
+          "hook_type": "hidden_truth",
+          "patterns": [
+            "Auf den ersten Blick wirkte alles eindeutig. Doch genau das machte diesen Fall so gefährlich.",
+            "Die offizielle Geschichte klang plausibel. Aber einige Details passten nicht zusammen.",
+            "Manchmal beginnt ein Fall nicht mit einem Schrei, sondern mit einem kleinen Widerspruch."
+          ]
+        },
+        {
+          "hook_type": "emotional_turn",
+          "patterns": [
+            "Für die Menschen in seinem Umfeld war es nur ein weiterer Tag. Bis plötzlich nichts mehr normal war.",
+            "Eine Entscheidung, ein Moment, ein Weg — und danach war ein ganzes Leben nicht mehr dasselbe.",
+            "Was zurückblieb, waren Fragen, Erinnerungen und ein Gefühl, dass etwas nicht stimmte."
+          ]
+        }
+      ],
+      "mystery_history": [
+        {
+          "hook_type": "curiosity_gap",
+          "patterns": [
+            "Dieser Ort sieht unscheinbar aus, doch seine Geschichte ist alles andere als gewöhnlich.",
+            "Wer hier vorbeiläuft, sieht nur alte Mauern. Aber genau diese Mauern erzählen etwas, das fast vergessen wurde.",
+            "Manche Orte verschwinden nicht wirklich. Sie warten nur darauf, dass jemand ihre Geschichte wiederfindet."
+          ]
+        },
+        {
+          "hook_type": "contradiction",
+          "patterns": [
+            "Heute wirkt dieser Ort verlassen. Früher aber war er Teil einer Geschichte, die viel größer war.",
+            "Was heute wie ein Relikt aussieht, war einmal ein Symbol für Macht, Hoffnung oder Veränderung.",
+            "Auf den ersten Blick ist es nur ein Gebäude. Auf den zweiten Blick ist es ein Stück vergessene Zeit."
+          ]
+        },
+        {
+          "hook_type": "hidden_truth",
+          "patterns": [
+            "Hinter dieser Fassade steckt eine Vergangenheit, die kaum jemand noch kennt.",
+            "Die eigentliche Geschichte beginnt nicht dort, wo man sie erwartet.",
+            "Dieses Detail wirkt klein. Aber es führt mitten hinein in eine vergessene Geschichte."
+          ]
+        }
+      ],
+      "emotional_story": [
+        {
+          "hook_type": "emotional_turn",
+          "patterns": [
+            "Manchmal verändert ein einziger Moment alles.",
+            "Diese Geschichte beginnt leise, aber sie bleibt im Kopf.",
+            "Was zunächst wie ein Rückschlag wirkt, wird zum Wendepunkt."
+          ]
+        },
+        {
+          "hook_type": "contradiction",
+          "patterns": [
+            "Von außen sah alles normal aus. Doch innerlich war längst nichts mehr wie vorher.",
+            "Es wirkte wie ein Ende. In Wahrheit war es der Anfang von etwas Neuem.",
+            "Manchmal verliert man etwas, nur um später zu verstehen, was man wirklich gebraucht hat."
+          ]
+        },
+        {
+          "hook_type": "curiosity_gap",
+          "patterns": [
+            "Warum dieser eine Moment so viel verändert hat, versteht man erst am Ende.",
+            "Es gibt Entscheidungen, die klein wirken — bis sie ein ganzes Leben verschieben.",
+            "Diese Geschichte zeigt, wie viel Kraft manchmal aus dem entsteht, was zuerst wie Scheitern aussieht."
+          ]
+        }
+      ],
+      "documentary": [
+        {
+          "hook_type": "consequence",
+          "patterns": [
+            "Diese Geschichte wirkt zunächst klein, doch ihre Folgen reichen weiter, als man denkt.",
+            "Um zu verstehen, warum das wichtig ist, muss man hinter die erste Schlagzeile schauen.",
+            "Was hier passiert ist, zeigt ein größeres Muster."
+          ]
+        },
+        {
+          "hook_type": "hidden_truth",
+          "patterns": [
+            "Auf den ersten Blick scheint die Sache klar. Doch der entscheidende Zusammenhang liegt darunter.",
+            "Hinter diesem Ereignis steckt mehr als nur eine einzelne Meldung.",
+            "Die eigentliche Frage ist nicht nur, was passiert ist — sondern warum."
+          ]
+        },
+        {
+          "hook_type": "contradiction",
+          "patterns": [
+            "Was einfach klingt, ist in Wahrheit deutlich komplexer.",
+            "Die sichtbare Geschichte ist nur ein Teil des Problems.",
+            "Genau dort, wo alles eindeutig wirkt, beginnt die eigentliche Erklärung."
+          ]
+        }
+      ],
+      "real_estate_story": [
+        {
+          "hook_type": "money_value",
+          "patterns": [
+            "Dieses Gebäude wirkt unscheinbar, doch sein Wert erzählt eine größere Geschichte.",
+            "Hinter dieser Immobilie steckt mehr als nur ein Verkauf — es geht um Risiko, Wandel und Chancen.",
+            "Was hier passiert, zeigt, wie sehr sich ein ganzer Markt verändern kann."
+          ]
+        },
+        {
+          "hook_type": "contradiction",
+          "patterns": [
+            "Von außen sieht es aus wie ein altes Haus. In Wahrheit steckt hier ein Millionenpotenzial.",
+            "Was lange leer stand, könnte plötzlich zu einem der spannendsten Objekte der Gegend werden.",
+            "Dieses Gebäude war fast vergessen — bis sein Wert wieder entdeckt wurde."
+          ]
+        },
+        {
+          "hook_type": "hidden_truth",
+          "patterns": [
+            "Die wichtigste Geschichte dieser Immobilie steht nicht im Exposé.",
+            "Man sieht Mauern, Fenster und ein Dach. Aber der eigentliche Wert liegt in der Geschichte dahinter.",
+            "Hinter diesem Objekt steckt eine Entwicklung, die viel über den Immobilienmarkt verrät."
+          ]
+        }
+      ],
+      "news_explainer": [
+        {
+          "hook_type": "consequence",
+          "patterns": [
+            "Diese Nachricht klingt auf den ersten Blick einfach, doch sie könnte größere Folgen haben.",
+            "Was hier entschieden wurde, betrifft mehr Menschen, als man zunächst denkt.",
+            "Diese Meldung ist nicht nur eine Schlagzeile — sie zeigt eine Entwicklung, die man verstehen sollte."
+          ]
+        },
+        {
+          "hook_type": "contradiction",
+          "patterns": [
+            "Offiziell klingt es nach einer einfachen Lösung. In der Praxis könnte es komplizierter werden.",
+            "Was wie eine kleine Änderung wirkt, kann für viele Menschen spürbare Folgen haben.",
+            "Die Schlagzeile erzählt nur den Anfang. Der eigentliche Konflikt liegt im Detail."
+          ]
+        },
+        {
+          "hook_type": "hidden_truth",
+          "patterns": [
+            "Hinter dieser Nachricht steckt ein Zusammenhang, der oft übersehen wird.",
+            "Um diese Meldung richtig einzuordnen, reicht die Überschrift allein nicht aus.",
+            "Die entscheidende Frage ist nicht nur, was passiert ist — sondern, warum gerade jetzt."
+          ]
+        }
+      ]
+    },
+    "global_hook_rules": [
+      "Do not invent facts.",
+      "Do not use fake quotes.",
+      "Do not overpromise what the video cannot explain.",
+      "Avoid clickbait without substance.",
+      "Use curiosity, but keep it truthful.",
+      "For news topics, clearly separate facts from interpretation.",
+      "For true crime topics, avoid accusations unless source-confirmed."
+    ]
+  }

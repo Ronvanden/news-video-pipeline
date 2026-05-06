@@ -1,0 +1,93 @@
+{
+  "export_version": "25.2-v1",
+  "source_label": "adapter:script_input_adapter",
+  "title": "Diese Domäne ist für die Verwendung in Dokumentationsbeispielen vorgesehen, ohne dass eine Genehmigung erforderlich ist",
+  "hook": "Hast du dich jemals gefragt, welche Rolle spezielle Domänen in der digitalen Welt spielen? Heute klären wir das!",
+  "run_id": "ba25_5_smoke_example",
+  "metadata": {
+    "adapter": "ba_25_2_generate_script_response",
+    "sources": [
+      "https://example.com"
+    ],
+    "input_warnings": [
+      "URL appears to be a homepage or index page. Use a specific article URL for better results.",
+      "Extracted content is very short. The URL may not contain sufficient article text.",
+      "Target word count: 140, Actual word count: 143",
+      "Generated using LLM mode",
+      "LLM output shorter than target"
+    ]
+  },
+  "scene_expansion": {
+    "expanded_scene_assets": [
+      {
+        "chapter_index": 0,
+        "beat_index": 0,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Hook. Textauszug: Hast du dich jemals gefragt, welche Rolle spezielle Domänen in der digitalen Welt spielen? Heute klären wir das!",
+        "camera_motion_hint": "static",
+        "duration_seconds": 8,
+        "asset_type": "hook_text",
+        "continuity_note": "",
+        "safety_notes": [],
+        "narration": "Hast du dich jemals gefragt, welche Rolle spezielle Domänen in der digitalen Welt spielen? Heute klären wir das!",
+        "voiceover_text": "Hast du dich jemals gefragt, welche Rolle spezielle Domänen in der digitalen Welt spielen? Heute klären wir das!",
+        "scene_title": "Hook"
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 1,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 1: Was sind Dokumentationsdomänen?. Textauszug: Dokumentationsdomänen sind spezielle Internetadressen, die für Schulungs- und Beispielzwecke verwendet werden. Sie sind nicht für den realen Betrieb gedacht, so",
+        "camera_motion_hint": "static",
+        "duration_seconds": 14,
+        "asset_type": "story_text",
+        "continuity_note": "",
+        "safety_notes": [],
+        "narration": "Dokumentationsdomänen sind spezielle Internetadressen, die für Schulungs- und Beispielzwecke verwendet werden. Sie sind nicht für den realen Betrieb gedacht, sondern dienen dazu, Entwicklern und Nutzern zu zeigen, wie bestimmte Technologien oder Systeme funktionieren.",
+        "voiceover_text": "Dokumentationsdomänen sind spezielle Internetadressen, die für Schulungs- und Beispielzwecke verwendet werden. Sie sind nicht für den realen Betrieb gedacht, sondern dienen dazu, Entwicklern und Nutzern zu zeigen, wie bestimmte Technologien oder Systeme funktionieren.",
+        "scene_title": "Kapitel 1: Was sind Dokumentationsdomänen?",
+        "estimated_duration_seconds": 14
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 2,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 2: Warum keine Genehmigung erforderlich?. Textauszug: Die Verwendung dieser Domänen erfordert keine Genehmigung, da sie speziell für diesen Zweck geschaffen wurden. Das bedeutet, dass jeder sie nutzen kann, um Beis",
+        "camera_motion_hint": "static",
+        "duration_seconds": 14,
+        "asset_type": "story_text",
+        "continuity_note": "match prior",
+        "safety_notes": [],
+        "narration": "Die Verwendung dieser Domänen erfordert keine Genehmigung, da sie speziell für diesen Zweck geschaffen wurden. Das bedeutet, dass jeder sie nutzen kann, um Beispiele zu erstellen oder zu demonstrieren, ohne rechtliche Bedenken.",
+        "voiceover_text": "Die Verwendung dieser Domänen erfordert keine Genehmigung, da sie speziell für diesen Zweck geschaffen wurden. Das bedeutet, dass jeder sie nutzen kann, um Beispiele zu erstellen oder zu demonstrieren, ohne rechtliche Bedenken.",
+        "scene_title": "Kapitel 2: Warum keine Genehmigung erforderlich?",
+        "estimated_duration_seconds": 14
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 3,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 3: Risiken der Nutzung im Betrieb. Textauszug: Es ist wichtig, diese Domänen nicht im operativen Geschäft zu verwenden. Sie sind nicht zuverlässig und können zu Verwirrung oder Sicherheitsproblemen führen. D",
+        "camera_motion_hint": "static",
+        "duration_seconds": 13,
+        "asset_type": "story_text",
+        "continuity_note": "match prior",
+        "safety_notes": [],
+        "narration": "Es ist wichtig, diese Domänen nicht im operativen Geschäft zu verwenden. Sie sind nicht zuverlässig und können zu Verwirrung oder Sicherheitsproblemen führen. Daher sollten sie ausschließlich für Dokumentationszwecke genutzt werden.",
+        "voiceover_text": "Es ist wichtig, diese Domänen nicht im operativen Geschäft zu verwenden. Sie sind nicht zuverlässig und können zu Verwirrung oder Sicherheitsproblemen führen. Daher sollten sie ausschließlich für Dokumentationszwecke genutzt werden.",
+        "scene_title": "Kapitel 3: Risiken der Nutzung im Betrieb",
+        "estimated_duration_seconds": 13
+      },
+      {
+        "chapter_index": 0,
+        "beat_index": 4,
+        "visual_prompt": "Textkarte, neutrale dokumentarische Bildsprache. Kapitel: Kapitel 4: Fazit und Ausblick. Textauszug: Zusammenfassend lässt sich sagen, dass Dokumentationsdomänen eine wertvolle Ressource sind, solange sie richtig eingesetzt werden. In Zukunft könnten wir jedoch",
+        "camera_motion_hint": "static",
+        "duration_seconds": 13,
+        "asset_type": "story_text",
+        "continuity_note": "match prior",
+        "safety_notes": [],
+        "narration": "Zusammenfassend lässt sich sagen, dass Dokumentationsdomänen eine wertvolle Ressource sind, solange sie richtig eingesetzt werden. In Zukunft könnten wir jedoch neue Standards sehen, die die Nutzung solcher Domänen weiter regulieren.",
+        "voiceover_text": "Zusammenfassend lässt sich sagen, dass Dokumentationsdomänen eine wertvolle Ressource sind, solange sie richtig eingesetzt werden. In Zukunft könnten wir jedoch neue Standards sehen, die die Nutzung solcher Domänen weiter regulieren.",
+        "scene_title": "Kapitel 4: Fazit und Ausblick",
+        "estimated_duration_seconds": 13
+      }
+    ]
+  }
+}

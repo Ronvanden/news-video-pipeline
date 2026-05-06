@@ -54,6 +54,14 @@ def test_generate_script_response_with_chapters_builds_pack(adapter_mod):
     assert len(beats) >= 4  # hook + 3 chapters
     assert any((b.get("narration") or "") == "Alpha." for b in beats)
     assert any((b.get("voiceover_text") or "") == "Beta." for b in beats)
+    # BA 26.4c: Policy-Felder additiv vorhanden
+    b0 = beats[0]
+    assert "visual_prompt_raw" in b0
+    assert "visual_prompt_effective" in b0
+    assert "visual_text_guard_applied" in b0
+    assert b0.get("visual_text_guard_applied") is True
+    assert "[visual_no_text_guard_v26_4]" in str(b0.get("visual_prompt_effective") or "")
+    assert b0.get("visual_policy_status") in ("safe", "text_extracted", "needs_review")
 
 
 def test_full_script_without_chapters_is_chunked(adapter_mod):

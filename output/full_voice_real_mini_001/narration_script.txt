@@ -1,0 +1,10 @@
+# BA 25.1 — REAL VIDEO BUILD VOICEOVER (smoke)
+# Narration aus scene_asset_pack abgeleitet; kein TTS-Live in BA 25.1.
+
+Eine kurze, lokale Mini-Story zur Verkabelung des realen Video-Builds.
+
+Szene 1. Establishing shot: ruhige Stadtlinie am frühen Morgen, weiches Tageslicht, dokumentarische Bildsprache.
+
+Szene 2. Detailaufnahme: Schreibtisch mit Notizen und Stift, neutraler Hintergrund, Fokus auf Hände beim Schreiben.
+
+Szene 3. B-roll: belebte Straße aus erhöhter Perspektive, leichte Kamerabewegung, alltägliche Szene ohne Konflikt.

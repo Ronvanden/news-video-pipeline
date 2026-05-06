@@ -1,0 +1,34 @@
+{
+  "ok": true,
+  "input_mode": "script_json",
+  "url": null,
+  "script_json": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\ba266_visual_founder_smoke\\script.json",
+  "title": "Mini-Testskript (BA 25.2)",
+  "output_dir": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real",
+  "script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\script.json",
+  "scene_plan_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\scene_plan.json",
+  "scene_asset_pack_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\scene_asset_pack.json",
+  "asset_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\generated_assets_final_founder_video_elevenlabs_real\\asset_manifest.json",
+  "timeline_manifest_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\timeline_final_founder_video_elevenlabs_real\\timeline_manifest.json",
+  "final_video_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\final_video.mp4",
+  "used_existing_assets": true,
+  "used_video_assets_count": 3,
+  "used_image_assets_count": 0,
+  "warnings": [
+    "ba266_video_reuse_for_remaining_scenes",
+    "existing_asset_used",
+    "ba266_cinematic_placeholder_applied:3",
+    "audio_shorter_than_timeline_padded_or_continued"
+  ],
+  "blocking_reasons": [],
+  "voice_used": true,
+  "voice_mode": "elevenlabs",
+  "voice_text_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\voiceover_text.txt",
+  "voice_file_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\final_founder_video_elevenlabs_real\\voiceover.mp3",
+  "voice_duration_seconds": 16.068209,
+  "audio_stream_expected": true,
+  "voice_warnings": [
+    "elevenlabs_voice_id_default_fallback"
+  ],
+  "voice_blocking_reasons": []
+}

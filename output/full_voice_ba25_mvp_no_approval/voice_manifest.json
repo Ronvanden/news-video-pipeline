@@ -1,0 +1,11 @@
+{
+  "schema_version": "real_build_voice_manifest_v1",
+  "run_id": "ba25_mvp_no_approval",
+  "source_type": "scene_asset_pack_visual_prompts",
+  "voice_mode_effective": "smoke",
+  "word_count": 298,
+  "estimated_duration_seconds": 123,
+  "narration_script_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_no_approval\\narration_script.txt",
+  "full_voiceover_path": "C:\\Users\\buicr\\news-to-video-pipeline\\output\\full_voice_ba25_mvp_no_approval\\full_voiceover.mp3",
+  "warnings": []
+}

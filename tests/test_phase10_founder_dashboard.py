@@ -36,6 +36,17 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("buildMarkdownBriefing", text)
         self.assertIn("localStorage", text)
         self.assertIn("provider-prompt-cards", text)
+        # BA 26.4c — Visual Policy Summary sichtbar (minimal-invasiv)
+        self.assertIn("Visual Policy Summary", text)
+        # BA 26.4d — Quellenanzeige-String muss im HTML/JS vorhanden sein
+        self.assertIn("Visual Policy Source", text)
+        self.assertIn("lastOptimize", text)
+        self.assertIn("lastExport", text)
+        self.assertIn("provider_prompts", text)
+        # BA 27.5b — Scene-level Reference Provider display strings
+        self.assertIn("Referenz-Provider", text)
+        self.assertIn("Bildreferenz vorbereitet", text)
+        self.assertIn("Kein Live-Upload", text)
         self.assertIn("Load Last Snapshot", text)
         self.assertIn("Clear Snapshot", text)
         self.assertIn("Founder Strategic Summary", text)
