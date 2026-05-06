@@ -54,6 +54,12 @@ Schritt **Snapshot** erklärt den Bezug zu **„Fresh Preview aktualisieren“**
 ### BA 31.2 — Final Render Preparation Gate
 Der Fresh-Preview-Snapshot enthält additiv `final_render_gate_*`: read-only, ob die **Vorbereitung** für einen sicheren Final Render sinnvoll freigegeben ist (locked / ready / blocked / needs_rework) — **kein** Render-Start im Browser. UI: Karte **Final Render Preparation** unter Operator Review. Logik gekoppelt an Operator Review + Readiness + Summary/Open-Me. `final_render_gate_version: ba31_2_v1`.
 
+### BA 31.3 — Final Render Input Checklist
+Read-only Liste typischer Render-Inputs (Skript, Pack, Manifest, Summary, Open-Me, `render_input_bundle_<run_id>.json`, Motion-Manifeste, Production-Pack-Ordner, optional Local-Preview-Result). Gesamtstatus ready/warning/blocked/pending abhängig vom Preparation Gate und Dateipräsenz. UI unter **Final Render Preparation**. `final_render_input_checklist_version: ba31_3_v1`.
+
+### BA 31.4 — Safe Final Render Handoff
+Wenn **Final Render Preparation** **ready** ist und die **Input Checklist** mindestens **ready** oder **warning** (nicht pending/blocked), liefert der Snapshot additiv einen **kopierbaren** CLI-Handoff für `scripts/run_safe_final_render.py`: `--production-summary output/production_pack_<run_id>/production_summary.json`, `--output-dir output/safe_final_render_<run_id>` (PowerShell-Variante mit Zeilenfortsetzung im Dashboard). **Kein** `--execute` im generierten Text; kein Final-Render-Start im Browser. Fehlt `production_summary.json` noch, erscheint ein Hinweis im Snapshot/UI (`safe_final_render_handoff_warning`). `safe_final_render_handoff_version: ba31_4_v1`.
+
 ### CLI
 ```powershell
 python scripts/render_local_preview_from_bundle.py `

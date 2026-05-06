@@ -52,6 +52,12 @@ Klarstellung für Operatoren: **Snapshot** = Dashboard-Abgleich per **„Fresh P
 ### BA 31.2 — Final Render Preparation Gate
 Die Karte **Final Render Preparation** zeigt read-only, ob der nächste Schritt „Final Render vorbereiten“ fachlich freigegeben ist oder blockiert bleibt — abgeleitet aus dem gleichen Snapshot wie Operator Review (kein Button zum Starten eines Final Renders im Dashboard in dieser BA).
 
+### BA 31.3 — Final Render Input Checklist
+Unter dem Preparation Gate: **Final Render Input Checklist** — welche konkreten Artefakte unter `output/` (und Fresh-Preview-Pfaden) vorhanden sind; Öffnen/Kopieren für zugelassene Text/JSON-Dateien wie bei BA 30.9 (erweiterte Root-JSONs und Local-Preview-Result im Preview-Work-Ordner).
+
+### BA 31.4 — Safe Final Render Handoff
+Unter der Input Checklist: Karte **Safe Final Render Handoff** — nur **Text/CLI zum Kopieren** für `scripts/run_safe_final_render.py` (Production Summary unter `output/production_pack_<run_id>/production_summary.json`, Ausgabeordner z. B. `output/safe_final_render_<run_id>`). Sichtbar, wenn Gate **ready** und Checkliste **ready** oder **warning**; bei Sperre Gründe und feste Kurzmeldung. **Kein** Final-Render-Start im Dashboard, keine Provider-Calls, keine neuen Writes — reiner Operator-Handoff.
+
 ### Operator-Workflow (CLI, keine Dashboard-Writes)
 1. Neu von Thema/URL/Skript bis Preview + Open-Me: `scripts/run_fresh_topic_preview_smoke.py` (siehe BA 30.2)
 2. Oder Preview-Smoke nur mit bestehendem Manifest: `scripts/run_preview_smoke_auto.py`
