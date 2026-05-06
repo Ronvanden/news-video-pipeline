@@ -163,11 +163,15 @@ def test_missing_narration_handled_cleanly(voice_mod, tmp_path):
     assert man["provider_used"] == "none"
 
 
-def test_elevenlabs_env_missing_fallback_smoke(voice_mod, tmp_path, monkeypatch):
+def test_elevenlabs_api_key_missing_blocks_no_smoke_placeholder(voice_mod, tmp_path, monkeypatch):
+    """BA 32.2 — ohne ELEVENLABS_API_KEY kein Smoke-MP3 als Ersatz für echtes ElevenLabs."""
     monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
     plan = _minimal_plan()
 
+    smoke_calls: list[int] = []
+
     def fake_write(*a, **k):
+        smoke_calls.append(1)
         return True, []
 
     monkeypatch.setattr(voice_mod, "_write_smoke_mp3_ffmpeg", fake_write)
@@ -180,17 +184,24 @@ def test_elevenlabs_env_missing_fallback_smoke(voice_mod, tmp_path, monkeypatch)
         ffmpeg_bin="x",
     )
     assert meta["voice_mode"] == "elevenlabs"
-    assert "elevenlabs_env_missing_fallback_smoke" in meta["warnings"]
-    assert meta["fallback_used"] is True
-    assert meta["provider_used"] == "smoke"
+    assert meta["ok"] is False
+    assert "elevenlabs_api_key_missing" in meta["blocking_reasons"]
+    assert smoke_calls == []
+    assert meta["fallback_used"] is False
+    assert meta["provider_used"] == "none"
     assert meta["real_tts_generated"] is False
+    assert meta["voice_completeness"] == "blocked"
+    assert meta["elevenlabs_api_key_configured"] is False
 
 
-def test_openai_env_missing_fallback_smoke(voice_mod, tmp_path, monkeypatch):
+def test_openai_api_key_missing_blocks_no_smoke_placeholder(voice_mod, tmp_path, monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     plan = _minimal_plan()
 
+    smoke_calls: list[int] = []
+
     def fake_write(*a, **k):
+        smoke_calls.append(1)
         return True, []
 
     monkeypatch.setattr(voice_mod, "_write_smoke_mp3_ffmpeg", fake_write)
@@ -203,9 +214,49 @@ def test_openai_env_missing_fallback_smoke(voice_mod, tmp_path, monkeypatch):
         ffmpeg_bin="x",
     )
     assert meta["voice_mode"] == "openai"
-    assert "openai_tts_env_missing_fallback_smoke" in meta["warnings"]
-    assert meta["fallback_used"] is True
-    assert meta["provider_used"] == "smoke"
+    assert meta["ok"] is False
+    assert "openai_api_key_missing" in meta["blocking_reasons"]
+    assert smoke_calls == []
+    assert meta["fallback_used"] is False
+    assert meta["provider_used"] == "none"
+    assert meta["openai_api_key_configured"] is False
+
+
+def test_strict_live_voice_skips_smoke_when_elevenlabs_fails(voice_mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "test-key-fake")
+    plan = _minimal_plan()
+    smoke_calls: list[int] = []
+
+    def fake_write(*a, **k):
+        smoke_calls.append(1)
+        return True, []
+
+    monkeypatch.setattr(voice_mod, "_write_smoke_mp3_ffmpeg", fake_write)
+
+    def empty_post(*_a, **_k):
+        return b""
+
+    meta = voice_mod.build_full_voiceover(
+        plan,
+        run_id="el_strict",
+        out_root=tmp_path,
+        voice_mode="elevenlabs",
+        ffmpeg_bin="ffmpeg_mock",
+        elevenlabs_post_override=empty_post,
+        strict_live_voice=True,
+    )
+    assert meta["ok"] is False
+    assert smoke_calls == []
+    assert meta["fallback_used"] is False
+    assert "elevenlabs_live_voice_failed_strict_no_fallback" in meta["warnings"]
+
+
+def test_longform_chunking_small_chunks_for_elevenlabs_quota(voice_mod):
+    """BA 32.2 — Langer Text wird in viele API-Chunks gesplittet (10-Min-tauglich)."""
+    long_text = ("Satz eins mit Inhalt. " * 400) + "\n\n" + ("Block zwei. " * 400)
+    chunks = voice_mod.chunk_narration_for_tts(long_text, 900)
+    assert len(chunks) >= 4
+    assert all(len(c) <= 900 for c in chunks)
 
 
 def test_elevenlabs_mock_post_single_chunk_success(voice_mod, tmp_path, monkeypatch):

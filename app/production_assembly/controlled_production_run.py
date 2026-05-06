@@ -34,6 +34,29 @@ def _write_json(p: Path, obj: Dict[str, Any]) -> Path:
     return pp
 
 
+def _voice_paths_and_doc_from_manifest(vm_path: Optional[Path]) -> tuple[list[str], Dict[str, Any]]:
+    """BA 32.2 — Pfade aus voice_manifest.json für Render-Bundle (keine Secrets)."""
+    if vm_path is None:
+        return [], {}
+    try:
+        p = Path(vm_path).resolve()
+        if not p.is_file():
+            return [], {}
+        doc = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, TypeError):
+        return [], {}
+    if not isinstance(doc, dict):
+        return [], {}
+    paths: list[str] = []
+    fv = str(doc.get("full_voiceover_path") or "").strip()
+    if fv:
+        paths.append(fv)
+    vp = doc.get("voice_paths")
+    if isinstance(vp, list):
+        paths.extend(str(x).strip() for x in vp if str(x or "").strip())
+    return list(dict.fromkeys(paths)), doc
+
+
 def run_controlled_production_run(
     *,
     run_id: str,
@@ -47,6 +70,7 @@ def run_controlled_production_run(
     max_timeline_scenes: int = 5,
     allow_live_motion: bool = False,
     max_live_motion_clips: int = 0,
+    voice_manifest_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """
     BA 29.0 core flow. Returns paths and artefact dicts (no printing).
@@ -56,6 +80,9 @@ def run_controlled_production_run(
 
     ``allow_live_motion`` / ``max_live_motion_clips``: Runway-Live-Wunsch (BA 32.1); Pipeline-Connector
     noch Stub — Blocker/Readiness siehe ``motion_clip_manifest``-Summary.
+
+    ``voice_manifest_path``: optional ``voice_manifest.json`` (z. B. von ``build_full_voiceover``) —
+    Pfade werden ins Render-Bundle und Production Pack übernommen (BA 32.2).
     """
     out_root = Path(output_root).resolve()
     out_root.mkdir(parents=True, exist_ok=True)
@@ -109,21 +136,40 @@ def run_controlled_production_run(
     motion_manifest_path = out_root / f"motion_clip_manifest_{rid}.json"
     _write_json(motion_manifest_path, motion_manifest_ingested)
 
+    src_paths: Dict[str, Any] = {
+        "asset_manifest": am_path,
+        "scene_asset_pack": scene_asset_pack,
+        "script_json": script_json,
+        "motion_clip_manifest": motion_manifest_path,
+    }
+    if voice_manifest_path:
+        src_paths["voice_manifest"] = Path(voice_manifest_path).resolve()
+
     pack = build_production_pack(
         run_id=rid,
         output_root=out_root,
-        source_paths={
-            "asset_manifest": am_path,
-            "scene_asset_pack": scene_asset_pack,
-            "script_json": script_json,
-            "motion_clip_manifest": motion_manifest_path,
-        },
+        source_paths=src_paths,
         dry_run=False,
         copy_assets=True,
     )
     pack_dir = Path(pack["pack_dir"]).resolve()
     prod_summary_path = pack_dir / "production_summary.json"
     prod_summary = _read_json(prod_summary_path)
+
+    voice_audio_paths, voice_doc = _voice_paths_and_doc_from_manifest(voice_manifest_path)
+    prod_warnings = (
+        list(prod_summary.get("warnings") or []) if isinstance(prod_summary.get("warnings"), list) else []
+    )
+    prod_blocking = (
+        list(prod_summary.get("blocking_reasons") or [])
+        if isinstance(prod_summary.get("blocking_reasons"), list)
+        else []
+    )
+    if voice_doc:
+        if isinstance(voice_doc.get("warnings"), list):
+            prod_warnings.extend(str(w) for w in voice_doc["warnings"] if str(w or "").strip())
+        if isinstance(voice_doc.get("blocking_reasons"), list):
+            prod_blocking.extend(str(w) for w in voice_doc["blocking_reasons"] if str(w or "").strip())
 
     preflight = build_visual_production_preflight_result(asset_manifest=asset_manifest, production_summary=prod_summary)
 
@@ -146,10 +192,11 @@ def run_controlled_production_run(
         asset_manifest=asset_manifest,
         motion_clip_manifest_path=str(motion_manifest_path),
         motion_timeline_manifest_path=str(timeline_path),
+        voice_paths=voice_audio_paths,
         ready_for_render=bool(prod_summary.get("ready_for_render") is True),
         render_readiness_status=str(prod_summary.get("render_readiness_status") or ""),
-        warnings=list(prod_summary.get("warnings") or []) if isinstance(prod_summary.get("warnings"), list) else [],
-        blocking_reasons=list(prod_summary.get("blocking_reasons") or []) if isinstance(prod_summary.get("blocking_reasons"), list) else [],
+        warnings=prod_warnings,
+        blocking_reasons=prod_blocking,
     )
     bundle_path = out_root / f"render_input_bundle_{rid}.json"
     _write_json(bundle_path, bundle)
@@ -192,7 +239,7 @@ def run_controlled_production_run(
         "scene_count": int(len(timeline.get("scenes") or [])),
         "used_real_images": True,
         "used_placeholder_clips": True,
-        "used_real_voice": False,
+        "used_real_voice": bool(voice_doc.get("real_tts_generated") is True),
         "production_pack_path": str(pack_dir),
         "render_input_bundle_path": str(bundle_path.resolve()),
         "final_render_dry_run_result_path": str(dry_path.resolve()),
