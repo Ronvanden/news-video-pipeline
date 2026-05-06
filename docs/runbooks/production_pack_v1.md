@@ -1,5 +1,7 @@
 ## BA 27.0 — Real End-to-End Production Pack V1
 
+**Kontext:** Das Production Pack bündelt Artefakte für Operator und spätere Render-Schritte. Die **aktuelle lokale Video-Linie** (Preview, URL→Final, Dashboard **BA 30.x–32.x**) ist in [PIPELINE_PLAN.md](../../PIPELINE_PLAN.md), [real_video_build_wiring_map.md](real_video_build_wiring_map.md) und [founder_production_flow_v1.md](founder_production_flow_v1.md) beschrieben; dieses Dokument bleibt fokussiert auf **BA 27.0** Pack-Builder und Readiness-Regeln.
+
 ### Ziel
 Ein **kopierbarer Produktionsordner** bündelt die wichtigsten Artefakte, Reports und Entscheidungen und sagt klar:
 - **ready_for_render**: `true/false`
