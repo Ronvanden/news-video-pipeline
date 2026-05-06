@@ -33,6 +33,18 @@ def main() -> int:
         metavar="N",
         help="BA 32.0: max assets in motion_timeline_manifest (default 5).",
     )
+    ap.add_argument(
+        "--allow-live-motion",
+        action="store_true",
+        help="BA 32.1: request Runway motion in controlled run (connector stub — see manifest summary).",
+    )
+    ap.add_argument(
+        "--max-live-motion-clips",
+        type=int,
+        default=0,
+        metavar="N",
+        help="BA 32.1: max motion_clip stub generations under budget (0 = unlimited cap).",
+    )
     args = ap.parse_args()
 
     out_root = args.output_root.resolve()
@@ -43,6 +55,8 @@ def main() -> int:
         duration_target_seconds=int(args.duration_target_seconds),
         provider=str(args.provider),
         max_timeline_scenes=int(args.max_timeline_scenes),
+        allow_live_motion=bool(args.allow_live_motion),
+        max_live_motion_clips=int(args.max_live_motion_clips or 0),
     )
     summary_path = out_root / f"preview_smoke_auto_summary_{args.run_id}.json"
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

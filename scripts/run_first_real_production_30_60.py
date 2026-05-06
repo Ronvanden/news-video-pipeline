@@ -40,6 +40,18 @@ def main() -> int:
         metavar="N",
         help="BA 32.0: max assets in motion_timeline_manifest (default 5).",
     )
+    ap.add_argument(
+        "--allow-live-motion",
+        action="store_true",
+        help="BA 32.1: request Runway motion clips (pipeline connector stub — see motion_clip_manifest summary).",
+    )
+    ap.add_argument(
+        "--max-live-motion-clips",
+        type=int,
+        default=0,
+        metavar="N",
+        help="BA 32.1: max motion_clip stub rows under budget (0 = no cap).",
+    )
     args = ap.parse_args()
 
     run_controlled_production_run(
@@ -52,6 +64,8 @@ def main() -> int:
         provider=str(args.provider),
         render_local_preview=bool(args.render_local_preview),
         max_timeline_scenes=int(args.max_timeline_scenes),
+        allow_live_motion=bool(args.allow_live_motion),
+        max_live_motion_clips=int(args.max_live_motion_clips or 0),
     )
     out_root = args.output_root.resolve()
     summ = out_root / f"first_real_production_run_summary_{args.run_id}.json"

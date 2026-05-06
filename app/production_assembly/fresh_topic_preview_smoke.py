@@ -121,6 +121,8 @@ def run_fresh_topic_preview_smoke(
     asset_dir: Optional[Path] = None,
     asset_runner_mode: str = "placeholder",
     max_live_assets: Optional[int] = None,
+    allow_live_motion: bool = False,
+    max_live_motion_clips: int = 0,
 ) -> Dict[str, Any]:
     """
     Build script → scene_asset_pack → placeholder (or configured) asset_runner → optional ``execute_preview_smoke_auto``.
@@ -234,6 +236,8 @@ def run_fresh_topic_preview_smoke(
         duration_target_seconds=int(duration_target_seconds),
         provider=str(provider),
         max_timeline_scenes=int(max_scenes),
+        allow_live_motion=bool(allow_live_motion),
+        max_live_motion_clips=int(max_live_motion_clips or 0),
     )
     result["preview_smoke_exit_code"] = int(code)
     result["preview_smoke_summary"] = summ

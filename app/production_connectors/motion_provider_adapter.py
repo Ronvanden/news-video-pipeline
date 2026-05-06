@@ -1,10 +1,18 @@
-"""BA 28.0 — Motion provider adapter (dry-run only, no provider calls)."""
+"""BA 28.0 — Motion provider adapter (dry-run only, no provider calls).
+
+BA 32.1 — Ein optionaler Live-Motion-Request (``allow_live_motion``) wird nur annotiert;
+echte Runway-Clip-Erzeugung in dieser Pipeline ist noch nicht implementiert
+(siehe ``runway_live_readiness.RUNWAY_LIVE_CONNECTOR_IMPLEMENTED`` und
+``scripts/runway_image_to_video_smoke.py`` für isolierte Einzelclip-Läufe).
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
+
+from app.production_connectors.runway_live_readiness import RUNWAY_LIVE_CONNECTOR_IMPLEMENTED
 
 MotionProvider = Literal["runway", "seedance"]
 
@@ -81,6 +89,32 @@ class MotionClipResult:
         }
 
 
+def _annotate_runway_live_stub_fields(
+    result: Dict[str, Any],
+    *,
+    allow_live_motion: bool,
+) -> Dict[str, Any]:
+    """Additive Felder — keine Secrets; klare Kennzeichnung Stub vs. Live-Wunsch."""
+    o = dict(result)
+    o["runway_live_connector_implemented"] = bool(RUNWAY_LIVE_CONNECTOR_IMPLEMENTED)
+    o["runway_live_requested"] = bool(allow_live_motion)
+    if allow_live_motion:
+        o["runway_live_connector_status"] = (
+            "live_ready" if RUNWAY_LIVE_CONNECTOR_IMPLEMENTED else "not_implemented"
+        )
+        w = [str(x) for x in (o.get("warnings") or []) if str(x or "").strip()]
+        for tag in (
+            "runway_live_connector_not_implemented",
+            "motion_provider_dry_run_only_no_clip_generated",
+        ):
+            if tag not in w:
+                w.append(tag)
+        o["warnings"] = w
+    else:
+        o["runway_live_connector_status"] = "dry_run_only"
+    return o
+
+
 def build_motion_clip_result(
     asset: Dict[str, Any],
     *,
@@ -88,6 +122,9 @@ def build_motion_clip_result(
     provider: str = "auto",
     duration_seconds: int = 5,
     dry_run: bool = True,
+    allow_live_motion: bool = False,
+    live_motion_clip_index: int = 0,
+    max_live_motion_clips: Optional[int] = None,
 ) -> Dict[str, Any]:
     a = asset if isinstance(asset, dict) else {}
     warns: List[str] = []
@@ -107,7 +144,7 @@ def build_motion_clip_result(
         }
 
     if img is None:
-        return MotionClipResult(
+        base = MotionClipResult(
             ok=False,
             provider=prov,
             dry_run=bool(dry_run),
@@ -123,12 +160,19 @@ def build_motion_clip_result(
             error_code="missing_input_image",
             error_message="No input image file found for motion clip generation.",
         ).to_dict()
+        return _annotate_runway_live_stub_fields(base, allow_live_motion=allow_live_motion)
+
+    budget_ok = True
+    cap_i = int(max_live_motion_clips) if max_live_motion_clips is not None else 0
+    if allow_live_motion and cap_i > 0 and live_motion_clip_index >= cap_i:
+        budget_ok = False
+        warns.append("live_motion_clip_budget_exceeded_stub_only")
 
     # dry-run only: no provider call, no output file is created
     clip_stub = str((base_dir / f"scene_{int(sn or 0):03d}_{prov}_dry_run.mp4").resolve())
     warns.append("motion_provider_dry_run_only_no_clip_generated")
 
-    return MotionClipResult(
+    base_ok = MotionClipResult(
         ok=True,
         provider=prov,
         dry_run=bool(dry_run),
@@ -144,4 +188,12 @@ def build_motion_clip_result(
         error_code=None,
         error_message=None,
     ).to_dict()
+    out = _annotate_runway_live_stub_fields(base_ok, allow_live_motion=allow_live_motion)
+    if not budget_ok:
+        out["ok"] = False
+        out["provider_status"] = "live_motion_budget_exceeded"
+        ec = str(out.get("error_code") or "").strip()
+        if not ec:
+            out["error_code"] = "live_motion_clip_budget_exceeded"
+    return out
 

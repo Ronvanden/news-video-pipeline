@@ -11,8 +11,12 @@ from app.production_assembly.final_render_contract import build_final_render_dry
 from app.production_assembly.local_preview_render import run_local_preview_from_bundle
 from app.production_assembly.motion_timeline_alignment import build_motion_timeline_manifest
 from app.production_assembly.render_input_bundle import build_render_input_bundle
-from app.production_connectors.motion_provider_adapter import build_motion_clip_result
 from app.production_connectors.motion_clip_ingest import ingest_motion_clip_results
+from app.production_connectors.motion_provider_adapter import build_motion_clip_result
+from app.production_connectors.runway_live_readiness import (
+    augment_motion_clip_manifest_summary,
+    controlled_run_blocking_reasons_for_live_motion,
+)
 from app.real_video_build.production_pack import build_production_pack
 from app.visual_plan.visual_production_preflight import build_visual_production_preflight_result
 
@@ -41,40 +45,65 @@ def run_controlled_production_run(
     provider: str = "auto",
     render_local_preview: bool = False,
     max_timeline_scenes: int = 5,
+    allow_live_motion: bool = False,
+    max_live_motion_clips: int = 0,
 ) -> Dict[str, Any]:
     """
     BA 29.0 core flow. Returns paths and artefact dicts (no printing).
 
     ``max_timeline_scenes``: max number of manifest assets included in ``motion_timeline_manifest``
     (default **5**, conservative; raise for long-form e.g. 20–24).
+
+    ``allow_live_motion`` / ``max_live_motion_clips``: Runway-Live-Wunsch (BA 32.1); Pipeline-Connector
+    noch Stub — Blocker/Readiness siehe ``motion_clip_manifest``-Summary.
     """
     out_root = Path(output_root).resolve()
     out_root.mkdir(parents=True, exist_ok=True)
     rid = str(run_id)
     warnings: list[str] = []
     blocking: list[str] = []
+    blocking.extend(controlled_run_blocking_reasons_for_live_motion(allow_live_motion=allow_live_motion))
 
     am_path = Path(asset_manifest_path).resolve()
     asset_manifest = _read_json(am_path)
     assets = asset_manifest.get("assets") if isinstance(asset_manifest.get("assets"), list) else []
 
     base_dir = am_path.parent
+    motion_cap: Optional[int] = int(max_live_motion_clips) if int(max_live_motion_clips or 0) > 0 else None
+    clip_assets: list[Dict[str, Any]] = [
+        a
+        for a in assets
+        if isinstance(a, dict) and str(a.get("visual_asset_kind") or "") == "motion_clip"
+    ]
     clips = []
-    for a in assets:
-        if not isinstance(a, dict):
-            continue
-        if str(a.get("visual_asset_kind") or "") != "motion_clip":
-            continue
-        clips.append(build_motion_clip_result(a, base_dir=base_dir, provider=str(provider), duration_seconds=5, dry_run=True))
+    for idx, a in enumerate(clip_assets):
+        clips.append(
+            build_motion_clip_result(
+                a,
+                base_dir=base_dir,
+                provider=str(provider),
+                duration_seconds=5,
+                dry_run=True,
+                allow_live_motion=bool(allow_live_motion),
+                live_motion_clip_index=int(idx),
+                max_live_motion_clips=motion_cap,
+            )
+        )
+    summary_core = {
+        "clips_planned": len(clips),
+        "provider_counts": {},
+        "missing_input_count": len([c for c in clips if c.get("error_code") == "missing_input_image"]),
+        "dry_run": True,
+    }
+    summary_core = augment_motion_clip_manifest_summary(
+        summary_core,
+        allow_live_motion=bool(allow_live_motion),
+        max_live_motion_clips=int(max_live_motion_clips or 0),
+    )
     motion_manifest = {
         "motion_clip_manifest_version": "ba28_0_v1",
         "clips": clips,
-        "summary": {
-            "clips_planned": len(clips),
-            "provider_counts": {},
-            "missing_input_count": len([c for c in clips if c.get("error_code") == "missing_input_image"]),
-            "dry_run": True,
-        },
+        "summary": summary_core,
     }
     motion_manifest_ingested = ingest_motion_clip_results(motion_manifest, output_dir=out_root / f"clips_{rid}", dry_run=False)
     motion_manifest_path = out_root / f"motion_clip_manifest_{rid}.json"

@@ -461,12 +461,16 @@ def execute_preview_smoke_auto(
     duration_target_seconds: int = 45,
     provider: str = "auto",
     max_timeline_scenes: int = 5,
+    allow_live_motion: bool = False,
+    max_live_motion_clips: int = 0,
 ) -> Tuple[Dict[str, Any], int]:
     """
     BA 29.2c — Find/prepare manifest, run BA 29.0, repair bundle media paths if needed,
     run local preview, return (summary_dict, exit_code). No live providers/uploads.
 
     ``max_timeline_scenes``: forwarded to ``run_controlled_production_run`` (default **5**).
+
+    ``allow_live_motion`` / ``max_live_motion_clips``: BA 32.1 Runway-Live-Wunsch (Pipeline weiter Stub).
     """
     from app.production_assembly.controlled_production_run import run_controlled_production_run
     from app.production_assembly.local_preview_render import run_local_preview_from_bundle
@@ -517,6 +521,8 @@ def execute_preview_smoke_auto(
             provider=str(provider),
             render_local_preview=False,
             max_timeline_scenes=int(max_timeline_scenes),
+            allow_live_motion=bool(allow_live_motion),
+            max_live_motion_clips=int(max_live_motion_clips or 0),
         )
     except Exception as e:
         summ = {

@@ -45,6 +45,18 @@ def main() -> int:
         metavar="N",
         help="BA 32.0: max Leonardo live generations in live mode (default: Asset Runner default 3).",
     )
+    ap.add_argument(
+        "--allow-live-motion",
+        action="store_true",
+        help="BA 32.1: request Runway motion clips in BA 29.0 path (pipeline connector still stub).",
+    )
+    ap.add_argument(
+        "--max-live-motion-clips",
+        type=int,
+        default=0,
+        metavar="N",
+        help="BA 32.1: max motion_clip rows before budget stub (0 = no budget cap).",
+    )
     args = ap.parse_args()
 
     r = run_fresh_topic_preview_smoke(
@@ -60,6 +72,8 @@ def main() -> int:
         asset_dir=args.asset_dir.resolve() if args.asset_dir else None,
         asset_runner_mode="live" if args.allow_live_assets else "placeholder",
         max_live_assets=args.max_live_assets,
+        allow_live_motion=bool(args.allow_live_motion),
+        max_live_motion_clips=int(args.max_live_motion_clips or 0),
     )
     print(json.dumps(r, ensure_ascii=False, indent=2, default=str))
     if r.get("blocking_reasons"):
