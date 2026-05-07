@@ -133,7 +133,7 @@ def test_dashboard_html_guided_flow_markers():
     assert "fd-guided-production-flow" in html
     assert "fd-guided-flow-steps" in html
     assert "fd-guided-flow-next-action" in html
-    assert "Snapshot = aktueller Dashboard-Abgleich" in html
+    assert "Status aktualisieren" in html
     assert "fd-guided-flow-microcopy-help" in html
     assert "Nach erfolgreichem Lauf: zurück ins Dashboard" in html
     assert "fp-handoff-after-run" in html

@@ -119,13 +119,13 @@ def test_dashboard_html_contains_fresh_preview_panel():
     assert "fd-score-gauge" in html
     assert "data-ba306d-score-gauge" in html
     assert "Noch kein Score" in html
-    assert "Fresh Preview" in html
-    assert "Fresh Preview Smoke (BA 30.3–30.8)" in html
+    assert "Vorschau-Prüflauf" in html
+    assert "Vorschau-Prüflauf (BA 30.3–30.8)" in html
     assert "fdLoadFreshPreviewSnapshot" in html
     assert "out-fp-snapshot" in html
     assert "/founder/dashboard/fresh-preview/snapshot" in html
     assert "data-ba304-readiness-marker" in html
-    assert "Fresh Preview aktualisieren" in html
+    assert "Status aktualisieren" in html
     assert "data-ba305-refresh" in html
     assert "data-ba305-copy-markers" in html
     assert "data-ba305-copy-path" in html

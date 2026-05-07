@@ -74,6 +74,6 @@ def test_handoff_url_branch_powershell():
 
 def test_dashboard_html_handoff_strings():
     html = get_founder_dashboard_html()
-    assert "Nächster Schritt: Full Preview Smoke lokal starten" in html
-    assert "CLI-Befehl kopieren" in html
+    assert "Nächster Schritt: vollen Vorschau-Prüflauf lokal starten" in html
+    assert "Befehl zum Kopieren" in html
     assert "fp-btn-copy-handoff-cli" in html

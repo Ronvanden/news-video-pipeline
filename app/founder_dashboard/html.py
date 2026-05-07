@@ -102,6 +102,21 @@ body {
   align-items: center;
   gap: 0.65rem;
 }
+.fd-header-reset-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  max-width: 22rem;
+}
+.fd-btn-dashboard-reset {
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(120, 40, 40, 0.15);
+  color: #fecaca;
+}
+.fd-btn-dashboard-reset:hover:not(:disabled) {
+  background: rgba(120, 40, 40, 0.28);
+}
 .vp-status-pill {
   display: inline-flex;
   align-items: center;
@@ -1532,14 +1547,18 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
       <div class="fd-logo-mark" aria-hidden="true">▶</div>
       <div>
         <h1>VideoPipe Founder Cockpit</h1>
-        <p class="fd-header-sub">Start, prüfe und steuere Fresh Preview Runs aus einem ruhigen Operator-Cockpit.</p>
-        <p class="fd-header-tech">Lokaler Snapshot · Dry-Run ohne Live-Provider · read-only</p>
+        <p class="fd-header-sub">Starte und prüfe Vorschau-Prüfläufe aus einem ruhigen Operator-Cockpit.</p>
+        <p class="fd-header-tech">Lokaler Stand · Struktur-Test ohne Live-Provider · read-only</p>
       </div>
     </div>
     <div class="fd-header-actions">
       <span class="vp-status-pill vp-status-pill--ok" title="Lokaler Produktions- und Preview-Pfad vorbereitet">Production Ready</span>
       <span class="vp-status-pill vp-status-pill--pipeline" title="Lokale Preview-Pipeline ohne externe Provider-Calls">Local Preview Pipeline</span>
-      <button type="button" class="primary fd-header-cta" id="fd-header-cta-local-preview" data-ba306-header-cta="1">Zum Fresh Preview Panel</button>
+      <div class="fd-header-reset-wrap" data-ba323b-dashboard-reset-wrap="1">
+        <button type="button" class="sm fd-btn-dashboard-reset" id="fd-btn-dashboard-reset" data-ba323b-dashboard-reset="1">Dashboard zurücksetzen</button>
+        <p class="fd-reset-hint muted" style="margin:0.35rem 0 0;font-size:0.72rem;max-width:22rem;line-height:1.35">Setzt nur die Ansicht zurück. Dateien im output-Ordner bleiben erhalten.</p>
+      </div>
+      <button type="button" class="primary fd-header-cta" id="fd-header-cta-local-preview" data-ba306-header-cta="1">Zum Vorschau-Panel</button>
     </div>
   </header>
 <div class="fd-app-shell" data-ba306c-sidebar="1">
@@ -1552,9 +1571,9 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
     <nav id="fd-sidebar-nav" class="fd-sidebar-nav" aria-label="Bereiche">
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fd-overview-anchor">Overview</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba323-video-generate">Video generieren</button>
-      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Fresh Preview</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Vorschau-Prüflauf</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Readiness</button>
-      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fp-dry-run-handoff">Handoff</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fp-dry-run-handoff">Befehl kopieren</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba22-local-preview">Local Preview</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="founder-strategic-summary">Founder Summary</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="coll-input-panel">Raw / Debug</button>
@@ -1571,7 +1590,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
           <span class="fd-sidebar-score-v fd-sidebar-score-v--empty" id="fd-sidebar-preview-power">Noch kein Score</span>
         </div>
       </div>
-      <p class="fd-sidebar-score-footnote">Score basiert auf Fresh Preview Readiness</p>
+      <p class="fd-sidebar-score-footnote">Score aus dem Readiness-Check des Vorschau-Prüflaufs</p>
     </div>
   </aside>
   <div class="fd-main-column">
@@ -1579,11 +1598,11 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
   <div id="error-bar" role="alert"></div>
 
   <div class="fd-exec-row" data-ba306b-exec-row="1">
-    <div class="fp-exec-strip" id="fp-exec-strip" data-ba306-exec-strip="1" aria-label="Executive Kurzüberblick Fresh Preview">
-      <div class="fp-exec-cell"><div class="fp-exec-label">Fresh Preview Status</div><div class="fp-exec-val" id="fp-exec-fresh-status">Warte auf Snapshot</div><div class="fp-exec-hint" id="fp-exec-hint-fresh"></div></div>
-      <div class="fp-exec-cell"><div class="fp-exec-label">Readiness Score</div><div class="fp-exec-readiness-body"><div class="fp-exec-mini-gauge fd-score-gauge fd-score-gauge--small" aria-hidden="true"><div class="fd-score-gauge-ring fd-score-gauge-ring--neutral" id="fp-exec-readiness-ring" style="--fd-sg-pct: 0"><div class="fd-score-gauge-inner"></div></div></div><div class="fp-exec-readiness-copy"><div class="fp-exec-val" id="fp-exec-readiness-score">Nicht bewertet</div><div class="fp-exec-hint" id="fp-exec-hint-score">Readiness wird nach dem Snapshot berechnet</div></div></div></div>
-      <div class="fp-exec-cell"><div class="fp-exec-label">Latest Run</div><div class="fp-exec-val" id="fp-exec-latest-run">Noch kein Run</div><div class="fp-exec-hint" id="fp-exec-hint-run"></div></div>
-      <div class="fp-exec-cell"><div class="fp-exec-label">Next Operator Step</div><div class="fp-exec-val" id="fp-exec-next-step-short">Starte einen Dry-Run, um den ersten Snapshot zu erzeugen</div><div class="fp-exec-hint" id="fp-exec-hint-next"></div></div>
+    <div class="fp-exec-strip" id="fp-exec-strip" data-ba306-exec-strip="1" aria-label="Executive Kurzüberblick Vorschau">
+      <div class="fp-exec-cell"><div class="fp-exec-label">Vorschau-Status</div><div class="fp-exec-val" id="fp-exec-fresh-status">Warte auf Daten …</div><div class="fp-exec-hint" id="fp-exec-hint-fresh"></div></div>
+      <div class="fp-exec-cell"><div class="fp-exec-label">Readiness Score</div><div class="fp-exec-readiness-body"><div class="fp-exec-mini-gauge fd-score-gauge fd-score-gauge--small" aria-hidden="true"><div class="fd-score-gauge-ring fd-score-gauge-ring--neutral" id="fp-exec-readiness-ring" style="--fd-sg-pct: 0"><div class="fd-score-gauge-inner"></div></div></div><div class="fp-exec-readiness-copy"><div class="fp-exec-val" id="fp-exec-readiness-score">Nicht bewertet</div><div class="fp-exec-hint" id="fp-exec-hint-score">Wird nach „Status aktualisieren“ berechnet</div></div></div></div>
+      <div class="fp-exec-cell"><div class="fp-exec-label">Letzter Lauf</div><div class="fp-exec-val" id="fp-exec-latest-run">Noch kein Run</div><div class="fp-exec-hint" id="fp-exec-hint-run"></div></div>
+      <div class="fp-exec-cell"><div class="fp-exec-label">Nächster Schritt</div><div class="fp-exec-val" id="fp-exec-next-step-short">Gib eine URL ein und starte Video generieren.</div><div class="fp-exec-hint" id="fp-exec-hint-next"></div></div>
     </div>
   </div>
 
@@ -1592,7 +1611,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
       <h2 id="fd-guided-flow-h">Production Flow</h2>
       <p class="fd-guided-flow-sub">Geführter Ablauf vom Input bis zum Final Render</p>
     </div>
-    <p class="fd-guided-flow-microcopy-help muted" id="fd-guided-flow-microcopy-help">Snapshot = aktueller Dashboard-Abgleich. Nutze „Fresh Preview aktualisieren“, nachdem du lokal einen Full Preview Smoke ausgeführt hast.</p>
+    <p class="fd-guided-flow-microcopy-help muted" id="fd-guided-flow-microcopy-help"><strong>Status aktualisieren</strong> liest den aktuellen Projektstand aus dem Ordner <code class="fp-inline-path">output/</code> neu ein. Nutze das nach einem lokalen Vorschau-Prüflauf im Terminal.</p>
     <div id="fd-guided-flow-steps" class="fd-guided-flow-steps" aria-label="Produktionsschritte"></div>
     <div class="fd-guided-flow-next">
       <div class="fd-guided-flow-next-kicker">Nächster Schritt</div>
@@ -1606,7 +1625,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
       <h2 id="vg-video-generate-h">Video generieren</h2>
       <p class="panel-section-desc muted">URL eingeben und einen kontrollierten 10-Minuten-Produktionslauf starten.</p>
     </div>
-    <p class="muted" style="margin:0 0 0.75rem">Fresh Preview bleibt das Diagnose- und Review-Cockpit; dieser Bereich startet den Longform-Render bis <code class="fp-inline-path">final_video.mp4</code>.</p>
+    <p class="muted" style="margin:0 0 0.75rem">Der Vorschau-Prüflauf bleibt das Diagnose-Cockpit; dieser Bereich startet den Longform-Render bis <code class="fp-inline-path">final_video.mp4</code>.</p>
     <p class="muted" style="margin:0 0 0.5rem">Live-Bilder können echte Provider-Kosten auslösen.</p>
     <p class="muted" style="margin:0 0 1rem">Live-Motion ist nur sinnvoll, wenn ein echter Connector verfügbar ist. Keine Fake-Clips — ohne Runway-Konfiguration blockt der Server Live-Motion.</p>
     <div id="fd-video-generate-form" class="fp-dry-run-grid" data-ba323-video-generate="1">
@@ -1654,14 +1673,14 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
 
   <section class="panel panel--fresh-preview fp-cockpit-primary" id="panel-ba303-fresh-preview" aria-labelledby="fp-snapshot-h">
     <div class="panel-section-head fp-cockpit-panel-head">
-      <h2 id="fp-snapshot-h">Fresh Preview Smoke (BA 30.3–30.8)</h2>
-      <p class="panel-section-desc muted">Read-only Snapshot unter <code class="fp-inline-path">output/fresh_topic_preview/</code> · Ready, Warning oder Blocked auf einen Blick · Dry-Run und Aktualisieren an einem Ort.</p>
+      <h2 id="fp-snapshot-h">Vorschau-Prüflauf (BA 30.3–30.8)</h2>
+      <p class="panel-section-desc muted">Read-only unter <code class="fp-inline-path">output/fresh_topic_preview/</code> · Ready, Warning oder Blocked auf einen Blick · <strong>Struktur-Test</strong> und <strong>Status aktualisieren</strong> an einem Ort. <em>Vorschau-Prüflauf:</em> erzeugt eine prüfbare Vorschau vor dem finalen Video.</p>
     </div>
     <div class="fp-cockpit-split">
       <div class="fp-cockpit-col fp-cockpit-col--actions">
         <div class="fp-dry-run-card" id="fp-dry-run-panel" data-ba307-dry-run-panel="1" aria-labelledby="fp-dry-run-h">
-          <h3 class="subh fp-module-title" id="fp-dry-run-h">Fresh Preview starten</h3>
-          <p class="fp-dry-run-meta">Dry-Run: keine Live-Provider, keine externen Asset-Kosten.</p>
+          <h3 class="subh fp-module-title" id="fp-dry-run-h">Vorschau starten</h3>
+          <p class="fp-dry-run-meta">Struktur-Test: prüft, ob Script, Szenen und Assets vorbereitet werden können — ohne Live-Provider und ohne externe Asset-Kosten.</p>
           <div class="fp-dry-run-grid">
             <div>
               <label for="fp-dry-topic">Topic</label>
@@ -1681,17 +1700,17 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
             </div>
           </div>
           <div class="fp-dry-run-actions">
-            <button type="button" class="primary fp-btn-dry-run" id="fp-btn-start-dry-run" data-label="Dry-Run starten" data-ba307-start-dry-run="1">Dry-Run starten</button>
+            <button type="button" class="primary fp-btn-dry-run" id="fp-btn-start-dry-run" data-label="Struktur-Test starten" data-ba307-start-dry-run="1">Struktur-Test starten</button>
           </div>
           <p class="muted" id="fp-dry-run-status" aria-live="polite"></p>
           <pre class="out out-empty" id="fp-dry-run-result" style="display:none;max-height:180px" data-ba307-dry-run-result="1"></pre>
           <div id="fp-dry-run-handoff" class="fp-dry-run-handoff" style="display:none" data-ba308-handoff="1" aria-labelledby="fp-handoff-heading">
-            <h4 class="subh fp-handoff-h" id="fp-handoff-heading">Nächster Schritt: Full Preview Smoke lokal starten</h4>
+            <h4 class="subh fp-handoff-h" id="fp-handoff-heading">Nächster Schritt: vollen Vorschau-Prüflauf lokal starten (Befehl zum Kopieren)</h4>
             <p class="fp-handoff-note muted" id="fp-handoff-note"></p>
             <p class="fp-handoff-warning" id="fp-handoff-warning"></p>
             <pre class="out" id="fp-dry-run-handoff-ps"></pre>
-            <p class="fp-handoff-after muted" id="fp-handoff-after-run">Nach erfolgreichem Lauf: zurück ins Dashboard und „Fresh Preview aktualisieren“ klicken.</p>
-            <button type="button" class="sm fp-copy-path" id="fp-btn-copy-handoff-cli" data-ba308-copy-handoff="1">CLI-Befehl kopieren</button>
+            <p class="fp-handoff-after muted" id="fp-handoff-after-run">Nach erfolgreichem Lauf: zurück ins Dashboard und <strong>Status aktualisieren</strong> wählen.</p>
+            <button type="button" class="sm fp-copy-path" id="fp-btn-copy-handoff-cli" data-ba308-copy-handoff="1">Befehl zum Kopieren</button>
           </div>
         </div>
       </div>
@@ -1705,13 +1724,13 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
                 <span class="fp-preview-power-label fd-score-gauge-label" id="fp-preview-power-label"></span>
               </div>
             </div>
-            <p class="fd-score-gauge-footnote">Score basiert auf Fresh Preview Readiness</p>
+            <p class="fd-score-gauge-footnote">Score aus dem Readiness-Check des Vorschau-Prüflaufs</p>
           </div>
           <div class="fp-readiness-row" id="fp-readiness-row" data-ba304-readiness-marker="1">
             <span id="fp-readiness-badge" class="fp-readiness-badge fp-readiness-unknown" title="BA 30.4 Readiness Gate">OFFEN</span>
-            <span id="fp-readiness-score" class="fp-readiness-score-wrap">Readiness wird nach dem Snapshot berechnet</span>
+            <span id="fp-readiness-score" class="fp-readiness-score-wrap">Wird nach „Status aktualisieren“ berechnet</span>
           </div>
-          <p class="fp-readiness-footnote muted">Score basiert auf Fresh Preview Readiness</p>
+          <p class="fp-readiness-footnote muted">Score aus dem Readiness-Check des Vorschau-Prüflaufs</p>
         </div>
         <div class="fp-operator-review-card" id="fp-operator-review-card" data-ba310-operator-review="1" aria-labelledby="fp-operator-review-h">
           <h3 class="subh fp-module-title" id="fp-operator-review-h">Operator Review</h3>
@@ -1719,7 +1738,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
             <span id="fp-review-decision-badge" class="fp-review-badge fp-review-badge--pending" data-review-decision-marker="pending">Ausstehend</span>
           </div>
           <ul id="fp-review-reasons" class="fp-review-reasons"></ul>
-          <p id="fp-review-next-action" class="fp-review-next muted">Full Preview Smoke lokal über CLI-Handoff starten</p>
+          <p id="fp-review-next-action" class="fp-review-next muted">Nach einem Vorschau-Prüflauf erscheinen hier Hinweise.</p>
         </div>
         <div class="fp-final-render-gate-card" id="fp-final-render-gate" data-ba312-final-render-gate="1" aria-labelledby="fp-final-render-gate-h">
           <h3 class="subh fp-module-title" id="fp-final-render-gate-h">Final Render Preparation</h3>
@@ -1749,9 +1768,9 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
           <button type="button" class="sm fp-copy-path" id="fp-safe-final-render-copy" style="display:none" data-ba314-copy-safe-fr="1">Final-Render-Befehl kopieren</button>
         </div>
         <div class="fp-toolbar">
-          <button type="button" class="primary" id="fp-btn-refresh" data-label="Fresh Preview aktualisieren" data-ba305-refresh="1">Fresh Preview aktualisieren</button>
+          <button type="button" class="primary" id="fp-btn-refresh" data-label="Status aktualisieren" data-ba305-refresh="1">Status aktualisieren</button>
         </div>
-        <p class="muted" id="fp-snapshot-status" style="margin:0.25rem 0 0.5rem;font-size:0.82rem">Lade Snapshot…</p>
+        <p class="muted" id="fp-snapshot-status" style="margin:0.25rem 0 0.5rem;font-size:0.82rem">Lade Projektstand …</p>
         <div id="fp-next-step-box" class="fp-next-step-box fp-next-step--neutral" data-ba305-next-step="1" data-operator-next-step-host="1" data-field="operator_next_step" role="status">
           <div class="fp-next-step-label">Nächster Schritt (Operator)</div>
           <div id="fp-operator-next-step" class="fp-next-step-text">—</div>
@@ -1762,7 +1781,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
           <div id="fp-readiness-list" class="fp-reasons-block fp-readiness" style="display:none"></div>
           <div id="fp-scan-warnings-list" class="fp-reasons-block fp-scan" style="display:none"></div>
         </div>
-        <pre class="out out-empty" id="out-fp-snapshot" style="max-height:200px" data-fp-snapshot-marker="ba303">Noch kein Fresh Preview Run gefunden. Starte einen Dry-Run, um den ersten Snapshot zu erzeugen. Technische Kurzübersicht erscheint danach hier (read-only).</pre>
+        <pre class="out out-empty" id="out-fp-snapshot" style="max-height:200px" data-fp-snapshot-marker="ba303">Noch kein Vorschau-Prüflauf geladen. Starte einen Struktur-Test oder wähle „Status aktualisieren“, um den letzten Stand aus <code class="fp-inline-path">output/</code> einzublenden. <em>Prüfbericht:</em> zeigt, was erzeugt wurde und was als Nächstes zu prüfen ist (Datei OPEN_PREVIEW_SMOKE.md).</pre>
       </div>
     </div>
   </section>
@@ -5407,6 +5426,7 @@ try {
       }
       return;
     }
+    fdClearDashboardManualResetFlag();
     var dur = parseInt(document.getElementById("fd-vg-duration") && document.getElementById("fd-vg-duration").value, 10);
     var maxSc = parseInt(document.getElementById("fd-vg-max-scenes") && document.getElementById("fd-vg-max-scenes").value, 10);
     var maxLive = parseInt(document.getElementById("fd-vg-max-live") && document.getElementById("fd-vg-max-live").value, 10);
@@ -5496,10 +5516,10 @@ try {
     var handoffWrap = document.getElementById("fp-dry-run-handoff");
     var btn = document.getElementById("fp-btn-start-dry-run");
     if (!btn) return;
-    var label = btn.getAttribute("data-label") || btn.textContent || "Dry-Run starten";
+    var label = btn.getAttribute("data-label") || btn.textContent || "Struktur-Test starten";
     if (isKillSwitchActive()) {
       if (st) {
-        st.textContent = "Kill Switch aktiv — Fresh-Preview-Dry-Run blockiert.";
+        st.textContent = "Kill Switch aktiv — Struktur-Test blockiert.";
         st.classList.add("intake-status-err");
       }
       return;
@@ -5527,6 +5547,7 @@ try {
       }
       return;
     }
+    fdClearDashboardManualResetFlag();
     var dur = durEl ? parseInt(durEl.value, 10) : 45;
     if (isNaN(dur) || dur < 5) dur = 45;
     var maxSc = msEl ? parseInt(msEl.value, 10) : 6;
@@ -5541,13 +5562,13 @@ try {
     btn.disabled = true;
     btn.classList.add("is-loading");
     btn.classList.remove("is-success", "is-error");
-    btn.textContent = "Dry-Run läuft…";
+    btn.textContent = "Struktur-Test läuft…";
     if (resEl) {
       resEl.style.display = "none";
       resEl.textContent = "";
     }
     if (handoffWrap) handoffWrap.style.display = "none";
-    if (st) st.textContent = "Starte Fresh-Preview-Dry-Run…";
+    if (st) st.textContent = "Starte Struktur-Test …";
     try {
       const r = await fetch("/founder/dashboard/fresh-preview/start-dry-run", {
         method: "POST",
@@ -5559,7 +5580,7 @@ try {
       if (!r.ok) {
         var detail = j && j.detail != null ? j.detail : ("HTTP " + r.status);
         if (st) {
-          st.textContent = "Dry-Run: " + String(detail);
+          st.textContent = "Struktur-Test: " + String(detail);
           st.classList.add("intake-status-err");
         }
         if (handoffWrap) handoffWrap.style.display = "none";
@@ -5568,7 +5589,7 @@ try {
       }
       if (!j || j.ok !== true) {
         if (st) {
-          st.textContent = "Dry-Run beendet mit Blockern. Siehe Details.";
+          st.textContent = "Struktur-Test beendet mit Blockern. Siehe Details.";
           st.classList.add("intake-status-err");
         }
         if (resEl) {
@@ -5581,7 +5602,7 @@ try {
         return;
       }
       if (st) {
-        st.textContent = (j.snapshot_hint || "Snapshot aktualisieren") + " — Run " + (j.run_id || "—");
+        st.textContent = (j.snapshot_hint || "Status aktualisieren") + " — Run " + (j.run_id || "—");
         st.classList.add("intake-status-success");
       }
       if (resEl) {
@@ -5604,7 +5625,7 @@ try {
       try { await fdLoadFreshPreviewSnapshot(); } catch (eRef) {}
     } catch (e) {
       if (st) {
-        st.textContent = "Dry-Run: " + (e && e.message ? e.message : String(e));
+        st.textContent = "Struktur-Test: " + (e && e.message ? e.message : String(e));
         st.classList.add("intake-status-err");
       }
       if (handoffWrap) handoffWrap.style.display = "none";
@@ -6000,10 +6021,152 @@ try {
     nx.textContent = (d && d.final_render_input_next_action) ? String(d.final_render_input_next_action) : "";
   }
 
+  var FD_DASHBOARD_MANUAL_RESET_KEY = "fd_dashboard_manual_reset";
+
+  function fdDashboardManualResetActive() {
+    try { return localStorage.getItem(FD_DASHBOARD_MANUAL_RESET_KEY) === "1"; } catch (e) { return false; }
+  }
+
+  function fdClearDashboardManualResetFlag() {
+    try { localStorage.removeItem(FD_DASHBOARD_MANUAL_RESET_KEY); } catch (e) {}
+  }
+
+  function fdSetDashboardManualResetFlag() {
+    try { localStorage.setItem(FD_DASHBOARD_MANUAL_RESET_KEY, "1"); } catch (e) {}
+  }
+
+  function fdFpResetOperatorReviewNeutral() {
+    var badge = document.getElementById("fp-review-decision-badge");
+    var ul = document.getElementById("fp-review-reasons");
+    var nx = document.getElementById("fp-review-next-action");
+    if (badge) {
+      badge.textContent = "Ausstehend";
+      badge.setAttribute("data-review-decision-marker", "pending");
+      badge.className = "fp-review-badge fp-review-badge--pending";
+    }
+    if (ul) ul.innerHTML = "";
+    if (nx) nx.textContent = "Nach einem Vorschau-Prüflauf erscheinen hier Hinweise.";
+  }
+
+  function fdResetDashboardView() {
+    fdSetDashboardManualResetFlag();
+    fdApplyDashboardNeutralView();
+    var eb = document.getElementById("error-bar");
+    if (eb) {
+      eb.textContent = "";
+      eb.classList.remove("visible");
+    }
+  }
+
+  function fdApplyDashboardNeutralView() {
+    fdClearVideoGenerateForm();
+    var tEl = document.getElementById("fp-dry-topic");
+    var uEl = document.getElementById("fp-dry-url");
+    var dEl = document.getElementById("fp-dry-duration");
+    var mEl = document.getElementById("fp-dry-max-scenes");
+    if (tEl) tEl.value = "";
+    if (uEl) uEl.value = "";
+    if (dEl) dEl.value = "45";
+    if (mEl) mEl.value = "6";
+    var dst = document.getElementById("fp-dry-run-status");
+    if (dst) {
+      dst.textContent = "";
+      dst.classList.remove("intake-status-err", "intake-status-success");
+    }
+    var dres = document.getElementById("fp-dry-run-result");
+    if (dres) {
+      dres.textContent = "";
+      dres.style.display = "none";
+      dres.classList.add("out-empty");
+    }
+    var handoff = document.getElementById("fp-dry-run-handoff");
+    if (handoff) handoff.style.display = "none";
+    var hn = document.getElementById("fp-handoff-note");
+    var hw = document.getElementById("fp-handoff-warning");
+    var hpre = document.getElementById("fp-dry-run-handoff-ps");
+    if (hn) hn.textContent = "";
+    if (hw) hw.textContent = "";
+    if (hpre) hpre.textContent = "";
+    var dbtn = document.getElementById("fp-btn-start-dry-run");
+    if (dbtn) {
+      var dl = dbtn.getAttribute("data-label") || "Struktur-Test starten";
+      dbtn.textContent = dl;
+      dbtn.disabled = false;
+      dbtn.classList.remove("is-loading", "is-success", "is-error");
+    }
+    var rfb = document.getElementById("fp-btn-refresh");
+    if (rfb) {
+      rfb.disabled = false;
+      rfb.classList.remove("is-loading", "is-success", "is-error");
+      var rlab = rfb.getAttribute("data-label") || "Status aktualisieren";
+      rfb.textContent = rlab;
+    }
+    var sst = document.getElementById("fp-snapshot-status");
+    if (sst) {
+      sst.textContent = "Ansicht zurückgesetzt — wähle „Status aktualisieren“, um den Projektstand aus output/ neu einzulesen.";
+      sst.classList.remove("intake-status-err");
+    }
+    var out = document.getElementById("out-fp-snapshot");
+    if (out) {
+      out.textContent = "Kein angezeigter Stand. Dateien im Ordner output/ bleiben erhalten. Nutze „Status aktualisieren“ für den letzten Lauf, einen Struktur-Test oder „Video generieren“.";
+      out.classList.add("out-empty");
+    }
+    fdFpResetPreviewPowerNeutral();
+    fdFpResetOperatorReviewNeutral();
+    fdFpResetFinalRenderGateNeutral();
+    fdFpResetFinalRenderInputChecklistNeutral();
+    fdFpResetSafeFinalRenderHandoffNeutral();
+    fdFpResetGuidedFlowNeutral();
+    var glb = document.getElementById("fd-guided-flow-next-label");
+    var gnx = document.getElementById("fd-guided-flow-next-action");
+    if (glb) glb.textContent = "";
+    if (gnx) gnx.textContent = "Gib eine URL ein und starte Video generieren.";
+    var badge = document.getElementById("fp-readiness-badge");
+    var scEl = document.getElementById("fp-readiness-score");
+    if (badge) {
+      badge.textContent = "OFFEN";
+      badge.className = "fp-readiness-badge fp-readiness-unknown";
+    }
+    if (scEl) scEl.textContent = "Noch kein Bewertungsstand — „Status aktualisieren“ oder Struktur-Test.";
+    var exFs = document.getElementById("fp-exec-fresh-status");
+    if (exFs) exFs.textContent = "Kein angezeigter Stand";
+    var exScore = document.getElementById("fp-exec-readiness-score");
+    if (exScore) exScore.textContent = "Nicht bewertet";
+    var exRun = document.getElementById("fp-exec-latest-run");
+    if (exRun) exRun.textContent = "Kein aktiver Run";
+    var exNx = document.getElementById("fp-exec-next-step-short");
+    if (exNx) {
+      exNx.textContent = "Gib eine URL ein und starte Video generieren.";
+      exNx.setAttribute("title", "");
+    }
+    var hFresh = document.getElementById("fp-exec-hint-fresh");
+    if (hFresh) hFresh.textContent = "Nur die Ansicht — Dateien bleiben auf der Festplatte.";
+    var hScore = document.getElementById("fp-exec-hint-score");
+    if (hScore) hScore.textContent = "Wird nach „Status aktualisieren“ berechnet";
+    var hRun = document.getElementById("fp-exec-hint-run");
+    if (hRun) hRun.textContent = "";
+    var hNext = document.getElementById("fp-exec-hint-next");
+    if (hNext) hNext.textContent = "";
+    var nextBox = document.getElementById("fp-next-step-box");
+    var nextText = document.getElementById("fp-operator-next-step");
+    if (nextBox && nextText) {
+      nextText.textContent = "Gib eine URL ein und starte Video generieren.";
+      nextBox.className = "fp-next-step-box fp-next-step--neutral";
+    }
+    var pr = document.getElementById("fp-path-rows");
+    if (pr) pr.innerHTML = "";
+    fdFpFillReasonList("fp-blocking-list", "Freigabe blockiert (Review)", []);
+    fdFpFillReasonList("fp-readiness-list", "Readiness zur Prüfung", []);
+    fdFpFillReasonList("fp-scan-warnings-list", "Pfade und Dateien (Review)", []);
+  }
+
   async function fdLoadFreshPreviewSnapshot() {
     var st = document.getElementById("fp-snapshot-status");
     var out = document.getElementById("out-fp-snapshot");
     if (!st || !out) return;
+    if (fdDashboardManualResetActive()) {
+      return;
+    }
     try {
       if (isKillSwitchActive()) {
         st.textContent = "Kill Switch aktiv — Fresh-Preview-Snapshot übersprungen.";
@@ -6025,7 +6188,7 @@ try {
         return;
       }
       const d = await r.json();
-      st.textContent = "Snapshot geladen · read-only · " + (d.fresh_preview_snapshot_version || "ba31_0_v1");
+      st.textContent = "Projektstand geladen · read-only · " + (d.fresh_preview_snapshot_version || "ba31_0_v1");
       st.classList.remove("intake-status-err");
       var rs = String(d.readiness_status || "").toLowerCase();
       var badge = document.getElementById("fp-readiness-badge");
@@ -6035,7 +6198,7 @@ try {
         badge.textContent = bl;
         badge.className = "fp-readiness-badge " + (rs === "ready" ? "fp-readiness-ready" : (rs === "warning" ? "fp-readiness-warning" : (rs === "blocked" ? "fp-readiness-blocked" : "fp-readiness-unknown")));
       }
-      if (scEl) scEl.textContent = d.readiness_score != null ? ("Score: " + String(d.readiness_score) + " / 100 · Score basiert auf Fresh Preview Readiness") : "Readiness wird nach dem Snapshot berechnet";
+      if (scEl) scEl.textContent = d.readiness_score != null ? ("Score: " + String(d.readiness_score) + " / 100 · Readiness-Check Vorschau-Prüflauf") : "Wird nach „Status aktualisieren“ berechnet";
       fdFpUpdatePreviewPower(d);
       fdFpApplyOperatorReview(d);
       fdFpApplyFinalRenderGate(d);
@@ -6044,28 +6207,28 @@ try {
       fdFpApplyGuidedFlow(d);
       var nsOp = String(d.operator_next_step || "").trim();
       var exFs = document.getElementById("fp-exec-fresh-status");
-      if (exFs) exFs.textContent = d.fresh_preview_available ? "Aktiv" : "Noch kein Fresh Preview Run gefunden";
+      if (exFs) exFs.textContent = d.fresh_preview_available ? "Vorschau aktiv" : "Kein Vorschau-Lauf gefunden";
       var exScore = document.getElementById("fp-exec-readiness-score");
       if (exScore) exScore.textContent = d.readiness_score != null ? String(d.readiness_score) + " / 100" : "Nicht bewertet";
       var exRun = document.getElementById("fp-exec-latest-run");
-      if (exRun) exRun.textContent = d.latest_run_id || "Noch kein Run";
+      if (exRun) exRun.textContent = d.latest_run_id || "Kein aktiver Run";
       var exNx = document.getElementById("fp-exec-next-step-short");
       if (exNx) {
-        exNx.textContent = nsOp ? (nsOp.length > 72 ? nsOp.slice(0, 72) + "…" : nsOp) : "Starte einen Dry-Run, um den ersten Snapshot zu erzeugen";
+        exNx.textContent = nsOp ? (nsOp.length > 72 ? nsOp.slice(0, 72) + "…" : nsOp) : "Gib eine URL ein und starte Video generieren.";
         exNx.setAttribute("title", nsOp || "");
       }
       var hFresh = document.getElementById("fp-exec-hint-fresh");
-      if (hFresh) hFresh.textContent = d.fresh_preview_available ? "" : "Starte einen Dry-Run, um den ersten Snapshot zu erzeugen";
+      if (hFresh) hFresh.textContent = d.fresh_preview_available ? "" : "Struktur-Test oder Status aktualisieren";
       var hScore = document.getElementById("fp-exec-hint-score");
-      if (hScore) hScore.textContent = d.readiness_score != null ? "" : "Readiness wird nach dem Snapshot berechnet";
+      if (hScore) hScore.textContent = d.readiness_score != null ? "" : "Wird nach „Status aktualisieren“ berechnet";
       var hRun = document.getElementById("fp-exec-hint-run");
       if (hRun) hRun.textContent = d.latest_run_id ? "" : "Der zuletzt erkannte Run erscheint hier";
       var hNext = document.getElementById("fp-exec-hint-next");
-      if (hNext) hNext.textContent = nsOp ? "" : "Wird aus Snapshot und Readiness abgeleitet";
+      if (hNext) hNext.textContent = nsOp ? "" : "Aus Projektstand und Readiness abgeleitet";
       var nextBox = document.getElementById("fp-next-step-box");
       var nextText = document.getElementById("fp-operator-next-step");
       if (nextBox && nextText) {
-        nextText.textContent = nsOp || "Starte einen Dry-Run, um den ersten Snapshot zu erzeugen";
+        nextText.textContent = nsOp || "Gib eine URL ein und starte Video generieren.";
         var ncls = "fp-next-step-box ";
         if (rs === "ready") ncls += "fp-next-step--ready";
         else if (rs === "warning") ncls += "fp-next-step--warning";
@@ -6081,13 +6244,13 @@ try {
         pr.appendChild(fdFpBuildPathRow("scene_asset_pack.json", d.scene_asset_pack_path));
         pr.appendChild(fdFpBuildPathRow("asset_manifest.json", d.asset_manifest_path));
         pr.appendChild(fdFpBuildPathRow("preview_smoke_summary", d.preview_smoke_summary_path));
-        pr.appendChild(fdFpBuildPathRow("OPEN_PREVIEW_SMOKE.md", d.open_preview_smoke_report_path));
+        pr.appendChild(fdFpBuildPathRow("Prüfbericht (OPEN_PREVIEW_SMOKE.md)", d.open_preview_smoke_report_path));
       }
       fdFpFillReasonList("fp-blocking-list", "Freigabe blockiert (Review)", d.blocking_reasons);
       fdFpFillReasonList("fp-readiness-list", "Readiness zur Prüfung", d.readiness_reasons);
       fdFpFillReasonList("fp-scan-warnings-list", "Pfade und Dateien (Review)", d.warnings);
       var lines = [];
-      lines.push("Fresh Preview — Kurzüberblick (Details oben)");
+      lines.push("Vorschau-Prüflauf — Kurzüberblick (Details oben)");
       lines.push("- Readiness: " + (d.readiness_status || "—") + " · Score: " + (d.readiness_score != null ? d.readiness_score : "—"));
       lines.push("- fresh_preview_available: " + (d.fresh_preview_available ? "ja" : "nein"));
       lines.push("- latest_run_id: " + (d.latest_run_id || "—"));
@@ -6436,7 +6599,11 @@ try {
   updatePqBadge();
   refreshOperatorClarity();
   fdLoadLocalPreviewPanel();
-  fdLoadFreshPreviewSnapshot();
+  if (fdDashboardManualResetActive()) {
+    fdApplyDashboardNeutralView();
+  } else {
+    fdLoadFreshPreviewSnapshot();
+  }
     var lpBtn = document.getElementById("lp-btn-run-mini");
     if (lpBtn) {
       lpBtn.addEventListener("click", async function() {
@@ -6446,7 +6613,14 @@ try {
     var fpRef = document.getElementById("fp-btn-refresh");
     if (fpRef) {
       fpRef.addEventListener("click", async function() {
+        fdClearDashboardManualResetFlag();
         try { await fdLoadFreshPreviewSnapshot(); } catch (eFp) {}
+      });
+    }
+    var fdDashReset = document.getElementById("fd-btn-dashboard-reset");
+    if (fdDashReset) {
+      fdDashReset.addEventListener("click", function() {
+        fdResetDashboardView();
       });
     }
     var fpDry = document.getElementById("fp-btn-start-dry-run");

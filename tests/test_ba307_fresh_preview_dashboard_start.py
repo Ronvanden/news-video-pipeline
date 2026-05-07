@@ -129,7 +129,7 @@ def test_config_includes_start_dry_run_relative():
 
 def test_dashboard_html_contains_dry_run_ui():
     html = get_founder_dashboard_html()
-    assert "Dry-Run starten" in html
+    assert "Struktur-Test starten" in html
     assert "fp-btn-start-dry-run" in html
     assert "fresh-preview/start-dry-run" in html
     assert "data-ba307-start-dry-run" in html
