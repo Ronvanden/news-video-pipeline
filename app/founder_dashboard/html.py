@@ -736,6 +736,203 @@ button.sm { padding: 0.3rem 0.5rem; font-size: 0.72rem; }
 .fd-vg-list { margin: 0.35rem 0 0; padding-left: 1.1rem; }
 .fd-vg-cta { margin-top: 0.75rem; font-size: 0.82rem; }
 .fd-vg-raw details { margin-top: 0.6rem; }
+/* BA 32.70 — Founder Dashboard Visual Redesign V1: cockpit-style hierarchy. */
+.fd-header-hero {
+  z-index: 20;
+  backdrop-filter: blur(18px);
+}
+.fd-header-actions { align-items: flex-start; }
+.fd-app-shell {
+  background:
+    linear-gradient(90deg, rgba(0, 42, 118, 0.22) 0, rgba(0, 0, 0, 0) 250px),
+    linear-gradient(180deg, rgba(9, 16, 30, 0.45), rgba(4, 8, 15, 0));
+}
+.fd-sidebar {
+  background: linear-gradient(180deg, rgba(3, 14, 31, 0.96), rgba(2, 9, 20, 0.98));
+  border-color: rgba(64, 83, 113, 0.7);
+}
+button.fd-sidebar-link {
+  min-height: 2.4rem;
+  padding: 0.55rem 0.72rem;
+  border-color: transparent;
+  background: transparent;
+}
+button.fd-sidebar-link:hover:not(:disabled), button.fd-sidebar-link:focus-visible {
+  background: linear-gradient(90deg, rgba(0, 70, 255, 0.28), rgba(0, 70, 255, 0.08));
+  border-color: rgba(78, 128, 255, 0.35);
+}
+.fd-exec-row {
+  border: 1px solid rgba(64, 83, 113, 0.72);
+  border-radius: 16px;
+  padding: 0.75rem;
+  background: linear-gradient(160deg, rgba(19, 31, 52, 0.74), rgba(8, 15, 27, 0.88));
+  box-shadow: var(--vp-card-shadow);
+}
+.fp-exec-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .fp-exec-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .fp-exec-strip { grid-template-columns: 1fr; } }
+.fp-exec-cell {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(78, 99, 132, 0.78);
+  background: linear-gradient(150deg, rgba(30, 44, 68, 0.9), rgba(11, 19, 33, 0.94));
+}
+.fp-exec-cell::after {
+  content: "";
+  position: absolute;
+  right: -2rem;
+  top: -2.5rem;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(0, 70, 255, 0.16), transparent 68%);
+  pointer-events: none;
+}
+.panel {
+  border-color: rgba(64, 83, 113, 0.72);
+  background: linear-gradient(160deg, rgba(24, 36, 56, 0.88), rgba(10, 17, 30, 0.96));
+  border-radius: 16px;
+}
+.panel--video-generate {
+  border-color: rgba(78, 128, 255, 0.38);
+  box-shadow: var(--vp-card-shadow), 0 0 0 1px rgba(0, 70, 255, 0.08);
+}
+.panel-section-head h2 {
+  font-size: clamp(1.15rem, 1.8vw, 1.55rem);
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: -0.03em;
+}
+.fd-vg-operator-brief {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+@media (max-width: 860px) { .fd-vg-operator-brief { grid-template-columns: 1fr; } }
+.fd-vg-brief-card {
+  padding: 0.85rem 0.95rem;
+  border-radius: 13px;
+  border: 1px solid rgba(67, 87, 118, 0.78);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+}
+.fd-vg-brief-k {
+  display: block;
+  margin-bottom: 0.28rem;
+  color: rgba(160, 176, 198, 0.92);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.fd-vg-brief-v {
+  display: block;
+  color: rgba(244, 247, 251, 0.96);
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.fd-vg-pipeline-steps {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(90px, 1fr));
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(64, 83, 113, 0.62);
+  border-radius: 14px;
+  background: rgba(2, 8, 18, 0.26);
+}
+@media (max-width: 960px) { .fd-vg-pipeline-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .fd-vg-pipeline-steps { grid-template-columns: 1fr 1fr; } }
+.fd-vg-step {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  color: rgba(214, 224, 238, 0.92);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.fd-vg-step-dot {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(90, 119, 160, 0.9);
+  background: rgba(0, 70, 255, 0.14);
+  color: #bcd0ff;
+  font-size: 0.72rem;
+}
+.fd-vg-step--warn .fd-vg-step-dot {
+  border-color: rgba(251, 191, 36, 0.82);
+  color: #facc15;
+  background: rgba(251, 191, 36, 0.08);
+}
+#fd-video-generate-form {
+  gap: 0.65rem 1rem;
+  align-items: start;
+}
+#fd-video-generate-form > div {
+  min-width: 0;
+}
+#fd-video-generate-form label {
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+input[type="text"], input[type="number"], input[type="url"], input[type="password"], textarea, select {
+  min-height: 2.55rem;
+  border-radius: 10px;
+  border-color: rgba(67, 87, 118, 0.95);
+  background: rgba(4, 12, 24, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: rgba(69, 132, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(0, 70, 255, 0.18);
+}
+.fp-dry-run-checks {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(64, 83, 113, 0.62);
+  border-radius: 12px;
+  background: rgba(2, 8, 18, 0.24);
+}
+.fd-vg-section-title {
+  margin: 0.9rem 0 0.45rem;
+  color: rgba(238, 243, 249, 0.96);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.fd-vg-result-card {
+  border-color: rgba(67, 87, 118, 0.78);
+  background: linear-gradient(145deg, rgba(19, 30, 48, 0.94), rgba(7, 13, 24, 0.94));
+}
+.fd-vg-kv {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(64, 83, 113, 0.52);
+  border-radius: 12px;
+  background: rgba(3, 10, 20, 0.28);
+}
+.fd-vg-kv-row {
+  padding: 0.24rem 0;
+  border-bottom: 1px solid rgba(64, 83, 113, 0.25);
+}
+.fd-vg-kv-row:last-child { border-bottom: 0; }
+.fd-vg-list {
+  padding: 0.6rem 0.75rem 0.6rem 1.5rem;
+  border: 1px solid rgba(64, 83, 113, 0.52);
+  border-radius: 12px;
+  background: rgba(3, 10, 20, 0.28);
+}
+.fd-vg-raw summary {
+  color: rgba(160, 176, 198, 0.94);
+  cursor: pointer;
+}
 pre.out-empty, .score.out-empty, .lab-empty {
   color: var(--muted);
   font-style: italic;
@@ -1677,9 +1874,28 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
       <h2 id="vg-video-generate-h">Video generieren</h2>
       <p class="panel-section-desc muted">URL eingeben und einen kontrollierten 10-Minuten-Produktionslauf starten.</p>
     </div>
-    <p class="muted" style="margin:0 0 0.75rem">Der Vorschau-Prüflauf bleibt das Diagnose-Cockpit; dieser Bereich startet den Longform-Render bis <code class="fp-inline-path">final_video.mp4</code>.</p>
-    <p class="muted" style="margin:0 0 0.5rem">Echte Assets können Provider-Kosten auslösen. Ohne Aktivierung wird eine Fallback-Preview mit Platzhaltern erstellt.</p>
-    <p class="muted" style="margin:0 0 1rem">Live-Motion ist nur sinnvoll, wenn ein echter Connector verfügbar ist. Keine Fake-Clips — ohne Runway-Konfiguration blockt der Server Live-Motion.</p>
+    <div class="fd-vg-operator-brief" aria-label="Operator-Kurzüberblick Video Generate">
+      <div class="fd-vg-brief-card">
+        <span class="fd-vg-brief-k">Current production state</span>
+        <span class="fd-vg-brief-v">Kontrollierter URL → Longform-Render bis <code class="fp-inline-path">final_video.mp4</code>.</span>
+      </div>
+      <div class="fd-vg-brief-card">
+        <span class="fd-vg-brief-k">Next operator step</span>
+        <span class="fd-vg-brief-v">URL eintragen, Kosten bewusst bestätigen und danach Ergebnis, Pfade und Warnungen prüfen.</span>
+      </div>
+      <div class="fd-vg-brief-card">
+        <span class="fd-vg-brief-k">Safety mode</span>
+        <span class="fd-vg-brief-v">Ohne Aktivierung wird eine Fallback-Preview mit Platzhaltern erstellt; Live-Motion blockt ohne echten Connector.</span>
+      </div>
+    </div>
+    <div class="fd-vg-pipeline-steps" aria-label="Video Generate Produktionsgates">
+      <div class="fd-vg-step"><span class="fd-vg-step-dot">1</span><span>Input</span></div>
+      <div class="fd-vg-step"><span class="fd-vg-step-dot">2</span><span>Script</span></div>
+      <div class="fd-vg-step"><span class="fd-vg-step-dot">3</span><span>Assets</span></div>
+      <div class="fd-vg-step"><span class="fd-vg-step-dot">4</span><span>Motion</span></div>
+      <div class="fd-vg-step"><span class="fd-vg-step-dot">5</span><span>Preview</span></div>
+      <div class="fd-vg-step fd-vg-step--warn"><span class="fd-vg-step-dot">6</span><span>Review / Render</span></div>
+    </div>
     <div id="fd-video-generate-form" class="fp-dry-run-grid" data-ba323-video-generate="1">
       <div style="grid-column:1/-1">
         <label for="fd-video-generate-url">URL</label>
@@ -1800,7 +2016,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
         <p class="muted" id="fd-vg-assets-mode-hint" style="margin:0.15rem 0 0;font-size:0.82rem"><strong>Preview/Fallback-Modus</strong> — keine Live-Provider, Platzhalter sind erwartbar.</p>
       </div>
       <div style="grid-column:1/-1">
-        <div class="muted" style="margin:0.65rem 0 0.35rem;font-size:0.78rem"><strong>Provider-Readiness</strong></div>
+        <div class="fd-vg-section-title">Readiness Audit · Provider-Readiness</div>
         <div id="fd-vg-provider-readiness" class="fd-vg-kv" aria-label="Provider-Readiness">
           <div class="fd-vg-kv-row"><span class="fd-vg-k">Live Assets</span><span class="fd-vg-v" id="fd-vg-pr-live-assets">Unbekannt</span></div>
           <div class="fd-vg-kv-row"><span class="fd-vg-k">ElevenLabs Voice</span><span class="fd-vg-v" id="fd-vg-pr-eleven">Unbekannt</span></div>
@@ -1813,18 +2029,18 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
         </div>
         <p class="muted" id="fd-vg-provider-readiness-hint" style="margin:0.35rem 0 0;font-size:0.78rem"></p>
 
-        <div class="muted" style="margin:0.7rem 0 0.35rem;font-size:0.78rem"><strong>Preflight</strong></div>
+        <div class="fd-vg-section-title">Current Production State · Preflight</div>
         <div class="fd-vg-kv" aria-label="Preflight">
           <div class="fd-vg-kv-row"><span class="fd-vg-k">Status</span><span class="fd-vg-v" id="fd-vg-preflight-status">Unbekannt</span></div>
           <div class="fd-vg-kv-row"><span class="fd-vg-k">Hinweis</span><span class="fd-vg-v" id="fd-vg-preflight-text">—</span></div>
         </div>
 
-        <div class="muted" style="margin:0.7rem 0 0.35rem;font-size:0.78rem"><strong>Fix Checklist</strong></div>
+        <div class="fd-vg-section-title">Warning / Blocking Reasons · Fix Checklist</div>
         <div id="fd-vg-fix-checklist" class="fd-vg-kv" aria-label="Fix Checklist">
           <div class="fd-vg-kv-row"><span class="fd-vg-k">—</span><span class="fd-vg-v">Noch keine Readiness geladen.</span></div>
         </div>
 
-        <div class="muted" style="margin:0.85rem 0 0.35rem;font-size:0.78rem"><strong>Real Production Smoke</strong></div>
+        <div class="fd-vg-section-title">Next Operator Step · Real Production Smoke</div>
         <p class="muted" style="margin:0 0 0.35rem;font-size:0.78rem">Checkliste für einen echten Lauf mit realen Assets und echter Voice.</p>
         <div style="display:flex;gap:8px;align-items:center;margin:0 0 0.45rem;flex-wrap:wrap">
           <button type="button" class="sm" id="fd-vg-real-smoke-preset">Real Production Smoke Preset</button>
@@ -1908,33 +2124,33 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
         <div class="fd-vg-kv-row"><span class="fd-vg-k">run_id</span><span class="fd-vg-v" id="fd-vg-run-id">—</span></div>
       </div>
       <div id="fd-vg-paths-wrap" style="display:none">
-        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Artefakte / Pfade</strong></div>
+        <div class="fd-vg-section-title">Output Artifacts · Pfade</div>
         <div id="fd-vg-paths" class="fd-vg-kv" aria-label="Video Generate Pfade"></div>
       </div>
       <div id="fd-vg-thumbnail-pack-wrap" style="display:none;margin-top:0.75rem" data-ba3277-thumbnail-pack="1">
-        <div class="muted" style="font-size:0.78rem"><strong>Thumbnail Pack (BA 32.77)</strong></div>
+        <div class="fd-vg-section-title">Output Artifacts · Thumbnail Pack (BA 32.77)</div>
         <div id="fd-vg-thumbnail-pack-kv" class="fd-vg-kv" aria-label="Thumbnail Pack"></div>
       </div>
       <div id="fd-vg-production-bundle-wrap" style="display:none;margin-top:0.75rem" data-ba3279-production-bundle="1">
-        <div class="muted" style="font-size:0.78rem"><strong>Production Bundle (BA 32.79)</strong></div>
+        <div class="fd-vg-section-title">Output Artifacts · Production Bundle (BA 32.79)</div>
         <div id="fd-vg-production-bundle-kv" class="fd-vg-kv" aria-label="Production Bundle"></div>
       </div>
       <div id="fd-vg-blockers-wrap" style="display:none">
-        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Blocker</strong></div>
+        <div class="fd-vg-section-title">Blocking Reasons</div>
         <ul class="fd-vg-list" id="fd-vg-blockers"></ul>
       </div>
       <div id="fd-vg-warnings-wrap" style="display:none">
-        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Warnungen</strong></div>
+        <div class="fd-vg-section-title">Warnings</div>
         <ul class="fd-vg-list" id="fd-vg-warnings"></ul>
       </div>
       <p class="fd-vg-cta" id="fd-vg-next-cta">—</p>
       <div id="fd-vg-voice-wrap" style="display:none">
-        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Voice</strong></div>
+        <div class="fd-vg-section-title">Voice Status</div>
         <div id="fd-vg-voice-kv" class="fd-vg-kv" aria-label="Voice Artifact"></div>
       </div>
       <p class="muted" id="fd-vg-smoke-result" style="display:none;margin:0.5rem 0 0;font-size:0.78rem"><strong>Smoke-Ergebnis</strong>: —</p>
       <div id="fd-vg-quality-wrap" style="display:none">
-        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Produktions-Check</strong></div>
+        <div class="fd-vg-section-title">Readiness Audit · Produktions-Check</div>
         <div id="fd-vg-quality-checklist" class="fd-vg-kv" aria-label="Produktions-Checkliste"></div>
       </div>
       <p class="muted" id="fd-vg-fallback-explain" style="display:none;margin:0.35rem 0 0;font-size:0.78rem">Dieser Lauf nutzt Platzhalter/Fallbacks, weil echte Assets, echte Voice oder Motion-Clips fehlen.</p>
@@ -5577,7 +5793,7 @@ try {
   function fdFpIsArtifactOpenable(absPath) {
     var s = String(absPath || "").trim().toLowerCase();
     if (!s) return false;
-    return /\.(md|json|txt)$/.test(s);
+    return /\\.(md|json|txt)$/.test(s);
   }
 
   function fdFpBuildPathRow(label, pathVal) {
