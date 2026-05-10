@@ -736,6 +736,153 @@ button.sm { padding: 0.3rem 0.5rem; font-size: 0.72rem; }
 .fd-vg-list { margin: 0.35rem 0 0; padding-left: 1.1rem; }
 .fd-vg-cta { margin-top: 0.75rem; font-size: 0.82rem; }
 .fd-vg-raw details { margin-top: 0.6rem; }
+
+/* BA 32.91 — Founder Dashboard Production Timeline Preview Layer. */
+.fd-vg-production-timeline {
+  margin-top: 0.9rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(94, 134, 255, 0.30);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(8, 19, 36, 0.72), rgba(3, 9, 18, 0.62));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+.fd-vg-timeline-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.65rem;
+}
+.fd-vg-timeline-title { margin: 0; font-size: 0.92rem; letter-spacing: -0.015em; }
+.fd-vg-timeline-meta { margin: 0.2rem 0 0; color: rgba(160, 176, 198, 0.92); font-size: 0.78rem; }
+.fd-vg-timeline-duration {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(94, 134, 255, 0.36);
+  color: #d7e4ff;
+  background: rgba(0, 70, 255, 0.10);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.fd-vg-timeline-shell { overflow-x: auto; padding: 0.15rem 0 0.2rem; }
+.fd-vg-timeline-scale {
+  min-width: 640px;
+  display: flex;
+  justify-content: space-between;
+  color: rgba(139, 156, 179, 0.92);
+  font-size: 0.68rem;
+  margin: 0 0 0.35rem;
+}
+.fd-vg-timeline-track {
+  min-width: 640px;
+  display: flex;
+  gap: 0.4rem;
+  align-items: stretch;
+  padding: 0.4rem;
+  border: 1px solid rgba(64, 83, 113, 0.38);
+  border-radius: 14px;
+  background: rgba(2, 8, 18, 0.40);
+}
+.fd-vg-timeline-seg {
+  position: relative;
+  min-width: 118px;
+  border: 1px solid rgba(105, 130, 169, 0.40);
+  border-radius: 13px;
+  padding: 0.55rem 0.6rem;
+  background: rgba(18, 29, 47, 0.88);
+  color: #edf4ff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, transform 0.12s ease, background 0.12s ease;
+}
+.fd-vg-timeline-seg:hover,
+.fd-vg-timeline-seg.is-selected {
+  border-color: rgba(94, 134, 255, 0.78);
+  background: rgba(28, 45, 74, 0.96);
+  transform: translateY(-1px);
+}
+.fd-vg-timeline-seg--motion {
+  border-color: rgba(45, 212, 191, 0.58);
+  background: linear-gradient(145deg, rgba(20, 184, 166, 0.20), rgba(17, 29, 47, 0.92));
+  box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.08);
+}
+.fd-vg-timeline-seg--placeholder { border-color: rgba(245, 158, 11, 0.56); }
+.fd-vg-timeline-seg--missing,
+.fd-vg-timeline-seg--failed { border-color: rgba(248, 113, 113, 0.58); }
+.fd-vg-timeline-seg-label { display: block; font-weight: 850; font-size: 0.78rem; line-height: 1.25; }
+.fd-vg-timeline-seg-time { display: block; margin-top: 0.18rem; color: rgba(190, 204, 224, 0.9); font-size: 0.68rem; }
+.fd-vg-timeline-seg-type { display: block; margin-top: 0.3rem; color: rgba(139, 156, 179, 0.95); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.fd-vg-timeline-status {
+  display: inline-flex;
+  margin-top: 0.42rem;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(139, 156, 179, 0.32);
+  font-size: 0.63rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.fd-vg-timeline-status--ready { color: #bbf7d0; border-color: rgba(74, 222, 128, 0.42); background: rgba(74, 222, 128, 0.10); }
+.fd-vg-timeline-status--placeholder,
+.fd-vg-timeline-status--skipped { color: #fde68a; border-color: rgba(245, 158, 11, 0.48); background: rgba(245, 158, 11, 0.10); }
+.fd-vg-timeline-status--missing,
+.fd-vg-timeline-status--failed { color: #fecaca; border-color: rgba(248, 113, 113, 0.50); background: rgba(248, 113, 113, 0.10); }
+.fd-vg-timeline-detail {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(260px, 1.15fr);
+  gap: 0.8rem;
+}
+@media (max-width: 820px) { .fd-vg-timeline-detail { grid-template-columns: 1fr; } }
+.fd-vg-timeline-detail-card,
+.fd-vg-timeline-preview {
+  border: 1px solid rgba(64, 83, 113, 0.46);
+  border-radius: 13px;
+  background: rgba(3, 10, 20, 0.34);
+  padding: 0.72rem;
+}
+.fd-vg-timeline-detail-title { margin: 0; font-size: 0.86rem; }
+.fd-vg-timeline-detail-copy { margin: 0.35rem 0 0; color: rgba(190, 204, 224, 0.92); font-size: 0.78rem; }
+.fd-vg-timeline-media-empty {
+  min-height: 150px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(139, 156, 179, 0.32);
+  border-radius: 12px;
+  color: rgba(160, 176, 198, 0.86);
+  text-align: center;
+  padding: 0.9rem;
+  background: rgba(2, 8, 18, 0.32);
+}
+.fd-vg-timeline-preview video,
+.fd-vg-timeline-preview img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: 11px;
+  background: #020817;
+}
+.fd-vg-advanced-artifacts {
+  margin-top: 0.75rem;
+  border: 1px solid rgba(64, 83, 113, 0.46);
+  border-radius: 13px;
+  padding: 0.35rem 0.75rem 0.75rem;
+  background: rgba(3, 10, 20, 0.22);
+}
+.fd-vg-advanced-artifacts > summary {
+  cursor: pointer;
+  color: rgba(160, 176, 198, 0.94);
+  font-size: 0.8rem;
+  font-weight: 750;
+  padding: 0.35rem 0;
+}
 /* BA 32.70 — Founder Dashboard Visual Redesign V1: cockpit-style hierarchy. */
 .fd-header-hero {
   z-index: 20;
@@ -2465,18 +2612,6 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       <div class="fd-vg-kv" id="fd-vg-result-kv">
         <div class="fd-vg-kv-row"><span class="fd-vg-k">run_id</span><span class="fd-vg-v" id="fd-vg-run-id">—</span></div>
       </div>
-      <div id="fd-vg-paths-wrap" style="display:none">
-        <div class="fd-vg-section-title">Output Artifacts · Pfade</div>
-        <div id="fd-vg-paths" class="fd-vg-kv" aria-label="Video Generate Pfade"></div>
-      </div>
-      <div id="fd-vg-thumbnail-pack-wrap" style="display:none;margin-top:0.75rem" data-ba3277-thumbnail-pack="1">
-        <div class="fd-vg-section-title">Output Artifacts · Thumbnail Pack (BA 32.77)</div>
-        <div id="fd-vg-thumbnail-pack-kv" class="fd-vg-kv" aria-label="Thumbnail Pack"></div>
-      </div>
-      <div id="fd-vg-production-bundle-wrap" style="display:none;margin-top:0.75rem" data-ba3279-production-bundle="1">
-        <div class="fd-vg-section-title">Output Artifacts · Production Bundle (BA 32.79)</div>
-        <div id="fd-vg-production-bundle-kv" class="fd-vg-kv" aria-label="Production Bundle"></div>
-      </div>
       <div id="fd-vg-blockers-wrap" style="display:none">
         <div class="fd-vg-section-title">Blocking Reasons</div>
         <ul class="fd-vg-list" id="fd-vg-blockers"></ul>
@@ -2495,13 +2630,45 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <div class="fd-vg-section-title">Readiness Audit · Produktions-Check</div>
         <div id="fd-vg-quality-checklist" class="fd-vg-kv" aria-label="Produktions-Checkliste"></div>
       </div>
+      <section class="fd-vg-production-timeline" id="fd-vg-production-timeline" data-ba3291-production-timeline="1" aria-labelledby="fd-vg-production-timeline-h" style="display:none">
+        <div class="fd-vg-timeline-head">
+          <div>
+            <h3 class="fd-vg-timeline-title" id="fd-vg-production-timeline-h">Production Timeline</h3>
+            <p class="fd-vg-timeline-meta" id="fd-vg-timeline-meta">0:00 bis Ende · Script, Bilder, Motion, Preview und Render.</p>
+          </div>
+          <span class="fd-vg-timeline-duration" id="fd-vg-timeline-duration">0:00 → —</span>
+        </div>
+        <div class="fd-vg-timeline-shell" aria-label="Production Timeline Segmente">
+          <div class="fd-vg-timeline-scale" id="fd-vg-timeline-scale"></div>
+          <div class="fd-vg-timeline-track" id="fd-vg-timeline-track"></div>
+        </div>
+        <div class="fd-vg-timeline-detail" id="fd-vg-timeline-detail">
+          <div class="fd-vg-timeline-detail-card" id="fd-vg-timeline-detail-copy"></div>
+          <div class="fd-vg-timeline-preview" id="fd-vg-timeline-preview"></div>
+        </div>
+      </section>
       <p class="muted" id="fd-vg-fallback-explain" style="display:none;margin:0.35rem 0 0;font-size:0.78rem">Dieser Lauf nutzt Platzhalter/Fallbacks, weil echte Assets, echte Voice oder Motion-Clips fehlen.</p>
-      <div class="fd-vg-raw">
-        <details id="fd-vg-raw-details">
-          <summary>Raw JSON (Debug)</summary>
-          <pre class="out out-empty" id="fd-video-generate-result" style="max-height:260px;display:none"></pre>
-        </details>
-      </div>
+      <details class="fd-vg-advanced-artifacts" id="fd-vg-advanced-artifacts">
+        <summary>Advanced artifacts & debug details</summary>
+        <div id="fd-vg-paths-wrap" style="display:none">
+          <div class="fd-vg-section-title">Output Artifacts · Pfade</div>
+          <div id="fd-vg-paths" class="fd-vg-kv" aria-label="Video Generate Pfade"></div>
+        </div>
+        <div id="fd-vg-thumbnail-pack-wrap" style="display:none;margin-top:0.75rem" data-ba3277-thumbnail-pack="1">
+          <div class="fd-vg-section-title">Output Artifacts · Thumbnail Pack (BA 32.77)</div>
+          <div id="fd-vg-thumbnail-pack-kv" class="fd-vg-kv" aria-label="Thumbnail Pack"></div>
+        </div>
+        <div id="fd-vg-production-bundle-wrap" style="display:none;margin-top:0.75rem" data-ba3279-production-bundle="1">
+          <div class="fd-vg-section-title">Output Artifacts · Production Bundle (BA 32.79)</div>
+          <div id="fd-vg-production-bundle-kv" class="fd-vg-kv" aria-label="Production Bundle"></div>
+        </div>
+        <div class="fd-vg-raw">
+          <details id="fd-vg-raw-details">
+            <summary>Raw JSON (Debug)</summary>
+            <pre class="out out-empty" id="fd-video-generate-result" style="max-height:260px;display:none"></pre>
+          </details>
+        </div>
+      </details>
     </div>
   </section>
 
@@ -6305,6 +6472,260 @@ try {
     return wrap;
   }
 
+  function fdVgTimelineFmt(sec) {
+    var n = parseFloat(sec);
+    if (!isFinite(n) || n < 0) n = 0;
+    n = Math.round(n);
+    var h = Math.floor(n / 3600);
+    var m = Math.floor((n % 3600) / 60);
+    var ss = n % 60;
+    if (h > 0) return String(h) + ":" + String(m).padStart(2, "0") + ":" + String(ss).padStart(2, "0");
+    return String(m) + ":" + String(ss).padStart(2, "0");
+  }
+
+  function fdVgTimelineNumberish(v, fallback) {
+    var n = parseFloat(v);
+    return isFinite(n) ? n : fallback;
+  }
+
+  function fdVgTimelineMediaUrl(pathVal) {
+    var p = String(pathVal || "").trim();
+    if (!p) return "";
+    if (new RegExp("^https?://", "i").test(p) || p.indexOf("/founder/") === 0) return p;
+    return "";
+  }
+
+  function fdVgTimelinePathFromSegment(seg) {
+    if (!seg || typeof seg !== "object") return "";
+    return String(seg.video_path || seg.preview_path || seg.render_path || seg.image_path || seg.path || "").trim();
+  }
+
+  function fdVgTimelineStatus(seg, fallback) {
+    var raw = String((seg && (seg.status || seg.state || seg.readiness || seg.generation_mode || seg.mode)) || fallback || "").toLowerCase();
+    if (raw.indexOf("fail") >= 0 || raw.indexOf("error") >= 0 || raw.indexOf("blocked") >= 0) return "failed";
+    if (raw.indexOf("skip") >= 0) return "skipped";
+    if (raw.indexOf("missing") >= 0 || raw.indexOf("absent") >= 0) return "missing";
+    if (raw.indexOf("placeholder") >= 0 || raw.indexOf("fallback") >= 0 || raw.indexOf("dummy") >= 0) return "placeholder";
+    if (raw.indexOf("ready") >= 0 || raw.indexOf("ok") >= 0 || raw.indexOf("complete") >= 0 || raw.indexOf("rendered") >= 0 || raw.indexOf("live") >= 0) return "ready";
+    return String(fallback || "ready");
+  }
+
+  function fdVgTimelineSegment(payload, opts) {
+    opts = opts || {};
+    var start = fdVgTimelineNumberish(opts.start, 0);
+    var dur = fdVgTimelineNumberish(opts.duration, 0);
+    var end = fdVgTimelineNumberish(opts.end, start + Math.max(0, dur));
+    if (!(end > start)) end = start + Math.max(1, dur || 1);
+    var type = String(opts.type || "segment").toLowerCase();
+    var path = String(opts.path || "").trim();
+    var status = fdVgTimelineStatus(opts.raw || {}, opts.status || (path ? "ready" : "missing"));
+    return {
+      label: String(opts.label || type || "Segment"),
+      type: type,
+      start: start,
+      end: end,
+      duration: Math.max(1, end - start),
+      status: status,
+      path: path,
+      media_kind: String(opts.media_kind || (type === "image" ? "image" : (type === "motion" || type === "preview" || type === "render" ? "video" : ""))).toLowerCase(),
+      detail: String(opts.detail || ""),
+      is_motion: !!opts.is_motion,
+      raw: opts.raw || {}
+    };
+  }
+
+  function fdVgTimelineArraysFromPayload(j) {
+    var out = [];
+    function add(arr, source) {
+      if (Array.isArray(arr) && arr.length) out.push({ source: source, rows: arr });
+    }
+    if (!j || typeof j !== "object") return out;
+    add(j.timeline, "timeline");
+    add(j.scenes, "scenes");
+    var tm = j.timeline_manifest || j.motion_timeline_manifest || null;
+    if (tm && typeof tm === "object") {
+      add(tm.segments, "timeline_manifest.segments");
+      add(tm.timeline, "timeline_manifest.timeline");
+      add(tm.scenes, "timeline_manifest.scenes");
+    }
+    var rm = j.render_manifest || null;
+    if (rm && typeof rm === "object") {
+      add(rm.segments, "render_manifest.segments");
+      add(rm.timeline, "render_manifest.timeline");
+      add(rm.scenes, "render_manifest.scenes");
+      add(rm.clips, "render_manifest.clips");
+    }
+    return out;
+  }
+
+  function fdVgBuildProductionTimeline(j) {
+    j = j || {};
+    var ta = (j.timing_audit && typeof j.timing_audit === "object") ? j.timing_audit : {};
+    var ms = (j.motion_strategy && typeof j.motion_strategy === "object") ? j.motion_strategy : {};
+    var aa = (j.asset_artifact && typeof j.asset_artifact === "object") ? j.asset_artifact : {};
+    var ra = (j.readiness_audit && typeof j.readiness_audit === "object") ? j.readiness_audit : {};
+    var duration = fdVgTimelineNumberish(j.duration_target_seconds, 0) || fdVgTimelineNumberish(ta.requested_duration_seconds, 0) || fdVgTimelineNumberish(ta.voice_duration_seconds, 0) || 60;
+    var rows = fdVgTimelineArraysFromPayload(j);
+    var segments = [];
+    if (rows.length) {
+      rows[0].rows.forEach(function(row, idx) {
+        if (!row || typeof row !== "object") return;
+        var st = fdVgTimelineNumberish(row.start_time, fdVgTimelineNumberish(row.start, idx * 5));
+        var en = fdVgTimelineNumberish(row.end_time, fdVgTimelineNumberish(row.end, NaN));
+        var du = fdVgTimelineNumberish(row.duration_seconds, fdVgTimelineNumberish(row.duration, 5));
+        if (!isFinite(en)) en = st + du;
+        var mediaPath = fdVgTimelinePathFromSegment(row);
+        var mt = String(row.media_type || row.type || (row.video_path ? "motion" : (row.image_path ? "image" : "segment"))).toLowerCase();
+        var isMotion = !!(row.video_path || mt.indexOf("motion") >= 0 || mt.indexOf("video") >= 0 || row.motion_clip_playback_seconds != null);
+        segments.push(fdVgTimelineSegment(j, {
+          label: row.label || row.title || ("Scene " + String(row.scene_number || idx + 1)),
+          type: isMotion ? "motion" : (mt.indexOf("image") >= 0 ? "image" : mt),
+          start: st,
+          end: en,
+          duration: du,
+          path: mediaPath,
+          media_kind: row.video_path ? "video" : (row.image_path ? "image" : ""),
+          status: fdVgTimelineStatus(row, mediaPath ? "ready" : "missing"),
+          detail: rows[0].source,
+          is_motion: isMotion,
+          raw: row
+        }));
+      });
+      var maxEnd = segments.reduce(function(mx, x) { return Math.max(mx, x.end || 0); }, 0);
+      if (maxEnd > 0) duration = Math.max(duration, maxEnd);
+    }
+    if (!segments.length) {
+      var finalPath = String(j.final_video_path || (j.production_bundle && j.production_bundle.final_video_bundle_path) || "").trim();
+      var previewPath = String(j.preview_with_subtitles_path || j.local_preview_video_path || "").trim();
+      var scriptReady = !!String(j.script_path || "").trim() || !!ra.script_ready;
+      var assetsReady = !!ra.real_assets_ready || !!(aa.real_asset_file_count && parseInt(aa.real_asset_file_count, 10) > 0);
+      var placeholders = !!(aa.placeholder_asset_count && parseInt(aa.placeholder_asset_count, 10) > 0) || String((aa.asset_quality_gate || {}).status || "").indexOf("placeholder") >= 0;
+      segments.push(fdVgTimelineSegment(j, { label: "Script", type: "script", start: 0, end: duration, status: scriptReady ? "ready" : "missing", path: String(j.script_path || ""), media_kind: "", detail: "Skript-Artefakt" }));
+      segments.push(fdVgTimelineSegment(j, { label: "Images", type: "image", start: 0, end: duration, status: assetsReady ? (placeholders ? "placeholder" : "ready") : (placeholders ? "placeholder" : "missing"), path: "", media_kind: "image", detail: "Asset Manifest / Bildstatus" }));
+      var planned = fdVgTimelineNumberish(ms.planned_motion_slot_count, fdVgTimelineNumberish(j.motion_slot_count, 0));
+      var rendered = fdVgTimelineNumberish(ms.runway_motion_rendered_count, 0);
+      var clipEvery = Math.max(15, fdVgTimelineNumberish(ms.motion_clip_every_seconds, 60));
+      var clipDur = Math.max(1, fdVgTimelineNumberish(ms.motion_clip_duration_seconds, 10));
+      var motionRequested = !!(ms.motion_requested || ra.motion_requested || planned > 0);
+      if (motionRequested || planned > 0) {
+        var slots = Math.max(1, Math.min(12, planned || fdVgTimelineNumberish(ms.max_motion_clips, 1)));
+        for (var i = 0; i < slots; i++) {
+          var st = Math.min(Math.max(0, i * clipEvery), Math.max(0, duration - clipDur));
+          segments.push(fdVgTimelineSegment(j, { label: "Motion " + String(i + 1), type: "motion", start: st, end: Math.min(duration, st + clipDur), status: i < rendered ? "ready" : (ms.live_motion_available ? "placeholder" : "missing"), path: "", media_kind: "video", detail: i < rendered ? "Live-Motion gerendert" : "Motion-Slot ohne Clip-Pfad", is_motion: true }));
+        }
+      } else {
+        segments.push(fdVgTimelineSegment(j, { label: "Motion", type: "motion", start: 0, end: Math.min(duration, 10), status: "skipped", path: "", media_kind: "video", detail: "Motion nicht angefordert oder nicht verfügbar", is_motion: true }));
+      }
+      segments.push(fdVgTimelineSegment(j, { label: "Preview", type: "preview", start: 0, end: duration, status: previewPath ? "ready" : (finalPath ? "skipped" : "missing"), path: previewPath, media_kind: "video", detail: "Vorschau-/Loop-Medium" }));
+      segments.push(fdVgTimelineSegment(j, { label: "Render", type: "render", start: 0, end: duration, status: finalPath ? "ready" : (!!j.ok ? "missing" : "failed"), path: finalPath, media_kind: "video", detail: "Finaler Render" }));
+    }
+    segments.sort(function(a, b) { return (a.start - b.start) || (a.end - b.end) || String(a.label).localeCompare(String(b.label)); });
+    return { duration: Math.max(1, duration), segments: segments };
+  }
+
+  function fdVgRenderTimelineDetail(seg) {
+    var copy = document.getElementById("fd-vg-timeline-detail-copy");
+    var prev = document.getElementById("fd-vg-timeline-preview");
+    if (!copy || !prev || !seg) return;
+    copy.innerHTML = "";
+    prev.innerHTML = "";
+    var h = document.createElement("h4");
+    h.className = "fd-vg-timeline-detail-title";
+    h.textContent = seg.label;
+    copy.appendChild(h);
+    var p = document.createElement("p");
+    p.className = "fd-vg-timeline-detail-copy";
+    p.textContent = fdVgTimelineFmt(seg.start) + " → " + fdVgTimelineFmt(seg.end) + " · " + seg.type + " · " + seg.status;
+    copy.appendChild(p);
+    var d = document.createElement("p");
+    d.className = "fd-vg-timeline-detail-copy";
+    d.textContent = seg.detail || (seg.path ? seg.path : "Kein direkter Medienpfad im aktuellen Ergebnisobjekt.");
+    copy.appendChild(d);
+    if (seg.path) {
+      var pathLine = document.createElement("p");
+      pathLine.className = "fd-vg-timeline-detail-copy";
+      pathLine.textContent = "Pfad: " + seg.path;
+      copy.appendChild(pathLine);
+    }
+    var url = fdVgTimelineMediaUrl(seg.path);
+    if (url && seg.media_kind === "video") {
+      var v = document.createElement("video");
+      v.controls = true;
+      v.loop = true;
+      v.muted = true;
+      v.playsInline = true;
+      v.src = url;
+      prev.appendChild(v);
+    } else if (url && seg.media_kind === "image") {
+      var img = document.createElement("img");
+      img.alt = seg.label;
+      img.src = url;
+      prev.appendChild(img);
+    } else {
+      var empty = document.createElement("div");
+      empty.className = "fd-vg-timeline-media-empty";
+      empty.textContent = seg.path ? "Medienpfad vorhanden, aber nicht direkt im Browser abspielbar (lokaler Pfad)." : "Noch kein Medienpfad für dieses Segment vorhanden.";
+      prev.appendChild(empty);
+    }
+  }
+
+  function fdVgRenderProductionTimeline(payload, mode) {
+    var host = document.getElementById("fd-vg-production-timeline");
+    var track = document.getElementById("fd-vg-timeline-track");
+    var scale = document.getElementById("fd-vg-timeline-scale");
+    var durEl = document.getElementById("fd-vg-timeline-duration");
+    var meta = document.getElementById("fd-vg-timeline-meta");
+    if (!host || !track || !scale) return;
+    track.innerHTML = "";
+    scale.innerHTML = "";
+    if (!payload || String(mode || "").toLowerCase() === "neutral") {
+      host.style.display = "none";
+      return;
+    }
+    host.style.display = "block";
+    var tl = fdVgBuildProductionTimeline(payload);
+    var duration = tl.duration || 1;
+    if (durEl) durEl.textContent = "0:00 → " + fdVgTimelineFmt(duration);
+    var ready = 0, placeholder = 0, missing = 0, motion = 0;
+    (tl.segments || []).forEach(function(seg) {
+      if (seg.status === "ready") ready += 1;
+      if (seg.status === "placeholder") placeholder += 1;
+      if (seg.status === "missing" || seg.status === "failed") missing += 1;
+      if (seg.is_motion || seg.type === "motion") motion += 1;
+    });
+    if (meta) meta.textContent = String((tl.segments || []).length) + " Segmente · " + String(ready) + " ready · " + String(placeholder) + " placeholder · " + String(missing) + " missing/failed · " + String(motion) + " Motion";
+    [0, duration / 2, duration].forEach(function(t, idx) {
+      var sp = document.createElement("span");
+      sp.textContent = idx === 0 ? "0:00" : fdVgTimelineFmt(t);
+      scale.appendChild(sp);
+    });
+    var selected = null;
+    (tl.segments || []).forEach(function(seg, idx) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "fd-vg-timeline-seg fd-vg-timeline-seg--" + seg.status + ((seg.is_motion || seg.type === "motion") ? " fd-vg-timeline-seg--motion" : "");
+      b.style.flex = String(Math.max(0.65, Math.min(3.2, (seg.duration || 1) / Math.max(1, duration) * 8))) + " 0 118px";
+      b.setAttribute("data-fd-vg-timeline-segment", String(idx));
+      b.innerHTML = '<span class="fd-vg-timeline-seg-label"></span><span class="fd-vg-timeline-seg-time"></span><span class="fd-vg-timeline-seg-type"></span><span class="fd-vg-timeline-status fd-vg-timeline-status--' + seg.status + '"></span>';
+      b.querySelector(".fd-vg-timeline-seg-label").textContent = seg.label;
+      b.querySelector(".fd-vg-timeline-seg-time").textContent = fdVgTimelineFmt(seg.start) + "–" + fdVgTimelineFmt(seg.end);
+      b.querySelector(".fd-vg-timeline-seg-type").textContent = seg.type;
+      b.querySelector(".fd-vg-timeline-status").textContent = seg.status;
+      b.addEventListener("click", function() {
+        Array.prototype.forEach.call(track.querySelectorAll(".fd-vg-timeline-seg"), function(x) { x.classList.remove("is-selected"); });
+        b.classList.add("is-selected");
+        fdVgRenderTimelineDetail(seg);
+      });
+      track.appendChild(b);
+      if (!selected && (seg.path || seg.is_motion || seg.status === "ready")) selected = { seg: seg, btn: b };
+    });
+    if (!selected && tl.segments && tl.segments.length) selected = { seg: tl.segments[0], btn: track.querySelector(".fd-vg-timeline-seg") };
+    if (selected) {
+      if (selected.btn) selected.btn.classList.add("is-selected");
+      fdVgRenderTimelineDetail(selected.seg);
+    }
+  }
+
   function fdRenderVideoGenerateOperatorResult(payload, mode) {
     var host = document.getElementById("fd-vg-operator-result");
     if (!host) return;
@@ -6358,6 +6779,7 @@ try {
     if (qHost) qHost.innerHTML = "";
 
     if (st === "neutral" || !j) {
+      fdVgRenderProductionTimeline(null, "neutral");
       host.style.display = "none";
       if (rawPre) {
         rawPre.textContent = "";
@@ -6385,6 +6807,7 @@ try {
         rawPre.style.display = "none";
         rawPre.classList.add("out-empty");
       }
+      fdVgRenderProductionTimeline(null, "neutral");
       return;
     }
 
@@ -6624,6 +7047,9 @@ try {
         fdVgListFill(warnsEl, warnings);
       }
     }
+
+    // Production Timeline (BA 32.91) — client-side from existing result/manifest/artifact fields.
+    try { fdVgRenderProductionTimeline(j, st); } catch (eTl) {}
 
     // Paths (best effort)
     var paths = [];

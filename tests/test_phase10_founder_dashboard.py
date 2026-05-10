@@ -340,6 +340,12 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Prüfen", text)
         self.assertIn("Nicht verfügbar", text)
         self.assertIn("Raw JSON (Debug)", text)
+        # BA 32.91 — Founder Dashboard Timeline Preview Layer
+        self.assertIn("Production Timeline", text)
+        self.assertIn('data-ba3291-production-timeline="1"', text)
+        self.assertIn("fdVgBuildProductionTimeline", text)
+        self.assertIn("fdVgRenderProductionTimeline", text)
+        self.assertIn("Advanced artifacts & debug details", text)
         self.assertIn('data-fd-nav-scroll="panel-ba323-video-generate"', text)
         self.assertGreaterEqual(text.count("Video generieren"), 2)
         self.assertIn("Vorschau-Prüflauf (BA 30.3–30.8)", text)
