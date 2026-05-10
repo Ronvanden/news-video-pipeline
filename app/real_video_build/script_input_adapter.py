@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from app.story_engine.templates import normalize_story_template_id
 from app.visual_plan.visual_no_text import append_no_text_guard, partition_visual_overlay_text
 from app.visual_plan.visual_provider_router import route_visual_provider
 from app.visual_plan.visual_policy_report import build_visual_policy_fields, ensure_effective_prompt
@@ -48,6 +49,7 @@ def build_scene_asset_pack_from_generate_script_response(
             "adapter": "ba_25_2_generate_script_response",
             "sources": sources,
             "input_warnings": warnings,
+            "video_template": _s(data.get("video_template")),
         },
     )
 
@@ -88,7 +90,10 @@ def build_scene_asset_pack_from_story_pack(
         title=title,
         hook=hook,
         scenes=scenes,
-        metadata={"adapter": "ba_25_2_story_pack"},
+        metadata={
+            "adapter": "ba_25_2_story_pack",
+            "video_template": _s(data.get("video_template")),
+        },
     )
 
 
@@ -292,23 +297,46 @@ def _estimate_duration_seconds(text: str) -> int:
     return max(4, min(25, sec)) if sec else 4
 
 
-def _visual_prompt_from_text(title: str, narration: str) -> Tuple[str, str, List[str], bool]:
+def _visual_prompt_from_text(
+    title: str,
+    narration: str,
+    *,
+    video_template: Optional[str] = None,
+) -> Tuple[str, str, List[str], bool]:
     """
     Textfreier Mood-Prompt + Overlay-Auszüge. Narration löst ``text_sensitive`` für Routing aus.
+
+    BA 32.60: Kanonisch ``documentary`` (Alias-Eingabe ``documentary_story``) — geerdete dokumentarische Positiv-Leitplanken
+    statt mystisch-dramatischer B-Roll-Defaults.
     """
+    vt_id, _ = normalize_story_template_id(video_template)
     t = _s(title)
     narr = _collapse_ws(narration)
     combo = f"{t}. {narr}" if t and narr else (t or narr)
     cleaned, overlay, ts_part = partition_visual_overlay_text(combo)
     ts = bool(ts_part or narr)
+    doc_lead = ""
+    if vt_id == "documentary":
+        doc_lead = (
+            "Realistic documentary photography, cinematic but grounded, natural light, real-world location, "
+            "believable people and environments; avoid fantasy, surreal, horror-monster, gore, cartoonish "
+            "exaggeration — "
+        )
     if overlay:
-        visual_core = cleaned
+        visual_core = doc_lead + cleaned
     else:
         label = t or "Kapitel"
-        visual_core = (
-            f"Cinematic editorial B-roll für „{label}“, symbolisches Motiv, dramatisches Licht, "
-            "großzügige Freiflächen für spätere Text-Overlays — keine eingezeichnete Schrift."
-        )
+        if vt_id == "documentary":
+            visual_core = (
+                doc_lead
+                + f"Editorial documentary still for „{label}“, grounded everyday context, "
+                "spacious composition for later text overlays — keine eingezeichnete Schrift."
+            )
+        else:
+            visual_core = (
+                f"Cinematic editorial B-roll für „{label}“, symbolisches Motiv, dramatisches Licht, "
+                "großzügige Freiflächen für spätere Text-Overlays — keine eingezeichnete Schrift."
+            )
     eff = append_no_text_guard(_collapse_ws(visual_core))
     return combo, eff, overlay, ts
 
@@ -323,11 +351,14 @@ def _build_scene_asset_pack(
 ) -> Dict[str, Any]:
     rid = _s(run_id)
     expanded: List[Dict[str, Any]] = []
+    vt = _s((metadata or {}).get("video_template"))
 
     # Optional: hook as first beat if present (keeps orchestration narration useful)
     beat_index = 0
     if hook:
-        vp_raw, vp_eff, ov_int, ts = _visual_prompt_from_text("Hook", hook)
+        vp_raw, vp_eff, ov_int, ts = _visual_prompt_from_text(
+            "Hook", hook, video_template=vt
+        )
         still_route = route_visual_provider("keyframe_still", text_sensitive=ts)
         vid_route = route_visual_provider("motion_clip", text_sensitive=False)
         vp_eff2, _ = ensure_effective_prompt(vp_eff)
@@ -369,7 +400,9 @@ def _build_scene_asset_pack(
         if not narration:
             continue
         sc_title = _s((sc or {}).get("title")) or f"Szene {i}"
-        vp_raw, vp_eff, ov_int, ts = _visual_prompt_from_text(sc_title, narration)
+        vp_raw, vp_eff, ov_int, ts = _visual_prompt_from_text(
+            sc_title, narration, video_template=vt
+        )
         if hook:
             still_kind = "keyframe_still" if beat_index == 1 else "cinematic_broll"
         else:

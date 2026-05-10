@@ -45,6 +45,17 @@ class Ba92HookCore(unittest.TestCase):
         self.assertEqual(r.hook_type, "generic_curiosity")
         self.assertTrue(any("Unbekanntes video_template" in w for w in r.warnings))
 
+    def test_documentary_story_no_unknown_template_warning(self):
+        r = generate_hook_v1(
+            video_template="documentary_story",
+            topic="Report",
+            title="Chronik einer Entscheidung",
+            source_summary="Die Zeitlinie zeigt mehrere Wendepunkte.",
+        )
+        self.assertEqual(r.template_match, "documentary")
+        self.assertFalse(any("Unbekanntes video_template" in w for w in r.warnings))
+        self.assertIn(r.hook_type, ("forgotten_power", "timeline_twist"))
+
 
 class Ba92Http(unittest.TestCase):
     def test_post_generate_hook(self):

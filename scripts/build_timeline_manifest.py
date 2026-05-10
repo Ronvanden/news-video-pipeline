@@ -107,6 +107,13 @@ def build_timeline_manifest_data(
         else:
             row["media_type"] = "image"
             row["image_path"] = img
+        for _k in (
+            "motion_clip_playback_seconds",
+            "motion_clip_rest_image_seconds",
+            "motion_clip_window_respected",
+        ):
+            if _k in a and a.get(_k) is not None:
+                row[_k] = a[_k]
         scenes.append(row)
         t += dur
 

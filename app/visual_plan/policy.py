@@ -19,4 +19,18 @@ SAFETY_NEGATIVE_SEGMENTS_V1: tuple[str, ...] = (
     "no_fake_journalistic_on_screen_text",
 )
 
+# BA 32.60 — Zusatz-Negative für dokumentarisches Template ``documentary`` (Merge in Scene-Blueprint ``negative_hints``).
+DOCUMENTARY_STORY_NEGATIVE_SEGMENTS_V1: tuple[str, ...] = (
+    "no_fantasy",
+    "no_surreal",
+    "no_horror_monster",
+    "no_gore",
+    "no_exaggerated_blood",
+    "no_apocalyptic_dramatic_lighting",
+    "no_cartoonish",
+    "no_fake_news_tabloid_aesthetic",
+    "no_exaggerated_disaster_imagery",
+    "no_giant_creature_unless_source_supported",
+)
+
 VISUAL_PROMPT_ENGINE_POLICY_V1 = "visual_prompt_engine_v8_2_20260501"

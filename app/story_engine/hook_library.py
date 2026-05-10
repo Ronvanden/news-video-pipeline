@@ -10,6 +10,7 @@ ALLOWED_HOOK_TYPES: Dict[str, FrozenSet[str]] = {
     "true_crime": frozenset({"shock_reveal", "hidden_truth"}),
     "mystery_explainer": frozenset({"unexplained_event", "question_gap"}),
     "history_deep_dive": frozenset({"forgotten_power", "timeline_twist"}),
+    "documentary": frozenset({"forgotten_power", "timeline_twist"}),
 }
 
 HOOK_TEMPLATES_DE: Dict[str, str] = {

@@ -54,10 +54,41 @@ def _tags_for_template(tmpl: str) -> List[str]:
         "true_crime": ["documentary_visual", "muted_palette"],
         "mystery_explainer": ["clarity_first", "soft_contrast"],
         "history_deep_dive": ["archival_visual", "warm_grade"],
+        "documentary": [
+            "believable_environments",
+            "documentary_visual",
+            "grounded_realism",
+            "natural_light",
+            "real_world_locations",
+        ],
         "default": ["layout_clean"],
     }
     tags = bucket.get(tid, bucket["default"])
     return sorted(set(tags))
+
+
+def _image_primary_prefix_for_template(tmpl_id: str) -> str:
+    tid, _ = normalize_story_template_id(tmpl_id)
+    if tid == "documentary":
+        return (
+            "Realistic documentary photography, cinematic but grounded, natural light, real-world locations, "
+            "believable people and everyday environments; no fantasy, no surreal imagery, no horror monsters, "
+            "no gore, no exaggerated disaster scenes, no fake tabloid sensationalism — "
+            f"aligned to template `{tid}`, emphasising chapter semantics without inventing factual detail: "
+        )
+    return (
+        f"Establishing illustrative frame aligned to template `{tid}`, "
+        f"emphasising chapter semantics without inventing factual detail: "
+    )
+
+
+def _negative_hints_for_template(tmpl_id: str) -> str:
+    tid, _ = normalize_story_template_id(tmpl_id)
+    parts: List[str] = [vp.NEGATIVE_HINTS_DEFAULT_V1]
+    if tid == "documentary":
+        parts.extend(list(vp.DOCUMENTARY_STORY_NEGATIVE_SEGMENTS_V1))
+    cleaned = [p.strip() for p in parts if (p or "").strip()]
+    return "; ".join(sorted(set(cleaned)))
 
 
 def _rhythm_label_for_scene(
@@ -163,10 +194,7 @@ def build_scene_blueprint_plan(req: StorySceneBlueprintRequest):
                 f"{vw.W_SPARSE_CHAPTER} Szene {sn}: wenig VO-Text unterhalb Schwellwert {_CHUNK_WORD_ALERT}."
             )
 
-        prefix = (
-            f"Establishing illustrative frame aligned to template `{tmpl_id}`, "
-            f"emphasising chapter semantics without inventing factual detail: "
-        )
+        prefix = _image_primary_prefix_for_template(tmpl_id)
         primary_body = _norm_space(f"{title}. Focus: {_truncate(body, 380)[0]}")
         image_primary_full = prefix + primary_body
         img_primary, tr_p = _truncate(image_primary_full, _PRIMARY_CAP)
@@ -196,7 +224,7 @@ def build_scene_blueprint_plan(req: StorySceneBlueprintRequest):
                 risk_flags=risk,
                 prompt_pack=SceneBlueprintPromptPack(
                     image_primary=img_primary,
-                    negative_hints=vp.NEGATIVE_HINTS_DEFAULT_V1,
+                    negative_hints=_negative_hints_for_template(tmpl_id),
                 ),
                 licensing_notes=licensing_l,
                 redaction_warnings=redaction,

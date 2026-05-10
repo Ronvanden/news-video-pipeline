@@ -236,6 +236,8 @@ def test_live_max_assets_limits_leonardo_attempts(asset_runner_mod, tmp_path, mo
     assert man["assets"][1]["generation_mode"] == "leonardo_live"
     assert man["assets"][2]["generation_mode"] == "placeholder"
     assert any("leonardo_live_max_assets_cap:2" in w for w in meta["warnings"])
+    assert any("live_image_max_assets_cap:2" in w for w in meta["warnings"])
+    assert any("live_image_provider:leonardo" in w for w in meta["warnings"])
     assert man["generation_mode"] == "leonardo_live"
 
 

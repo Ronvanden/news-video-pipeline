@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
+import os
 import importlib.util
 import re
 import shlex
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from starlette.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
@@ -20,11 +21,17 @@ from app.founder_dashboard.fresh_preview_artifact_access import (
     resolve_fresh_preview_artifact_path,
 )
 from app.founder_dashboard.ba323_video_generate import (
+    build_video_generate_operator_ui_ba3280,
+    derive_video_generate_status,
     execute_dashboard_video_generate,
+    build_provider_readiness,
     new_video_gen_run_id,
     runway_live_configured,
+    scrub_video_generate_warnings_ba3280,
     video_generate_output_dir,
+    write_open_me_video_result_report,
 )
+from app.production_connectors.production_bundle import build_production_bundle_v1
 from app.founder_dashboard.html import get_founder_dashboard_html
 from app.production_assembly.fresh_preview_snapshot import build_latest_fresh_preview_snapshot
 from app.production_assembly.fresh_topic_preview_smoke import run_fresh_topic_preview_smoke
@@ -165,33 +172,163 @@ _ALLOWED_VOICE_MODES_BA323 = frozenset(
     {"elevenlabs_or_safe_default", "none", "elevenlabs", "dummy", "openai", "existing"}
 )
 _ALLOWED_MOTION_MODES_BA323 = frozenset({"basic", "static"})
+_THUMBNAIL_OVERLAY_PRESETS_BA3278 = frozenset(
+    {"clean_bold", "impact_youtube", "urgent_mystery", "documentary_poster"}
+)
 
 
 class VideoGenerateRequest(BaseModel):
     """BA 32.3 — kontrollierter URL→MP4-Lauf (kein Fresh-Preview-Dry-Run)."""
 
-    url: str = Field(..., min_length=1)
+    url: Optional[str] = Field(default=None)
+    raw_text: Optional[str] = Field(default=None, description="BA 32.42 — optional: Raw-Text Input statt URL.")
+    title: Optional[str] = Field(default=None, description="BA 32.42 — optional: Title override für Raw-Text Smokes.")
+    script_text: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="BA 32.58 — finales Skript (GenerateScriptResponse-ähnlich); höchste Input-Priorität.",
+    )
+    source_youtube_url: Optional[str] = Field(
+        default=None,
+        description="BA 32.58 — YouTube-URL; Transkript als Quellenmaterial für ein neues Originalskript.",
+    )
+    youtube_url: Optional[str] = Field(
+        default=None,
+        description="BA 32.58 — Alias zu source_youtube_url (gleiche URL erlaubt, unterschiedliche nicht).",
+    )
+    rewrite_style: Optional[str] = Field(default=None, description="BA 32.58 — optionaler Stil-Hinweis fürs Rewrite.")
+    video_template: Optional[str] = Field(default=None, description="BA 32.58 — optional; Default generic in der Pipeline.")
+    target_language: str = Field(default="de", min_length=2, max_length=12, description="BA 32.58 — Zielsprache fürs Skript.")
     duration_target_seconds: int = Field(default=600, ge=60, le=1800)
     max_scenes: int = Field(default=24, ge=1, le=80)
     max_live_assets: int = Field(default=24, ge=0, le=80)
     motion_clip_every_seconds: int = Field(default=60, ge=15, le=600)
     motion_clip_duration_seconds: int = Field(default=10, ge=1, le=120)
-    max_motion_clips: int = Field(default=10, ge=0, le=30)
+    # BA 32.51: Default 0 — Video-Generate-Pfad (static + Voice) kann Timeline an Voice anpassen;
+    # Wert > 0 signalisiert Motion-Clip-Kontext (kein automatisches Fit-to-Voice).
+    max_motion_clips: int = Field(default=0, ge=0, le=30)
     allow_live_assets: bool = False
     allow_live_motion: bool = False
     confirm_provider_costs: bool = False
     voice_mode: str = Field(default="elevenlabs_or_safe_default")
     motion_mode: str = Field(default="basic")
+    image_provider: Optional[str] = Field(
+        default=None,
+        description="BA 32.72 — optional; überschreibt IMAGE_PROVIDER bei Live-Assets (leonardo|openai_image|gemini_image|placeholder).",
+    )
+    openai_image_model: Optional[str] = Field(default=None, max_length=128)
+    openai_image_size: Optional[str] = Field(default=None, max_length=64)
+    openai_image_timeout_seconds: Optional[float] = Field(default=None, ge=15.0, le=600.0)
+    # BA 32.72b — dev-only, transient overrides for local dashboard smokes.
+    # Niemals in Result JSON / OPEN_ME / Warnings schreiben.
+    dev_openai_api_key: Optional[str] = Field(default=None, max_length=512)
+    dev_elevenlabs_api_key: Optional[str] = Field(default=None, max_length=512)
+    dev_runway_api_key: Optional[str] = Field(default=None, max_length=512)
+    dev_leonardo_api_key: Optional[str] = Field(default=None, max_length=512)
+    # BA 32.78 — optional Thumbnail Pack (OpenAI Image Candidates + lokales Batch-Overlay)
+    generate_thumbnail_pack: bool = False
+    thumbnail_candidate_count: int = Field(default=3, ge=1, le=3)
+    thumbnail_max_outputs: int = Field(default=6, ge=1, le=6)
+    thumbnail_model: Optional[str] = Field(default=None, max_length=128)
+    thumbnail_size: Optional[str] = Field(default=None, max_length=64)
+    thumbnail_style_presets: Optional[List[str]] = Field(default=None, max_length=8)
+    thumbnail_title_override: Optional[str] = Field(default=None, max_length=500)
+    thumbnail_summary_override: Optional[str] = Field(default=None, max_length=4000)
 
     model_config = {"extra": "forbid"}
 
     @field_validator("url")
     @classmethod
-    def _strip_url(cls, v: str) -> str:
+    def _strip_url(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
         s = (v or "").strip()
-        if not s:
-            raise ValueError("url_required")
-        return s
+        return s or None
+
+    @field_validator("raw_text")
+    @classmethod
+    def _strip_raw_text(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = (v or "").strip()
+        return s or None
+
+    @field_validator("title")
+    @classmethod
+    def _strip_title(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = (v or "").strip()
+        return s or None
+
+    @field_validator("thumbnail_title_override", "thumbnail_summary_override")
+    @classmethod
+    def _strip_thumb_text_overrides(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = str(v).strip()
+        return s or None
+
+    @field_validator("thumbnail_model", "thumbnail_size")
+    @classmethod
+    def _strip_thumb_model_size(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = str(v).strip()
+        return s or None
+
+    @field_validator("thumbnail_style_presets", mode="before")
+    @classmethod
+    def _thumb_presets_before(cls, v: Union[None, str, List[Any]]) -> Optional[List[str]]:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            parts = [x.strip() for x in v.split(",") if str(x).strip()]
+            return parts or None
+        if isinstance(v, list):
+            return [str(x).strip() for x in v if str(x).strip()] or None
+        raise ValueError("thumbnail_style_presets_invalid")
+
+    @field_validator("thumbnail_style_presets")
+    @classmethod
+    def _thumb_presets_allowed(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        if not v:
+            return None
+        out = [x for x in v if x in _THUMBNAIL_OVERLAY_PRESETS_BA3278]
+        return out or None
+
+    @field_validator("source_youtube_url", "youtube_url", "rewrite_style", "video_template")
+    @classmethod
+    def _strip_optional_str(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = (v or "").strip()
+        return s or None
+
+    @field_validator("target_language")
+    @classmethod
+    def _strip_target_language(cls, v: str) -> str:
+        return (v or "de").strip() or "de"
+
+    @model_validator(mode="after")
+    def _video_generate_input_required(self) -> "VideoGenerateRequest":
+        # Mindestens eine Eingabe: URL, Raw-Text, YouTube-Source oder script_text.
+        yt = (self.source_youtube_url or "").strip() or (self.youtube_url or "").strip()
+        st = self.script_text
+        has_script = False
+        if isinstance(st, dict):
+            has_script = bool(
+                (st.get("full_script") or "").strip()
+                or (st.get("title") or "").strip()
+                or (st.get("hook") or "").strip()
+                or (isinstance(st.get("chapters"), list) and len(st.get("chapters") or []) > 0)
+            )
+        if not ((self.url or "").strip() or (self.raw_text or "").strip() or yt or has_script):
+            raise ValueError("video_generate_input_required")
+        sy = (self.source_youtube_url or "").strip()
+        yu = (self.youtube_url or "").strip()
+        if sy and yu and sy != yu:
+            raise ValueError("youtube_url_fields_conflict")
+        return self
 
     @field_validator("voice_mode")
     @classmethod
@@ -208,6 +345,65 @@ class VideoGenerateRequest(BaseModel):
         if s not in _ALLOWED_MOTION_MODES_BA323:
             raise ValueError("motion_mode_invalid")
         return s
+
+    @field_validator("image_provider")
+    @classmethod
+    def _normalize_image_provider_req(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = str(v).strip().lower()
+        if not s:
+            return None
+        if s in ("openai_image", "openai-image", "openai", "gpt_image", "gpt-image"):
+            return "openai_image"
+        if s in ("gemini_image", "gemini-image", "gemini", "nano_banana", "nano-banana", "google_image", "google-image"):
+            return "gemini_image"
+        if s in ("placeholder", "none", "off", "disabled"):
+            return "placeholder"
+        if s in ("leonardo", "leonardo_ai", "leonardo-ai"):
+            return "leonardo"
+        raise ValueError("image_provider_invalid")
+
+    @field_validator("openai_image_model", "openai_image_size")
+    @classmethod
+    def _strip_openai_image_optional_str(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = str(v).strip()
+        return s or None
+
+    @field_validator(
+        "dev_openai_api_key",
+        "dev_elevenlabs_api_key",
+        "dev_runway_api_key",
+        "dev_leonardo_api_key",
+    )
+    @classmethod
+    def _strip_dev_key_override(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = str(v).strip()
+        return s or None
+
+
+def _dev_key_overrides_allowed(req: Request) -> bool:
+    """
+    BA 32.72b — Dev-only: Erlaubt Key-Overrides nur lokal oder bei explizitem Flag.
+    Niemals Key-Werte loggen.
+    """
+    flag = (os.environ.get("VP_ALLOW_DEV_PROVIDER_KEY_OVERRIDES") or "").strip().lower()
+    if flag in ("1", "true", "yes", "on"):
+        return True
+    try:
+        ch = (req.client.host or "").strip().lower() if req.client else ""
+    except Exception:
+        ch = ""
+    host = (req.headers.get("host") or "").strip().lower()
+    if ch in ("127.0.0.1", "::1"):
+        return True
+    if host.startswith("localhost") or host.startswith("127.0.0.1"):
+        return True
+    return False
 
 
 def _ps_single_quote_body(s: str) -> str:
@@ -335,13 +531,13 @@ async def founder_fresh_preview_start_dry_run(req: FreshPreviewStartDryRunReques
 
 
 @router.post("/founder/dashboard/video/generate")
-async def founder_dashboard_video_generate(req: VideoGenerateRequest) -> dict:
+async def founder_dashboard_video_generate(req: VideoGenerateRequest, request: Request) -> dict:
     """
     BA 32.3 — URL → ``final_video.mp4`` via ``run_ba265_url_to_final`` unter ``output/video_generate/<run_id>/``.
 
     Keine Runway-Clip-Erzeugung in dieser Pipeline; Live-Motion nur mit konfiguriertem Connector + Warnhinweis.
     """
-    if (req.allow_live_assets or req.allow_live_motion) and not req.confirm_provider_costs:
+    if (req.allow_live_assets or req.allow_live_motion or req.generate_thumbnail_pack) and not req.confirm_provider_costs:
         raise HTTPException(
             status_code=422,
             detail="confirm_provider_costs_required_when_live_flags",
@@ -356,8 +552,28 @@ async def founder_dashboard_video_generate(req: VideoGenerateRequest) -> dict:
 
     def _run() -> Dict[str, Any]:
         out_dir.mkdir(parents=True, exist_ok=True)
+        yt_effective = (req.source_youtube_url or "").strip() or (req.youtube_url or "").strip() or None
+        has_dev_keys = any(
+            bool((x or "").strip())
+            for x in (
+                req.dev_openai_api_key,
+                req.dev_elevenlabs_api_key,
+                req.dev_runway_api_key,
+                req.dev_leonardo_api_key,
+            )
+        )
+        if has_dev_keys and not _dev_key_overrides_allowed(request):
+            # dev-only: niemals Keys akzeptieren, wenn nicht explizit erlaubt/lokal
+            raise HTTPException(status_code=403, detail="dev_key_overrides_not_allowed")
         return execute_dashboard_video_generate(
             url=req.url,
+            raw_text=req.raw_text,
+            title=req.title,
+            script_text=req.script_text,
+            source_youtube_url=yt_effective,
+            rewrite_style=req.rewrite_style,
+            video_template=req.video_template,
+            target_language=req.target_language,
             output_dir=out_dir,
             run_id=run_id,
             duration_target_seconds=int(req.duration_target_seconds),
@@ -370,10 +586,91 @@ async def founder_dashboard_video_generate(req: VideoGenerateRequest) -> dict:
             allow_live_motion=bool(req.allow_live_motion),
             voice_mode=req.voice_mode,
             motion_mode=req.motion_mode,
+            image_provider=req.image_provider,
+            openai_image_model=req.openai_image_model,
+            openai_image_size=req.openai_image_size,
+            openai_image_timeout_seconds=req.openai_image_timeout_seconds,
+            dev_openai_api_key=req.dev_openai_api_key,
+            dev_elevenlabs_api_key=req.dev_elevenlabs_api_key,
+            dev_runway_api_key=req.dev_runway_api_key,
+            dev_leonardo_api_key=req.dev_leonardo_api_key,
+            generate_thumbnail_pack=bool(req.generate_thumbnail_pack),
+            thumbnail_candidate_count=int(req.thumbnail_candidate_count),
+            thumbnail_max_outputs=int(req.thumbnail_max_outputs),
+            thumbnail_model=req.thumbnail_model,
+            thumbnail_size=req.thumbnail_size,
+            thumbnail_style_presets=req.thumbnail_style_presets,
+            thumbnail_title_override=req.thumbnail_title_override,
+            thumbnail_summary_override=req.thumbnail_summary_override,
         )
 
     payload = await run_in_threadpool(_run)
     payload["video_generate_version"] = "ba32_3_v1"
+    # BA 32.4 — additive Debug-Felder: Route bleibt robust, auch wenn ältere/Mock-Payloads
+    # (z.B. Tests) noch kein readiness_audit liefern.
+    payload.setdefault("readiness_audit", {})
+    payload.setdefault("voice_artifact", {})
+    payload.setdefault("image_asset_audit", {})
+    report_path, warn = await run_in_threadpool(
+        write_open_me_video_result_report,
+        output_dir=out_dir,
+        payload=payload,
+    )
+    if report_path is not None:
+        payload["open_me_report_path"] = str(report_path)
+    if warn:
+        try:
+            payload.setdefault("warnings", [])
+            if isinstance(payload["warnings"], list):
+                payload["warnings"].append(warn)
+        except Exception:
+            pass
+
+    def _finalize_production_bundle() -> None:
+        """BA 32.79 — Bundle inkl. OPEN_ME nach erstem OPEN_ME-Schreiben."""
+        pl = payload
+        om = str(report_path) if report_path is not None else ""
+        pb = build_production_bundle_v1(
+            output_dir=out_dir,
+            run_id=str(pl.get("run_id") or "").strip() or None,
+            final_video_path=str(pl.get("final_video_path") or "") or None,
+            script_path=str(pl.get("script_path") or "") or None,
+            scene_asset_pack_path=str(pl.get("scene_asset_pack_path") or "") or None,
+            asset_manifest_path=str(pl.get("asset_manifest_path") or "") or None,
+            open_me_path=om or None,
+            thumbnail_pack=pl.get("thumbnail_pack") if isinstance(pl.get("thumbnail_pack"), dict) else None,
+            warnings=list(pl.get("warnings") or []) if isinstance(pl.get("warnings"), list) else [],
+        )
+        pl["production_bundle"] = pb
+        ws = pl.setdefault("warnings", [])
+        if isinstance(ws, list):
+            for w in pb.get("warnings") or []:
+                if w and w not in ws:
+                    ws.append(w)
+
+    await run_in_threadpool(_finalize_production_bundle)
+    report_path2, warn2 = await run_in_threadpool(
+        write_open_me_video_result_report,
+        output_dir=out_dir,
+        payload=payload,
+    )
+    if report_path2 is not None:
+        payload["open_me_report_path"] = str(report_path2)
+    if warn2:
+        try:
+            payload.setdefault("warnings", [])
+            if isinstance(payload["warnings"], list):
+                payload["warnings"].append(warn2)
+        except Exception:
+            pass
+    # BA 32.80 — veraltete Bundle-Warnungen entfernen; Status/Operator für Dashboard-JSON
+    try:
+        scrub_video_generate_warnings_ba3280(payload)
+        _st = derive_video_generate_status(payload)
+        payload["video_generate_run_status"] = _st
+        payload["video_generate_operator"] = build_video_generate_operator_ui_ba3280(_st, payload)
+    except Exception:
+        pass
     return payload
 
 
@@ -666,6 +963,7 @@ async def founder_dashboard_config() -> dict:
     return {
         "dashboard_version": "10.8-v1",
         "auth": False,
+        "provider_readiness": build_provider_readiness(),
         "local_preview_panel_relative": {"method": "GET", "path": "/founder/dashboard/local-preview/panel"},
         "fresh_preview_snapshot_relative": {"method": "GET", "path": "/founder/dashboard/fresh-preview/snapshot"},
         "fresh_preview_start_dry_run_relative": {

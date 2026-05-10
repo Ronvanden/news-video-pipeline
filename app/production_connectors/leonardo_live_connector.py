@@ -18,7 +18,23 @@ from app.production_connectors.schema import (
 )
 
 _CONN = LeonardoProductionConnector()
+# OpenAPI-Referenz (createGeneration): Default modelId laut Schema — öffentliche UUID, kein Secret.
 DEFAULT_LEONARDO_MODEL_ID = "b24e16ff-06e3-43eb-8d33-4416c2d75876"
+# GET listPlatformModels (BA 32.39) — nur für manuelles Discovery / Diagnose.
+LEONARDO_PLATFORM_MODELS_URL = "https://cloud.leonardo.ai/api/rest/v1/platformModels"
+DEFAULT_LEONARDO_MODEL_PUBLIC_LABEL = "openapi_schema_default"
+# BA 32.38 — Minimalfelder nur für Mini-Smoke-Profile (keine Presets/Alchemy/Ultra im Body).
+LEONARDO_MINI_SMOKE_SAFE_PROFILES = frozenset({"mini_smoke", "mini_smoke_safe"})
+LEONARDO_MINI_SMOKE_SAFE_PAYLOAD_KEYS = frozenset(
+    {"prompt", "modelId", "width", "height", "num_images"}
+)
+
+
+def leonardo_mini_smoke_safe_payload_is_minimal(body: Dict[str, Any]) -> bool:
+    """True wenn der POST-Body nur die dokumentierten Minimal-Keys enthält (Smoke-Validierung)."""
+    if not isinstance(body, dict):
+        return False
+    return set(body.keys()) == LEONARDO_MINI_SMOKE_SAFE_PAYLOAD_KEYS
 
 
 def _content_type_from_headers(headers: Any) -> str:
@@ -39,7 +55,11 @@ def _content_type_from_headers(headers: Any) -> str:
     return ""
 
 
-def _build_leonardo_generation_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
+def _build_leonardo_generation_payload(
+    payload: Dict[str, Any],
+    *,
+    profile: str = "standard",
+) -> Dict[str, Any]:
     prompts = payload.get("prompts")
     prompt = payload.get("prompt")
     if isinstance(prompts, list) and prompts:
@@ -48,12 +68,20 @@ def _build_leonardo_generation_payload(payload: Dict[str, Any]) -> Dict[str, Any
             prompt = first.strip()
     if not isinstance(prompt, str) or not prompt.strip():
         prompt = "Cinematic documentary still, dramatic newsroom lighting, no text overlay."
+    prof = (profile or "standard").strip().lower()
+    # BA 32.37/32.38 — Mini-Smoke: Repo-Default-Modell (OpenAPI-Schema-Default), konservative 512×512.
+    force_repo_default = prof in LEONARDO_MINI_SMOKE_SAFE_PROFILES
+    if force_repo_default:
+        model_id = (DEFAULT_LEONARDO_MODEL_ID or "").strip()
+    else:
+        model_id = (os.getenv("LEONARDO_MODEL_ID") or DEFAULT_LEONARDO_MODEL_ID or "").strip() or DEFAULT_LEONARDO_MODEL_ID
+    # Nur die fünf Keys — optional setzt der Server Alchemy o. ä. per Default (siehe API-Doku).
     return {
         "prompt": prompt.strip(),
+        "modelId": model_id,
         "width": 512,
         "height": 512,
         "num_images": 1,
-        "modelId": (os.getenv("LEONARDO_MODEL_ID") or DEFAULT_LEONARDO_MODEL_ID).strip() or DEFAULT_LEONARDO_MODEL_ID,
     }
 
 

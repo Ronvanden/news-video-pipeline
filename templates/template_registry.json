@@ -104,6 +104,10 @@
         "role": "higher RPM business and property format"
       }
     ],
+    "template_aliases": {
+      "documentary_story": "documentary",
+      "real_estate": "real_estate_story"
+    },
     "selection_rules": [
       {
         "condition": "If the topic is broad, neutral or hard to classify",

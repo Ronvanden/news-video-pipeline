@@ -43,6 +43,31 @@ class OpenAIImageGenerationResult:
 _DEFAULT_API_BASE = "https://api.openai.com"
 
 
+def _openai_image_http_warning(status: int) -> str:
+    """Sichere Warn-Codes ohne Response-Body (BA 32.69)."""
+    s = int(status)
+    if s == 400:
+        return "openai_image_http_400"
+    if s == 401:
+        return "openai_image_http_401"
+    if s == 403:
+        return "openai_image_http_403"
+    if s == 429:
+        return "openai_image_http_429"
+    if 500 <= s <= 599:
+        return "openai_image_http_5xx"
+    return f"openai_image_http_error:{s}"
+
+
+def _openai_images_error_code_for_http(status: int) -> str:
+    s = int(status)
+    if s in (400, 401, 403, 429):
+        return f"openai_images_http_{s}"
+    if 500 <= s <= 599:
+        return "openai_images_http_5xx"
+    return "openai_images_http_error"
+
+
 def _effective_openai_api_key() -> str:
     # Prefer environment OPENAI_API_KEY; fallback to settings.openai_api_key (env_file handled by pydantic_settings).
     k = (os.environ.get("OPENAI_API_KEY") or "").strip()
@@ -95,7 +120,13 @@ def generate_openai_image_from_prompt(
         p_used = "Clean editorial background, negative space for later overlay, no readable text."
         warns.append("openai_images_empty_prompt_defaulted")
 
-    eff_model = (model or getattr(settings, "openai_image_model", "") or "gpt-image-1").strip()
+    # Reihenfolge: Aufrufparameter → OPENAI_IMAGE_MODEL → Settings → Default gpt-image-2 (Smoke: testweise z. B. gpt-image-1).
+    eff_model = (
+        model
+        or (os.environ.get("OPENAI_IMAGE_MODEL") or "").strip()
+        or str(getattr(settings, "openai_image_model", "") or "").strip()
+        or "gpt-image-2"
+    ).strip()
     eff_size = (size or getattr(settings, "openai_image_size", "") or "1024x1024").strip()
 
     if dry_run:
@@ -147,6 +178,12 @@ def generate_openai_image_from_prompt(
             code = getattr(resp, "status", None) or resp.getcode()
             raw = resp.read()
     except HTTPError as e:
+        status = int(getattr(e, "code", 0) or 0)
+        http_warn = _openai_image_http_warning(status)
+        extra: List[str] = [http_warn]
+        if status == 403:
+            extra.append(f"openai_image_model_access_denied:{eff_model}")
+        ec = _openai_images_error_code_for_http(status)
         return OpenAIImageGenerationResult(
             ok=False,
             provider="openai_images",
@@ -156,9 +193,9 @@ def generate_openai_image_from_prompt(
             prompt_used=p_used,
             output_path=str(out),
             bytes_written=0,
-            warnings=warns + [f"openai_images_http_error:{int(getattr(e, 'code', 0) or 0)}"],
-            error_code="openai_images_http_error",
-            error_message=str(e)[:240],
+            warnings=warns + extra,
+            error_code=ec,
+            error_message=f"HTTP {status}",
         )
     except (URLError, OSError, ValueError) as e:
         return OpenAIImageGenerationResult(
@@ -176,6 +213,12 @@ def generate_openai_image_from_prompt(
         )
 
     if int(code) != 200:
+        status = int(code)
+        http_warn = _openai_image_http_warning(status)
+        extra: List[str] = [http_warn]
+        if status == 403:
+            extra.append(f"openai_image_model_access_denied:{eff_model}")
+        ec = _openai_images_error_code_for_http(status)
         return OpenAIImageGenerationResult(
             ok=False,
             provider="openai_images",
@@ -185,9 +228,9 @@ def generate_openai_image_from_prompt(
             prompt_used=p_used,
             output_path=str(out),
             bytes_written=0,
-            warnings=warns + [f"openai_images_http_status:{int(code)}"],
-            error_code="openai_images_http_status",
-            error_message="non-200 response",
+            warnings=warns + extra,
+            error_code=ec,
+            error_message=f"HTTP {status}",
         )
 
     try:

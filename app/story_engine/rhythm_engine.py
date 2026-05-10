@@ -91,6 +91,11 @@ def rhythm_hints_v1(
         trans = "Bei Datumssprüngen eine kurze Orientierungsklammer sprechen, dann Fade."
     elif tid == "history_deep_dive":
         trans = "Epochenwechsel mit zwei Satz-Anker verkitten, keine harten Schnitt-Sprünge."
+    elif tid == "documentary":
+        trans = (
+            "Dokumentarischer Fluss: Abschnitte mit kurzer Überleitung verbinden, "
+            "Themenwechsel nicht abrupt."
+        )
     else:
         trans = "Abschnitte mit einer Satz-Brücke falten — kein stumpfer Topic-Sprung."
 

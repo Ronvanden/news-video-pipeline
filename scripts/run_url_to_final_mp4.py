@@ -28,12 +28,22 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.real_video_build.motion_slot_planner import build_motion_slots  # type: ignore
+from app.real_video_build.runway_motion_integration import (  # type: ignore
+    apply_first_runway_motion_slot_to_manifest,
+)
 from app.real_video_build.script_input_adapter import (  # type: ignore
     _scenes_from_chapters_like,
     _scenes_from_full_script,
     _visual_prompt_from_text,
 )
-from app.utils import build_script_response_from_extracted_text, extract_text_from_url  # type: ignore
+from app.story_engine.templates import normalize_story_template_id  # type: ignore
+from app.utils import (  # type: ignore
+    build_script_dict_from_youtube_source,
+    build_script_response_from_extracted_text,
+    extract_text_from_url,
+    extract_video_id,
+)
 
 import importlib.util
 
@@ -68,7 +78,7 @@ def _tolerant_script(data: Any) -> Dict[str, Any]:
     wr = data.get("warnings")
     if wr is not None and not isinstance(wr, list):
         wr = [str(wr)] if wr else []
-    return {
+    out = {
         "title": str(data.get("title") or "").strip(),
         "hook": str(data.get("hook") or "").strip(),
         "chapters": list(ch or []),
@@ -76,6 +86,10 @@ def _tolerant_script(data: Any) -> Dict[str, Any]:
         "sources": [str(x).strip() for x in (src or []) if str(x).strip()],
         "warnings": [str(x).strip() for x in (wr or []) if str(x).strip()],
     }
+    vt_keep = str(data.get("video_template") or "").strip()
+    if vt_keep:
+        out["video_template"] = vt_keep
+    return out
 
 
 def _collect_assets(asset_dir: Optional[Path]) -> Tuple[List[Path], List[Path]]:
@@ -108,6 +122,7 @@ def _build_scene_rows_from_script(
 ) -> List[Dict[str, Any]]:
     """Hook + Kapitel → Liste von Szenen-Dicts (title, narration) max. max_scenes."""
     rows: List[Dict[str, Any]] = []
+    vt = str(script.get("video_template") or "").strip()
     hook = str(script.get("hook") or "").strip()
     if hook and max_scenes > 0:
         rows.append({"title": "Hook", "narration": hook})
@@ -140,7 +155,9 @@ def _build_scene_rows_from_script(
                 "title": title,
                 "narration": narration,
                 "duration_seconds": dur,
-                "visual_prompt": _visual_prompt_from_text(title, narration)[1],
+                "visual_prompt": _visual_prompt_from_text(
+                    title, narration, video_template=vt
+                )[1],
             }
         )
     return out
@@ -265,6 +282,28 @@ def _draw_cinematic_placeholder_png(out_path: Path, *, scene_number: int, total_
     img.save(out_path, format="PNG")
 
 
+def _asset_row_skips_cinematic_override(asset: Dict[str, Any]) -> bool:
+    """
+    BA 32.30 — Keine cinematic Überschreibung für echte Asset-Runner-Ergebnisse.
+
+    Gleiche Heuristik wie Dashboard ``build_asset_artifact``: Modus mit Teilstring
+    ``placeholder`` → weiterhin cinematic; leerer Modus → nicht überschreiben
+    (best-effort Schutz vor Zerstörung unbekannter/echter Dateien).
+    """
+    if not isinstance(asset, dict):
+        return True
+    gmode = str(
+        asset.get("generation_mode")
+        or asset.get("mode")
+        or asset.get("provider_used")
+        or asset.get("source_type")
+        or ""
+    ).strip().lower()
+    if not gmode:
+        return True
+    return "placeholder" not in gmode
+
+
 def _apply_cinematic_placeholders(
     gen_dir: Path,
     manifest_path: Path,
@@ -272,10 +311,15 @@ def _apply_cinematic_placeholders(
     image_override_scenes: Sequence[int],
 ) -> List[str]:
     """
-    BA 26.6 — Überschreibt nach dem Asset-Runner alle PNGs für **Bild**-Szenen
-    (nur dort, wo kein Video gesetzt ist und kein expliziter Image-Override aus
-    `--asset-dir` greift) durch eine textfreie cinematic Variante. Manifest
-    bleibt strukturell unverändert.
+    BA 26.6 — Überschreibt nach dem Asset-Runner PNGs für **Bild**-Szenen durch
+    eine textfreie cinematic Variante, **nur** wenn die Manifest-Zeile ein
+    Placeholder-/Fallback-Asset kennzeichnet (``placeholder`` im erkannten
+    Modus-String).
+
+    BA 32.30 — Zeilen mit echten Modi (z. B. ``leonardo_live``) bleiben unverändert;
+    ``ba266_cinematic_placeholder_applied`` erscheint nur bei tatsächlichen
+    Überschreibungen. Explizite Image-Overrides aus ``--asset-dir`` weiterhin
+    ausgenommen (``image_override_scenes``).
     """
     warns: List[str] = []
     if not manifest_path.is_file():
@@ -294,6 +338,8 @@ def _apply_cinematic_placeholders(
             continue
         sn = int(asset.get("scene_number") or 0)
         if sn <= 0 or sn in skip:
+            continue
+        if _asset_row_skips_cinematic_override(asset):
             continue
         img_name = str(asset.get("image_path") or "").strip()
         if not img_name:
@@ -753,10 +799,66 @@ def _redact_secret(msg: Any) -> str:
     return s
 
 
+def _compute_timing_gap(
+    *,
+    voice_duration_seconds: Optional[float],
+    timeline_duration_seconds: Optional[float],
+    final_video_duration_seconds: Optional[float] = None,
+) -> Dict[str, Any]:
+    """
+    BA 32.48 — Timing-Gap Helper (direkt testbar via Import + Call).
+    JSON-Felder bleiben numerisch; Formatierung passiert nur in UI/OPEN_ME.
+    """
+    v = voice_duration_seconds
+    tl = timeline_duration_seconds
+    fv = final_video_duration_seconds
+
+    timeline_minus_voice = None
+    voice_minus_timeline = None
+    if v is not None and tl is not None:
+        timeline_minus_voice = float(tl) - float(v)
+        voice_minus_timeline = float(v) - float(tl)
+
+    final_minus_voice = None
+    if v is not None and fv is not None:
+        final_minus_voice = float(fv) - float(v)
+
+    gap_abs = None
+    if timeline_minus_voice is not None:
+        gap_abs = abs(float(timeline_minus_voice))
+    elif final_minus_voice is not None:
+        gap_abs = abs(float(final_minus_voice))
+
+    tol = 1.05
+    status = "unknown"
+    if gap_abs is not None:
+        if gap_abs <= tol:
+            status = "ok"
+        elif gap_abs <= 5.0:
+            status = "minor_gap"
+        else:
+            status = "major_gap"
+
+    return {
+        "timeline_minus_voice_seconds": timeline_minus_voice,
+        "final_video_minus_voice_seconds": final_minus_voice,
+        "voice_minus_timeline_seconds": voice_minus_timeline,
+        "timing_gap_abs_seconds": gap_abs,
+        "timing_gap_status": status,
+    }
+
+
 def run_ba265_url_to_final(
     *,
     url: Optional[str],
+    raw_text: Optional[str] = None,
+    title: Optional[str] = None,
     script_json_path: Optional[Path],
+    inline_script: Optional[Dict[str, Any]] = None,
+    source_youtube_url: Optional[str] = None,
+    target_language: str = "de",
+    rewrite_style: Optional[str] = None,
+    video_template: Optional[str] = None,
     out_dir: Path,
     max_scenes: int = 3,
     duration_seconds: int = 45,
@@ -777,9 +879,14 @@ def run_ba265_url_to_final(
     fit_min_seconds_per_scene: int = 2,
     asset_runner_mode: str = "placeholder",
     max_live_assets: Optional[int] = None,
+    image_provider: Optional[str] = None,
+    openai_image_model: Optional[str] = None,
+    openai_image_size: Optional[str] = None,
+    openai_image_timeout_seconds: Optional[float] = None,
     motion_clip_every_seconds: int = 60,
     motion_clip_duration_seconds: int = 10,
     max_motion_clips: int = 10,
+    runway_motion_smoke_runner: Optional[Callable[..., Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Orchestrierung; gibt run_summary-Dict zurück."""
     out_dir = out_dir.resolve()
@@ -793,9 +900,21 @@ def run_ba265_url_to_final(
         "fitted_video_duration_seconds": None,
         "original_requested_duration_seconds": int(original_requested_duration_seconds),
     }
+    effective_fit_video_to_voice = bool(fit_video_to_voice)
     warnings: List[str] = []
     blocking: List[str] = []
-    input_mode = "url" if url else "script_json"
+    motion_slot_plan_result: Optional[Dict[str, Any]] = None
+    motion_clip_artifact: Optional[Dict[str, Any]] = None
+    raw_text_s = (raw_text or "").strip()
+    title_s = (title or "").strip()
+    yt_s = (source_youtube_url or "").strip()
+    vtpl = (video_template or "").strip() or "generic"
+    tlang = (target_language or "de").strip() or "de"
+    yt_meta: Dict[str, Any] = {
+        "source_youtube_url": None,
+        "transcript_available": False,
+        "generated_original_script": False,
+    }
     script_path = out_dir / "script.json"
     scene_plan_path = out_dir / "scene_plan.json"
     pack_path = out_dir / "scene_asset_pack.json"
@@ -826,23 +945,248 @@ def run_ba265_url_to_final(
 
     def _finalize_summary(doc: Dict[str, Any]) -> Dict[str, Any]:
         _add_voice_fields(doc)
+        doc["source_youtube_url"] = yt_meta.get("source_youtube_url")
+        doc["transcript_available"] = bool(yt_meta.get("transcript_available"))
+        doc["generated_original_script"] = bool(yt_meta.get("generated_original_script"))
         doc.update(fit_summary)
+        # BA 32.62 — Motion-Slot-Plan (additiv); bei fehlender Timeline bleibt Default.
+        if "motion_slot_plan" not in doc:
+            doc["motion_slot_plan"] = {
+                "enabled": False,
+                "motion_clip_every_seconds": int(motion_clip_every_seconds),
+                "motion_clip_duration_seconds": int(motion_clip_duration_seconds),
+                "max_motion_clips": int(max_motion_clips),
+                "planned_count": 0,
+                "slots": [],
+            }
+        if "motion_slot_count" not in doc:
+            msp0 = doc.get("motion_slot_plan")
+            if isinstance(msp0, dict):
+                doc["motion_slot_count"] = int(msp0.get("planned_count") or 0)
+            else:
+                doc["motion_slot_count"] = 0
+        if "motion_clip_artifact" not in doc:
+            doc["motion_clip_artifact"] = {
+                "planned_count": int((doc.get("motion_slot_plan") or {}).get("planned_count") or 0),
+                "rendered_count": 0,
+                "failed_count": 0,
+                "skipped_count": 0,
+                "video_clip_paths": [],
+                "warnings": [],
+            }
         return doc
+
+    def _build_timing_audit(
+        *,
+        warnings_list: List[str],
+        voice_meta_local: Dict[str, Any],
+        timeline_body: Optional[Dict[str, Any]],
+        render_meta: Optional[Dict[str, Any]],
+        effective_fit_to_voice: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        BA 32.46 — additive Timing/Voice-Fit Diagnose. Muss robust sein (fehlende Felder => unknown).
+        """
+        joined = " ".join(str(x or "") for x in (warnings_list or [])).lower()
+        audio_short_sig = "audio_shorter_than_timeline_padded_or_continued"
+        audio_short = audio_short_sig in joined
+        fit_voice_applied = "timeline_fit_to_voice_applied" in joined
+        if fit_voice_applied:
+            # Nach BA 32.51: Timeline an Voice angepasst — Padding-Warnung nicht als Audit-Signal werten.
+            audio_short = False
+
+        voice_d = voice_meta_local.get("voice_duration_seconds")
+        try:
+            voice_d_f = float(voice_d) if voice_d is not None else None
+            if voice_d_f is not None and voice_d_f <= 0:
+                voice_d_f = None
+        except (TypeError, ValueError):
+            voice_d_f = None
+
+        tl_d = None
+        if isinstance(timeline_body, dict):
+            td = timeline_body.get("estimated_duration_seconds")
+            try:
+                tl_d = float(td) if td is not None else None
+                if tl_d is not None and tl_d <= 0:
+                    tl_d = None
+            except (TypeError, ValueError):
+                tl_d = None
+
+        final_d = None
+        if isinstance(render_meta, dict):
+            vd = render_meta.get("duration_seconds")
+            try:
+                final_d = float(vd) if vd is not None else None
+                if final_d is not None and final_d <= 0:
+                    final_d = None
+            except (TypeError, ValueError):
+                final_d = None
+
+        # best-effort: longer/shorter flags
+        audio_long = False
+        if voice_d_f is not None and tl_d is not None:
+            audio_long = voice_d_f > (tl_d + 1.05)
+
+        padding_applied = bool(audio_short)
+        if effective_fit_to_voice or fit_voice_applied:
+            fit_strategy = "fit_to_voice"
+        elif padding_applied:
+            fit_strategy = "padded_or_continued"
+        elif voice_d_f is None and not voice_meta_local.get("voice_used"):
+            fit_strategy = "none"
+        else:
+            fit_strategy = "unknown"
+
+        gap = _compute_timing_gap(
+            voice_duration_seconds=voice_d_f,
+            timeline_duration_seconds=tl_d,
+            final_video_duration_seconds=final_d,
+        )
+        gap_tl_minus_voice = gap.get("timeline_minus_voice_seconds")
+        gap_final_minus_voice = gap.get("final_video_minus_voice_seconds")
+        gap_voice_minus_tl = gap.get("voice_minus_timeline_seconds")
+        gap_abs = gap.get("timing_gap_abs_seconds")
+        timing_gap_status = gap.get("timing_gap_status") or "unknown"
+
+        def _fmt_s(x: float) -> str:
+            return f"{float(x):.2f}s"
+
+        if timing_gap_status == "unknown":
+            summary = "Timing-Gap konnte nicht berechnet werden."
+        elif timing_gap_status == "ok":
+            summary = "Voice und Timeline liegen innerhalb der Toleranz."
+        else:
+            # prefer timeline gap sign if available
+            g = gap_tl_minus_voice if gap_tl_minus_voice is not None else gap_final_minus_voice
+            if g is None:
+                summary = "Timing-Gap konnte nicht berechnet werden."
+            elif g > 0:
+                summary = f"Voice ist {_fmt_s(g)} kürzer als Timeline."
+            else:
+                summary = f"Voice ist {_fmt_s(abs(g))} länger als Timeline."
+
+        # keep legacy hint if warning exists
+        if audio_short and timing_gap_status in ("ok", "minor_gap", "major_gap"):
+            summary = summary + " Audio ist kürzer als Timeline; Video wurde gepadded oder fortgeführt."
+        if fit_voice_applied:
+            summary = "Timeline wurde an Voice-Dauer angepasst. " + summary
+
+        return {
+            "voice_duration_seconds": voice_d_f,
+            "timeline_duration_seconds": tl_d,
+            "final_video_duration_seconds": final_d,
+            "requested_duration_seconds": float(original_requested_duration_seconds),
+            "audio_shorter_than_timeline": bool(audio_short),
+            "audio_longer_than_timeline": bool(audio_long),
+            "padding_or_continue_applied": bool(padding_applied),
+            "fit_strategy": fit_strategy,
+            "timeline_minus_voice_seconds": gap_tl_minus_voice,
+            "final_video_minus_voice_seconds": gap_final_minus_voice,
+            "voice_minus_timeline_seconds": gap_voice_minus_tl,
+            "timing_gap_abs_seconds": gap_abs,
+            "timing_gap_status": timing_gap_status,
+            "summary": summary,
+        }
 
     asset_mod = _load_submodule("run_asset_runner_ba265", _ASSET_RUNNER)
     timeline_mod = _load_submodule("build_timeline_ba265", _TIMELINE)
     render_mod = _load_submodule("render_ba265", _RENDER)
 
     script: Dict[str, Any]
-    if url:
-        text, ext_warns = extract_text_from_url(url.strip())
+    if inline_script is not None:
+        # BA 32.58 — finales Skript-Objekt (GenerateScriptResponse-ähnlich), keine Extraktion.
+        input_mode = "final_script"
+        script = _tolerant_script(inline_script)
+        if title_s:
+            script["title"] = title_s
+            sw = list(script.get("warnings") or [])
+            sw.append("script_title_override_used")
+            script["warnings"] = sw
+        url = None
+    elif yt_s:
+        # BA 32.58 — YouTube-Transkript als Recherchebasis → neues Skript (kein 1:1-Reupload-Pfad).
+        input_mode = "youtube_source"
+        dm = max(1, int(round(duration_seconds / 60.0)))
+        y_script, transcript_ok, yt_warns, yt_block = build_script_dict_from_youtube_source(
+            source_youtube_url=yt_s,
+            duration_minutes=dm,
+            target_language=tlang,
+            video_template=vtpl,
+            rewrite_style=rewrite_style,
+        )
+        vid = extract_video_id(yt_s)
+        yt_meta["source_youtube_url"] = f"https://www.youtube.com/watch?v={vid}" if vid else yt_s
+        yt_meta["transcript_available"] = bool(transcript_ok)
+        warnings.extend(list(yt_warns or []))
+        if yt_block:
+            blocking.extend(list(yt_block))
+            doc = {
+                "ok": False,
+                "input_mode": input_mode,
+                "url": None,
+                "script_json": None,
+                "title": "",
+                "output_dir": str(out_dir),
+                "script_path": str(script_path),
+                "scene_plan_path": str(scene_plan_path),
+                "scene_asset_pack_path": str(pack_path),
+                "asset_manifest_path": None,
+                "timeline_manifest_path": None,
+                "final_video_path": str(final_video_path),
+                "used_existing_assets": False,
+                "used_video_assets_count": 0,
+                "used_image_assets_count": 0,
+                "warnings": warnings,
+                "blocking_reasons": blocking,
+            }
+            summary_path.write_text(json.dumps(_finalize_summary(doc), ensure_ascii=False, indent=2), encoding="utf-8")
+            return doc
+        yt_meta["generated_original_script"] = True
+        script = y_script
+        if title_s:
+            script["title"] = title_s
+            sw = list(script.get("warnings") or [])
+            sw.append("youtube_title_override_used")
+            script["warnings"] = sw
+        url = None
+    elif raw_text_s:
+        # BA 32.42 — Raw Text Input: keine URL-Extraktion, gleicher Script-/Pack-Pfad wie extrahierter Text.
+        input_mode = "raw_text"
+        dm = max(1, int(round(duration_seconds / 60.0)))
+        title_g, hook, chapters, full_script, sources, gen_warns = build_script_response_from_extracted_text(
+            extracted_text=raw_text_s,
+            source_url="raw_text",
+            target_language=tlang,
+            duration_minutes=dm,
+            extraction_warnings=[],
+            extra_warnings=["raw_text_input_used"],
+            video_template=vtpl,
+        )
+        if title_s:
+            title_g = title_s
+            gen_warns = list(gen_warns or []) + ["raw_text_title_override_used"]
+        script = {
+            "title": title_g,
+            "hook": hook,
+            "chapters": chapters,
+            "full_script": full_script,
+            "sources": list(sources or []),
+            "warnings": list(gen_warns or []),
+        }
+        # raw_text hat keine URL
+        url = None
+    elif (url or "").strip():
+        input_mode = "url"
+        url = (url or "").strip()
+        text, ext_warns = extract_text_from_url(url)
         warnings.extend(ext_warns)
         if not (text or "").strip():
             blocking.append("url_extraction_empty_use_script_json")
             doc = {
                 "ok": False,
                 "input_mode": input_mode,
-                "url": url.strip(),
+                "url": url,
                 "script_json": None,
                 "title": "",
                 "output_dir": str(out_dir),
@@ -863,10 +1207,11 @@ def run_ba265_url_to_final(
         dm = max(1, int(round(duration_seconds / 60.0)))
         title, hook, chapters, full_script, sources, gen_warns = build_script_response_from_extracted_text(
             extracted_text=text,
-            source_url=url.strip(),
-            target_language="de",
+            source_url=url,
+            target_language=tlang,
             duration_minutes=dm,
             extraction_warnings=[],
+            video_template=vtpl,
         )
         warnings.extend(gen_warns)
         script = {
@@ -878,8 +1223,22 @@ def run_ba265_url_to_final(
             "warnings": warnings,
         }
     else:
+        input_mode = "script_json"
         raw = json.loads(Path(script_json_path or "").read_text(encoding="utf-8"))
         script = _tolerant_script(raw)
+
+    # BA 32.60 — kanonisches video_template im Skript (Visual-Leitplanken; Pipeline-Param hat Vorrang).
+    pipe_tpl = (video_template or "").strip()
+    existing_vt = str(script.get("video_template") or "").strip()
+    src_tpl = pipe_tpl or existing_vt or "generic"
+    eff_vt, extra_vt_warns = normalize_story_template_id(src_tpl)
+    script["video_template"] = eff_vt
+    if extra_vt_warns:
+        sw_script = list(script.get("warnings") or [])
+        for w in extra_vt_warns:
+            if w not in sw_script:
+                sw_script.append(w)
+        script["warnings"] = sw_script
 
     script_path.write_text(
         json.dumps(script, ensure_ascii=False, indent=2, default=str),
@@ -945,6 +1304,13 @@ def run_ba265_url_to_final(
     if runner_mode not in ("placeholder", "live"):
         runner_mode = "placeholder"
         warnings.append("ba265_invalid_asset_runner_mode_fallback_placeholder")
+    # BA 32.x — Wenn Assets live generiert werden, sind Warnungen über *asset_dir* leere Inputs irreführend.
+    if runner_mode == "live":
+        warnings = [
+            w
+            for w in warnings
+            if w not in ("no_assets_in_asset_dir_using_placeholder", "no_existing_video_asset_found_using_fallback")
+        ]
     runner_kw: Dict[str, Any] = dict(
         pack_path=pack_path,
         out_root=out_dir,
@@ -953,9 +1319,27 @@ def run_ba265_url_to_final(
     )
     if max_live_assets is not None:
         runner_kw["max_assets_live"] = int(max_live_assets)
+    ip_run = (image_provider or "").strip()
+    if ip_run:
+        runner_kw["image_provider"] = ip_run
+    if openai_image_model is not None:
+        om = str(openai_image_model).strip()
+        if om:
+            runner_kw["openai_image_model"] = om
+    if openai_image_size is not None:
+        oz = str(openai_image_size).strip()
+        if oz:
+            runner_kw["openai_image_size"] = oz
+    if openai_image_timeout_seconds is not None:
+        runner_kw["openai_image_timeout_seconds"] = float(openai_image_timeout_seconds)
 
+    _runner_audit: Optional[Dict[str, Any]] = None
     try:
         ameta = asset_mod.run_local_asset_runner(**runner_kw)
+        _runner_audit = {
+            "effective_image_provider": ameta.get("effective_image_provider"),
+            "openai_image_runner_options": ameta.get("openai_image_runner_options"),
+        }
     except (OSError, ValueError, FileNotFoundError, json.JSONDecodeError) as e:
         blocking.append(f"asset_runner_failed:{type(e).__name__}")
         doc = {
@@ -1001,6 +1385,8 @@ def run_ba265_url_to_final(
             "warnings": warnings + list(ameta.get("warnings") or []),
             "blocking_reasons": blocking,
         }
+        if _runner_audit is not None:
+            doc["asset_runner_audit"] = dict(_runner_audit)
         summary_path.write_text(json.dumps(_finalize_summary(doc), ensure_ascii=False, indent=2), encoding="utf-8")
         return doc
 
@@ -1036,6 +1422,25 @@ def run_ba265_url_to_final(
         openai_post_override=openai_post_override,
         dummy_seconds=int(dummy_voice_seconds),
     )
+    # BA 32.35 — Voice-Warnungen/Blocker müssen in den Lauf-warnings landen (Dashboard, OPEN_ME).
+    for w in list(voice_meta.get("voice_warnings") or []):
+        sw = str(w or "").strip()
+        if sw and sw not in warnings:
+            warnings.append(sw)
+    vbb = list(voice_meta.get("voice_blocking_reasons") or [])
+    vm_after = str(voice_meta.get("voice_mode") or voice_mode or "none").strip().lower()
+    for b in vbb:
+        sb = str(b or "").strip()
+        if not sb:
+            continue
+        tag = f"voice_synthesis_blocked:{_redact_secret(sb)}"
+        if tag not in warnings:
+            warnings.append(tag)
+    if vbb and vm_after == "elevenlabs" and "elevenlabs_voice_synthesis_failed" not in warnings:
+        warnings.append("elevenlabs_voice_synthesis_failed")
+    if vbb and vm_after == "openai" and "openai_voice_synthesis_failed" not in warnings:
+        warnings.append("openai_voice_synthesis_failed")
+
     audio_for_timeline: Optional[Path] = None
     vfp = voice_meta.get("voice_file_path")
     if voice_meta.get("voice_used") and vfp:
@@ -1047,7 +1452,24 @@ def run_ba265_url_to_final(
         and vd_raw is not None
         and float(vd_raw) > 0
     )
-    if fit_video_to_voice:
+    vm_eff = str(voice_meta.get("voice_mode") or voice_mode or "none").strip().lower()
+    productive_voice = vm_eff in ("elevenlabs", "openai", "existing")
+    mm_eff = str(motion_mode or "").strip().lower()
+    # BA 32.51 — Auto Fit-to-Voice: statische Bildläufe (static/basic Ken-Burns) + echte Voice,
+    # solange keine Motion-Clips angefordert werden (max_motion_clips==0).
+    static_image_motion = mm_eff in ("static", "basic")
+    auto_fit_static_voice = (
+        vd_ok
+        and productive_voice
+        and vm_eff != "dummy"
+        and static_image_motion
+        and int(max_motion_clips) == 0
+    )
+    effective_fit_video_to_voice = bool(fit_video_to_voice) or bool(auto_fit_static_voice)
+    fit_summary["fit_video_to_voice"] = bool(effective_fit_video_to_voice)
+    fit_summary["voice_fit_padding_seconds"] = float(_pad) if effective_fit_video_to_voice else None
+
+    if effective_fit_video_to_voice:
         if vd_ok:
             fit_warns, total_after = _apply_fit_to_voice_durations(
                 asset_manifest_path=manifest_path,
@@ -1062,10 +1484,41 @@ def run_ba265_url_to_final(
             if total_after is not None and total_after > 0:
                 duration_seconds = int(total_after)
                 fit_summary["fitted_video_duration_seconds"] = float(total_after)
-        else:
+                warnings.append("timeline_fit_to_voice_applied")
+        elif fit_video_to_voice:
             warnings.append("fit_video_to_voice_requested_but_no_voice_duration")
 
     scene_dur_default = max(5, min(12, duration_seconds // max(1, n_scenes)))
+    # BA 32.62 / 32.63 — Motion-Slots aus Manifest (nach Fit-to-Voice); optional Runway für Slot 1.
+    if int(max_motion_clips) > 0:
+        motion_slot_plan_result, motion_clip_artifact, rw_m = apply_first_runway_motion_slot_to_manifest(
+            manifest_path=manifest_path,
+            pack_path=pack_path,
+            run_id=rid,
+            motion_clip_every_seconds=int(motion_clip_every_seconds),
+            motion_clip_duration_seconds=int(motion_clip_duration_seconds),
+            max_motion_clips=int(max_motion_clips),
+            smoke_runner=runway_motion_smoke_runner,
+        )
+        warnings.extend(rw_m)
+    else:
+        motion_slot_plan_result, _ms0 = build_motion_slots(
+            None,
+            None,
+            motion_clip_every_seconds=int(motion_clip_every_seconds),
+            motion_clip_duration_seconds=int(motion_clip_duration_seconds),
+            max_motion_clips=0,
+        )
+        warnings.extend(_ms0)
+        motion_clip_artifact = {
+            "planned_count": 0,
+            "rendered_count": 0,
+            "failed_count": 0,
+            "skipped_count": 0,
+            "video_clip_paths": [],
+            "warnings": [],
+        }
+
     try:
         tfile, _tbody = timeline_mod.write_timeline_manifest(
             timeline_mod.load_asset_manifest(manifest_path),
@@ -1096,6 +1549,13 @@ def run_ba265_url_to_final(
             "warnings": warnings + [str(e)],
             "blocking_reasons": blocking,
         }
+        if motion_slot_plan_result is not None:
+            doc["motion_slot_plan"] = motion_slot_plan_result
+            doc["motion_slot_count"] = int(motion_slot_plan_result.get("planned_count") or 0)
+        if motion_clip_artifact is not None:
+            doc["motion_clip_artifact"] = motion_clip_artifact
+        if _runner_audit is not None:
+            doc["asset_runner_audit"] = dict(_runner_audit)
         summary_path.write_text(json.dumps(_finalize_summary(doc), ensure_ascii=False, indent=2), encoding="utf-8")
         return doc
 
@@ -1134,6 +1594,25 @@ def run_ba265_url_to_final(
         "warnings": warnings,
         "blocking_reasons": blocking,
     }
+    if motion_slot_plan_result is not None:
+        doc["motion_slot_plan"] = motion_slot_plan_result
+        doc["motion_slot_count"] = int(motion_slot_plan_result.get("planned_count") or 0)
+    if motion_clip_artifact is not None:
+        doc["motion_clip_artifact"] = motion_clip_artifact
+    if _runner_audit is not None:
+        doc["asset_runner_audit"] = dict(_runner_audit)
+    # BA 32.46 — timing audit aus voice/timeline/render + warnings
+    try:
+        tbody = _tbody if isinstance(_tbody, dict) else None
+    except Exception:
+        tbody = None
+    doc["timing_audit"] = _build_timing_audit(
+        warnings_list=[str(x or "") for x in (warnings or [])],
+        voice_meta_local=voice_meta,
+        timeline_body=tbody,
+        render_meta=rmeta if isinstance(rmeta, dict) else None,
+        effective_fit_to_voice=bool(effective_fit_video_to_voice),
+    )
     summary_path.write_text(json.dumps(_finalize_summary(doc), ensure_ascii=False, indent=2), encoding="utf-8")
     return doc
 

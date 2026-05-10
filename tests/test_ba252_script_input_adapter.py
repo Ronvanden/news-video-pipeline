@@ -34,6 +34,23 @@ def _beats(pack: Dict[str, Any]):
     return ((pack.get("scene_expansion") or {}).get("expanded_scene_assets") or [])
 
 
+def test_documentary_story_visual_prompt_grounded(adapter_mod):
+    data = {
+        "title": "Doku",
+        "hook": "Ein Hook ohne Overlay-Sonderzeichen.",
+        "chapters": [{"title": "A", "content": "Sachlicher Kapiteltext."}],
+        "full_script": "",
+        "sources": [],
+        "warnings": [],
+        "video_template": "documentary_story",
+    }
+    pack = adapter_mod.build_scene_asset_pack_from_generate_script_response(data, run_id="rid_doc")
+    beats = _beats(pack)
+    eff = str(beats[0].get("visual_prompt_effective") or beats[0].get("visual_prompt") or "").lower()
+    assert "realistic documentary" in eff
+    assert "fantasy" in eff or "avoid fantasy" in eff
+
+
 def test_generate_script_response_with_chapters_builds_pack(adapter_mod):
     data = {
         "title": "Test",

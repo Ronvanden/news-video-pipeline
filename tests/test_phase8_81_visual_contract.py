@@ -10,6 +10,7 @@ from app.main import app
 from app.models import Chapter, StorySceneBlueprintRequest
 from app.visual_plan.builder import build_scene_blueprint_plan
 from app.visual_plan.policy import VISUAL_POLICY_PROFILE_V1
+from app.visual_plan import policy as vp
 
 
 def _chapter(title: str, content: str) -> Chapter:
@@ -80,6 +81,29 @@ class Phase81Builder(unittest.TestCase):
     def test_policy_profile_constant(self):
         req = StorySceneBlueprintRequest(chapters=[_chapter("X", "Y " * 40)])
         self.assertEqual(build_scene_blueprint_plan(req).policy_profile, VISUAL_POLICY_PROFILE_V1)
+
+    def test_documentary_story_visual_guidance_and_negatives(self):
+        req = StorySceneBlueprintRequest(
+            video_template="documentary_story",
+            title="Report",
+            hook="Kontext und Relevanz in einem Satz hier.",
+            chapters=[_chapter("Vor Ort", "Genug Fließtext für eine Szene. " * 12)],
+        )
+        out = build_scene_blueprint_plan(req)
+        self.assertEqual(out.status, "ready")
+        sc = out.scenes[0]
+        low = (sc.prompt_pack.image_primary or "").lower()
+        self.assertIn("realistic documentary", low)
+        self.assertIn("no fantasy", low)
+        neg = (sc.prompt_pack.negative_hints or "").lower()
+        self.assertIn("no_fantasy", neg)
+        self.assertIn("no_surreal", neg)
+        self.assertIn("no_horror_monster", neg)
+        for seg in vp.DOCUMENTARY_STORY_NEGATIVE_SEGMENTS_V1:
+            self.assertIn(seg.lower(), neg)
+        tags = " ".join(sc.style_tags or []).lower()
+        self.assertIn("grounded_realism", tags)
+        self.assertIn("natural_light", tags)
 
 
 class Phase81Route(unittest.TestCase):

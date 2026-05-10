@@ -1,6 +1,6 @@
 {
   "run_id": "mini_fixture",
-  "assets_directory": "fixtures/local_preview_mini/assets",
+  "assets_directory": "assets",
   "audio_path": "",
   "total_scenes": 3,
   "estimated_duration_seconds": 6,

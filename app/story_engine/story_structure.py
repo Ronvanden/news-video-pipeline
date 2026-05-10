@@ -82,6 +82,7 @@ def _chapter_role(tpl: str, index: int, total: int) -> str:
             "true_crime": "cold_open_context",
             "mystery_explainer": "question_stake",
             "history_deep_dive": "chronological_anchor",
+            "documentary": "chronological_anchor",
         }
         return mapping.get(tid, "intro_positioning")
     if index >= total - 1:
@@ -90,6 +91,7 @@ def _chapter_role(tpl: str, index: int, total: int) -> str:
         "true_crime": "timeline_evidence_cluster",
         "mystery_explainer": "claim_counterpoint_rotate",
         "history_deep_dive": "cause_consequence_deepening",
+        "documentary": "cause_consequence_deepening",
         "generic": "middle_development",
     }
     return mids.get(tid, "middle_development")

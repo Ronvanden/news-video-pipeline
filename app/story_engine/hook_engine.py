@@ -72,6 +72,23 @@ def _pick_hook_type(tid: str, blob: str) -> str:
         ):
             return "timeline_twist"
         return "forgotten_power"
+    if tid == "documentary":
+        if any(
+            k in blob
+            for k in (
+                "haus",
+                "gebäude",
+                "palast",
+                "denkmal",
+                "fassade",
+            )
+        ):
+            return "forgotten_power"
+        if any(
+            k in blob for k in ("chronik", "zeitlinie", "geschichte", "dokumentation")
+        ):
+            return "timeline_twist"
+        return "timeline_twist"
     if tid == "mystery_explainer":
         if "warum" in blob or "wieso" in blob:
             return "question_gap"

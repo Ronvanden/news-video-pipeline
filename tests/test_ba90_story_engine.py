@@ -21,12 +21,35 @@ class Ba90Templates(unittest.TestCase):
         self.assertEqual(tid, "generic")
         self.assertTrue(ws)
 
+    def test_documentary_story_normalized_without_warning(self):
+        tid, ws = normalize_story_template_id("documentary_story")
+        self.assertEqual(tid, "documentary")
+        self.assertEqual(ws, [])
+        tid2, ws2 = normalize_story_template_id("documentary-story")
+        self.assertEqual(tid2, "documentary")
+        self.assertEqual(ws2, [])
+        tid3, ws3 = normalize_story_template_id("documentary")
+        self.assertEqual(tid3, "documentary")
+        self.assertEqual(ws3, [])
+
+    def test_real_estate_alias_normalized_without_warning(self):
+        tid, ws = normalize_story_template_id("real_estate")
+        self.assertEqual(tid, "real_estate_story")
+        self.assertEqual(ws, [])
+
+    def test_documentary_story_addon_nonempty(self):
+        addon = story_template_prompt_addon_de("documentary_story")
+        self.assertIn("DOCUMENTARY", addon)
+        self.assertNotIn("Unbekanntes video_template", addon)
+
     def test_true_crime_addon_nonempty(self):
         self.assertIn("TRUE CRIME", story_template_prompt_addon_de("true_crime"))
 
     def test_style_voice_mapping(self):
         self.assertEqual(style_profile_for_template("true_crime"), "true_crime")
+        self.assertEqual(style_profile_for_template("documentary_story"), "documentary")
         self.assertEqual(voice_profile_for_template("mystery_explainer"), "soft")
+        self.assertEqual(voice_profile_for_template("documentary_story"), "documentary")
 
 
 class Ba90Conformance(unittest.TestCase):

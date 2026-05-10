@@ -10,13 +10,13 @@ from app.main import app
 
 
 class TemplateSelectorRouteTests(unittest.TestCase):
-    def test_selector_lists_six_templates(self):
+    def test_selector_lists_seven_templates(self):
         client = TestClient(app)
         r = client.get("/story-engine/template-selector")
         self.assertEqual(r.status_code, 200, msg=r.text)
         data = r.json()
         self.assertIn("templates", data)
-        self.assertEqual(len(data["templates"]), 6)
+        self.assertEqual(len(data["templates"]), 7)
         ids = [t["template_id"] for t in data["templates"]]
         self.assertEqual(
             ids[0],
@@ -28,6 +28,7 @@ class TemplateSelectorRouteTests(unittest.TestCase):
             "true_crime",
             "mystery_explainer",
             "history_deep_dive",
+            "documentary",
             "breaking_news",
             "philosophy",
         ):

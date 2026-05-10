@@ -84,6 +84,66 @@ def test_cinematic_placeholder_renders_png(ba266_mod, tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# BA 32.30 — Live-/echte Manifest-Zeilen: kein cinematic Überschreiben
+# ---------------------------------------------------------------------------
+
+
+def test_cinematic_skips_leonardo_live_manifest_rows(ba266_mod, tmp_path):
+    gen = tmp_path / "gen_live"
+    gen.mkdir()
+    marker = b"\x89PNG\r\n\x1a\nLIVE_ASSET_MARKER"
+    (gen / "scene_001.png").write_bytes(marker)
+    man = {
+        "assets": [
+            {
+                "scene_number": 1,
+                "image_path": "scene_001.png",
+                "generation_mode": "leonardo_live",
+            }
+        ]
+    }
+    mp = gen / "asset_manifest.json"
+    mp.write_text(json.dumps(man), encoding="utf-8")
+    warns = ba266_mod._apply_cinematic_placeholders(gen, mp, image_override_scenes=[])
+    assert (gen / "scene_001.png").read_bytes() == marker
+    assert not any("ba266_cinematic_placeholder_applied" in str(w) for w in warns)
+
+
+def test_cinematic_still_applies_for_placeholder_generation_mode(ba266_mod, tmp_path):
+    gen = tmp_path / "gen_ph"
+    gen.mkdir()
+    old = b"\x89PNG\r\n\x1a\nOLD_PLACEHOLDER"
+    (gen / "scene_001.png").write_bytes(old)
+    man = {
+        "assets": [
+            {
+                "scene_number": 1,
+                "image_path": "scene_001.png",
+                "generation_mode": "placeholder",
+            }
+        ]
+    }
+    mp = gen / "asset_manifest.json"
+    mp.write_text(json.dumps(man), encoding="utf-8")
+    warns = ba266_mod._apply_cinematic_placeholders(gen, mp, image_override_scenes=[])
+    assert any("ba266_cinematic_placeholder_applied" in str(w) for w in warns)
+    assert (gen / "scene_001.png").read_bytes() != old
+
+
+def test_cinematic_skips_empty_generation_mode_preserves_bytes(ba266_mod, tmp_path):
+    gen = tmp_path / "gen_empty_mode"
+    gen.mkdir()
+    marker = b"\x89PNG\r\n\x1a\nUNKNOWN_MODE_OK"
+    (gen / "scene_001.png").write_bytes(marker)
+    man = {"assets": [{"scene_number": 1, "image_path": "scene_001.png"}]}
+    mp = gen / "asset_manifest.json"
+    mp.write_text(json.dumps(man), encoding="utf-8")
+    warns = ba266_mod._apply_cinematic_placeholders(gen, mp, image_override_scenes=[])
+    assert (gen / "scene_001.png").read_bytes() == marker
+    assert not any("ba266_cinematic_placeholder_applied" in str(w) for w in warns)
+
+
+# ---------------------------------------------------------------------------
 # Asset-Runner-Override: Bild-Szenen-PNGs werden cinematic überschrieben
 # (kein scene-spezifischer Text mehr → Pixelflächen vergleichbar)
 # ---------------------------------------------------------------------------

@@ -34,10 +34,10 @@ def test_fixture_files_exist():
 def test_mini_timeline_is_valid_json_with_expected_shape():
     raw = (_FIXTURE / "mini_timeline_manifest.json").read_text(encoding="utf-8")
     assert "C:\\" not in raw
-    assert '"assets_directory": "fixtures/local_preview_mini/assets"' in raw
+    assert '"assets_directory": "assets"' in raw
     data = json.loads(raw)
     assert data.get("audio_path") == ""
-    assert data.get("assets_directory") == "fixtures/local_preview_mini/assets"
+    assert data.get("assets_directory") == "assets"
     scenes = data.get("scenes")
     assert isinstance(scenes, list) and len(scenes) == 3
     for sc in scenes:

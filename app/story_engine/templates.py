@@ -6,14 +6,23 @@ from typing import Any, Dict, List, Tuple
 
 from app.watchlist.models import SceneAssetStyleProfileLiteral, VoiceProfileLiteral
 
+# Kanonische IDs (u. a. abgestimmt auf ``templates/template_registry.json`` / ``documentary.json``).
 STORY_TEMPLATE_IDS = frozenset(
     {
         "generic",
         "true_crime",
         "mystery_explainer",
         "history_deep_dive",
+        "documentary",
+        "real_estate_story",
     }
 )
+
+# Eingabe-Aliase → kanonische ID (keine Warnung bei Alias-Treffer).
+VIDEO_TEMPLATE_ALIASES: Dict[str, str] = {
+    "documentary_story": "documentary",
+    "real_estate": "real_estate_story",
+}
 
 
 def normalize_story_template_id(raw: str | None) -> Tuple[str, List[str]]:
@@ -22,6 +31,7 @@ def normalize_story_template_id(raw: str | None) -> Tuple[str, List[str]]:
     s = (raw or "").strip().lower().replace("-", "_")
     if not s or s == "default":
         return "generic", ws
+    s = VIDEO_TEMPLATE_ALIASES.get(s, s)
     if s in STORY_TEMPLATE_IDS:
         return s, ws
     ws.append(
@@ -61,6 +71,18 @@ def chapter_band_for_template_duration(
         if d <= 10:
             return (4, 7)
         return (6, 10)
+    if tid == "documentary":
+        if d <= 6:
+            return (3, 5)
+        if d <= 10:
+            return (4, 7)
+        return (6, 10)
+    if tid == "real_estate_story":
+        if d <= 6:
+            return (3, 6)
+        if d <= 10:
+            return (4, 8)
+        return (5, 10)
     return (3, 8)
 
 
@@ -86,6 +108,11 @@ def chapter_title_style_hint_de(template_id: str) -> str:
         return (
             "Epoche/Kontext oder Wendepunkt im Titel; kein reißerischer "
             "Anachronismus."
+        )
+    if tid == "documentary":
+        return (
+            "Dokumentarisch: Fokus, Wendepunkt oder These im Titel; "
+            "seriös und erklärend, ohne reißerische Übertreibung."
         )
     return "klar und informativ; kein abgeschnittener Titel."
 
@@ -169,6 +196,31 @@ def public_story_template_catalog() -> List[Dict[str, Any]]:
             "min_hook_words": min_hook_words_for_template("history_deep_dive"),
             "chapter_title_style": chapter_title_style_hint_de("history_deep_dive"),
         },
+        {
+            "id": "documentary",
+            "label": "Documentary Story",
+            "description": (
+                "Seriöse, emotionale dokumentarische Erzählung aus realen Ereignissen (``templates/documentary.json``); "
+                "Ton: sachlich, cineastisch, ernst, geerdet, emotional zugänglich — ohne Sensationsjournalismus. "
+                "Struktur: Hook → Kontext → Ereignis → Folgen → Erklärung → Abschlussreflexion. "
+                "API-Alias ohne Extra-Warnung: ``documentary_story`` → ``documentary``."
+            ),
+            "duration_examples": bands_for("documentary"),
+            "min_hook_words": min_hook_words_for_template("documentary"),
+            "chapter_title_style": chapter_title_style_hint_de("documentary"),
+        },
+        {
+            "id": "real_estate_story",
+            "label": "Real Estate Story",
+            "description": (
+                "Immobilien, Umbau, Marktverlauf — sachlich-erklärend; "
+                "orientiert an ``templates/real_estate_story.json``. "
+                "API-Alias ohne Extra-Warnung: ``real_estate`` → ``real_estate_story``."
+            ),
+            "duration_examples": bands_for("real_estate_story"),
+            "min_hook_words": min_hook_words_for_template("real_estate_story"),
+            "chapter_title_style": chapter_title_style_hint_de("real_estate_story"),
+        },
     ]
 
 
@@ -199,6 +251,15 @@ Story-Format HISTORY DEEP DIVE:
 - Vorsicht bei Urteilen aus heutiger Sicht (kein unreflektierter Presentismus).
 - Kapitel: Setting → Wendepunkte → langfristige Wirkung → Bezug zur Gegenwart ohne neue Fakten.
 """.strip()
+    if tid == "documentary":
+        return """
+Story-Format DOCUMENTARY (reale Ereignisse, dokumentarisch):
+- Zweck: seriöse, emotionale, dokumentarische Erzählung — factual, cinematic, serious, grounded, emotionally engaging.
+- Ton: erklärend und spannend, aber nicht reißerisch; keine Tabloid-Übertreibung.
+- Struktur (orientierend): Hook → Kontext → Ereignis/Vorfall → Folgen → Erklärung/Einordnung → Abschlussreflexion.
+- Hook: Relevanz und echte Spannung aus Faktenlage, keine erfundenen Schocks.
+- Keine neuen Fakten erfinden; Unsicherheiten und Quellenlage transparent halten.
+""".strip()
     return ""
 
 
@@ -212,6 +273,8 @@ def style_profile_for_template(
         return "cinematic"
     if tid == "history_deep_dive":
         return "documentary"
+    if tid == "documentary":
+        return "documentary"
     return "documentary"
 
 
@@ -223,6 +286,8 @@ def voice_profile_for_template(template_id: str) -> VoiceProfileLiteral:
         return "soft"
     if tid == "history_deep_dive":
         return "documentary"
+    if tid == "documentary":
+        return "documentary"
     return "documentary"
 
 
@@ -232,6 +297,8 @@ TEMPLATE_DEFINITION_VERSION: Dict[str, str] = {
     "true_crime": "1",
     "mystery_explainer": "1",
     "history_deep_dive": "1",
+    "documentary": "3",
+    "real_estate_story": "1",
 }
 
 

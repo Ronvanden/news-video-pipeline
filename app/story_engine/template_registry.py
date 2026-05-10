@@ -40,6 +40,14 @@ TEMPLATE_REGISTRY: List[TemplateRegistryItem] = [
         pacing_bias="Tiefere Kapitel, weniger Hektik als Breaking News.",
     ),
     TemplateRegistryItem(
+        template_id="documentary",
+        label="Documentary Story",
+        style="Factual, cinematic, serious, grounded; emotional aber nicht reißerisch.",
+        ideal_use_case="Reale Ereignisse, YouTube-Source & Doku-Stories; visuell dokumentarisch-realistisch.",
+        hook_bias="Relevanz und echte Spannung aus Fakten — kein Mystik-Fokus.",
+        pacing_bias="Hook → Kontext → Ereignis → Folgen → Erklärung → Reflexion; geerdetes Bild-Tempo.",
+    ),
+    TemplateRegistryItem(
         template_id="breaking_news",
         label="Breaking News",
         style="Kurz, aktuell, Fokus auf Was-ist-los-jetzt.",

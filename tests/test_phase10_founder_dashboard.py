@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import unittest
+import os
+import shutil
+import subprocess
+import tempfile
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -31,6 +36,9 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Readiness Score", text)
         self.assertIn("Letzter Lauf", text)
         self.assertIn("Nächster Schritt", text)
+        self.assertIn("Zum nächsten Schritt", text)
+        self.assertIn("Video-Status: Fallback-Preview erstellt", text)
+        self.assertIn("Fallback-Preview erstellt. Provider/Assets prüfen oder Preview öffnen.", text)
         self.assertIn("data-ba306b-exec-row", text)
         self.assertIn("fd-dashboard-main", text)
         self.assertIn("Template", text)
@@ -109,6 +117,229 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("data-ba323-video-generate", text)
         self.assertIn("Zurücksetzen", text)
         self.assertIn("/founder/dashboard/video/generate", text)
+        # BA 32.5 — Real Assets Activation Gate (UI copy)
+        self.assertIn("Echte Assets erzeugen", text)
+        self.assertIn("Ohne Aktivierung wird eine Fallback-Preview mit Platzhaltern erstellt", text)
+        self.assertIn("Preview/Fallback-Modus", text)
+        # BA 32.6 — Provider Readiness Panel (UI)
+        self.assertIn("Provider-Readiness", text)
+        self.assertIn("Live Assets", text)
+        self.assertIn("ElevenLabs Voice", text)
+        self.assertIn("OpenAI TTS", text)
+        self.assertIn("Runway Motion", text)
+        self.assertIn("Bereit", text)
+        self.assertIn("Fehlt", text)
+        self.assertIn("Optional fehlt", text)
+        self.assertIn("Unbekannt", text)
+        self.assertIn("Echte Assets sind angefordert, aber der Asset-Provider ist nicht konfiguriert", text)
+        self.assertIn("ElevenLabs ist nicht konfiguriert. Der Lauf nutzt voraussichtlich Dummy-Voice.", text)
+        # BA 32.7 — Preflight + Fix Checklist
+        self.assertIn("Preflight", text)
+        self.assertIn("Preview-Modus bereit", text)
+        self.assertIn("Real-Assets-Modus nicht vollständig bereit", text)
+        self.assertIn("Fix Checklist", text)
+        self.assertIn("Live Assets konfigurieren", text)
+        self.assertIn("ElevenLabs konfigurieren", text)
+        self.assertIn("OpenAI TTS konfigurieren", text)
+        self.assertIn("Runway optional konfigurieren", text)
+        self.assertIn("LEONARDO_API_KEY", text)
+        self.assertIn("ELEVENLABS_API_KEY", text)
+        self.assertIn("OPENAI_API_KEY", text)
+        self.assertIn("RUNWAY_API_KEY", text)
+        self.assertIn("Status aktualisieren", text)
+        # BA 32.8 — Voice Mode Selector + Preflight Sync
+        self.assertIn("Voice-Modus", text)
+        self.assertIn("Dummy Voice / Testmodus", text)
+        self.assertIn("Keine Voice", text)
+        self.assertIn("ElevenLabs", text)
+        self.assertIn("OpenAI TTS", text)
+        self.assertIn("Dummy Voice aktiv – geeignet für Tests.", text)
+        self.assertIn("OpenAI TTS ist nicht konfiguriert", text)
+        # BA 32.9 — Voice Artifact Wiring (Operator-Karte)
+        self.assertIn("Voice", text)
+        self.assertIn("Echte Voice-Datei vorhanden", text)
+        self.assertIn("Echte Voice-Datei vorhanden.", text)
+        self.assertIn("Dummy Voice verwendet", text)
+        self.assertIn("Dummy Voice verwendet.", text)
+        self.assertIn("Keine Voice ausgewählt", text)
+        self.assertIn("Keine Voice ausgewählt.", text)
+        self.assertIn("Voice-Datei fehlt", text)
+        self.assertIn("Voice-Datei fehlt.", text)
+        self.assertIn("Voice Artifact", text)
+        # BA 32.10 — Real Production Smoke Checklist + Ergebnis
+        self.assertIn("Real Production Smoke", text)
+        # BA 32.25 — Real Leonardo Live Smoke (Operator-Checkliste, kein Provider in CI)
+        self.assertIn("Real Leonardo Live Smoke", text)
+        self.assertIn("voice_mode=none", text)
+        self.assertIn("Max. Live-Assets = 1", text)
+        self.assertIn("generation_modes", text)
+        self.assertIn("leonardo_live", text)
+        self.assertIn("real_leonardo_live_smoke.md", text)
+        # BA 32.72 — Founder OpenAI Image Dashboard-Mini-Smoke (Markup/JS, kein Live-Call)
+        self.assertIn("Founder OpenAI Image Smoke (BA 32.72)", text)
+        self.assertIn("fdApplyOpenAiImageMiniSmokePreset", text)
+        self.assertIn('id="fd-vg-live-assets"', text)
+        self.assertIn("fdVgDispatchInputChange", text)
+        self.assertIn('oaiSize.value = "1024x1024"', text)
+        self.assertIn('body.openai_image_model = oaiModel || "gpt-image-2"', text)
+        self.assertIn("allow_live_assets:", text)
+        # BA 32.72b — Dev-only Provider Key Override Panel (nur transient per Request)
+        self.assertIn("Provider Keys / Local Test (dev-only)", text)
+        self.assertIn('id="fd-vg-dev-openai-api-key"', text)
+        self.assertIn('type="password" id="fd-vg-dev-openai-api-key"', text)
+        self.assertIn("dev_openai_api_key", text)
+        self.assertIn("fdVgApplyDevKeyOverrideHint", text)
+        self.assertIn("image_asset_audit", text)
+        self.assertIn("Teilweise Platzhalter, weil Live-Asset-Limit erreicht wurde oder der Provider nicht alle Szenen erzeugt hat.", text)
+        self.assertIn("Live Assets angefordert", text)
+        self.assertIn("Asset Provider bereit", text)
+        self.assertIn("Voice-Modus produktiv gewählt", text)
+        self.assertIn("Voice Provider bereit", text)
+        self.assertIn("Timing / Voice Fit", text)
+        self.assertIn("toFixed(2)", text)
+        self.assertIn("Motion optional", text)
+        self.assertIn("Bereit für Real Production Smoke", text)
+        self.assertIn("Noch nicht production-ready", text)
+        self.assertIn("Nur Preview/Fallback-Smoke", text)
+        self.assertIn("Smoke-Ergebnis", text)
+        # BA 32.16 — Asset Manifest Quality Gate (minimal UI marker)
+        self.assertIn("Asset Quality", text)
+        self.assertIn("mixed_assets", text)
+        self.assertIn("placeholder_only", text)
+        self.assertIn("production_ready", text)
+        self.assertIn("Echte Assets vorhanden, aber noch Placeholder im Manifest.", text)
+        # BA 32.17 — Asset Quality Gate in Real Smoke Checklist
+        self.assertIn("Asset Quality strict/loose", text)
+        self.assertIn("Asset Manifest enthält echte Assets ohne Placeholder.", text)
+        self.assertIn("Nur Placeholder-Assets vorhanden.", text)
+        self.assertIn("Keine Asset-Dateien im Manifest.", text)
+        self.assertIn("Asset-Qualität noch nicht verfügbar.", text)
+        self.assertIn("Asset-Gate bestanden.", text)
+        self.assertIn("Zwischenstufe: Live Assets funktionieren teilweise, aber Placeholder müssen noch ersetzt werden.", text)
+        # BA 32.18 — Persist Last Run Summary (localStorage)
+        self.assertIn("FD_VG_LAST_VIDEO_GENERATE", text)
+        self.assertIn("Letzter gespeicherter Video-Lauf", text)
+        self.assertIn("Aus lokalem Browser-Speicher.", text)
+        self.assertIn("Letzten Lauf vergessen", text)
+        self.assertIn("fdVgBuildLastRunSummary", text)
+        self.assertIn("fdVgSaveLastRunSummary", text)
+        self.assertIn("fdVgLoadLastRunSummary", text)
+        self.assertIn("fdVgForgetLastRunSummary", text)
+        # Data minimization markers
+        self.assertIn("warnings_count", text)
+        self.assertIn("blocking_reasons_count", text)
+        # BA 32.19 — Restore Asset Quality from Last Run Summary
+        self.assertIn("(local)", text)
+        self.assertIn("aus letztem gespeicherten Lauf", text)
+        self.assertIn("fdVgIsLastRunSummaryExpired", text)
+        self.assertIn("fdVgGetRestoredAssetQualityGate", text)
+        # BA 32.27 — Asset-Qualität vs. Render-Layer (Produktions-Check)
+        self.assertIn("Render-Layer", text)
+        self.assertIn("Render-Layer nutzt noch Placeholder/Cinematic-Fallback.", text)
+        self.assertIn("Render-Layer nutzt keine Placeholder-Signale.", text)
+        self.assertIn("Live Asset erfolgreich, aber Render/Audio nutzt noch Fallbacks.", text)
+        self.assertIn("Asset Quality Gate strict_ready (Manifest) — unabhängig von Render-Warnungen", text)
+        self.assertIn("FD_VG_RENDER_LAYER_PLACEHOLDER_SIGNALS", text)
+        self.assertIn("fdVgRenderLayerPlaceholderHit", text)
+        # BA 32.29 — Dashboard Voice QC: readiness_audit-Fallback wenn voice_artifact fehlt
+        self.assertIn("fdVgVoiceQcRowTuple", text)
+        self.assertIn("fdVgVoiceArtifactPresent", text)
+        self.assertIn("voice_artifact hat Vorrang vor readiness_audit", text)
+        self.assertIn("effective_voice_mode", text)
+        self.assertIn("voice_is_dummy", text)
+        self.assertIn("voice_file_ready", text)
+        self.assertIn("voice_file_path_present", text)
+        self.assertLess(
+            text.find("if (fdVgVoiceArtifactPresent(j))"),
+            text.find("raV.voice_is_dummy"),
+            msg="voice_artifact-Zweig muss in fdVgVoiceQcRowTuple vor readiness_audit liegen",
+        )
+        # BA 32.31 — Silent Render mit voice_mode=none: kein Fallback-Preview allein wegen audio_missing_silent_render
+        self.assertIn("fdVgWarnTriggersFallbackPreview", text)
+        self.assertIn("fdVgVideoGenerateRunStatusFromPayload", text)
+        self.assertIn("fdVgIsOkRunFallbackPreview", text)
+        self.assertIn("fdVgEffectiveVoiceMode", text)
+        self.assertIn("fdVgAudioSilentIsExpectedFallback", text)
+        self.assertIn("BA 32.31", text)
+        self.assertIn("Smoke erfolgreich; Silent Render erwartet.", text)
+        self.assertIn("Keine Voice ausgewählt; Silent Render ist erwartet.", text)
+        # BA 32.32 — readiness_audit.silent_render_expected (Dashboard bevorzugt Feld, Heuristik Fallback)
+        self.assertIn("silent_render_expected", text)
+        self.assertIn("BA 32.32", text)
+        # BA 32.80b — Voice-Escape + harmlose ``fallback``-Namen in Warn-Join
+        self.assertIn("fdVgVoiceEscapeOkBa3280", text)
+        self.assertIn("fdVgSanitizeJoinedForFallbackPreview", text)
+        # BA 32.11 — One-Click Preset
+        self.assertIn("Real Production Smoke Preset", text)
+        self.assertIn("Preset aktiviert: Live Assets an, produktive Voice gewählt. Mögliche Provider-Kosten wurden bestätigt.", text)
+        self.assertIn("Preset aktiviert: Live Assets an, Kosten bestätigt, aber kein Voice-Provider bereit – Dummy Voice bleibt aktiv.", text)
+        self.assertIn("Asset-Provider fehlt – der Lauf kann weiterhin auf Platzhalter zurückfallen.", text)
+        self.assertIn("voice_elevenlabs", text)
+        self.assertIn("voice_openai", text)
+        self.assertIn("chosenVoice = \"dummy\"", text)
+        self.assertIn("chosenVoice = \"elevenlabs\"", text)
+        self.assertIn("chosenVoice = \"openai\"", text)
+        # BA 32.12 — Confirm Costs Assist
+        self.assertIn("Mögliche Provider-Kosten bestätigen", text)
+        self.assertIn("Kostenbestätigung fehlt – Real-Assets-Lauf kann blockiert werden.", text)
+        self.assertIn("Kosten bestätigt", text)
+        # BA 32.13 — Inline 422 Prevention Copy
+        self.assertIn(
+            "Ohne Kostenbestätigung kann der Server den Real-Assets- oder Thumbnail-Pack-Lauf mit 422 ablehnen.",
+            text,
+        )
+        self.assertIn("Kostenbestätigung aktiv.", text)
+        self.assertIn("Preview/Fallback-Modus – keine Live-Asset-Kosten erwartet.", text)
+        self.assertIn("fdApplyInline422Hint", text)
+        # BA 32.14 — Inline 422 Detail Decode
+        self.assertIn("confirm_provider_costs_required_when_live_flags", text)
+        self.assertIn("Kostenbestätigung fehlt: Für Live Assets oder Thumbnail Pack musst du zuerst", text)
+        self.assertIn("Zur Kostenbestätigung", text)
+        self.assertIn("fdScrollToConfirmCosts", text)
+        self.assertIn("fdVgErrorDetailContains", text)
+        self.assertIn("fdUpdateVideoGenerateExecutiveState", text)
+        self.assertIn("fdRenderVideoGenerateOperatorResult", text)
+        self.assertIn("fd-video-generate-result", text)
+        self.assertIn("fd-vg-operator-result", text)
+        self.assertIn("Video-Generierung abgeschlossen", text)
+        self.assertIn("Video konnte nicht erzeugt werden", text)
+        self.assertIn("Fallback-Preview erstellt", text)
+        self.assertIn("Fallback / Preview", text)
+        self.assertIn("placeholder", text)
+        self.assertIn("dummy", text)
+        self.assertIn("fallback", text)
+        self.assertIn("Keine Live-Motion-Clips verfügbar.", text)
+        self.assertIn("Final Video", text)
+        self.assertIn("Output-Ordner", text)
+        self.assertIn("Script", text)
+        self.assertIn("Scene Asset Pack", text)
+        self.assertIn("Asset Manifest", text)
+        self.assertIn("OPEN_ME Ergebnisbericht", text)
+        # BA 32.77 — Thumbnail Pack Summary im Video-Generate-Panel
+        self.assertIn("Thumbnail Pack (BA 32.77)", text)
+        self.assertIn("data-ba3277-thumbnail-pack", text)
+        # BA 32.78 — Thumbnail Pack Auto-Attach Optionen
+        self.assertIn("fd-vg-generate-thumbnail-pack", text)
+        self.assertIn("data-ba3278-thumbnail-pack", text)
+        # BA 32.79 — Production Bundle Ergebnisanzeige
+        self.assertIn("Production Bundle (BA 32.79)", text)
+        self.assertIn("data-ba3279-production-bundle", text)
+        self.assertIn("fd-vg-production-bundle-wrap", text)
+        self.assertIn("Dieser Lauf nutzt Platzhalter/Fallbacks", text)
+        self.assertIn("Finales Video prüfen", text)
+        self.assertIn("Blocker beheben und erneut starten", text)
+        self.assertIn("Produktions-Check", text)
+        self.assertIn("Script erstellt", text)
+        self.assertIn("Scene Asset Pack erstellt", text)
+        self.assertIn("Asset Manifest vorhanden", text)
+        self.assertIn("Final Video Pfad vorhanden", text)
+        self.assertIn("Echte Assets verwendet", text)
+        self.assertIn("Echte Voice verwendet", text)
+        self.assertIn("Live Motion verfügbar", text)
+        self.assertIn("OK", text)
+        self.assertIn("Prüfen", text)
+        self.assertIn("Nicht verfügbar", text)
+        self.assertIn("Raw JSON (Debug)", text)
         self.assertIn('data-fd-nav-scroll="panel-ba323-video-generate"', text)
         self.assertGreaterEqual(text.count("Video generieren"), 2)
         self.assertIn("Vorschau-Prüflauf (BA 30.3–30.8)", text)
@@ -155,6 +386,8 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Strategic Badge", text)
         self.assertIn("Source Intake (BA 11.0)", text)
         self.assertIn("Run Full Pipeline (BA 11.1)", text)
+        self.assertIn("Legacy Source Intake / Debug (BA 11.0)", text)
+        self.assertIn("Für neue Produktionen nutze oben „Video generieren“", text)
         self.assertIn('id="pipeline-timeline"', text)
         self.assertIn('id="intake-source-type"', text)
         self.assertIn('value="raw_text"', text)
@@ -243,6 +476,12 @@ class FounderDashboardRouteTests(unittest.TestCase):
         data = r.json()
         self.assertIn("dashboard_version", data)
         self.assertIn("story_engine_relative", data)
+        self.assertIn("provider_readiness", data)
+        pr = data["provider_readiness"]
+        self.assertIn("live_assets", pr)
+        self.assertIn("voice_elevenlabs", pr)
+        self.assertIn("voice_openai", pr)
+        self.assertIn("motion_runway", pr)
         paths = data["story_engine_relative"]
         self.assertIn("export_package", paths)
         self.assertEqual(paths["export_formats"]["path"], "/story-engine/export-formats")
@@ -254,6 +493,27 @@ class FounderDashboardRouteTests(unittest.TestCase):
             data["video_generate_relative"]["path"],
             "/founder/dashboard/video/generate",
         )
+
+    def test_dashboard_config_provider_readiness_missing_env_is_missing(self):
+        client = TestClient(app)
+        with patch.dict(
+            os.environ,
+            {
+                "LEONARDO_API_KEY": "",
+                "ELEVENLABS_API_KEY": "",
+                "OPENAI_API_KEY": "",
+                "RUNWAY_API_KEY": "",
+            },
+            clear=False,
+        ):
+            r = client.get("/founder/dashboard/config")
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        pr = r.json().get("provider_readiness") or {}
+        self.assertEqual((pr.get("live_assets") or {}).get("status"), "missing")
+        self.assertEqual((pr.get("voice_elevenlabs") or {}).get("status"), "missing")
+        self.assertEqual((pr.get("voice_openai") or {}).get("status"), "missing")
+        # Runway ist optional: missing -> optional_missing
+        self.assertEqual((pr.get("motion_runway") or {}).get("status"), "optional_missing")
 
     def test_production_proof_summary_200(self):
         client = TestClient(app)
@@ -339,6 +599,43 @@ class FounderDashboardRouteTests(unittest.TestCase):
         ctr = client.post("/story-engine/thumbnail-ctr", json=ctr_body)
         self.assertEqual(ctr.status_code, 200, msg=ctr.text)
         self.assertIsInstance(ctr.json().get("ctr_score"), int)
+
+    @unittest.skipUnless(shutil.which("node"), "node nicht im PATH — Syntaxcheck übersprungen")
+    def test_dashboard_embedded_script_node_syntax_ok_and_video_handlers_wired(self):
+        """HOTFIX-Regression: gebrochene Regex-Literals im Script blockieren gesamtes Dashboard-JS."""
+        client = TestClient(app)
+        r = client.get("/founder/dashboard")
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        text = r.text
+        self.assertIn("fdApplyOpenAiImageMiniSmokePreset", text)
+        self.assertIn("fdSubmitVideoGenerate", text)
+        self.assertIn('getElementById("fd-video-generate-submit")', text)
+        self.assertIn("await fdSubmitVideoGenerate()", text)
+        start = text.find("<script>")
+        end = text.rfind("</script>")
+        self.assertGreater(start, 0)
+        self.assertGreater(end, start)
+        js = text[start + len("<script>") : end]
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False, encoding="utf-8") as tf:
+            tf.write(js)
+            tpath = tf.name
+        try:
+            proc = subprocess.run(
+                ["node", "--check", tpath],
+                capture_output=True,
+                text=True,
+                timeout=90,
+            )
+            self.assertEqual(
+                proc.returncode,
+                0,
+                msg=(proc.stderr or proc.stdout or "").strip() or "node --check fehlgeschlagen",
+            )
+        finally:
+            try:
+                os.unlink(tpath)
+            except OSError:
+                pass
 
 
 if __name__ == "__main__":

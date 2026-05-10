@@ -464,6 +464,17 @@ def analyze_originality(request: ReviewScriptRequest) -> ReviewScriptResponse:
                 rationale="video_template=history_deep_dive.",
             )
         )
+    elif tid == "documentary":
+        recommendations.append(
+            ReviewRecommendation(
+                priority="low",
+                action=(
+                    "Dokumentar-Story: seriös-spannenden Ton halten; Behauptungen an Belege binden; "
+                    "Sensationsformulierungen ohne Evidenz vermeiden."
+                ),
+                rationale="video_template=documentary.",
+            )
+        )
 
     hook_line = (request.hook_text or "").strip()
     if not hook_line and gen_raw.strip():

@@ -9,6 +9,12 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 
 **BA 26.4d (Dashboard-Fallback):** Die Visual Policy Summary im Founder Dashboard bevorzugt Optimize-Daten, kann aber ohne Optimize bereits aus dem Export Package lesen (`provider_prompts`, optional `scene_prompts.scenes`). Der Block zeigt zusätzlich **„Visual Policy Source: Optimize|Export Package|Story Pack|Not available“**.
 
+**BA 32.62 (Motion Slot Planner):** Aus **Asset-Manifest-Szenen** nach Fit-to-Voice (vor Timeline-Build) plant die Pipeline **Hybrid-Motion-Zeitfenster** (`app/real_video_build/motion_slot_planner.build_motion_slots`): z. B. alle 60 s ein geplanter 10-s-Clip, begrenzt durch `max_motion_clips` und die **Summe der Szenendauern**. Ausgabe additiv in `run_summary.json` (`motion_slot_plan`, `motion_slot_count`), Dashboard (`motion_strategy.planned_motion_slot_count`) und `OPEN_ME_VIDEO_RESULT.html`. Ohne BA 32.63: **keine** Runway-Calls; Slots bleiben `status: planned` (sofern nicht später überschrieben).
+
+**BA 32.63 (Runway Motion Slot Smoke / Integration):** Nach **Fit-to-Voice** und **vor** `build_timeline_manifest` wertet `run_ba265_url_to_final` bei `max_motion_clips >= 1` das **Asset-Manifest** aus, plant Slots (wie BA 32.62) und versucht **höchstens einen** Runway Image-to-Video-Clip für Slot 1 (`app/production_connectors/runway_video_connector.py`, `app/real_video_build/runway_motion_integration.py`). Erfolg → `video_path` z. B. `scene_NNN_motion.mp4`, `generation_mode: runway_video_live`, `provider_used: runway`, erster Slot `status: rendered`; Fehler/ohne Key → `failed` / `skipped` + Warnungen ohne Crash. Additiv: `run_summary.motion_clip_artifact`, Dashboard/OPEN_ME.
+
+**BA 32.64 (Motion Readiness vs. gerenderte Clips):** `readiness_audit` im Video-Generate-Payload setzt u. a. **`motion_ready`** / **`motion_requested`** / **`motion_rendered`** konsistent zu Slot-Plan und Manifest (`derive_motion_readiness_fields` in `app/founder_dashboard/ba323_video_generate.py`). Nach erfolgreichem Runway-Render gilt **`live_motion_not_available`** nicht mehr als `provider_blockers`-Eintrag, wenn **`motion_rendered`** wahr ist.
+
 **BA 26.4e (Acceptance Smoke):** Vor **BA 26.5** gibt es einen trockenen Acceptance-Smoke-Test (`tests/test_ba264e_provider_routing_acceptance_smoke.py`), der 5 synthetische Assets durch Routing/Partition/Guard/Policy-Report jagt und sicherstellt, dass kein `needs_review` entsteht und alle Provider-Ziele (`leonardo`, `openai_images`, `runway`, `render_layer`) mindestens einmal erreicht werden — **ohne** Live-Calls.
 
 **BA 26.5 (OpenAI Images Provider Integration V1):** `scripts/run_asset_runner.py` kann bei Routing `openai_images` den neuen Adapter `app/production_connectors/openai_images_adapter.py` nutzen. Default bleibt **dry-run** (kostenfrei, placeholder PNG ohne Text); Live nur mit `--openai-images-live` oder `Settings.enable_openai_images_live=true`. Ergebnis wird additiv im `asset_manifest.json` gespiegelt (`provider_used`, `provider_status`, `prompt_used_effective`, `openai_image_result`).
@@ -35,11 +41,79 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 
 **Scope (BA 25.0):** reine Analyse/Dokumentation. Keine neuen Features, keine Provider‑Calls, keine Secrets.
 
+## BA 32.65 — Erster erfolgreicher Runway Hybrid Smoke
+
+**Kurzfassung:** Der erste Runway-Hybrid-Smoke war erfolgreich: Die Pipeline plante einen Motion Slot, erzeugte einen Runway-Clip, schrieb diesen als `video_path` ins Asset Manifest, kombinierte ihn mit zwei Gemini/Nano-Banana-Bildern und einer echten ElevenLabs-Voice und erzeugte ein finales MP4 ohne Placeholder.
+
+**Referenzlauf** (Chronik, keine Secrets, keine API-Key-Werte, keine vollständigen lokalen Pfade nötig):
+
+| Feld | Wert |
+|------|------|
+| `run_id` | `video_gen_10m_1778273622251` |
+| `motion_slot_plan.enabled` | `true` |
+| `motion_slot_plan.planned_count` | `1` |
+| `motion_slot_count` (Top-Level `run_summary`) | `1` |
+| `motion_slot_plan.slots[0].status` | `rendered` |
+| `motion_clip_artifact.planned_count` | `1` |
+| `motion_clip_artifact.rendered_count` | `1` |
+| `motion_clip_artifact.failed_count` | `0` |
+| `motion_clip_artifact.skipped_count` | `0` |
+| `motion_clip_artifact.video_clip_paths` | `["scene_001_motion.mp4"]` |
+| `generation_modes` (Asset-Artifact / Manifest-Histogramm) | `runway_video_live`: **1**, `gemini_image_live`: **2** |
+| `asset_manifest_file_count` | `3` |
+| `real_asset_file_count` | `3` |
+| `placeholder_asset_count` | `0` |
+| `asset_quality_gate.status` | `production_ready` |
+| `requested_voice_mode` / `effective_voice_mode` | `elevenlabs` |
+| `voice_ready` | `true` |
+| `voice_duration_seconds` | `57.817687` |
+| `voice_is_dummy` | `false` |
+| `render_used_placeholders` | `false` |
+| `provider_blockers` | `[]` (nach **BA 32.64** erwartbar, wenn `motion_rendered` wahr ist — kein widersprüchlicher `live_motion_not_available`-Blocker) |
+| `live_motion_available` | `true` |
+| `motion_rendered` | `true` |
+| `motion_ready` | `true` |
+| `motion_requested` | `true` |
+
+**Typische Warnings / Hinweise** (ohne Geheimnisse): Gemini-Provider-Metadaten im Lauf; optional Transienten wie `gemini_image_response_invalid` / Retry-Schritte, sofern im konkreten Lauf aufgetreten — ohne den Gesamterfolg zu verwerfen; Runway-Clip erfolgreich gerendert.
+
+### Was dieser Lauf beweist
+
+- **Motion Slot Planning** (BA 32.62) liefert nutzbare Slots im Summary.
+- **Slot 1** kann in einen **echten Runway-Clip** überführt werden (BA 32.63).
+- Das **Asset Manifest** kann **Video- und Bildassets** gemeinsam führen (`video_path` + Bilder für weitere Szenen).
+- **`generation_mode: runway_video_live`** wird im Manifest korrekt ausgewiesen.
+- **Gemini-Bilder** bleiben parallel nutzbar (hier zwei Live-Gemini-Assets).
+- **ElevenLabs Voice** bleibt kompatibel (echte MP3, keine Dummy-Voice).
+- Der **finale Renderpfad** (Timeline → `render_final_story_video`) verarbeitet **Hybrid-Assets** (Bild + Video-Szene).
+
+### Was dieser Lauf noch nicht beweist
+
+- Keine **8 / 10 / 12** parallelen Motion-Clips pro Langlauf.
+- Keine dedizierte **mehrminütige Hybrid-Großproduktion** als Produktgarantie.
+- Keine **Motion-Provider-Stabilität unter Last** oder Last-Tests.
+- Keine **Kosten-/Latenzbewertung** für viele Runway-Clips hintereinander.
+- Keine **finale YouTube-Upload-Qualität** (Content-ID, Metadaten, Thumbnail-Politik).
+- Keine Bewertung der **inhaltlichen Qualität** der Motion-Auswahl über viele Szenen hinweg.
+
+### Readiness-Semantik nach BA 32.64
+
+- **`allow_live_motion_requested`:** expliziter **Dashboard-/API-Wunsch** (Checkbox „Live Motion“ / `allow_live_motion`), gekoppelt an Runway-Key-Pflicht (**BA 32.1**).
+- **`motion_requested`:** Slots/Plan aktiv (`motion_slot_plan.enabled`, `planned_count`) oder **`max_motion_clips` > 0** bzw. Artefakt-`planned_count`.
+- **`motion_rendered`:** mindestens ein Runway-Clip erzeugt (`motion_clip_artifact.rendered_count`) **oder** Histogramm `generation_modes.runway_video_live` > 0.
+- **`motion_ready`:** `true`, wenn **`motion_rendered`** **oder** der klassische Pfad (**`live_motion_available`** und **`allow_live_motion_requested`**).
+- **`live_motion_not_available`** erscheint **nicht** in `provider_blockers`, wenn **`motion_rendered`** wahr ist (**BA 32.64**).
+
+### Nächster sinnvoller Schritt — BA 32.66 (2-Clip Hybrid Smoke)
+
+- **`max_motion_clips=2`**, zwei Runway-Clips (sobald Pipeline/Erweiterung mehr als Slot 1 unterstützt), mehrere Gemini-Bilder, ElevenLabs Voice.
+- Prüfen, ob **Manifest / Timeline / Timing** mit **mehr als einem Video-Clip** stabil bleiben.
+
 ## Existing Building Blocks
 
 | Schritt | Script | Input | Output | Real/Placeholder | Hinweise |
 |---|---|---|---|---|---|
-| 0b. Founder Dashboard URL→MP4 (BA 32.3) | *(HTTP)* `POST /founder/dashboard/video/generate` → `run_ba265_url_to_final` | JSON: `url`, Dauer, `max_scenes`, Live-Flags + Kostenbestätigung | `output/video_generate/<run_id>/final_video.mp4` + `run_summary.json` | placeholder/live wie gewählt | Eigenes UI-Panel vor Fresh Preview. Motion-Intervall/Max-Clips nur als **Metadaten** (`metadata.ba323_motion_strategy` im Pack). **Keine** Runway-Clip-Erzeugung in dieser BA-26.5-Kette; Live-Motion ohne Key → 422. |
+| 0b. Founder Dashboard URL→MP4 (BA 32.3) | *(HTTP)* `POST /founder/dashboard/video/generate` → `run_ba265_url_to_final` | JSON: `url`, Dauer, `max_scenes`, Live-Flags + Kostenbestätigung | `output/video_generate/<run_id>/final_video.mp4` + `run_summary.json` | placeholder/live wie gewählt | Eigenes UI-Panel vor Fresh Preview. Motion-Metadaten im Pack; **`run_summary`**: `motion_slot_plan` (**BA 32.62**) + optional **ein** Runway-Clip für Slot 1 bei **`max_motion_clips` ≥ 1** + **`RUNWAY_API_KEY`** (**BA 32.63**). Checkbox **Live Motion** ohne Key → **422** (**BA 32.1**). Chronik Erstlauf: **BA 32.65**. |
 | 1. Script / Story Pack Input | *(extern / API / Export)* | URL, `ProductionPromptPlan.json`, oder `GenerateScriptResponse`/Story‑Pack | **Plan/Pack** für nachfolgende Schritte | real | Aktuell gibt es mehrere mögliche Quellen (API, CLI, Exporte). |
 | 2. Scene Asset Pack Export | `scripts/export_scene_asset_pack.py` | `--url` **oder** `--prompt-plan-json` | `output/scene_asset_pack_<run_id>/scene_asset_pack.json` + `leonardo_prompts.txt` + `shot_plan.md` + `founder_summary.txt` | real | Baut/erzwingt Scene Expansion im Plan. `--duration-minutes` wirkt nur auf Plan‑Erzeugung via URL. |
 | 3. Asset Runner | `scripts/run_asset_runner.py` | `scene_asset_pack.json` | `output/generated_assets_<run_id>/scene_001.png…` + optional `scene_XXX.mp4`/`.mov`/`.webm` + `asset_manifest.json` | **placeholder default** / optional live | Default `--mode placeholder` erzeugt bewusst PIL‑Placeholder‑PNGs. `--mode live` nutzt Leonardo nur mit `LEONARDO_API_KEY`, sonst Fallback + Warnungen. **BA 26.3:** Beats können **lokale** Clips referenzieren (`video_path`, `runway_clip_path`, …) — Validierung (Datei, Endung, kein Symlink); Kopie ins `generated_assets_*`‑Ordner; `asset_manifest` mit `asset_type`/`video_path` + optional `image_path` (Fallback). |

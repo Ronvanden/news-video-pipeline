@@ -1,4 +1,9 @@
-"""BA 19.2 / BA 20.4 — timeline_manifest + Bilder + Audio → MP4 (ffmpeg)."""
+"""BA 19.2 / BA 20.4 — timeline_manifest + Bilder + Audio → MP4 (ffmpeg).
+
+BA 32.58: Relatives ``assets_directory`` wird gegen den Ordner von ``timeline_manifest.json``
+aufgelöst; relative ``image_path``/``video_path`` gegen den aufgelösten Asset-Root (absolute
+Medienpfade unverändert).
+"""
 
 from __future__ import annotations
 
@@ -21,8 +26,29 @@ MOTION_FPS = 25
 DEFAULT_XFADE_FADE_SEC = 0.35
 CUT_XFADE_SEC = 0.06
 
+# BA 32.68: Ziel-Canvas 16:9, Bilder/Videos per Cover füllen (crop, kein Letterboxing).
+RENDER_TARGET_W = 1920
+RENDER_TARGET_H = 1080
+RENDER_FRAME_FIT_MODE = "cover"
+
+
+def render_target_resolution_label() -> str:
+    return f"{RENDER_TARGET_W}x{RENDER_TARGET_H}"
+
+
+def vf_cover_scale_crop_core() -> str:
+    """scale=increase + Mittelcrop auf Zielgröße (object-fit: cover), ohne pad."""
+    w, h = RENDER_TARGET_W, RENDER_TARGET_H
+    return (
+        f"format=yuv420p,scale={w}:{h}:force_original_aspect_ratio=increase,"
+        f"crop={w}:{h}:(iw-{w})/2:(ih-{h})/2"
+    )
+
 # Ab wann „Audio kürzer als Timeline“ gewarnt wird (Deckt BA-26.7b Voice-Fit-Padding ~1s + Container-Drift ab.)
 _AUDIO_SHORTER_THAN_TIMELINE_SLOP_SEC = 1.05
+
+# BA 32.66: Rest der Szene nach Motion-Clip nur splitten, wenn genug Zeit für ein Bild-Segment bleibt.
+_MIN_MOTION_REST_SPLIT_SEC = 0.04
 
 # libass force_style (Kommas im Filter escaped)
 SUBTITLE_FORCE_STYLE = (
@@ -114,6 +140,138 @@ def _timeline_video_duration_seconds(scenes: List[Dict[str, Any]]) -> float:
     return sum(float(sc.get("duration_seconds") or 6) for sc in scenes)
 
 
+def _parse_positive_float(val: Any) -> Optional[float]:
+    if val is None:
+        return None
+    try:
+        f = float(val)
+        return f if f > 0 else None
+    except (TypeError, ValueError):
+        return None
+
+
+def expand_timeline_scenes_for_motion_clip_windows(
+    scenes: List[Dict[str, Any]],
+    kinds: List[str],
+    warnings: List[str],
+) -> Tuple[List[Dict[str, Any]], List[str]]:
+    """
+    BA 32.66: Kurzer Motion-Clip (Runway) nur im Slot-Fenster; Rest der Szene als Bild-Segment.
+
+    Ohne ``motion_clip_playback_seconds`` bleibt ein Video-Segment unverändert (Legacy-Loop möglich).
+    """
+    if len(kinds) != len(scenes):
+        return list(scenes), list(kinds)
+    out_s: List[Dict[str, Any]] = []
+    out_k: List[str] = []
+    for sc, k in zip(scenes, kinds):
+        if k != "video":
+            out_s.append(dict(sc))
+            out_k.append(k)
+            continue
+        pb = _parse_positive_float(sc.get("motion_clip_playback_seconds"))
+        if pb is None:
+            out_s.append(dict(sc))
+            out_k.append("video")
+            continue
+        d_total = float(sc.get("duration_seconds") or 6)
+        d_tot_i = max(1, int(round(d_total)))
+        try:
+            pbi = int(round(float(pb)))
+        except (TypeError, ValueError):
+            pbi = d_tot_i
+        play_i = max(1, min(d_tot_i, pbi))
+        d_rest_i = d_tot_i - play_i
+        decode_f = min(float(pb), float(d_tot_i))
+        ip = str(sc.get("image_path") or "").strip()
+        sn = sc.get("scene_number")
+
+        if d_rest_i == 0 or float(d_rest_i) < _MIN_MOTION_REST_SPLIT_SEC:
+            sc_one = dict(sc)
+            sc_one["duration_seconds"] = d_tot_i
+            sc_one["motion_video_single_decode"] = True
+            sc_one["_motion_video_decode_seconds"] = decode_f
+            leftover = max(0.0, float(d_tot_i) - decode_f)
+            if leftover > 1e-6 and not ip:
+                sc_one["_motion_video_freeze_pad_seconds"] = leftover
+                warnings.append(f"motion_clip_rest_no_image_fallback:{sn}")
+            elif leftover > 1e-6 and ip:
+                sc_one["_motion_video_freeze_pad_seconds"] = leftover
+                warnings.append(f"motion_clip_rest_absorbed_into_video_pad:{sn}")
+            for key in (
+                "motion_clip_playback_seconds",
+                "motion_clip_rest_image_seconds",
+                "motion_clip_window_respected",
+            ):
+                sc_one.pop(key, None)
+            out_s.append(sc_one)
+            out_k.append("video")
+            continue
+
+        if not ip:
+            warnings.append(f"motion_clip_rest_no_image_fallback:{sn}")
+            sc_pad = dict(sc)
+            sc_pad["duration_seconds"] = d_tot_i
+            sc_pad["motion_video_single_decode"] = True
+            sc_pad["_motion_video_decode_seconds"] = decode_f
+            sc_pad["_motion_video_freeze_pad_seconds"] = float(d_rest_i)
+            for key in (
+                "motion_clip_playback_seconds",
+                "motion_clip_rest_image_seconds",
+                "motion_clip_window_respected",
+            ):
+                sc_pad.pop(key, None)
+            out_s.append(sc_pad)
+            out_k.append("video")
+            continue
+
+        sc_vid = dict(sc)
+        sc_vid["duration_seconds"] = play_i
+        sc_vid["motion_video_single_decode"] = True
+        sc_vid["_motion_video_decode_seconds"] = decode_f
+        for key in (
+            "motion_clip_playback_seconds",
+            "motion_clip_rest_image_seconds",
+            "motion_clip_window_respected",
+        ):
+            sc_vid.pop(key, None)
+        out_s.append(sc_vid)
+        out_k.append("video")
+
+        sc_img = dict(sc)
+        sc_img["duration_seconds"] = d_rest_i
+        sc_img["video_path"] = ""
+        sc_img["media_type"] = "image"
+        for key in (
+            "motion_clip_playback_seconds",
+            "motion_clip_rest_image_seconds",
+            "motion_clip_window_respected",
+        ):
+            sc_img.pop(key, None)
+        out_s.append(sc_img)
+        out_k.append("image")
+
+    return out_s, out_k
+
+
+def _motion_clip_video_input_ffmpeg_args(sc: Dict[str, Any], d_scene: float, assets_root: Path) -> List[str]:
+    """BA 32.66: Motion-Clip einmal decodieren; Legacy-Volllänge weiter mit ``stream_loop``."""
+    vid = _resolve_media_under_assets(str(sc.get("video_path") or ""), assets_root)
+    d_scene = float(d_scene)
+    raw_dec = sc.get("_motion_video_decode_seconds")
+    try:
+        decode_f = float(raw_dec) if raw_dec is not None else 0.0
+    except (TypeError, ValueError):
+        decode_f = 0.0
+    single = sc.get("motion_video_single_decode")
+    is_single = single is True or single == 1 or str(single).lower() in ("true", "1", "yes")
+    if is_single:
+        t_in = decode_f if decode_f > 0.02 else d_scene
+        t_in = min(t_in, d_scene)
+        return ["-i", str(vid), "-t", f"{t_in:.6f}"]
+    return ["-stream_loop", "-1", "-t", f"{d_scene:.6f}", "-i", str(vid)]
+
+
 def _zoom_from_camera_hint(hint: str) -> str:
     h = (hint or "").lower()
     if "pull" in h or "zoom out" in h:
@@ -159,22 +317,54 @@ def _xfade_offset_sequence(durs: List[float], fades: List[float]) -> List[float]
 
 
 def _media_file_usable(p: Path) -> bool:
+    """Datei existiert und ist lesbar; Symlinks zu echten Files sind erlaubt (BA 32.58)."""
     try:
-        if p.is_symlink():
-            return False
         return p.is_file()
     except OSError:
         return False
 
 
+def _resolve_assets_directory(timeline_file: Path, raw: str) -> Path:
+    """BA 32.58: ``assets_directory`` absolut nutzen; sonst relativ zum Ordner von ``timeline_manifest.json``."""
+    s = str(raw or "").strip()
+    if not s:
+        return Path()
+    p = Path(s)
+    if p.is_absolute():
+        try:
+            return p.resolve()
+        except OSError:
+            return p
+    base = timeline_file.resolve().parent
+    try:
+        return (base / p).resolve()
+    except OSError:
+        return base / p
+
+
+def _resolve_media_under_assets(media_ref: str, assets_root: Path) -> Path:
+    """Relativ zu ``assets_root`` joinen; absoluter Verweis bleibt eigenständig (resolve)."""
+    s = str(media_ref or "").strip()
+    if not s:
+        return Path()
+    cand = Path(s)
+    if cand.is_absolute():
+        try:
+            return cand.resolve()
+        except OSError:
+            return cand
+    if not str(assets_root):
+        return cand
+    try:
+        return (assets_root / cand).resolve()
+    except OSError:
+        return assets_root / cand
+
+
 def _segment_video_branch(d_sec: float, fps: int) -> str:
-    """Normiert Video-Segment auf 1920×1080, Ziel-Länge d_sec (Input per -t bereits begrenzt)."""
+    """Normiert Video-Segment auf Ziel-16:9 per Cover-Crop; Länge d_sec (Input per -t begrenzt)."""
     d_str = f"{d_sec:.6f}"
-    return (
-        f"fps={fps},format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
-        f"pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,"
-        f"trim=duration={d_str},setpts=PTS-STARTPTS"
-    )
+    return f"fps={fps},{vf_cover_scale_crop_core()},trim=duration={d_str},setpts=PTS-STARTPTS"
 
 
 def _segment_motion_filter(d_sec: float, zoom_type: str, pan_direction: str, fps: int) -> str:
@@ -211,22 +401,18 @@ def _segment_motion_filter(d_sec: float, zoom_type: str, pan_direction: str, fps
             f"format=yuv420p,setpts=PTS-STARTPTS"
         )
 
-    return (
-        f"fps={fps},format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
-        f"pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,"
-        f"trim=duration={d_str},setpts=PTS-STARTPTS"
-    )
+    return f"fps={fps},{vf_cover_scale_crop_core()},trim=duration={d_str},setpts=PTS-STARTPTS"
 
 
-def _write_concat_list(scenes: List[Dict[str, Any]], assets_dir: Path, tmp_list: Path) -> None:
+def _write_concat_list(scenes: List[Dict[str, Any]], assets_root: Path, tmp_list: Path) -> None:
     lines: List[str] = []
     for i, sc in enumerate(scenes):
-        img = assets_dir / str(sc.get("image_path") or "")
+        img = _resolve_media_under_assets(str(sc.get("image_path") or ""), assets_root)
         dur = float(sc.get("duration_seconds") or 6)
         lines.append(f"file '{_escape_concat_path(img)}'")
         lines.append(f"duration {dur}")
     if scenes:
-        last = assets_dir / str(scenes[-1].get("image_path") or "")
+        last = _resolve_media_under_assets(str(scenes[-1].get("image_path") or ""), assets_root)
         lines.append(f"file '{_escape_concat_path(last)}'")
         lines.append("duration 0.04")
     tmp_list.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -314,6 +500,12 @@ def _build_basic_motion_filter_script(
     for i, sc in enumerate(scenes):
         if kinds[i] == "video":
             vf = _segment_video_branch(durs[i], fps)
+            try:
+                pad = float(sc.get("_motion_video_freeze_pad_seconds") or 0.0)
+            except (TypeError, ValueError):
+                pad = 0.0
+            if pad > 0.001:
+                vf += f",tpad=stop_mode=clone:stop_duration={pad:.6f}"
         else:
             zt = _scene_zoom_type(sc)
             pd = _scene_pan_direction(sc)
@@ -355,7 +547,7 @@ def _build_basic_motion_filter_script(
 
 def _run_ffmpeg_static_concat(
     scenes: List[Dict[str, Any]],
-    assets_dir: Path,
+    assets_root: Path,
     output_video: Path,
     ffmpeg: str,
     ffprobe: Optional[str],
@@ -365,13 +557,13 @@ def _run_ffmpeg_static_concat(
     *,
     subtitle_path: Optional[Path] = None,
 ) -> Tuple[bool, List[str], List[str]]:
-    """BA 19.2 Pfad: concat-Demuxer + globales scale/pad; optional BA 20.5 subtitles-Burn-in."""
+    """BA 19.2 Pfad: concat-Demuxer + Cover-Crop auf 16:9; optional BA 20.5 subtitles-Burn-in."""
     blocking: List[str] = []
     fd, tmp_name = tempfile.mkstemp(suffix="_concat.txt", text=True)
     os.close(fd)
     tmp_path = Path(tmp_name)
     try:
-        _write_concat_list(scenes, assets_dir, tmp_path)
+        _write_concat_list(scenes, assets_root, tmp_path)
         vf = (
             "format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
             "pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black"
@@ -453,11 +645,14 @@ def _build_hybrid_static_filter_script(
     parts: List[str] = []
     for i in range(n):
         d_str = f"{durs[i]:.6f}"
-        vf = (
-            f"fps={fps},format=yuv420p,scale=1920:1080:force_original_aspect_ratio=decrease,"
-            f"pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,"
-            f"trim=duration={d_str},setpts=PTS-STARTPTS"
-        )
+        sc = scenes[i]
+        try:
+            pad = float(sc.get("_motion_video_freeze_pad_seconds") or 0.0)
+        except (TypeError, ValueError):
+            pad = 0.0
+        vf = f"fps={fps},{vf_cover_scale_crop_core()},trim=duration={d_str},setpts=PTS-STARTPTS"
+        if pad > 0.001:
+            vf += f",tpad=stop_mode=clone:stop_duration={pad:.6f}"
         parts.append(f"[{i}:v]{vf}[seg{i}]")
     concat_in = "".join(f"[seg{i}]" for i in range(n))
     parts.append(f"{concat_in}concat=n={n}:v=1:a=0[vcore]")
@@ -476,7 +671,7 @@ def _build_hybrid_static_filter_script(
 
 def _run_ffmpeg_hybrid_static(
     scenes: List[Dict[str, Any]],
-    assets_dir: Path,
+    assets_root: Path,
     output_video: Path,
     ffmpeg: str,
     ffprobe: Optional[str],
@@ -518,10 +713,9 @@ def _run_ffmpeg_hybrid_static(
         for i, sc in enumerate(scenes):
             d = float(sc.get("duration_seconds") or 6)
             if kinds[i] == "video":
-                vid = assets_dir / str(sc.get("video_path") or "").strip()
-                cmd.extend(["-stream_loop", "-1", "-t", f"{d:.6f}", "-i", str(vid)])
+                cmd.extend(_motion_clip_video_input_ffmpeg_args(sc, d, assets_root))
             else:
-                img = assets_dir / str(sc.get("image_path") or "")
+                img = _resolve_media_under_assets(str(sc.get("image_path") or ""), assets_root)
                 cmd.extend(["-loop", "1", "-framerate", str(fps), "-t", f"{d:.6f}", "-i", str(img)])
         if audio_file:
             cmd.extend(["-i", str(audio_file)])
@@ -581,7 +775,7 @@ def _run_ffmpeg_hybrid_static(
 
 def _run_ffmpeg_basic_motion(
     scenes: List[Dict[str, Any]],
-    assets_dir: Path,
+    assets_root: Path,
     output_video: Path,
     ffmpeg: str,
     ffprobe: Optional[str],
@@ -625,10 +819,9 @@ def _run_ffmpeg_basic_motion(
         for i, sc in enumerate(scenes):
             d = float(sc.get("duration_seconds") or 6)
             if kinds[i] == "video":
-                vid = assets_dir / str(sc.get("video_path") or "").strip()
-                cmd.extend(["-stream_loop", "-1", "-t", f"{d:.6f}", "-i", str(vid)])
+                cmd.extend(_motion_clip_video_input_ffmpeg_args(sc, d, assets_root))
             else:
-                img = assets_dir / str(sc.get("image_path") or "")
+                img = _resolve_media_under_assets(str(sc.get("image_path") or ""), assets_root)
                 cmd.extend(["-loop", "1", "-framerate", str(fps), "-t", f"{d:.6f}", "-i", str(img)])
         if audio_file:
             cmd.extend(["-i", str(audio_file)])
@@ -763,7 +956,7 @@ def render_final_story_video(
     manifest_root: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """
-    concat demuxer (static) oder Motion+xfade (basic) → scale/pad 1920x1080 → H.264 + optional AAC.
+    concat demuxer (static) oder Motion+xfade (basic) → Cover-Crop 1920×1080 → H.264 + optional AAC.
     Ohne Audio: stumm (warnings audio_missing_silent_render).
     BA 20.5: optional Untertitel-Burn-in (--subtitle-path), bei Fehler erneuter Lauf ohne Untertitel.
     BA 20.7: Primärausgabe ist **clean** ohne --subtitle-path; --subtitle-path = Legacy-Inline-Burn-in
@@ -850,14 +1043,14 @@ def render_final_story_video(
         r.update(_sub_meta())
         return _merge_207(r, video_created=False, burned=False)
 
-    n_scenes = len(scenes)
+    n_scenes_logical = len(scenes)
     ffmpeg = ffmpeg_bin if ffmpeg_bin is not None else which_ffmpeg()
     if not ffmpeg:
         r = {
             "video_created": False,
             "output_path": str(output_video),
             "duration_seconds": None,
-            "scene_count": n_scenes,
+            "scene_count": n_scenes_logical,
             "motion_mode": motion_eff,
             "warnings": warnings,
             "blocking_reasons": ["ffmpeg_missing"],
@@ -865,13 +1058,13 @@ def render_final_story_video(
         r.update(_sub_meta())
         return _merge_207(r, video_created=False, burned=False)
 
-    assets_dir = Path(str(tl.get("assets_directory") or ""))
-    if not assets_dir.is_dir():
+    assets_root = _resolve_assets_directory(timeline_path, str(tl.get("assets_directory") or ""))
+    if not assets_root.is_dir():
         r = {
             "video_created": False,
             "output_path": str(output_video),
             "duration_seconds": None,
-            "scene_count": n_scenes,
+            "scene_count": n_scenes_logical,
             "motion_mode": motion_eff,
             "warnings": warnings,
             "blocking_reasons": ["assets_directory_missing"],
@@ -881,12 +1074,13 @@ def render_final_story_video(
 
     segment_kinds: List[str] = []
     for sc in scenes:
+        sn = sc.get("scene_number")
         vp = str(sc.get("video_path") or "").strip()
         ip = str(sc.get("image_path") or "").strip()
-        vfull = assets_dir / vp if vp else None
-        ifull = assets_dir / ip if ip else None
-        video_ok = vfull is not None and _media_file_usable(vfull)
-        image_ok = ifull is not None and _media_file_usable(ifull)
+        vfull = _resolve_media_under_assets(vp, assets_root) if vp else Path()
+        ifull = _resolve_media_under_assets(ip, assets_root) if ip else Path()
+        video_ok = bool(vp) and _media_file_usable(vfull)
+        image_ok = bool(ip) and _media_file_usable(ifull)
         mt = str(sc.get("media_type") or "").strip().lower()
         want_v = mt == "video" or bool(vp)
 
@@ -894,25 +1088,36 @@ def render_final_story_video(
             segment_kinds.append("video")
         elif image_ok:
             if want_v and not video_ok:
-                warnings.append(f"video_asset_unusable_fallback_image:{sc.get('scene_number')}")
+                warnings.append(f"video_asset_unusable_fallback_image:{sn}")
+                if vp:
+                    warnings.append(f"render_video_missing:{sn}")
+                else:
+                    warnings.append(f"render_video_path_missing:{sn}")
             segment_kinds.append("image")
         elif video_ok:
             segment_kinds.append("video")
         else:
-            miss = vp or ip or sc.get("scene_number")
+            if want_v:
+                if not vp:
+                    warnings.append(f"render_video_path_missing:{sn}")
+                elif not video_ok:
+                    warnings.append(f"render_video_missing:{sn}")
+            if not ip:
+                warnings.append(f"render_image_path_missing:{sn}")
+            elif not image_ok:
+                warnings.append(f"render_image_missing:{sn}")
+            miss = vp or ip or sn
             r = {
                 "video_created": False,
                 "output_path": str(output_video),
                 "duration_seconds": None,
-                "scene_count": n_scenes,
+                "scene_count": n_scenes_logical,
                 "motion_mode": motion_eff,
                 "warnings": warnings,
                 "blocking_reasons": [f"missing_scene_media:{miss}"],
             }
             r.update(_sub_meta())
             return _merge_207(r, video_created=False, burned=False)
-
-    any_video = any(k == "video" for k in segment_kinds)
 
     audio_path = (tl.get("audio_path") or "").strip()
     audio_file: Optional[Path] = Path(audio_path) if audio_path else None
@@ -922,6 +1127,10 @@ def render_final_story_video(
     if not audio_file:
         warnings.append("audio_missing_silent_render")
 
+    scenes, segment_kinds = expand_timeline_scenes_for_motion_clip_windows(
+        scenes, segment_kinds, warnings
+    )
+    any_video = any(k == "video" for k in segment_kinds)
     timeline_seconds = _timeline_video_duration_seconds(scenes)
 
     output_video.parent.mkdir(parents=True, exist_ok=True)
@@ -947,7 +1156,7 @@ def render_final_story_video(
         for sub_on in sub_tries:
             ok, warnings, blocking = _run_ffmpeg_basic_motion(
                 scenes,
-                assets_dir,
+                assets_root,
                 output_video,
                 ffmpeg,
                 ffprobe,
@@ -967,7 +1176,7 @@ def render_final_story_video(
                 if any_video:
                     ok, warnings, blocking = _run_ffmpeg_hybrid_static(
                         scenes,
-                        assets_dir,
+                        assets_root,
                         output_video,
                         ffmpeg,
                         ffprobe,
@@ -980,7 +1189,7 @@ def render_final_story_video(
                 else:
                     ok, warnings, blocking = _run_ffmpeg_static_concat(
                         scenes,
-                        assets_dir,
+                        assets_root,
                         output_video,
                         ffmpeg,
                         ffprobe,
@@ -997,7 +1206,7 @@ def render_final_story_video(
             if any_video:
                 ok, warnings, blocking = _run_ffmpeg_hybrid_static(
                     scenes,
-                    assets_dir,
+                    assets_root,
                     output_video,
                     ffmpeg,
                     ffprobe,
@@ -1010,7 +1219,7 @@ def render_final_story_video(
             else:
                 ok, warnings, blocking = _run_ffmpeg_static_concat(
                     scenes,
-                    assets_dir,
+                    assets_root,
                     output_video,
                     ffmpeg,
                     ffprobe,
@@ -1025,12 +1234,12 @@ def render_final_story_video(
 
     if not ok and any_video:
         warnings.append("video_render_failed_retry_image_only")
-        image_kinds = ["image"] * n_scenes
+        image_kinds = ["image"] * len(scenes)
         if motion_eff == "basic":
             for sub_on in sub_tries:
                 ok, warnings, blocking = _run_ffmpeg_basic_motion(
                     scenes,
-                    assets_dir,
+                    assets_root,
                     output_video,
                     ffmpeg,
                     ffprobe,
@@ -1049,7 +1258,7 @@ def render_final_story_video(
             for sub_on in sub_tries:
                 ok, warnings, blocking = _run_ffmpeg_static_concat(
                     scenes,
-                    assets_dir,
+                    assets_root,
                     output_video,
                     ffmpeg,
                     ffprobe,
@@ -1070,7 +1279,7 @@ def render_final_story_video(
             "video_created": False,
             "output_path": str(output_video),
             "duration_seconds": None,
-            "scene_count": n_scenes,
+            "scene_count": n_scenes_logical,
             "motion_mode": motion_eff,
             "motion_applied": used_motion,
             "warnings": warnings,
@@ -1088,13 +1297,16 @@ def render_final_story_video(
         "video_created": True,
         "output_path": str(output_video.resolve()),
         "duration_seconds": dur,
-        "scene_count": n_scenes,
+        "scene_count": n_scenes_logical,
         "motion_mode": motion_eff,
         "motion_applied": used_motion,
         "warnings": warnings,
         "blocking_reasons": blocking,
         "subtitle_path_requested": sub_req or None,
         "subtitles_burned": burned_subtitles,
+        "render_image_segment_count": sum(1 for k in segment_kinds if k == "image"),
+        "render_frame_fit_mode": RENDER_FRAME_FIT_MODE,
+        "render_target_resolution": render_target_resolution_label(),
     }
     return _merge_207(r_ok, video_created=True, burned=burned_subtitles)
 

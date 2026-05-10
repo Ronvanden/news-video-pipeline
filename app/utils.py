@@ -1,6 +1,6 @@
 import logging
 import json
-from typing import List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import re
 from urllib.parse import urlparse, parse_qs
 import trafilatura
@@ -708,6 +708,68 @@ def generate_script_from_youtube_video(
                 f"Technischer Hinweis: {type(e).__name__}.",
             ],
         )
+
+
+def build_script_dict_from_youtube_source(
+    *,
+    source_youtube_url: str,
+    duration_minutes: int,
+    target_language: str = "de",
+    video_template: str = "generic",
+    template_conformance_level: str = "warn",
+    rewrite_style: Optional[str] = None,
+) -> Tuple[Optional[Dict[str, Any]], bool, List[str], List[str]]:
+    """
+    BA 32.58 — Transkript → neues Skript (kein 1:1-Transkript; gleiche Pipeline wie /youtube/generate-script).
+
+    Rückgabe: ``(script_dict | None, transcript_available, warnings, blocking_reasons)``.
+    """
+    blocking: List[str] = []
+    warns: List[str] = []
+    raw_u = (source_youtube_url or "").strip()
+    if not raw_u:
+        return None, False, warns, ["youtube_transcript_missing"]
+
+    video_id = extract_video_id(raw_u)
+    if not video_id:
+        return None, False, warns, ["youtube_url_invalid"]
+
+    transcript = fetch_youtube_transcript_by_video_id(video_id)
+    transcript_ok = bool((transcript or "").strip())
+    if not transcript_ok:
+        return None, False, warns, ["youtube_transcript_missing"]
+
+    canonical_url = f"https://www.youtube.com/watch?v={video_id}"
+    extra = [
+        "youtube_source_rewrite_used",
+        "transcript_used_as_source_material",
+        "Quelle: YouTube-Untertitel/Transkript; das Skript ist eine eigenständige "
+        "deutschsprachige Story-Formulierung, keine wörtliche Abschrift.",
+    ]
+    rs = (rewrite_style or "").strip()
+    if rs:
+        extra.append(f"youtube_rewrite_style:{rs}")
+
+    title, hook, chapters, full_script, sources, gen_warns = build_script_response_from_extracted_text(
+        extracted_text=transcript,
+        source_url=canonical_url,
+        target_language=target_language,
+        duration_minutes=max(1, int(duration_minutes)),
+        extraction_warnings=[],
+        extra_warnings=extra,
+        video_template=video_template,
+        template_conformance_level=template_conformance_level,
+    )
+    warns.extend(list(gen_warns or []))
+    script: Dict[str, Any] = {
+        "title": title,
+        "hook": hook,
+        "chapters": chapters,
+        "full_script": full_script,
+        "sources": list(sources or []),
+        "warnings": warns,
+    }
+    return script, True, warns, blocking
 
 
 def summarize_text(text: str, sentences_count: int = 10) -> str:

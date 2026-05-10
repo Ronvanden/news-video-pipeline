@@ -685,6 +685,57 @@ button.is-error {
   color: #fecaca !important;
 }
 button.sm { padding: 0.3rem 0.5rem; font-size: 0.72rem; }
+.fp-exec-next-btn {
+  margin-top: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(100, 150, 255, 0.35);
+  background: rgba(0, 70, 255, 0.08);
+  color: rgba(200, 220, 255, 0.95);
+}
+.fp-exec-next-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.fp-exec-next-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.fd-vg-result-card {
+  margin-top: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(42, 51, 73, 0.75);
+  background: rgba(12, 16, 26, 0.55);
+}
+.fd-vg-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+.fd-vg-result-title { margin: 0; font-size: 0.95rem; }
+.fd-vg-result-sub { margin: 0.25rem 0 0; font-size: 0.8rem; color: rgba(139, 156, 179, 0.9); }
+.fd-vg-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(54, 65, 88, 0.9);
+  background: rgba(18, 24, 38, 0.75);
+  color: rgba(210, 220, 235, 0.95);
+}
+.fd-vg-badge--ok { border-color: rgba(34, 197, 94, 0.45); background: rgba(34, 197, 94, 0.12); color: #bbf7d0; }
+.fd-vg-badge--blocked { border-color: rgba(248, 113, 113, 0.55); background: rgba(248, 113, 113, 0.12); color: #fecaca; }
+.fd-vg-badge--neutral { border-color: rgba(100, 150, 255, 0.35); background: rgba(0, 70, 255, 0.06); color: rgba(200, 220, 255, 0.95); }
+.fd-vg-badge--fallback { border-color: rgba(245, 158, 11, 0.55); background: rgba(245, 158, 11, 0.10); color: rgba(253, 230, 138, 0.95); }
+.fd-vg-kv { margin-top: 0.65rem; display: grid; gap: 0.35rem; }
+.fd-vg-kv-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: baseline; }
+.fd-vg-k { font-size: 0.72rem; color: rgba(139, 156, 179, 0.9); min-width: 130px; }
+.fd-vg-v { font-size: 0.78rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color: var(--text); word-break: break-word; }
+.fd-vg-list { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+.fd-vg-cta { margin-top: 0.75rem; font-size: 0.82rem; }
+.fd-vg-raw details { margin-top: 0.6rem; }
 pre.out-empty, .score.out-empty, .lab-empty {
   color: var(--muted);
   font-style: italic;
@@ -1571,12 +1622,13 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
     <nav id="fd-sidebar-nav" class="fd-sidebar-nav" aria-label="Bereiche">
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fd-overview-anchor">Overview</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba323-video-generate">Video generieren</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fd-video-generate-result">Ergebnis prüfen</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Vorschau-Prüflauf</button>
-      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Readiness</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fp-btn-refresh">Status aktualisieren / Readiness</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fp-dry-run-handoff">Befehl kopieren</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba22-local-preview">Local Preview</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="founder-strategic-summary">Founder Summary</button>
-      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="coll-input-panel">Raw / Debug</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="coll-legacy-debug">Legacy / Debug</button>
     </nav>
     <div class="fd-sidebar-score" data-ba306d-score-gauge="sidebar" aria-live="polite">
       <div class="fd-sidebar-score-row">
@@ -1602,7 +1654,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
       <div class="fp-exec-cell"><div class="fp-exec-label">Vorschau-Status</div><div class="fp-exec-val" id="fp-exec-fresh-status">Warte auf Daten …</div><div class="fp-exec-hint" id="fp-exec-hint-fresh"></div></div>
       <div class="fp-exec-cell"><div class="fp-exec-label">Readiness Score</div><div class="fp-exec-readiness-body"><div class="fp-exec-mini-gauge fd-score-gauge fd-score-gauge--small" aria-hidden="true"><div class="fd-score-gauge-ring fd-score-gauge-ring--neutral" id="fp-exec-readiness-ring" style="--fd-sg-pct: 0"><div class="fd-score-gauge-inner"></div></div></div><div class="fp-exec-readiness-copy"><div class="fp-exec-val" id="fp-exec-readiness-score">Nicht bewertet</div><div class="fp-exec-hint" id="fp-exec-hint-score">Wird nach „Status aktualisieren“ berechnet</div></div></div></div>
       <div class="fp-exec-cell"><div class="fp-exec-label">Letzter Lauf</div><div class="fp-exec-val" id="fp-exec-latest-run">Noch kein Run</div><div class="fp-exec-hint" id="fp-exec-hint-run"></div></div>
-      <div class="fp-exec-cell"><div class="fp-exec-label">Nächster Schritt</div><div class="fp-exec-val" id="fp-exec-next-step-short">Gib eine URL ein und starte Video generieren.</div><div class="fp-exec-hint" id="fp-exec-hint-next"></div></div>
+      <div class="fp-exec-cell"><div class="fp-exec-label">Nächster Schritt</div><div class="fp-exec-val" id="fp-exec-next-step-short">Gib eine URL ein und starte Video generieren.</div><div class="fp-exec-hint" id="fp-exec-hint-next"></div><button type="button" class="sm fp-exec-next-btn" id="fp-exec-next-step-btn" data-fd-exec-next-target="fd-video-generate-url">Zum nächsten Schritt</button></div>
     </div>
   </div>
 
@@ -1626,7 +1678,7 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
       <p class="panel-section-desc muted">URL eingeben und einen kontrollierten 10-Minuten-Produktionslauf starten.</p>
     </div>
     <p class="muted" style="margin:0 0 0.75rem">Der Vorschau-Prüflauf bleibt das Diagnose-Cockpit; dieser Bereich startet den Longform-Render bis <code class="fp-inline-path">final_video.mp4</code>.</p>
-    <p class="muted" style="margin:0 0 0.5rem">Live-Bilder können echte Provider-Kosten auslösen.</p>
+    <p class="muted" style="margin:0 0 0.5rem">Echte Assets können Provider-Kosten auslösen. Ohne Aktivierung wird eine Fallback-Preview mit Platzhaltern erstellt.</p>
     <p class="muted" style="margin:0 0 1rem">Live-Motion ist nur sinnvoll, wenn ein echter Connector verfügbar ist. Keine Fake-Clips — ohne Runway-Konfiguration blockt der Server Live-Motion.</p>
     <div id="fd-video-generate-form" class="fp-dry-run-grid" data-ba323-video-generate="1">
       <div style="grid-column:1/-1">
@@ -1657,18 +1709,242 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
         <label for="fd-vg-max-motion">Max. Motion-Clips</label>
         <input type="number" id="fd-vg-max-motion" min="0" max="30" value="10"/>
       </div>
+      <div style="grid-column:1/-1">
+        <label for="fd-vg-image-provider">Image-Provider Override (optional, BA 32.72)</label>
+        <select id="fd-vg-image-provider">
+          <option value="">— Server-Default (IMAGE_PROVIDER) —</option>
+          <option value="leonardo">leonardo</option>
+          <option value="openai_image">openai_image</option>
+          <option value="gemini_image">gemini_image</option>
+          <option value="placeholder">placeholder</option>
+        </select>
+      </div>
+      <div>
+        <label for="fd-vg-openai-image-model">OpenAI Bild-Modell (optional)</label>
+        <input type="text" id="fd-vg-openai-image-model" placeholder="gpt-image-2" maxlength="128" autocomplete="off"/>
+      </div>
+      <div>
+        <label for="fd-vg-openai-image-size">OpenAI Bildgröße (optional)</label>
+        <input type="text" id="fd-vg-openai-image-size" placeholder="1024x1024" maxlength="64" autocomplete="off"/>
+      </div>
+      <div>
+        <label for="fd-vg-openai-image-timeout">OpenAI Timeout (Sek., optional)</label>
+        <input type="number" id="fd-vg-openai-image-timeout" min="15" max="600" placeholder="z. B. 120"/>
+      </div>
+      <div style="grid-column:1/-1">
+        <label for="fd-vg-voice-mode">Voice-Modus</label>
+        <select id="fd-vg-voice-mode">
+          <option value="dummy">Dummy Voice / Testmodus</option>
+          <option value="none">Keine Voice</option>
+          <option value="elevenlabs">ElevenLabs</option>
+          <option value="openai">OpenAI TTS</option>
+        </select>
+        <p class="muted" id="fd-vg-voice-mode-hint" style="margin:0.25rem 0 0;font-size:0.78rem">Dummy Voice aktiv – geeignet für Tests.</p>
+      </div>
       <div style="grid-column:1/-1" class="fp-dry-run-checks">
-        <label><input type="checkbox" id="fd-vg-live-assets"/> Live-Bilder erlauben (Leonardo live)</label>
+        <label><input type="checkbox" id="fd-vg-live-assets"/> Echte Assets erzeugen</label>
         <label><input type="checkbox" id="fd-vg-live-motion"/> Live-Motion erlauben (Runway — nur mit Connector)</label>
         <label><input type="checkbox" id="fd-vg-confirm-costs"/> Mögliche Provider-Kosten bestätigen</label>
+      </div>
+      <div style="grid-column:1/-1" class="fp-dry-run-checks" data-ba3278-thumbnail-pack="1">
+        <label><input type="checkbox" id="fd-vg-generate-thumbnail-pack"/> Thumbnail Pack erzeugen (BA 32.78)</label>
+        <span class="muted" style="font-size:0.78rem;display:block;margin:0.25rem 0 0">Erzeugt nach erfolgreichem Video-Lauf zusätzliche <strong>OpenAI-Bilder</strong> (Kandidaten) und lokale Text-Overlays. Erfordert OpenAI-Key und <strong>Kostenbestätigung</strong>.</span>
+      </div>
+      <div>
+        <label for="fd-vg-thumb-cand-count">Thumbnail-Kandidaten (1–3)</label>
+        <input type="number" id="fd-vg-thumb-cand-count" min="1" max="3" value="3"/>
+      </div>
+      <div>
+        <label for="fd-vg-thumb-max-out">Max. Overlay-Outputs (1–6)</label>
+        <input type="number" id="fd-vg-thumb-max-out" min="1" max="6" value="6"/>
+      </div>
+      <div>
+        <label for="fd-vg-thumb-model">Thumbnail OpenAI-Modell (optional)</label>
+        <input type="text" id="fd-vg-thumb-model" placeholder="gpt-image-2" maxlength="128" autocomplete="off"/>
+      </div>
+      <div>
+        <label for="fd-vg-thumb-size">Thumbnail Bildgröße (optional)</label>
+        <input type="text" id="fd-vg-thumb-size" placeholder="1024x1024" maxlength="64" autocomplete="off"/>
+      </div>
+      <div style="grid-column:1/-1">
+        <label for="fd-vg-thumb-presets">Style-Presets (optional, kommagetrennt)</label>
+        <input type="text" id="fd-vg-thumb-presets" placeholder="impact_youtube, urgent_mystery" maxlength="120" autocomplete="off"/>
+      </div>
+      <details class="muted" style="grid-column:1/-1;margin-top:0.35rem" id="fd-vg-dev-keys" data-ba3272b-dev-keys="1">
+        <summary><strong>Provider Keys / Local Test (dev-only)</strong> — nur im Request, nie speichern</summary>
+        <p class="muted" style="margin:0.35rem 0 0;font-size:0.78rem;line-height:1.35">
+          Diese Felder werden <strong>nur</strong> im aktuellen <code>POST /founder/dashboard/video/generate</code> übertragen.
+          Es gibt <strong>keine</strong> Speicherung (kein localStorage/sessionStorage), <strong>kein</strong> Echo im Ergebnis-JSON, <strong>kein</strong> OPEN_ME und <strong>keine</strong> Logs.
+        </p>
+        <div class="fp-dry-run-grid" style="margin-top:0.6rem">
+          <div style="grid-column:1/-1">
+            <label for="fd-vg-dev-openai-api-key">OPENAI_API_KEY (Request Override)</label>
+            <input type="password" id="fd-vg-dev-openai-api-key" placeholder="sk-…" autocomplete="off" spellcheck="false"/>
+          </div>
+          <div>
+            <label for="fd-vg-dev-elevenlabs-api-key">ELEVENLABS_API_KEY (optional)</label>
+            <input type="password" id="fd-vg-dev-elevenlabs-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+          </div>
+          <div>
+            <label for="fd-vg-dev-runway-api-key">RUNWAY_API_KEY (optional)</label>
+            <input type="password" id="fd-vg-dev-runway-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+          </div>
+          <div style="grid-column:1/-1">
+            <label for="fd-vg-dev-leonardo-api-key">LEONARDO_API_KEY (optional)</label>
+            <input type="password" id="fd-vg-dev-leonardo-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+          </div>
+        </div>
+        <p class="muted" id="fd-vg-dev-keys-hint" style="margin:0.35rem 0 0;font-size:0.78rem"></p>
+      </details>
+      <div style="grid-column:1/-1">
+        <p class="muted" id="fd-vg-assets-mode-hint" style="margin:0.15rem 0 0;font-size:0.82rem"><strong>Preview/Fallback-Modus</strong> — keine Live-Provider, Platzhalter sind erwartbar.</p>
+      </div>
+      <div style="grid-column:1/-1">
+        <div class="muted" style="margin:0.65rem 0 0.35rem;font-size:0.78rem"><strong>Provider-Readiness</strong></div>
+        <div id="fd-vg-provider-readiness" class="fd-vg-kv" aria-label="Provider-Readiness">
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Live Assets</span><span class="fd-vg-v" id="fd-vg-pr-live-assets">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">ElevenLabs Voice</span><span class="fd-vg-v" id="fd-vg-pr-eleven">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">OpenAI TTS</span><span class="fd-vg-v" id="fd-vg-pr-openai">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Runway Motion</span><span class="fd-vg-v" id="fd-vg-pr-runway">Unbekannt</span></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:0.45rem;flex-wrap:wrap">
+          <button type="button" class="sm" id="fd-vg-provider-refresh">Status aktualisieren</button>
+          <span class="muted" style="font-size:0.78rem">lädt nur Readiness (keine Provider-Calls)</span>
+        </div>
+        <p class="muted" id="fd-vg-provider-readiness-hint" style="margin:0.35rem 0 0;font-size:0.78rem"></p>
+
+        <div class="muted" style="margin:0.7rem 0 0.35rem;font-size:0.78rem"><strong>Preflight</strong></div>
+        <div class="fd-vg-kv" aria-label="Preflight">
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Status</span><span class="fd-vg-v" id="fd-vg-preflight-status">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Hinweis</span><span class="fd-vg-v" id="fd-vg-preflight-text">—</span></div>
+        </div>
+
+        <div class="muted" style="margin:0.7rem 0 0.35rem;font-size:0.78rem"><strong>Fix Checklist</strong></div>
+        <div id="fd-vg-fix-checklist" class="fd-vg-kv" aria-label="Fix Checklist">
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">—</span><span class="fd-vg-v">Noch keine Readiness geladen.</span></div>
+        </div>
+
+        <div class="muted" style="margin:0.85rem 0 0.35rem;font-size:0.78rem"><strong>Real Production Smoke</strong></div>
+        <p class="muted" style="margin:0 0 0.35rem;font-size:0.78rem">Checkliste für einen echten Lauf mit realen Assets und echter Voice.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin:0 0 0.45rem;flex-wrap:wrap">
+          <button type="button" class="sm" id="fd-vg-real-smoke-preset">Real Production Smoke Preset</button>
+          <span class="muted" style="font-size:0.78rem">setzt Live Assets + bestmögliche Voice (kein Blocker)</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin:0.35rem 0 0;flex-wrap:wrap">
+          <button type="button" class="sm" id="fd-vg-openai-image-mini-preset" data-ba372-openai-image-smoke="1">OpenAI gpt-image-2 Mini-Preset</button>
+          <span class="muted" style="font-size:0.78rem">BA 32.72 — 1 Szene, 1 Live-Asset, Live + Kostenbestätigung, Voice aus</span>
+        </div>
+        <p class="muted" id="fd-vg-real-smoke-preset-hint" style="margin:0 0 0.35rem;font-size:0.78rem"></p>
+        <details class="muted" style="margin:0.55rem 0 0;font-size:0.78rem" id="fd-vg-leonardo-smoke-details">
+          <summary><strong>Real Leonardo Live Smoke</strong> — Operator-Checkliste (manuell, kostenpflichtig)</summary>
+          <ul style="margin:0.35rem 0 0;padding-left:1.1rem;line-height:1.45">
+            <li><code>LEONARDO_API_KEY</code> in der Runtime gesetzt (niemals Werte im UI/Chat loggen)</li>
+            <li>Provider-Readiness: <strong>Live Assets = Bereit</strong></li>
+            <li><strong>Echte Assets erzeugen</strong> aktiv</li>
+            <li><strong>Mögliche Provider-Kosten bestätigen</strong> aktiv</li>
+            <li>Voice-Modus: <strong>Keine Voice</strong> (<code>voice_mode=none</code>) oder Dummy</li>
+            <li><strong>Max. Szenen = 1</strong>, <strong>Max. Live-Assets = 1</strong>, optional <strong>Max. Motion-Clips = 0</strong></li>
+            <li>Motion: Dashboard sendet <code>motion_mode=basic</code>; für rein statisches Rendering <code>motion_mode=static</code> per API nutzen (siehe Runbook)</li>
+          </ul>
+          <p style="margin:0.4rem 0 0">Nach dem Lauf: <code>asset_artifact.generation_modes</code> enthält <strong>leonardo_live</strong>; <code>asset_quality_gate.status</code> möglichst <code>production_ready</code> oder <code>mixed_assets</code>; keine Warning <code>leonardo_env_missing_fallback_placeholder</code>. Runbook: <code>docs/runbooks/real_leonardo_live_smoke.md</code></p>
+        </details>
+        <details class="muted" style="margin:0.55rem 0 0;font-size:0.78rem" id="fd-vg-openai-image-smoke-details" data-ba372-openai-image-smoke="1">
+          <summary><strong>Founder OpenAI Image Smoke (BA 32.72)</strong> — Dashboard-Integration mit <code>gpt-image-2</code>, maximal <strong>1 Szene</strong></summary>
+          <ul style="margin:0.35rem 0 0;padding-left:1.1rem;line-height:1.45">
+            <li><code>OPENAI_API_KEY</code> in der <strong>Server</strong>-Runtime (nicht loggen)</li>
+            <li>Optional Request: <code>image_provider=openai_image</code> oder gleichwertig Env <code>IMAGE_PROVIDER=openai_image</code></li>
+            <li>Optional: <code>openai_image_model=gpt-image-2</code>, <code>openai_image_size</code>, <code>openai_image_timeout_seconds</code></li>
+            <li><strong>Echte Assets erzeugen</strong> + <strong>Kosten bestätigen</strong>; <strong>Max. Szenen = 1</strong>, <strong>Max. Live-Assets = 1</strong></li>
+            <li>Empfehlung: <code>raw_text</code> statt URL für stabile Provider-Smokes (siehe Runbook)</li>
+          </ul>
+          <p style="margin:0.4rem 0 0">Nach dem Lauf: JSON-Feld <code>image_asset_audit</code> und OPEN_ME-Abschnitt <strong>Image Asset Audit</strong>; bei <strong>403</strong> weiterhin <code>openai_image_http_403</code> und <code>openai_image_model_access_denied:</code> plus Modell-Slug in <code>warnings</code>. Runbook: <code>docs/runbooks/real_image_provider_smoke.md</code> (BA 32.72). <strong>Budget:</strong> Live-Bilder sind kostenpflichtig — Mini-Smoke klein halten.</p>
+        </details>
+        <div id="fd-vg-real-smoke-checklist" class="fd-vg-kv" aria-label="Real Production Smoke">
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Live Assets angefordert</span><span class="fd-vg-v" id="fd-vg-rs-live-assets">—</span><span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-rs-live-assets-b">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Kosten bestätigt</span><span class="fd-vg-v" id="fd-vg-rs-costs">—</span><span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-rs-costs-b">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Asset Provider bereit</span><span class="fd-vg-v" id="fd-vg-rs-asset-provider">—</span><span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-rs-asset-provider-b">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Asset Quality strict/loose</span><span class="fd-vg-v" id="fd-vg-rs-asset-quality">—</span><span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-rs-asset-quality-b">Nicht verfügbar</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Voice-Modus produktiv gewählt</span><span class="fd-vg-v" id="fd-vg-rs-voice-mode">—</span><span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-rs-voice-mode-b">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Voice Provider bereit</span><span class="fd-vg-v" id="fd-vg-rs-voice-provider">—</span><span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-rs-voice-provider-b">Unbekannt</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Timing / Voice Fit</span><span class="fd-vg-v" id="fd-vg-rs-timing">—</span><span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-rs-timing-b">Nicht verfügbar</span></div>
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Motion optional</span><span class="fd-vg-v" id="fd-vg-rs-motion">—</span><span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-rs-motion-b">Unbekannt</span></div>
+        </div>
+        <div class="fd-vg-kv" style="margin-top:0.45rem" aria-label="Smoke Empfehlung">
+          <div class="fd-vg-kv-row"><span class="fd-vg-k">Empfehlung</span><span class="fd-vg-v" id="fd-vg-rs-reco">Unbekannt</span></div>
+        </div>
       </div>
       <div style="grid-column:1/-1" class="fp-dry-run-actions">
         <button type="button" class="primary" id="fd-video-generate-submit" data-ba323-video-generate="1">Video generieren</button>
         <button type="button" class="sm" id="fd-video-generate-clear" data-ba323-video-generate="1">Zurücksetzen</button>
       </div>
+      <div style="grid-column:1/-1">
+        <p class="muted" id="fd-vg-inline-422-hint" style="margin:0.35rem 0 0;font-size:0.78rem"></p>
+        <button type="button" class="sm" id="fd-vg-go-confirm-costs" style="display:none;margin-top:0.35rem">Zur Kostenbestätigung</button>
+      </div>
     </div>
     <p class="muted" id="fd-video-generate-status" aria-live="polite"></p>
-    <pre class="out out-empty" id="fd-video-generate-result" style="max-height:260px;display:none"></pre>
+    <div class="fd-vg-result-card" id="fd-vg-last-run-summary" style="display:none;margin-top:0.75rem" aria-live="polite">
+      <div class="fd-vg-result-head">
+        <div>
+          <h3 class="fd-vg-result-title">Letzter gespeicherter Video-Lauf</h3>
+          <p class="fd-vg-result-sub">Aus lokalem Browser-Speicher.</p>
+        </div>
+        <span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-last-run-badge">LOCAL</span>
+      </div>
+      <div class="fd-vg-kv" id="fd-vg-last-run-kv" aria-label="Letzter gespeicherter Video-Lauf"></div>
+      <div style="margin-top:0.55rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button type="button" class="sm" id="fd-vg-forget-last-run">Letzten Lauf vergessen</button>
+      </div>
+    </div>
+    <div class="fd-vg-result-card" id="fd-vg-operator-result" style="display:none" aria-live="polite">
+      <div class="fd-vg-result-head">
+        <div>
+          <h3 class="fd-vg-result-title" id="fd-vg-result-headline">Ergebnis</h3>
+          <p class="fd-vg-result-sub" id="fd-vg-result-subline">—</p>
+        </div>
+        <span class="fd-vg-badge fd-vg-badge--neutral" id="fd-vg-result-badge">OFFEN</span>
+      </div>
+      <div class="fd-vg-kv" id="fd-vg-result-kv">
+        <div class="fd-vg-kv-row"><span class="fd-vg-k">run_id</span><span class="fd-vg-v" id="fd-vg-run-id">—</span></div>
+      </div>
+      <div id="fd-vg-paths-wrap" style="display:none">
+        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Artefakte / Pfade</strong></div>
+        <div id="fd-vg-paths" class="fd-vg-kv" aria-label="Video Generate Pfade"></div>
+      </div>
+      <div id="fd-vg-thumbnail-pack-wrap" style="display:none;margin-top:0.75rem" data-ba3277-thumbnail-pack="1">
+        <div class="muted" style="font-size:0.78rem"><strong>Thumbnail Pack (BA 32.77)</strong></div>
+        <div id="fd-vg-thumbnail-pack-kv" class="fd-vg-kv" aria-label="Thumbnail Pack"></div>
+      </div>
+      <div id="fd-vg-production-bundle-wrap" style="display:none;margin-top:0.75rem" data-ba3279-production-bundle="1">
+        <div class="muted" style="font-size:0.78rem"><strong>Production Bundle (BA 32.79)</strong></div>
+        <div id="fd-vg-production-bundle-kv" class="fd-vg-kv" aria-label="Production Bundle"></div>
+      </div>
+      <div id="fd-vg-blockers-wrap" style="display:none">
+        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Blocker</strong></div>
+        <ul class="fd-vg-list" id="fd-vg-blockers"></ul>
+      </div>
+      <div id="fd-vg-warnings-wrap" style="display:none">
+        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Warnungen</strong></div>
+        <ul class="fd-vg-list" id="fd-vg-warnings"></ul>
+      </div>
+      <p class="fd-vg-cta" id="fd-vg-next-cta">—</p>
+      <div id="fd-vg-voice-wrap" style="display:none">
+        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Voice</strong></div>
+        <div id="fd-vg-voice-kv" class="fd-vg-kv" aria-label="Voice Artifact"></div>
+      </div>
+      <p class="muted" id="fd-vg-smoke-result" style="display:none;margin:0.5rem 0 0;font-size:0.78rem"><strong>Smoke-Ergebnis</strong>: —</p>
+      <div id="fd-vg-quality-wrap" style="display:none">
+        <div class="muted" style="margin-top:0.75rem;font-size:0.78rem"><strong>Produktions-Check</strong></div>
+        <div id="fd-vg-quality-checklist" class="fd-vg-kv" aria-label="Produktions-Checkliste"></div>
+      </div>
+      <p class="muted" id="fd-vg-fallback-explain" style="display:none;margin:0.35rem 0 0;font-size:0.78rem">Dieser Lauf nutzt Platzhalter/Fallbacks, weil echte Assets, echte Voice oder Motion-Clips fehlen.</p>
+      <div class="fd-vg-raw">
+        <details id="fd-vg-raw-details">
+          <summary>Raw JSON (Debug)</summary>
+          <pre class="out out-empty" id="fd-video-generate-result" style="max-height:260px;display:none"></pre>
+        </details>
+      </div>
+    </div>
   </section>
 
   <section class="panel panel--fresh-preview fp-cockpit-primary" id="panel-ba303-fresh-preview" aria-labelledby="fp-snapshot-h">
@@ -1932,53 +2208,59 @@ button.fp-copy-path:disabled { opacity: 0.45; cursor: not-allowed; }
     </div>
   </section>
 
-  <section class="panel" id="coll-source-intake" style="margin-top:1rem">
-    <h2>Source Intake (BA 11.0)</h2>
-    <p class="muted">YouTube- oder News-URL ruft bestehende Generate-Endpunkte auf; Rohtext nur clientseitig in Kapitel segmentiert (Dashboard-V1, kein neuer API-Vertrag).</p>
-    <div class="intake-type-row">
-      <label for="intake-source-type">Quelle</label>
-      <select id="intake-source-type">
-        <option value="youtube">YouTube URL</option>
-        <option value="news">News / Artikel URL</option>
-        <option value="raw_text">Rohtext</option>
-      </select>
-    </div>
-    <label for="intake-youtube-url">YouTube URL</label>
-    <input type="text" id="intake-youtube-url" placeholder="https://www.youtube.com/watch?v=…"/>
-    <label for="intake-news-url">News URL</label>
-    <input type="text" id="intake-news-url" placeholder="https://…"/>
-    <label for="intake-raw-text">Rohtext</label>
-    <textarea id="intake-raw-text" placeholder="Freitext einfügen…" style="min-height:100px"></textarea>
-    <label for="intake-topic">Topic (optional, Kategorie/Thema)</label>
-    <input type="text" id="intake-topic" placeholder="z. B. Politik, True Crime, Wirtschaft"/>
-    <p class="muted" id="intake-raw-headline-hint" style="font-size:0.76rem;margin:-0.25rem 0 0.6rem">Rohtext: Titel automatisch aus Rohtext erzeugt — oder aus dem Topic-Feld als Headline, falls gesetzt. Rohtext ≠ Titel.</p>
-    <div class="actions" style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
-      <button type="button" class="primary" id="btn-intake-body" data-label="Quelle analysieren & Input füllen">Quelle analysieren & Input füllen</button>
-      <button type="button" id="btn-fill-test-body" title="Schreibt feste Testwerte ins Input Panel (DOM/IDs prüfen, kein Intake)">Fill Test Body</button>
-      <button type="button" id="btn-dom-test" title="Prüft Error-Bar / JS ohne Intake">DOM TEST</button>
-    </div>
-    <p id="intake-status" class="intake-status muted" role="status" aria-live="polite"></p>
-    <p id="intake-source-debug" class="muted" style="font-size:0.78rem;margin:0.15rem 0 0" aria-live="polite"></p>
-    <p id="intake-field-debug" class="muted" style="font-size:0.74rem;margin:0.2rem 0 0;font-family:ui-monospace,monospace;white-space:pre-wrap;word-break:break-word" aria-live="polite"></p>
-  </section>
+  <details class="fd-coll" id="coll-legacy-debug" style="margin-top:1rem">
+    <summary>Legacy Source Intake / Debug (BA 11.0)</summary>
+    <div class="coll-body">
+      <p class="muted">Dieser ältere Bereich bleibt für Debug/alte Pipeline-Pfade erhalten. Für neue Produktionen nutze oben „Video generieren“.</p>
+      <section class="panel" id="coll-source-intake" style="margin-top:0.75rem">
+        <h2>Source Intake (BA 11.0)</h2>
+        <p class="muted">YouTube- oder News-URL ruft bestehende Generate-Endpunkte auf; Rohtext nur clientseitig in Kapitel segmentiert (Dashboard-V1, kein neuer API-Vertrag).</p>
+        <div class="intake-type-row">
+          <label for="intake-source-type">Quelle</label>
+          <select id="intake-source-type">
+            <option value="youtube">YouTube URL</option>
+            <option value="news">News / Artikel URL</option>
+            <option value="raw_text">Rohtext</option>
+          </select>
+        </div>
+        <label for="intake-youtube-url">YouTube URL</label>
+        <input type="text" id="intake-youtube-url" placeholder="https://www.youtube.com/watch?v=…"/>
+        <label for="intake-news-url">News URL</label>
+        <input type="text" id="intake-news-url" placeholder="https://…"/>
+        <label for="intake-raw-text">Rohtext</label>
+        <textarea id="intake-raw-text" placeholder="Freitext einfügen…" style="min-height:100px"></textarea>
+        <label for="intake-topic">Topic (optional, Kategorie/Thema)</label>
+        <input type="text" id="intake-topic" placeholder="z. B. Politik, True Crime, Wirtschaft"/>
+        <p class="muted" id="intake-raw-headline-hint" style="font-size:0.76rem;margin:-0.25rem 0 0.6rem">Rohtext: Titel automatisch aus Rohtext erzeugt — oder aus dem Topic-Feld als Headline, falls gesetzt. Rohtext ≠ Titel.</p>
+        <div class="actions" style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
+          <button type="button" class="primary" id="btn-intake-body" data-label="Quelle analysieren & Input füllen">Quelle analysieren & Input füllen</button>
+          <button type="button" id="btn-fill-test-body" title="Schreibt feste Testwerte ins Input Panel (DOM/IDs prüfen, kein Intake)">Fill Test Body</button>
+          <button type="button" id="btn-dom-test" title="Prüft Error-Bar / JS ohne Intake">DOM TEST</button>
+        </div>
+        <p id="intake-status" class="intake-status muted" role="status" aria-live="polite"></p>
+        <p id="intake-source-debug" class="muted" style="font-size:0.78rem;margin:0.15rem 0 0" aria-live="polite"></p>
+        <p id="intake-field-debug" class="muted" style="font-size:0.74rem;margin:0.2rem 0 0;font-family:ui-monospace,monospace;white-space:pre-wrap;word-break:break-word" aria-live="polite"></p>
+      </section>
 
-  <section class="panel" id="coll-full-pipeline" style="margin-top:1rem">
-    <h2>Run Full Pipeline (BA 11.1)</h2>
-    <p class="muted">Orchestrierung: Generate → Export → Preview → Readiness → Optimize → CTR → Founder Summary → Production Bundle (Downloads). Bei Fehler: Schritt rot, Pipeline stoppt. Ende: Session Snapshot speichern.</p>
-    <ol id="pipeline-timeline" class="pipe-timeline" aria-label="Pipeline Timeline">
-      <li class="pipe-step pending" data-pi="0"><span class="ps-label">1. Generate (Quelle)</span><span class="ps-msg"></span></li>
-      <li class="pipe-step pending" data-pi="1"><span class="ps-label">2. Export Package</span><span class="ps-msg"></span></li>
-      <li class="pipe-step pending" data-pi="2"><span class="ps-label">3. Preview</span><span class="ps-msg"></span></li>
-      <li class="pipe-step pending" data-pi="3"><span class="ps-label">4. Readiness</span><span class="ps-msg"></span></li>
-      <li class="pipe-step pending" data-pi="4"><span class="ps-label">5. Optimize</span><span class="ps-msg"></span></li>
-      <li class="pipe-step pending" data-pi="5"><span class="ps-label">6. Thumbnail CTR</span><span class="ps-msg"></span></li>
-      <li class="pipe-step pending" data-pi="6"><span class="ps-label">7. Founder Summary</span><span class="ps-msg"></span></li>
-      <li class="pipe-step pending" data-pi="7"><span class="ps-label">8. Production Bundle</span><span class="ps-msg"></span></li>
-    </ol>
-    <div class="actions">
-      <button type="button" class="primary" id="btn-full-pipeline" data-label="Run Full Pipeline">Run Full Pipeline</button>
+      <section class="panel" id="coll-full-pipeline" style="margin-top:0.75rem">
+        <h2>Run Full Pipeline (BA 11.1)</h2>
+        <p class="muted">Orchestrierung: Generate → Export → Preview → Readiness → Optimize → CTR → Founder Summary → Production Bundle (Downloads). Bei Fehler: Schritt rot, Pipeline stoppt. Ende: Session Snapshot speichern.</p>
+        <ol id="pipeline-timeline" class="pipe-timeline" aria-label="Pipeline Timeline">
+          <li class="pipe-step pending" data-pi="0"><span class="ps-label">1. Generate (Quelle)</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="1"><span class="ps-label">2. Export Package</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="2"><span class="ps-label">3. Preview</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="3"><span class="ps-label">4. Readiness</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="4"><span class="ps-label">5. Optimize</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="5"><span class="ps-label">6. Thumbnail CTR</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="6"><span class="ps-label">7. Founder Summary</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="7"><span class="ps-label">8. Production Bundle</span><span class="ps-msg"></span></li>
+        </ol>
+        <div class="actions">
+          <button type="button" class="primary" id="btn-full-pipeline" data-label="Run Full Pipeline">Run Full Pipeline</button>
+        </div>
+      </section>
     </div>
-  </section>
+  </details>
 
   <div class="grid grid-2">
     <section class="panel" id="coll-input-panel">
@@ -5388,6 +5670,7 @@ try {
       st.textContent = "";
       st.classList.remove("intake-status-err", "intake-status-success");
     }
+    fdRenderVideoGenerateOperatorResult(null, "neutral");
     var res = document.getElementById("fd-video-generate-result");
     if (res) {
       res.textContent = "";
@@ -5400,6 +5683,495 @@ try {
       btn.classList.remove("is-loading", "is-success", "is-error");
       btn.textContent = "Video generieren";
     }
+    fdUpdateVideoGenerateExecutiveState(null, "neutral");
+    fdExecSetNextStep("Gib eine URL ein und starte Video generieren.", "fd-video-generate-url", "");
+    fdSetGuidedFlowVideoGenerateState("neutral", "Gib eine URL ein und starte Video generieren.");
+  }
+
+  function fdVgListFill(listEl, items) {
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    if (!items || !items.length) return;
+    items.forEach(function(x) {
+      var li = document.createElement("li");
+      li.textContent = String(x);
+      listEl.appendChild(li);
+    });
+  }
+
+  function fdVgBuildPathRow(label, pathVal) {
+    var wrap = document.createElement("div");
+    wrap.className = "fd-vg-kv-row";
+    var k = document.createElement("span");
+    k.className = "fd-vg-k";
+    k.textContent = String(label);
+    var v = document.createElement("span");
+    v.className = "fd-vg-v";
+    var p = String(pathVal || "").trim();
+    var short = p;
+    if (p && p.length > 90) short = "…" + p.slice(p.length - 90);
+    v.textContent = p ? short : "—";
+    if (p) v.setAttribute("title", p);
+    var isWin = /^[a-zA-Z]:\\\\/.test(p) || /^\\\\\\\\/.test(p);
+    var canOpen = /^https?:\\/\\//i.test(p) || p.startsWith("/founder/");
+    var openEl = document.createElement("span");
+    openEl.className = "muted";
+    openEl.style.fontSize = "0.72rem";
+    openEl.style.marginLeft = "0.25rem";
+    if (p && canOpen) {
+      var a = document.createElement("a");
+      a.href = p;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "fp-open-artifact";
+      a.textContent = "Öffnen";
+      openEl = a;
+    } else if (p && isWin) {
+      openEl.textContent = "lokaler Pfad";
+    } else {
+      openEl.textContent = "";
+      openEl.setAttribute("aria-hidden", "true");
+    }
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "sm fp-copy-path";
+    b.textContent = "Kopieren";
+    b.disabled = !p;
+    if (p) {
+      b.addEventListener("click", function() { fdFpCopyToClipboard(p, b); });
+    }
+    wrap.appendChild(k);
+    wrap.appendChild(v);
+    wrap.appendChild(openEl);
+    wrap.appendChild(b);
+    return wrap;
+  }
+
+  function fdRenderVideoGenerateOperatorResult(payload, mode) {
+    var host = document.getElementById("fd-vg-operator-result");
+    if (!host) return;
+    var badge = document.getElementById("fd-vg-result-badge");
+    var h = document.getElementById("fd-vg-result-headline");
+    var sub = document.getElementById("fd-vg-result-subline");
+    var runIdEl = document.getElementById("fd-vg-run-id");
+    var blockersWrap = document.getElementById("fd-vg-blockers-wrap");
+    var blockersEl = document.getElementById("fd-vg-blockers");
+    var warnsWrap = document.getElementById("fd-vg-warnings-wrap");
+    var warnsEl = document.getElementById("fd-vg-warnings");
+    var pathsWrap = document.getElementById("fd-vg-paths-wrap");
+    var pathsEl = document.getElementById("fd-vg-paths");
+    var thumbWrap = document.getElementById("fd-vg-thumbnail-pack-wrap");
+    var thumbKv = document.getElementById("fd-vg-thumbnail-pack-kv");
+    var bundleWrap = document.getElementById("fd-vg-production-bundle-wrap");
+    var bundleKv = document.getElementById("fd-vg-production-bundle-kv");
+    var cta = document.getElementById("fd-vg-next-cta");
+    var fbExplain = document.getElementById("fd-vg-fallback-explain");
+    var vWrap = document.getElementById("fd-vg-voice-wrap");
+    var vHost = document.getElementById("fd-vg-voice-kv");
+    var smokeEl = document.getElementById("fd-vg-smoke-result");
+    var qWrap = document.getElementById("fd-vg-quality-wrap");
+    var qHost = document.getElementById("fd-vg-quality-checklist");
+    var rawDet = document.getElementById("fd-vg-raw-details");
+    var rawPre = document.getElementById("fd-video-generate-result");
+
+    var j = payload || null;
+    var st = String(mode || "").toLowerCase();
+    var ok = !!(j && j.ok);
+    var rid = (j && j.run_id) ? String(j.run_id) : "";
+    var blocking = (j && j.blocking_reasons && j.blocking_reasons.length) ? j.blocking_reasons : [];
+    var warnings = (j && j.warnings && j.warnings.length) ? j.warnings : [];
+    var liveMotionAvailable = !!(j && j.motion_strategy && j.motion_strategy.live_motion_available);
+
+    // default hide lists
+    if (blockersWrap) blockersWrap.style.display = "none";
+    if (warnsWrap) warnsWrap.style.display = "none";
+    if (pathsWrap) pathsWrap.style.display = "none";
+    if (pathsEl) pathsEl.innerHTML = "";
+    if (thumbWrap) thumbWrap.style.display = "none";
+    if (thumbKv) thumbKv.innerHTML = "";
+    if (bundleWrap) bundleWrap.style.display = "none";
+    if (bundleKv) bundleKv.innerHTML = "";
+    if (cta) cta.textContent = "—";
+    if (fbExplain) fbExplain.style.display = "none";
+    if (vWrap) vWrap.style.display = "none";
+    if (vHost) vHost.innerHTML = "";
+    if (smokeEl) { smokeEl.style.display = "none"; smokeEl.textContent = "Smoke-Ergebnis: —"; }
+    if (qWrap) qWrap.style.display = "none";
+    if (qHost) qHost.innerHTML = "";
+
+    if (st === "neutral" || !j) {
+      host.style.display = "none";
+      if (rawPre) {
+        rawPre.textContent = "";
+        rawPre.style.display = "none";
+        rawPre.classList.add("out-empty");
+      }
+      if (rawDet) rawDet.open = false;
+      return;
+    }
+
+    host.style.display = "block";
+    if (runIdEl) runIdEl.textContent = rid || "—";
+
+    if (st === "running") {
+      if (h) h.textContent = "Video-Generierung läuft …";
+      if (sub) sub.textContent = "Bitte warten. Nach Abschluss erscheinen Ergebnis, Pfade und Warnungen hier.";
+      if (badge) {
+        badge.textContent = "RUNNING";
+        badge.className = "fd-vg-badge fd-vg-badge--neutral";
+      }
+      if (cta) cta.textContent = "Nächster Schritt: Warte auf Abschluss und prüfe danach das Ergebnis.";
+      if (rawDet) rawDet.open = false;
+      if (rawPre) {
+        rawPre.textContent = "";
+        rawPre.style.display = "none";
+        rawPre.classList.add("out-empty");
+      }
+      return;
+    }
+
+    function _kvRow(hostEl, kText, vText) {
+      if (!hostEl) return;
+      var row = document.createElement("div");
+      row.className = "fd-vg-kv-row";
+      var k = document.createElement("span");
+      k.className = "fd-vg-k";
+      k.textContent = String(kText || "");
+      var v = document.createElement("span");
+      v.className = "fd-vg-v";
+      v.textContent = String(vText || "—");
+      row.appendChild(k);
+      row.appendChild(v);
+      hostEl.appendChild(row);
+    }
+
+    // Voice Artifact (best effort)
+    try {
+      var va = (j && j.voice_artifact) ? j.voice_artifact : null;
+      if (vWrap && vHost) {
+        vWrap.style.display = "block";
+        var reqVm = va && va.requested_voice_mode ? String(va.requested_voice_mode) : (j && j.readiness_audit && j.readiness_audit.requested_voice_mode ? String(j.readiness_audit.requested_voice_mode) : "—");
+        var effVm = va && va.effective_voice_mode ? String(va.effective_voice_mode) : (j && j.readiness_audit && j.readiness_audit.effective_voice_mode ? String(j.readiness_audit.effective_voice_mode) : "—");
+        _kvRow(vHost, "Modus", reqVm + " → " + effVm);
+        var isDummy = !!(va && va.is_dummy);
+        var voiceReady = !!(va && va.voice_ready);
+        var voicePath = va && va.voice_file_path ? String(va.voice_file_path) : "";
+        var dur = (va && va.duration_seconds != null) ? String(va.duration_seconds) : "";
+        var statusText = "—";
+        if (effVm === "none") statusText = "Keine Voice ausgewählt";
+        else if (isDummy) statusText = "Dummy Voice verwendet";
+        else if (voiceReady) statusText = "Echte Voice-Datei vorhanden";
+        else if (voicePath) statusText = "Voice-Datei fehlt";
+        _kvRow(vHost, "Status", statusText);
+        if (voicePath) {
+          var row = fdVgBuildPathRow("Voice-Datei", voicePath);
+          if (row) vHost.appendChild(row);
+        }
+        if (dur) _kvRow(vHost, "Dauer (Sek.)", dur);
+      }
+    } catch (eVa) {}
+
+    // Asset Quality (small, operator-friendly)
+    try {
+      // Keep status strings in bundle for tests + operator hints.
+      var FD_VG_ASSET_QUALITY_STATUSES = ["production_ready", "mixed_assets", "placeholder_only", "missing_assets", "unknown"];
+      var FD_VG_ASSET_QUALITY_SUMMARY_HINTS = {
+        production_ready: "Asset Manifest enthält echte Assets ohne Placeholder.",
+        mixed_assets: "Echte Assets vorhanden, aber noch Placeholder im Manifest.",
+        placeholder_only: "Nur Placeholder-Assets im Manifest.",
+        missing_assets: "Keine Asset-Dateien im Manifest gefunden.",
+        unknown: "Asset-Qualität unklar."
+      };
+      var aa = (j && j.asset_artifact) ? j.asset_artifact : null;
+      if (aa && typeof aa === "object") {
+        var gate = aa.asset_quality_gate || {};
+        var stA = gate && gate.status ? String(gate.status) : "";
+        var sumA = gate && gate.summary ? String(gate.summary) : "";
+        if (!sumA && FD_VG_ASSET_QUALITY_SUMMARY_HINTS[stA]) sumA = FD_VG_ASSET_QUALITY_SUMMARY_HINTS[stA];
+        // Put into warnings box if present, else into voice kv as a minimal carrier.
+        if (warnsWrap && warnsEl) {
+          var line = "Asset Quality: " + (stA || "unknown") + (sumA ? (" — " + sumA) : "");
+          warnsWrap.style.display = "block";
+          var extraW = [line].concat(warnings || []);
+          fdVgListFill(warnsEl, extraW);
+        } else if (vHost) {
+          _kvRow(vHost, "Asset Quality", (stA || "unknown") + (sumA ? (" — " + sumA) : ""));
+        }
+      }
+    } catch (eAa) {}
+
+    function _qcRow(label, statusText, detail) {
+      if (!qHost) return;
+      var row = document.createElement("div");
+      row.className = "fd-vg-kv-row";
+      var k = document.createElement("span");
+      k.className = "fd-vg-k";
+      k.textContent = String(label);
+      var v = document.createElement("span");
+      v.className = "fd-vg-v";
+      v.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+      v.style.fontSize = "0.82rem";
+      v.textContent = String(detail || "");
+      var badge = document.createElement("span");
+      badge.className = "fd-vg-badge " + (statusText === "OK" ? "fd-vg-badge--ok" : (statusText === "Prüfen" ? "fd-vg-badge--fallback" : "fd-vg-badge--neutral"));
+      badge.textContent = String(statusText);
+      row.appendChild(k);
+      row.appendChild(v);
+      row.appendChild(badge);
+      qHost.appendChild(row);
+    }
+
+    // Quality checklist (defensive) — Asset-Gate getrennt von Render-Layer (BA 32.27)
+    var joined = fdVgWarnJoinedLower(warnings);
+    var hasVoiceFallback = fdVgHasAnySignal(joined, ["dummy", "voice_mode_fallback", "no_elevenlabs_key"]);
+    var hasScript = !!(j && j.script_path);
+    var hasPack = !!(j && j.scene_asset_pack_path);
+    var hasManifest = !!(j && j.asset_manifest_path);
+    var hasFinalVideo = !!(j && j.final_video_path);
+    var motionFieldPresent = (j && j.motion_strategy && typeof j.motion_strategy.live_motion_available === "boolean");
+    var motionOk = motionFieldPresent ? !!j.motion_strategy.live_motion_available : null;
+    var raQc = (j && j.readiness_audit && typeof j.readiness_audit === "object") ? j.readiness_audit : {};
+    var gateQc = (j && j.asset_artifact && j.asset_artifact.asset_quality_gate && typeof j.asset_artifact.asset_quality_gate === "object")
+      ? j.asset_artifact.asset_quality_gate : {};
+    var assetStrictQc = !!(raQc.asset_strict_ready || gateQc.strict_ready);
+    var gStatusQc = gateQc.status ? String(gateQc.status) : "";
+    var hasAaQc = !!(j && j.asset_artifact && typeof j.asset_artifact === "object");
+    var assetRowStatus = "Prüfen";
+    var assetRowDetail = "Asset-Gate unklar";
+    if (assetStrictQc) {
+      assetRowStatus = "OK";
+      assetRowDetail = "Asset Quality Gate strict_ready (Manifest) — unabhängig von Render-Warnungen";
+    } else if (!hasAaQc || !gStatusQc) {
+      assetRowStatus = "Prüfen";
+      assetRowDetail = "kein vollständiges asset_artifact / Gate";
+    } else if (gStatusQc === "mixed_assets" || gStatusQc === "placeholder_only" || gStatusQc === "missing_assets" || gStatusQc === "unknown") {
+      assetRowStatus = "Prüfen";
+      assetRowDetail = "Asset-Gate: " + gStatusQc;
+    } else if (gStatusQc === "production_ready") {
+      assetRowStatus = "OK";
+      assetRowDetail = "asset_quality_gate production_ready";
+    }
+    var renderHitQc = fdVgRenderLayerPlaceholderHit(joined, raQc, j);
+    var renderRowStatus = "OK";
+    var renderRowDetail = "Render-Layer nutzt keine Placeholder-Signale.";
+    if (!hasFinalVideo) {
+      renderRowStatus = "Nicht verfügbar";
+      renderRowDetail = "final_video_path fehlt — keine Renderdaten";
+    } else if (renderHitQc) {
+      renderRowStatus = "Prüfen";
+      renderRowDetail = "Render-Layer nutzt noch Placeholder/Cinematic-Fallback.";
+    }
+
+    if (qWrap && qHost) {
+      qWrap.style.display = "block";
+      _qcRow("Script erstellt", hasScript ? "OK" : "Nicht verfügbar", hasScript ? "script_path vorhanden" : "script_path fehlt");
+      _qcRow("Scene Asset Pack erstellt", hasPack ? "OK" : "Nicht verfügbar", hasPack ? "scene_asset_pack_path vorhanden" : "scene_asset_pack_path fehlt");
+      _qcRow("Asset Manifest vorhanden", hasManifest ? "OK" : "Nicht verfügbar", hasManifest ? "asset_manifest_path vorhanden" : "asset_manifest_path fehlt");
+      _qcRow("Final Video Pfad vorhanden", hasFinalVideo ? "OK" : "Nicht verfügbar", hasFinalVideo ? "final_video_path vorhanden" : "final_video_path fehlt");
+      _qcRow("Echte Assets verwendet", assetRowStatus, assetRowDetail);
+      _qcRow("Render-Layer", renderRowStatus, renderRowDetail);
+      var vq = fdVgVoiceQcRowTuple(j, raQc, hasVoiceFallback);
+      _qcRow(vq[0], vq[1], vq[2]);
+      if (!motionFieldPresent) _qcRow("Live Motion verfügbar", "Nicht verfügbar", "motion_strategy.live_motion_available fehlt");
+      else _qcRow("Live Motion verfügbar", motionOk ? "OK" : "Prüfen", motionOk ? "live_motion_available=true" : "live_motion_available=false");
+    }
+
+    if (ok) {
+      var warnJoined = "";
+      try { warnJoined = joined; } catch (eW2) { warnJoined = ""; }
+      var hasFallbackSignal = fdVgIsOkRunFallbackPreview(j, warnJoined);
+      var op = j && j.video_generate_operator && typeof j.video_generate_operator === "object" ? j.video_generate_operator : null;
+
+      if (op && op.headline) {
+        if (h) h.textContent = String(op.headline || "");
+        if (sub) sub.textContent = String(op.subline || "");
+        if (badge) {
+          badge.textContent = String(op.badge || "Ready");
+          var bcls = String(op.badge_class || "ok");
+          if (bcls === "bad") badge.className = "fd-vg-badge fd-vg-badge--blocked";
+          else if (bcls === "warn") badge.className = "fd-vg-badge fd-vg-badge--fallback";
+          else badge.className = "fd-vg-badge fd-vg-badge--ok";
+        }
+        if (cta) cta.textContent = hasFallbackSignal ? "Nächster Schritt: Provider/Assets prüfen oder Preview öffnen." : "Finales Video prüfen";
+        if (fbExplain) fbExplain.style.display = hasFallbackSignal ? "block" : "none";
+        if (smokeEl) {
+          smokeEl.style.display = "block";
+          var slOp = op.smoke_line ? String(op.smoke_line) : "";
+          smokeEl.innerHTML = slOp ? ("<strong>Smoke-Ergebnis</strong>: " + slOp) : "<strong>Smoke-Ergebnis</strong>: —";
+        }
+      } else if (hasFallbackSignal) {
+        if (h) h.textContent = "Fallback-Preview erstellt";
+        if (sub) {
+          if (assetStrictQc || gStatusQc === "production_ready") {
+            sub.textContent = "Live Asset erfolgreich, aber Render/Audio nutzt noch Fallbacks.";
+          } else {
+            sub.textContent = "Der Lauf ist technisch abgeschlossen, aber echte Assets, echte Voice oder Motion-Clips fehlen noch.";
+          }
+        }
+        if (badge) {
+          badge.textContent = "Fallback / Preview";
+          badge.className = "fd-vg-badge fd-vg-badge--fallback";
+        }
+        if (cta) cta.textContent = "Nächster Schritt: Provider/Assets prüfen oder Preview öffnen.";
+        if (fbExplain) fbExplain.style.display = "block";
+        if (smokeEl) { smokeEl.style.display = "block"; smokeEl.innerHTML = "<strong>Smoke-Ergebnis</strong>: Smoke lief, aber Fallbacks wurden genutzt"; }
+      } else {
+        if (h) h.textContent = "Video-Generierung abgeschlossen";
+        var silentOnlyOk = fdVgAudioSilentIsExpectedFallback(j) && warnJoined.indexOf("audio_missing_silent_render") >= 0 && !fdVgWarnTriggersFallbackPreview(j, warnJoined);
+        if (sub) {
+          sub.textContent = silentOnlyOk
+            ? "Keine Voice ausgewählt; Silent Render ist erwartet. Finales Ergebnis prüfen und Preview öffnen."
+            : "Finales Ergebnis prüfen und Preview öffnen.";
+        }
+        if (badge) {
+          badge.textContent = "Ready";
+          badge.className = "fd-vg-badge fd-vg-badge--ok";
+        }
+        if (cta) cta.textContent = "Finales Video prüfen";
+        if (smokeEl) {
+          smokeEl.style.display = "block";
+          smokeEl.innerHTML = silentOnlyOk
+            ? "<strong>Smoke-Ergebnis</strong>: Smoke erfolgreich; Silent Render erwartet."
+            : "<strong>Smoke-Ergebnis</strong>: Real Production Smoke erfolgreich prüfen";
+        }
+      }
+
+      var motionReqUi = !!(raQc && raQc.motion_requested);
+      var allowLiveUi = !!(raQc && raQc.allow_live_motion_requested);
+      if (!liveMotionAvailable && (motionReqUi || allowLiveUi)) {
+        if (warnsWrap && warnsEl) {
+          var extra = ["Keine Live-Motion-Clips verfügbar."].concat(warnings || []);
+          warnsWrap.style.display = "block";
+          fdVgListFill(warnsEl, extra);
+        }
+      } else if (warnings && warnings.length && warnsWrap && warnsEl) {
+        warnsWrap.style.display = "block";
+        fdVgListFill(warnsEl, warnings);
+      }
+    } else {
+      if (h) h.textContent = "Video konnte nicht erzeugt werden";
+      if (sub) sub.textContent = "Blocker prüfen und Lauf erneut starten.";
+      if (badge) {
+        badge.textContent = "BLOCKED";
+        badge.className = "fd-vg-badge fd-vg-badge--blocked";
+      }
+      if (cta) cta.textContent = "Blocker beheben und erneut starten";
+      if (smokeEl) { smokeEl.style.display = "block"; smokeEl.innerHTML = "<strong>Smoke-Ergebnis</strong>: Smoke fehlgeschlagen"; }
+      if (blocking && blocking.length && blockersWrap && blockersEl) {
+        blockersWrap.style.display = "block";
+        fdVgListFill(blockersEl, blocking);
+      }
+      if (warnings && warnings.length && warnsWrap && warnsEl) {
+        warnsWrap.style.display = "block";
+        fdVgListFill(warnsEl, warnings);
+      }
+    }
+
+    // Paths (best effort)
+    var paths = [];
+    var tpPack = null;
+    if (j) {
+      if (j.final_video_path) paths.push(["Final Video", j.final_video_path]);
+      if (j.output_dir) paths.push(["Output-Ordner", j.output_dir]);
+      if (j.script_path) paths.push(["Script", j.script_path]);
+      if (j.scene_asset_pack_path) paths.push(["Scene Asset Pack", j.scene_asset_pack_path]);
+      if (j.asset_manifest_path) paths.push(["Asset Manifest", j.asset_manifest_path]);
+      if (j.voice_artifact && j.voice_artifact.voice_file_path) paths.push(["Voice-Datei", j.voice_artifact.voice_file_path]);
+      if (j.open_me_report_path) paths.push(["OPEN_ME Ergebnisbericht", j.open_me_report_path]);
+      tpPack = (j.thumbnail_pack && typeof j.thumbnail_pack === "object") ? j.thumbnail_pack : null;
+      if (tpPack) {
+        if (tpPack.thumbnail_recommended_path) paths.push(["Empfohlenes Thumbnail", String(tpPack.thumbnail_recommended_path)]);
+        if (tpPack.thumbnail_pack_result_path) paths.push(["Thumbnail Batch Report (JSON)", String(tpPack.thumbnail_pack_result_path)]);
+        if (tpPack.thumbnail_pack_path) paths.push(["Thumbnail Pack Ordner", String(tpPack.thumbnail_pack_path)]);
+      }
+      var pb = (j.production_bundle && typeof j.production_bundle === "object") ? j.production_bundle : null;
+      if (pb) {
+        if (pb.production_bundle_path) paths.push(["Production Bundle Ordner", String(pb.production_bundle_path)]);
+        if (pb.production_bundle_manifest_path) paths.push(["Production Bundle Manifest", String(pb.production_bundle_manifest_path)]);
+        if (pb.final_video_bundle_path) paths.push(["Final Video (Bundle)", String(pb.final_video_bundle_path)]);
+        if (pb.recommended_thumbnail_bundle_path) paths.push(["Recommended Thumbnail (Bundle)", String(pb.recommended_thumbnail_bundle_path)]);
+      }
+      var ia = (j.image_asset_audit && typeof j.image_asset_audit === "object") ? j.image_asset_audit : null;
+      if (ia) {
+        if (ia.effective_image_provider != null && String(ia.effective_image_provider).trim())
+          paths.push(["Image Provider (effektiv)", String(ia.effective_image_provider)]);
+        if (ia.requested_image_provider != null && String(ia.requested_image_provider).trim())
+          paths.push(["Image Provider (angefordert)", String(ia.requested_image_provider)]);
+        var ro = ia.openai_image_runner_options;
+        if (ro && typeof ro === "object") {
+          if (ro.model != null && String(ro.model).trim()) paths.push(["OpenAI Bild-Modell (Runner)", String(ro.model)]);
+          if (ro.size != null && String(ro.size).trim()) paths.push(["OpenAI Größe (Runner)", String(ro.size)]);
+          if (ro.timeout_seconds != null) paths.push(["OpenAI Timeout Sek. (Runner)", String(ro.timeout_seconds)]);
+        }
+        if (ia.real_asset_file_count != null) paths.push(["Echte Asset-Dateien (Zähler)", String(ia.real_asset_file_count)]);
+        if (ia.asset_manifest_file_count != null) paths.push(["Manifest-Asset-Zeilen", String(ia.asset_manifest_file_count)]);
+        try {
+          var realN = (ia.real_asset_file_count != null) ? parseInt(String(ia.real_asset_file_count), 10) : NaN;
+          var manN = (ia.asset_manifest_file_count != null) ? parseInt(String(ia.asset_manifest_file_count), 10) : NaN;
+          if (!isNaN(realN) && !isNaN(manN) && manN > 0 && realN < manN) {
+            paths.push([
+              "Hinweis",
+              "Teilweise Platzhalter, weil Live-Asset-Limit erreicht wurde oder der Provider nicht alle Szenen erzeugt hat."
+            ]);
+          }
+        } catch (eCapHint) {}
+      }
+    }
+    if (paths.length && pathsWrap && pathsEl) {
+      pathsWrap.style.display = "block";
+      paths.forEach(function(p) { pathsEl.appendChild(fdVgBuildPathRow(p[0], p[1])); });
+    }
+
+    try {
+      if (tpPack && thumbWrap && thumbKv && st !== "neutral" && st !== "running" && j) {
+        thumbKv.innerHTML = "";
+        var tstatusTp = tpPack.thumbnail_pack_status != null ? String(tpPack.thumbnail_pack_status) : "—";
+        _kvRow(thumbKv, "Thumbnail Pack Status", tstatusTp);
+        if (tpPack.thumbnail_generated_count != null) _kvRow(thumbKv, "Generierte Thumbnails", String(tpPack.thumbnail_generated_count));
+        if (tpPack.thumbnail_top_score != null) _kvRow(thumbKv, "Top-Score", String(tpPack.thumbnail_top_score));
+        if (tpPack.thumbnail_recommended_score != null) _kvRow(thumbKv, "Empfehlungs-Score", String(tpPack.thumbnail_recommended_score));
+        var recPTp = tpPack.thumbnail_recommended_path ? String(tpPack.thumbnail_recommended_path) : "";
+        if (recPTp) thumbKv.appendChild(fdVgBuildPathRow("Empfohlenes Thumbnail", recPTp));
+        var repPTp = tpPack.thumbnail_pack_result_path ? String(tpPack.thumbnail_pack_result_path) : "";
+        if (repPTp) thumbKv.appendChild(fdVgBuildPathRow("Thumbnail Batch Report", repPTp));
+        var packPTp = tpPack.thumbnail_pack_path ? String(tpPack.thumbnail_pack_path) : "";
+        if (packPTp) thumbKv.appendChild(fdVgBuildPathRow("Thumbnail Pack Ordner", packPTp));
+        thumbWrap.style.display = "block";
+      }
+    } catch (eThumb) {}
+
+    try {
+      var pbPack = (j && j.production_bundle && typeof j.production_bundle === "object") ? j.production_bundle : null;
+      if (pbPack && bundleWrap && bundleKv && st !== "neutral" && st !== "running" && j) {
+        bundleKv.innerHTML = "";
+        var bst = pbPack.production_bundle_status != null ? String(pbPack.production_bundle_status) : "—";
+        _kvRow(bundleKv, "Production Bundle Status", bst);
+        var bpDir = pbPack.production_bundle_path ? String(pbPack.production_bundle_path) : "";
+        if (bpDir) bundleKv.appendChild(fdVgBuildPathRow("Production Bundle Ordner", bpDir));
+        var bmPath = pbPack.production_bundle_manifest_path ? String(pbPack.production_bundle_manifest_path) : "";
+        if (bmPath) bundleKv.appendChild(fdVgBuildPathRow("Production Bundle Manifest", bmPath));
+        var fvB = pbPack.final_video_bundle_path ? String(pbPack.final_video_bundle_path) : "";
+        if (fvB) bundleKv.appendChild(fdVgBuildPathRow("Final Video (Bundle)", fvB));
+        var rtB = pbPack.recommended_thumbnail_bundle_path ? String(pbPack.recommended_thumbnail_bundle_path) : "";
+        if (rtB) bundleKv.appendChild(fdVgBuildPathRow("Recommended Thumbnail (Bundle)", rtB));
+        bundleWrap.style.display = "block";
+      }
+    } catch (ePb) {}
+
+    // Raw JSON (optional)
+    if (rawPre) {
+      rawPre.style.display = "block";
+      rawPre.classList.remove("out-empty");
+      try { rawPre.textContent = JSON.stringify(j, null, 2); } catch (eJ) { rawPre.textContent = String(j); }
+    }
+  }
+
+  function fdVgDispatchInputChange(el) {
+    if (!el || typeof el.dispatchEvent !== "function") return;
+    try {
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    } catch (eDc) {}
   }
 
   async function fdSubmitVideoGenerate() {
@@ -5427,6 +6199,8 @@ try {
       return;
     }
     fdClearDashboardManualResetFlag();
+    fdUpdateVideoGenerateExecutiveState(null, "running");
+    fdRenderVideoGenerateOperatorResult({ ok: false, run_id: "", blocking_reasons: [], warnings: [] }, "running");
     var dur = parseInt(document.getElementById("fd-vg-duration") && document.getElementById("fd-vg-duration").value, 10);
     var maxSc = parseInt(document.getElementById("fd-vg-max-scenes") && document.getElementById("fd-vg-max-scenes").value, 10);
     var maxLive = parseInt(document.getElementById("fd-vg-max-live") && document.getElementById("fd-vg-max-live").value, 10);
@@ -5439,9 +6213,48 @@ try {
     if (isNaN(motEvery) || motEvery < 15) motEvery = 60;
     if (isNaN(motDur) || motDur < 1) motDur = 10;
     if (isNaN(maxMot) || maxMot < 0) maxMot = 10;
-    var allowLiveAssets = document.getElementById("fd-vg-live-assets") && document.getElementById("fd-vg-live-assets").checked;
-    var allowLiveMotion = document.getElementById("fd-vg-live-motion") && document.getElementById("fd-vg-live-motion").checked;
-    var confirmCosts = document.getElementById("fd-vg-confirm-costs") && document.getElementById("fd-vg-confirm-costs").checked;
+    var liveAssetsCb = document.getElementById("fd-vg-live-assets");
+    var liveMotionCb = document.getElementById("fd-vg-live-motion");
+    var confirmCostsCb = document.getElementById("fd-vg-confirm-costs");
+    var allowLiveAssets = !!(liveAssetsCb && liveAssetsCb.checked);
+    var allowLiveMotion = !!(liveMotionCb && liveMotionCb.checked);
+    var confirmCosts = !!(confirmCostsCb && confirmCostsCb.checked);
+    var cbThumbPack = document.getElementById("fd-vg-generate-thumbnail-pack");
+    var generateThumbPack = !!(cbThumbPack && cbThumbPack.checked);
+    var thumbCandEl = document.getElementById("fd-vg-thumb-cand-count");
+    var thumbOutEl = document.getElementById("fd-vg-thumb-max-out");
+    var thumbModelEl = document.getElementById("fd-vg-thumb-model");
+    var thumbSizeEl = document.getElementById("fd-vg-thumb-size");
+    var thumbPresetsEl = document.getElementById("fd-vg-thumb-presets");
+    var thumbCand = parseInt(thumbCandEl && thumbCandEl.value, 10);
+    var thumbMaxOut = parseInt(thumbOutEl && thumbOutEl.value, 10);
+    if (isNaN(thumbCand) || thumbCand < 1) thumbCand = 3;
+    if (thumbCand > 3) thumbCand = 3;
+    if (isNaN(thumbMaxOut) || thumbMaxOut < 1) thumbMaxOut = 6;
+    if (thumbMaxOut > 6) thumbMaxOut = 6;
+    var thumbModel = thumbModelEl ? String(thumbModelEl.value || "").trim() : "";
+    var thumbSize = thumbSizeEl ? String(thumbSizeEl.value || "").trim() : "";
+    var thumbPresetsRaw = thumbPresetsEl ? String(thumbPresetsEl.value || "").trim() : "";
+    var voiceSel = document.getElementById("fd-vg-voice-mode");
+    var voiceMode = voiceSel ? String(voiceSel.value || "dummy") : "dummy";
+    var imgProvEl = document.getElementById("fd-vg-image-provider");
+    var imgProv = imgProvEl ? String(imgProvEl.value || "").trim() : "";
+    var oaiModelEl = document.getElementById("fd-vg-openai-image-model");
+    var oaiSizeEl = document.getElementById("fd-vg-openai-image-size");
+    var oaiToEl = document.getElementById("fd-vg-openai-image-timeout");
+    var oaiModel = oaiModelEl ? String(oaiModelEl.value || "").trim() : "";
+    var oaiSize = oaiSizeEl ? String(oaiSizeEl.value || "").trim() : "";
+    var oaiToRaw = oaiToEl ? String(oaiToEl.value || "").trim() : "";
+    var oaiTo = parseFloat(oaiToRaw);
+    // BA 32.72b — dev-only key overrides (nur im Request, nie speichern/anzeigen/loggen)
+    var devOaiEl = document.getElementById("fd-vg-dev-openai-api-key");
+    var devElEl = document.getElementById("fd-vg-dev-elevenlabs-api-key");
+    var devRwEl = document.getElementById("fd-vg-dev-runway-api-key");
+    var devLeoEl = document.getElementById("fd-vg-dev-leonardo-api-key");
+    var devOai = devOaiEl ? String(devOaiEl.value || "").trim() : "";
+    var devEl = devElEl ? String(devElEl.value || "").trim() : "";
+    var devRw = devRwEl ? String(devRwEl.value || "").trim() : "";
+    var devLeo = devLeoEl ? String(devLeoEl.value || "").trim() : "";
     var body = {
       url: url,
       duration_target_seconds: dur,
@@ -5453,9 +6266,32 @@ try {
       allow_live_assets: !!allowLiveAssets,
       allow_live_motion: !!allowLiveMotion,
       confirm_provider_costs: !!confirmCosts,
-      voice_mode: "elevenlabs_or_safe_default",
-      motion_mode: "basic"
+      voice_mode: voiceMode,
+      motion_mode: "basic",
+      generate_thumbnail_pack: !!generateThumbPack,
+      thumbnail_candidate_count: thumbCand,
+      thumbnail_max_outputs: thumbMaxOut
     };
+    if (generateThumbPack) {
+      if (thumbModel) body.thumbnail_model = thumbModel;
+      if (thumbSize) body.thumbnail_size = thumbSize;
+      if (thumbPresetsRaw) {
+        var pp = thumbPresetsRaw.split(",").map(function(x) { return String(x || "").trim(); }).filter(Boolean);
+        if (pp.length) body.thumbnail_style_presets = pp;
+      }
+    }
+    if (imgProv) body.image_provider = imgProv;
+    if (imgProv === "openai_image") {
+      body.openai_image_model = oaiModel || "gpt-image-2";
+    } else if (oaiModel) {
+      body.openai_image_model = oaiModel;
+    }
+    if (oaiSize) body.openai_image_size = oaiSize;
+    if (!isNaN(oaiTo) && oaiTo >= 15 && oaiTo <= 600) body.openai_image_timeout_seconds = oaiTo;
+    if (devOai) body.dev_openai_api_key = devOai;
+    if (devEl) body.dev_elevenlabs_api_key = devEl;
+    if (devRw) body.dev_runway_api_key = devRw;
+    if (devLeo) body.dev_leonardo_api_key = devLeo;
     btn.disabled = true;
     btn.classList.add("is-loading");
     btn.classList.remove("is-success", "is-error");
@@ -5476,9 +6312,23 @@ try {
       if (!r.ok) {
         var det = j && j.detail != null ? j.detail : ("HTTP " + r.status);
         if (st) {
-          st.textContent = "Video-Generierung: " + String(det);
+          // Operator-friendly decode for known 422 detail
+          if (r.status === 422 && fdVgErrorDetailContains(det, "confirm_provider_costs_required_when_live_flags")) {
+            st.textContent = "Kostenbestätigung fehlt: Für Live Assets oder Thumbnail Pack musst du zuerst „Mögliche Provider-Kosten bestätigen“ aktivieren.";
+          } else {
+            st.textContent = "Video-Generierung: " + String(det);
+          }
           st.classList.add("intake-status-err");
         }
+        // Inline hint + CTA to checkbox
+        if (r.status === 422 && fdVgErrorDetailContains(det, "confirm_provider_costs_required_when_live_flags")) {
+          var inline = document.getElementById("fd-vg-inline-422-hint");
+          var go = document.getElementById("fd-vg-go-confirm-costs");
+          if (inline) inline.textContent = "Kostenbestätigung fehlt: Für Live Assets oder Thumbnail Pack musst du zuerst „Mögliche Provider-Kosten bestätigen“ aktivieren.";
+          if (go) go.style.display = "inline-block";
+        }
+        fdUpdateVideoGenerateExecutiveState(j || null, "done");
+        fdRenderVideoGenerateOperatorResult(j || { ok: false, run_id: "", blocking_reasons: [String(det)] }, "done");
         btn.classList.add("is-error");
         btn.textContent = "Video generieren";
         btn.disabled = false;
@@ -5489,11 +6339,11 @@ try {
         st.textContent = (j && j.ok) ? "Fertig — siehe Ergebnis." : "Beendet mit Blockern/Warnungen.";
         st.classList.add((j && j.ok) ? "intake-status-success" : "intake-status-err");
       }
-      if (resEl && j) {
-        resEl.style.display = "block";
-        resEl.classList.remove("out-empty");
-        resEl.textContent = JSON.stringify(j, null, 2);
-      }
+      fdUpdateVideoGenerateExecutiveState(j || null, "done");
+      fdRenderVideoGenerateOperatorResult(j || null, "done");
+      try { FD_VG_LAST_VIDEO_GENERATE = j || null; } catch (eKeep) {}
+      try { fdApplyRealProductionSmokeChecklist(); } catch (eRsAfter) {}
+      try { fdVgSaveLastRunSummary(j || null); } catch (eSave) {}
       btn.classList.add((j && j.ok) ? "is-success" : "is-error");
       btn.textContent = "Video generieren";
       btn.disabled = false;
@@ -5503,11 +6353,729 @@ try {
         st.textContent = "Video-Generierung: " + String(e && e.message ? e.message : e);
         st.classList.add("intake-status-err");
       }
+      fdUpdateVideoGenerateExecutiveState({ ok: false, run_id: "", blocking_reasons: ["fetch_exception"] }, "done");
+      fdRenderVideoGenerateOperatorResult({ ok: false, run_id: "", blocking_reasons: ["fetch_exception"], warnings: [] }, "done");
       btn.classList.add("is-error");
       btn.textContent = "Video generieren";
       btn.disabled = false;
       btn.classList.remove("is-loading");
     }
+  }
+
+  function fdApplyVideoGenerateAssetsModeHint() {
+    var cb = document.getElementById("fd-vg-live-assets");
+    var el = document.getElementById("fd-vg-assets-mode-hint");
+    if (!el) return;
+    var on = !!(cb && cb.checked);
+    if (on) {
+      el.innerHTML = "<strong>Real-Assets-Modus</strong> — kann Provider-Kosten verursachen; bei fehlender Konfiguration fällt der Lauf auf Platzhalter zurück.";
+    } else {
+      el.innerHTML = "<strong>Preview/Fallback-Modus</strong> — keine Live-Provider, Platzhalter sind erwartbar.";
+    }
+  }
+
+  var FD_VG_PROVIDER_READINESS = null;
+  var FD_VG_LAST_VIDEO_GENERATE = null;
+
+  function fdPrStatusWord(s) {
+    var v = String(s || "").toLowerCase();
+    if (v === "ready") return "Bereit";
+    if (v === "missing") return "Fehlt";
+    if (v === "optional_missing") return "Optional fehlt";
+    if (v === "unknown") return "Unbekannt";
+    return "Unbekannt";
+  }
+
+  function fdApplyVideoGenerateProviderReadinessHint() {
+    var hint = document.getElementById("fd-vg-provider-readiness-hint");
+    if (!hint) return;
+    hint.textContent = "";
+    var cbAssets = document.getElementById("fd-vg-live-assets");
+    var assetsRequested = !!(cbAssets && cbAssets.checked);
+    var voiceSel = document.getElementById("fd-vg-voice-mode");
+    var requestedVoice = voiceSel ? String(voiceSel.value || "dummy") : "dummy";
+    var pr = FD_VG_PROVIDER_READINESS;
+    if (!pr || typeof pr !== "object") return;
+
+    try {
+      var la = pr.live_assets || {};
+      var el = pr.voice_elevenlabs || {};
+      var oa = pr.voice_openai || {};
+      if (assetsRequested && String(la.status || "") !== "ready") {
+        hint.textContent = "Echte Assets sind angefordert, aber der Asset-Provider ist nicht konfiguriert. Der Lauf wird wahrscheinlich auf Platzhalter zurückfallen.";
+        return;
+      }
+      if (requestedVoice === "elevenlabs" && String(el.status || "") !== "ready") {
+        hint.textContent = "ElevenLabs ist nicht konfiguriert. Der Lauf nutzt voraussichtlich Dummy-Voice.";
+        return;
+      }
+      if (requestedVoice === "openai" && String(oa.status || "") !== "ready") {
+        hint.textContent = "OpenAI TTS ist nicht konfiguriert. Der Lauf nutzt voraussichtlich Dummy-Voice oder fällt zurück.";
+        return;
+      }
+    } catch (eH) {}
+  }
+
+  function fdRenderFixChecklistFromProviderReadiness(pr) {
+    var wrap = document.getElementById("fd-vg-fix-checklist");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    if (!pr || typeof pr !== "object") {
+      wrap.innerHTML = "<div class='fd-vg-kv-row'><span class='fd-vg-k'>—</span><span class='fd-vg-v'>Unbekannt</span></div>";
+      return;
+    }
+
+    function addFix(label, envName, hintText) {
+      var row = document.createElement("div");
+      row.className = "fd-vg-kv-row";
+      var k = document.createElement("span");
+      k.className = "fd-vg-k";
+      k.textContent = label;
+      var v = document.createElement("span");
+      v.className = "fd-vg-v";
+      v.textContent = String(hintText || "");
+      var actions = document.createElement("span");
+      actions.className = "fd-vg-v";
+      actions.style.display = "inline-flex";
+      actions.style.gap = "6px";
+      actions.style.alignItems = "center";
+      var code = document.createElement("code");
+      code.textContent = envName;
+      code.title = "Nur Variablennamen kopieren";
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tb-copy";
+      btn.textContent = "Copy";
+      btn.addEventListener("click", function() {
+        try { fdFpCopyToClipboard(envName, btn); } catch (eC) {}
+      });
+      actions.appendChild(code);
+      actions.appendChild(btn);
+      row.appendChild(k);
+      row.appendChild(v);
+      row.appendChild(actions);
+      wrap.appendChild(row);
+    }
+
+    var la = pr.live_assets || {};
+    var el = pr.voice_elevenlabs || {};
+    var oa = pr.voice_openai || {};
+    var rw = pr.motion_runway || {};
+    var imgOi = pr.image_openai || {};
+    var added = 0;
+    var cbAssets = document.getElementById("fd-vg-live-assets");
+    var assetsRequested = !!(cbAssets && cbAssets.checked);
+    var voiceSel = document.getElementById("fd-vg-voice-mode");
+    var requestedVoice = voiceSel ? String(voiceSel.value || "dummy") : "dummy";
+
+    if (assetsRequested && String(la.status || "") !== "ready") {
+      addFix("Live Assets konfigurieren", "LEONARDO_API_KEY", "Setze LEONARDO_API_KEY in der Laufzeitumgebung/Secret-Konfiguration.");
+      added += 1;
+    }
+    if (requestedVoice === "elevenlabs" && String(el.status || "") !== "ready") {
+      addFix("ElevenLabs konfigurieren", "ELEVENLABS_API_KEY", "Setze ELEVENLABS_API_KEY in der Laufzeitumgebung/Secret-Konfiguration.");
+      added += 1;
+    }
+    if (requestedVoice === "openai" && String(oa.status || "") !== "ready") {
+      addFix("OpenAI TTS konfigurieren", "OPENAI_API_KEY", "Setze OPENAI_API_KEY, falls OpenAI TTS genutzt werden soll.");
+      added += 1;
+    }
+    if (String(rw.status || "") !== "ready") {
+      addFix("Runway optional konfigurieren", "RUNWAY_API_KEY", "Setze RUNWAY_API_KEY nur, wenn Live-Motion-Clips genutzt werden sollen.");
+      added += 1;
+    }
+    if (imgOi.configured === true && String(imgOi.hint || "").trim()) {
+      addFix("OpenAI Bild (Modell)", "OPENAI_IMAGE_MODEL", String(imgOi.hint || ""));
+      added += 1;
+    }
+    if (!added) {
+      wrap.innerHTML = "<div class='fd-vg-kv-row'><span class='fd-vg-k'>Alles bereit</span><span class='fd-vg-v'>Keine fehlenden Provider erkannt.</span></div>";
+    }
+  }
+
+  function fdApplyVideoGeneratePreflight() {
+    var st = document.getElementById("fd-vg-preflight-status");
+    var tx = document.getElementById("fd-vg-preflight-text");
+    if (!st || !tx) return;
+    var cbAssets = document.getElementById("fd-vg-live-assets");
+    var assetsRequested = !!(cbAssets && cbAssets.checked);
+    var cbCosts = document.getElementById("fd-vg-confirm-costs");
+    var costsConfirmed = !!(cbCosts && cbCosts.checked);
+    var voiceSel = document.getElementById("fd-vg-voice-mode");
+    var requestedVoice = voiceSel ? String(voiceSel.value || "dummy") : "dummy";
+    var voiceHintEl = document.getElementById("fd-vg-voice-mode-hint");
+    var pr = FD_VG_PROVIDER_READINESS;
+    var la = pr && pr.live_assets ? pr.live_assets : {};
+    var el = pr && pr.voice_elevenlabs ? pr.voice_elevenlabs : {};
+    var oa = pr && pr.voice_openai ? pr.voice_openai : {};
+    var rw = pr && pr.motion_runway ? pr.motion_runway : {};
+
+    // Default ist Preview/Fallback
+    if (!assetsRequested) {
+      st.textContent = "Preview-Modus bereit";
+      tx.textContent = "Der Lauf kann starten, nutzt aber voraussichtlich Platzhalter oder Dummy-Voice, wenn Provider fehlen.";
+    } else if (String(la.status || "") === "ready") {
+      st.textContent = "Real-Assets-Modus bereit";
+      tx.textContent = "Echte Assets können angefordert werden. Provider-Kosten möglich.";
+    } else {
+      st.textContent = "Real-Assets-Modus nicht vollständig bereit";
+      tx.textContent = "Der Asset-Provider fehlt. Der Lauf wird wahrscheinlich auf Platzhalter zurückfallen.";
+    }
+
+    // Zusatz-Hinweise (nicht blockierend)
+    var extras = [];
+    if (assetsRequested && !costsConfirmed) extras.push("Kostenbestätigung fehlt – Real-Assets-Lauf kann blockiert werden.");
+    if (requestedVoice === "dummy") {
+      extras.push("Dummy Voice aktiv – geeignet für Tests.");
+      if (voiceHintEl) voiceHintEl.textContent = "Dummy Voice aktiv – geeignet für Tests.";
+    } else if (requestedVoice === "none") {
+      extras.push("Keine Voice ausgewählt.");
+      if (voiceHintEl) voiceHintEl.textContent = "Keine Voice ausgewählt.";
+    } else if (requestedVoice === "elevenlabs") {
+      if (String(el.status || "") === "ready") {
+        extras.push("ElevenLabs bereit.");
+        if (voiceHintEl) voiceHintEl.textContent = "ElevenLabs bereit.";
+      } else {
+        extras.push("ElevenLabs ist nicht konfiguriert. Der Lauf nutzt voraussichtlich Dummy-Voice.");
+        if (voiceHintEl) voiceHintEl.textContent = "ElevenLabs ist nicht konfiguriert. Der Lauf nutzt voraussichtlich Dummy-Voice.";
+      }
+    } else if (requestedVoice === "openai") {
+      if (String(oa.status || "") === "ready") {
+        extras.push("OpenAI TTS bereit.");
+        if (voiceHintEl) voiceHintEl.textContent = "OpenAI TTS bereit.";
+      } else {
+        extras.push("OpenAI TTS ist nicht konfiguriert. Der Lauf nutzt voraussichtlich Dummy-Voice oder fällt zurück.");
+        if (voiceHintEl) voiceHintEl.textContent = "OpenAI TTS ist nicht konfiguriert. Der Lauf nutzt voraussichtlich Dummy-Voice oder fällt zurück.";
+      }
+    }
+    if (String(rw.status || "") !== "ready") extras.push("Motion-Clips sind optional und aktuell nicht verfügbar.");
+    var cbThumbPf = document.getElementById("fd-vg-generate-thumbnail-pack");
+    var thumbPf = !!(cbThumbPf && cbThumbPf.checked);
+    if (thumbPf && !costsConfirmed) extras.push("Thumbnail Pack: Kostenbestätigung fehlt — Server kann mit 422 antworten.");
+    if (thumbPf) extras.push("Thumbnail Pack erzeugt nach erfolgreichem Video zusätzliche OpenAI-Bilder (Kosten).");
+    if (extras.length) tx.textContent = tx.textContent + " " + extras.join(" ");
+  }
+
+  function fdRsSetRow(idBase, statusText, detailText) {
+    var v = document.getElementById("fd-vg-rs-" + idBase);
+    var b = document.getElementById("fd-vg-rs-" + idBase + "-b");
+    if (v) v.textContent = String(detailText || "—");
+    if (b) {
+      b.textContent = String(statusText || "Unbekannt");
+      b.className = "fd-vg-badge " + (statusText === "OK" ? "fd-vg-badge--ok" : (statusText === "Prüfen" ? "fd-vg-badge--fallback" : "fd-vg-badge--neutral"));
+    }
+  }
+
+  function fdApplyRealProductionSmokeChecklist() {
+    var pr = FD_VG_PROVIDER_READINESS;
+    var cbAssets = document.getElementById("fd-vg-live-assets");
+    var assetsRequested = !!(cbAssets && cbAssets.checked);
+    var cbCosts = document.getElementById("fd-vg-confirm-costs");
+    var costsConfirmed = !!(cbCosts && cbCosts.checked);
+    var voiceSel = document.getElementById("fd-vg-voice-mode");
+    var requestedVoice = voiceSel ? String(voiceSel.value || "dummy") : "dummy";
+    var reco = document.getElementById("fd-vg-rs-reco");
+
+    var la = pr && pr.live_assets ? pr.live_assets : {};
+    var el = pr && pr.voice_elevenlabs ? pr.voice_elevenlabs : {};
+    var oa = pr && pr.voice_openai ? pr.voice_openai : {};
+    var rw = pr && pr.motion_runway ? pr.motion_runway : {};
+    var last = FD_VG_LAST_VIDEO_GENERATE;
+    var lastAa = last && last.asset_artifact ? last.asset_artifact : null;
+    var lastGate = lastAa && lastAa.asset_quality_gate ? lastAa.asset_quality_gate : null;
+    var restored = null;
+    if (!lastGate) {
+      try { restored = fdVgGetRestoredAssetQualityGate(fdVgLoadLastRunSummary()); } catch (eR) { restored = null; }
+    }
+    // current payload wins; localStorage is restore-fallback after reload
+    var gateEffective = lastGate || restored;
+    var lastStatus = gateEffective && gateEffective.status ? String(gateEffective.status) : "";
+    var lastStrict = !!(gateEffective && gateEffective.strict_ready);
+    var lastLoose = !!(gateEffective && gateEffective.loose_ready);
+    var localMark = (gateEffective && gateEffective.source === "local") ? " (local)" : "";
+    var localHint = (gateEffective && gateEffective.source === "local") ? " aus letztem gespeicherten Lauf" : "";
+    // keep strings in bundle for tests + operator clarity
+    var FD_VG_ASSET_QUALITY_HINTS = {
+      production_ready: "Asset Manifest enthält echte Assets ohne Placeholder.",
+      mixed_assets: "Echte Assets vorhanden, aber noch Placeholder im Manifest.",
+      placeholder_only: "Nur Placeholder-Assets vorhanden.",
+      missing_assets: "Keine Asset-Dateien im Manifest.",
+      unknown: "Asset-Qualität noch nicht verfügbar."
+    };
+
+    // Live Assets angefordert
+    fdRsSetRow(
+      "live-assets",
+      assetsRequested ? "OK" : "Prüfen",
+      assetsRequested ? "Echte Assets aktiv" : "Toggle aus (Preview/Fallback)"
+    );
+
+    // Kosten bestätigt (nur relevant wenn Live Assets angefordert sind)
+    if (!assetsRequested) {
+      fdRsSetRow("costs", "Nicht verfügbar", "Preview/Fallback");
+    } else {
+      fdRsSetRow(
+        "costs",
+        costsConfirmed ? "OK" : "Prüfen",
+        costsConfirmed ? "Kosten bestätigt" : "Kostenbestätigung fehlt – Real-Assets-Lauf kann blockiert werden."
+      );
+    }
+
+    // Asset Provider bereit
+    var assetReady = String(la.status || "") === "ready";
+    fdRsSetRow(
+      "asset-provider",
+      assetReady ? "OK" : "Prüfen",
+      assetReady ? "Provider bereit" : ("Status: " + fdPrStatusWord(la.status))
+    );
+
+    // Asset Quality (post-run; do not require pre-run)
+    if (!gateEffective || !lastStatus) {
+      fdRsSetRow("asset-quality", "Nicht verfügbar", "Asset-Qualität noch nicht verfügbar.");
+    } else if (lastStrict) {
+      fdRsSetRow("asset-quality", "OK", "production_ready — " + ((gateEffective.summary || FD_VG_ASSET_QUALITY_HINTS.production_ready) + localMark));
+    } else if (lastLoose) {
+      // loose true but strict false => mixed or placeholder-like stage
+      fdRsSetRow("asset-quality", "Prüfen", (lastStatus || "mixed_assets") + " — " + ((gateEffective.summary || FD_VG_ASSET_QUALITY_HINTS.mixed_assets) + localMark));
+    } else {
+      // placeholder_only / missing_assets / unknown
+      var hint = FD_VG_ASSET_QUALITY_HINTS[lastStatus] || "Asset-Qualität noch nicht verfügbar.";
+      fdRsSetRow("asset-quality", "Nicht verfügbar", (lastStatus || "unknown") + " — " + ((gateEffective.summary || hint) + localMark));
+    }
+
+    // Voice-Modus produktiv gewählt
+    var voiceProd = (requestedVoice === "elevenlabs" || requestedVoice === "openai");
+    var voiceNone = (requestedVoice === "none");
+    fdRsSetRow(
+      "voice-mode",
+      voiceProd ? "OK" : (voiceNone ? "Nicht verfügbar" : "Prüfen"),
+      requestedVoice
+    );
+
+    // Voice Provider bereit (abhängig von Selection)
+    var vpStatus = "Nicht verfügbar";
+    var vpDetail = "—";
+    var vpOk = false;
+    if (requestedVoice === "elevenlabs") {
+      vpOk = String(el.status || "") === "ready";
+      vpStatus = vpOk ? "OK" : "Prüfen";
+      vpDetail = vpOk ? "ElevenLabs bereit" : "ElevenLabs fehlt";
+    } else if (requestedVoice === "openai") {
+      vpOk = String(oa.status || "") === "ready";
+      vpStatus = vpOk ? "OK" : "Prüfen";
+      vpDetail = vpOk ? "OpenAI TTS bereit" : "OpenAI TTS fehlt";
+    } else if (requestedVoice === "dummy") {
+      vpStatus = "Nicht verfügbar";
+      vpDetail = "Dummy / Test";
+    } else if (requestedVoice === "none") {
+      vpStatus = "Nicht verfügbar";
+      vpDetail = "keine Voice";
+    } else {
+      vpStatus = "Unbekannt";
+      vpDetail = "—";
+    }
+    fdRsSetRow("voice-provider", vpStatus, vpDetail);
+
+    // Timing / Voice Fit (best-effort aus letztem Lauf)
+    try {
+      var ta = last && last.timing_audit ? last.timing_audit : null;
+      if (ta && typeof ta === "object") {
+        function fdFmtSeconds2(v) {
+          try {
+            var n = Number(v);
+            if (!isFinite(n)) return null;
+            return n.toFixed(2) + "s";
+          } catch (e) {
+            return null;
+          }
+        }
+        var pad = !!ta.padding_or_continue_applied;
+        var vds = ta.voice_duration_seconds;
+        var tds = ta.timeline_duration_seconds;
+        var gapAbs = ta.timing_gap_abs_seconds;
+        var gapStatus = String(ta.timing_gap_status || "unknown");
+        var gapFmt = (gapAbs != null) ? fdFmtSeconds2(gapAbs) : null;
+        var detBase = gapFmt ? ("Gap: " + gapFmt) : ((vds != null && tds != null) ? ("Voice ~" + String(vds) + "s vs Timeline ~" + String(tds) + "s") : (String(ta.summary || "—") || "—"));
+        var st = (gapStatus === "major_gap") ? "Prüfen" : (pad ? "Prüfen" : (gapStatus === "ok" ? "OK" : (gapStatus === "minor_gap" ? "Prüfen" : "Nicht verfügbar")));
+        var detail = detBase;
+        if (pad) detail = detail + " · Audio kürzer als Timeline; gepadded/fortgeführt";
+        fdRsSetRow("timing", st, detail);
+      } else {
+        fdRsSetRow("timing", "Nicht verfügbar", "timing_audit fehlt");
+      }
+    } catch (eT) {
+      fdRsSetRow("timing", "Nicht verfügbar", "timing_audit Fehler");
+    }
+
+    // Motion optional (darf nicht blocken)
+    var rwReady = String(rw.status || "") === "ready";
+    fdRsSetRow(
+      "motion",
+      rwReady ? "OK" : "Prüfen",
+      rwReady ? "Runway bereit" : ("Status: " + fdPrStatusWord(rw.status))
+    );
+
+    // Empfehlung ableiten
+    var isPreviewOnly = !assetsRequested;
+    var canRealAssets = assetsRequested && assetReady && costsConfirmed;
+    var canProdVoice = voiceProd && vpOk;
+    if (isPreviewOnly) {
+      if (reco) reco.textContent = "Nur Preview/Fallback-Smoke";
+    } else if (canRealAssets && canProdVoice) {
+      var extra = "";
+      if (lastStatus === "production_ready") extra = " · Asset-Gate bestanden.";
+      else if (lastStatus === "mixed_assets") extra = " · Zwischenstufe: Live Assets funktionieren teilweise, aber Placeholder müssen noch ersetzt werden.";
+      if (reco) reco.textContent = "Bereit für Real Production Smoke" + extra + (localHint ? (" ·" + localHint) : "");
+    } else {
+      if (reco) reco.textContent = "Noch nicht production-ready";
+    }
+  }
+
+  function fdApplyRealProductionSmokePreset() {
+    var pr = FD_VG_PROVIDER_READINESS || {};
+    var la = pr.live_assets || {};
+    var el = pr.voice_elevenlabs || {};
+    var oa = pr.voice_openai || {};
+
+    var cbAssets = document.getElementById("fd-vg-live-assets");
+    var cbCosts = document.getElementById("fd-vg-confirm-costs");
+    var voiceSel = document.getElementById("fd-vg-voice-mode");
+    var hint = document.getElementById("fd-vg-real-smoke-preset-hint");
+
+    if (cbAssets) cbAssets.checked = true;
+    if (cbCosts) cbCosts.checked = true;
+
+    var chosenVoice = "dummy";
+    // Priorität: ElevenLabs vor OpenAI vor Dummy
+    if (String(el.status || "") === "ready") chosenVoice = "elevenlabs";
+    else if (String(oa.status || "") === "ready") chosenVoice = "openai";
+    else chosenVoice = "dummy";
+    if (voiceSel) voiceSel.value = chosenVoice;
+
+    // Hinweistext
+    var parts = [];
+    if (chosenVoice === "elevenlabs" || chosenVoice === "openai") {
+      parts.push("Preset aktiviert: Live Assets an, produktive Voice gewählt. Mögliche Provider-Kosten wurden bestätigt.");
+    } else {
+      parts.push("Preset aktiviert: Live Assets an, Kosten bestätigt, aber kein Voice-Provider bereit – Dummy Voice bleibt aktiv.");
+    }
+    if (String(la.status || "") !== "ready") {
+      parts.push("Asset-Provider fehlt – der Lauf kann weiterhin auf Platzhalter zurückfallen.");
+    }
+    if (hint) hint.textContent = parts.join(" ");
+
+    // UI refresh
+    try { fdApplyVideoGenerateAssetsModeHint(); } catch (e0) {}
+    try { fdApplyVideoGenerateProviderReadinessHint(); } catch (e1) {}
+    try { fdApplyVideoGeneratePreflight(); } catch (e2) {}
+    try { fdRenderFixChecklistFromProviderReadiness(FD_VG_PROVIDER_READINESS); } catch (e3) {}
+    try { fdApplyRealProductionSmokeChecklist(); } catch (e4) {}
+    try { fdApplyInline422Hint(); } catch (e5) {}
+  }
+
+  function fdApplyOpenAiImageMiniSmokePreset() {
+    var cbThumb = document.getElementById("fd-vg-generate-thumbnail-pack");
+    var nCand = document.getElementById("fd-vg-thumb-cand-count");
+    var nOut = document.getElementById("fd-vg-thumb-max-out");
+    if (cbThumb) cbThumb.checked = false;
+    if (nCand) nCand.value = "1";
+    if (nOut) nOut.value = "2";
+    var cbAssets = document.getElementById("fd-vg-live-assets");
+    var cbCosts = document.getElementById("fd-vg-confirm-costs");
+    var cbMotion = document.getElementById("fd-vg-live-motion");
+    var voiceSel = document.getElementById("fd-vg-voice-mode");
+    var maxSc = document.getElementById("fd-vg-max-scenes");
+    var maxLive = document.getElementById("fd-vg-max-live");
+    var maxMot = document.getElementById("fd-vg-max-motion");
+    var imgProv = document.getElementById("fd-vg-image-provider");
+    var oaiModel = document.getElementById("fd-vg-openai-image-model");
+    var oaiSize = document.getElementById("fd-vg-openai-image-size");
+    if (cbMotion) cbMotion.checked = false;
+    if (cbAssets) cbAssets.checked = true;
+    if (cbCosts) cbCosts.checked = true;
+    fdVgDispatchInputChange(cbAssets);
+    fdVgDispatchInputChange(cbCosts);
+    if (voiceSel) voiceSel.value = "none";
+    if (maxSc) maxSc.value = "1";
+    if (maxLive) maxLive.value = "1";
+    if (maxMot) maxMot.value = "0";
+    if (imgProv) imgProv.value = "openai_image";
+    if (oaiModel) oaiModel.value = "gpt-image-2";
+    if (oaiSize) oaiSize.value = "1024x1024";
+    try { fdApplyVideoGenerateAssetsModeHint(); } catch (eA) {}
+    try { fdApplyVideoGenerateProviderReadinessHint(); } catch (eB) {}
+    try { fdApplyVideoGeneratePreflight(); } catch (eC) {}
+    try { fdRenderFixChecklistFromProviderReadiness(FD_VG_PROVIDER_READINESS); } catch (eD) {}
+    try { fdApplyRealProductionSmokeChecklist(); } catch (eE) {}
+    try { fdApplyInline422Hint(); } catch (eF) {}
+  }
+
+  function fdApplyInline422Hint() {
+    var el = document.getElementById("fd-vg-inline-422-hint");
+    var go = document.getElementById("fd-vg-go-confirm-costs");
+    if (!el) return;
+    if (go) go.style.display = "none";
+    var cbAssets = document.getElementById("fd-vg-live-assets");
+    var cbCosts = document.getElementById("fd-vg-confirm-costs");
+    var assetsRequested = !!(cbAssets && cbAssets.checked);
+    var costsConfirmed = !!(cbCosts && cbCosts.checked);
+    var cbThumb = document.getElementById("fd-vg-generate-thumbnail-pack");
+    var thumbRequested = !!(cbThumb && cbThumb.checked);
+    if ((assetsRequested || thumbRequested) && !costsConfirmed) {
+      el.textContent = "Ohne Kostenbestätigung kann der Server den Real-Assets- oder Thumbnail-Pack-Lauf mit 422 ablehnen.";
+      return;
+    }
+    if (assetsRequested && costsConfirmed) {
+      el.textContent = "Kostenbestätigung aktiv.";
+      return;
+    }
+    el.textContent = "Preview/Fallback-Modus – keine Live-Asset-Kosten erwartet.";
+  }
+
+  function fdVgApplyDevKeyOverrideHint() {
+    var el = document.getElementById("fd-vg-dev-keys-hint");
+    if (!el) return;
+    var oai = document.getElementById("fd-vg-dev-openai-api-key");
+    var ev = document.getElementById("fd-vg-dev-elevenlabs-api-key");
+    var rw = document.getElementById("fd-vg-dev-runway-api-key");
+    var leo = document.getElementById("fd-vg-dev-leonardo-api-key");
+    var hasOai = !!(oai && String(oai.value || "").trim());
+    var hasEv = !!(ev && String(ev.value || "").trim());
+    var hasRw = !!(rw && String(rw.value || "").trim());
+    var hasLeo = !!(leo && String(leo.value || "").trim());
+    var parts = [];
+    if (hasOai) parts.push("OpenAI Key per Request vorhanden.");
+    if (hasEv) parts.push("ElevenLabs Key per Request vorhanden.");
+    if (hasRw) parts.push("Runway Key per Request vorhanden.");
+    if (hasLeo) parts.push("Leonardo Key per Request vorhanden.");
+    el.textContent = parts.length ? parts.join(" ") : "";
+  }
+
+  var FD_VG_LAST_VIDEO_GENERATE_KEY = "FD_VG_LAST_VIDEO_GENERATE";
+
+  function fdVgDeriveStatusFromPayload(j) {
+    try {
+      if (!j || typeof j !== "object") return "blocked";
+      var rs0 = j.video_generate_run_status != null ? String(j.video_generate_run_status).trim() : "";
+      if (rs0) return rs0;
+      var ok = !!j.ok;
+      var blocking = (j.blocking_reasons && j.blocking_reasons.length) ? j.blocking_reasons : [];
+      if (!ok || (blocking && blocking.length)) return "blocked";
+      var warnings = (j.warnings && j.warnings.length) ? j.warnings : [];
+      var joined = fdVgWarnJoinedLower(warnings);
+      var hasFallback = fdVgWarnTriggersFallbackPreview(j, joined);
+      return hasFallback ? "fallback_preview" : "production_ready";
+    } catch (e) {}
+    return "blocked";
+  }
+
+  function fdVgBuildLastRunSummary(j) {
+    try {
+      if (!j || typeof j !== "object") return null;
+      var ra = (j.readiness_audit && typeof j.readiness_audit === "object") ? j.readiness_audit : {};
+      var aa = (j.asset_artifact && typeof j.asset_artifact === "object") ? j.asset_artifact : {};
+      var gate = (aa.asset_quality_gate && typeof aa.asset_quality_gate === "object") ? aa.asset_quality_gate : {};
+      var va = (j.voice_artifact && typeof j.voice_artifact === "object") ? j.voice_artifact : {};
+      var status = fdVgDeriveStatusFromPayload(j);
+      var runId = j.run_id != null ? String(j.run_id) : "";
+      return {
+        saved_at: (new Date()).toISOString(),
+        run_id: runId,
+        status: status,
+        next_action: j.next_action != null ? String(j.next_action) : "",
+        warnings_count: (j.warnings && j.warnings.length) ? parseInt(j.warnings.length, 10) : 0,
+        blocking_reasons_count: (j.blocking_reasons && j.blocking_reasons.length) ? parseInt(j.blocking_reasons.length, 10) : 0,
+        readiness_audit: {
+          requested_live_assets: !!ra.requested_live_assets,
+          asset_quality_status: ra.asset_quality_status != null ? String(ra.asset_quality_status) : "",
+          asset_strict_ready: !!ra.asset_strict_ready,
+          asset_loose_ready: !!ra.asset_loose_ready,
+          requested_voice_mode: ra.requested_voice_mode != null ? String(ra.requested_voice_mode) : "",
+          effective_voice_mode: ra.effective_voice_mode != null ? String(ra.effective_voice_mode) : "",
+          voice_file_ready: !!ra.voice_file_ready,
+          voice_is_dummy: !!ra.voice_is_dummy,
+          silent_render_expected: typeof ra.silent_render_expected === "boolean" ? !!ra.silent_render_expected : null,
+          silent_render_reason: ra.silent_render_reason != null ? String(ra.silent_render_reason) : ""
+        },
+        asset_quality_gate: {
+          status: gate.status != null ? String(gate.status) : "",
+          strict_ready: !!gate.strict_ready,
+          loose_ready: !!gate.loose_ready,
+          summary: gate.summary != null ? String(gate.summary) : ""
+        },
+        voice_artifact_summary: {
+          requested_voice_mode: va.requested_voice_mode != null ? String(va.requested_voice_mode) : "",
+          effective_voice_mode: va.effective_voice_mode != null ? String(va.effective_voice_mode) : "",
+          voice_ready: !!va.voice_ready,
+          is_dummy: !!va.is_dummy,
+          duration_seconds: (va.duration_seconds == null ? null : Number(va.duration_seconds))
+        }
+      };
+    } catch (e) {}
+    return null;
+  }
+
+  function fdVgSaveLastRunSummary(j) {
+    try {
+      var sum = fdVgBuildLastRunSummary(j);
+      if (!sum) return;
+      // Data minimization: only the compact summary is saved.
+      window.localStorage && window.localStorage.setItem(FD_VG_LAST_VIDEO_GENERATE_KEY, JSON.stringify(sum));
+    } catch (e) {}
+  }
+
+  function fdVgLoadLastRunSummary() {
+    try {
+      if (!window.localStorage) return null;
+      var raw = window.localStorage.getItem(FD_VG_LAST_VIDEO_GENERATE_KEY);
+      if (!raw) return null;
+      var j = JSON.parse(raw);
+      if (!j || typeof j !== "object") return null;
+      return j;
+    } catch (e) {
+      try { window.localStorage && window.localStorage.removeItem(FD_VG_LAST_VIDEO_GENERATE_KEY); } catch (e2) {}
+      return null;
+    }
+  }
+
+  function fdVgIsLastRunSummaryExpired(sum, days) {
+    try {
+      var d = (days == null ? 7 : parseInt(days, 10));
+      if (!sum || typeof sum !== "object") return true;
+      var s = sum.saved_at ? String(sum.saved_at) : "";
+      if (!s) return true;
+      var t = Date.parse(s);
+      if (!isFinite(t)) return true;
+      var ageMs = Date.now() - t;
+      var maxMs = Math.max(1, d) * 24 * 60 * 60 * 1000;
+      return ageMs > maxMs;
+    } catch (e) {}
+    return true;
+  }
+
+  function fdVgGetRestoredAssetQualityGate(sum) {
+    // Restore-fallback: use compact localStorage summary, without backend calls.
+    try {
+      if (!sum || typeof sum !== "object") return null;
+      if (fdVgIsLastRunSummaryExpired(sum, 7)) return null;
+      var gate = (sum.asset_quality_gate && typeof sum.asset_quality_gate === "object") ? sum.asset_quality_gate : null;
+      var ra = (sum.readiness_audit && typeof sum.readiness_audit === "object") ? sum.readiness_audit : null;
+      var st = gate && gate.status ? String(gate.status) : (ra && ra.asset_quality_status ? String(ra.asset_quality_status) : "");
+      if (!st) return null;
+      return {
+        status: st,
+        strict_ready: !!(gate && gate.strict_ready) || !!(ra && ra.asset_strict_ready),
+        loose_ready: !!(gate && gate.loose_ready) || !!(ra && ra.asset_loose_ready),
+        summary: gate && gate.summary ? String(gate.summary) : "",
+        source: "local"
+      };
+    } catch (e) {}
+    return null;
+  }
+
+  function fdVgForgetLastRunSummary() {
+    try { window.localStorage && window.localStorage.removeItem(FD_VG_LAST_VIDEO_GENERATE_KEY); } catch (e) {}
+  }
+
+  function fdVgRenderLastRunSummary(sum) {
+    var box = document.getElementById("fd-vg-last-run-summary");
+    var kv = document.getElementById("fd-vg-last-run-kv");
+    if (!box || !kv) return;
+    if (sum && fdVgIsLastRunSummaryExpired(sum, 7)) {
+      try { fdVgForgetLastRunSummary(); } catch (eF) {}
+      sum = null;
+    }
+    if (!sum || typeof sum !== "object") {
+      box.style.display = "none";
+      kv.innerHTML = "";
+      return;
+    }
+    box.style.display = "block";
+    kv.innerHTML = "";
+    function row(k, v) {
+      var r = document.createElement("div");
+      r.className = "fd-vg-kv-row";
+      var kk = document.createElement("span");
+      kk.className = "fd-vg-k";
+      kk.textContent = String(k);
+      var vv = document.createElement("span");
+      vv.className = "fd-vg-v";
+      vv.textContent = (v == null || v === "") ? "—" : String(v);
+      r.appendChild(kk); r.appendChild(vv);
+      kv.appendChild(r);
+    }
+    row("run_id", sum.run_id || "—");
+    row("saved_at", sum.saved_at || "—");
+    row("status", sum.status || "—");
+    row("asset_quality_status", (sum.readiness_audit && sum.readiness_audit.asset_quality_status) ? sum.readiness_audit.asset_quality_status : (sum.asset_quality_gate && sum.asset_quality_gate.status ? sum.asset_quality_gate.status : "—"));
+    row("voice (effective)", (sum.readiness_audit && sum.readiness_audit.effective_voice_mode) ? sum.readiness_audit.effective_voice_mode : (sum.voice_artifact_summary && sum.voice_artifact_summary.effective_voice_mode ? sum.voice_artifact_summary.effective_voice_mode : "—"));
+  }
+
+  function fdVgErrorDetailContains(payloadOrDetail, needle) {
+    try {
+      if (!needle) return false;
+      var n = String(needle);
+      if (!n) return false;
+      if (payloadOrDetail == null) return false;
+      // If a full response/payload is passed, prefer its .detail field.
+      var d = payloadOrDetail;
+      if (typeof payloadOrDetail === "object" && payloadOrDetail.detail != null) d = payloadOrDetail.detail;
+      if (typeof d === "string") return String(d).indexOf(n) >= 0;
+      if (Array.isArray(d)) return JSON.stringify(d).indexOf(n) >= 0;
+      if (typeof d === "object") return JSON.stringify(d).indexOf(n) >= 0;
+      return String(d).indexOf(n) >= 0;
+    } catch (e) {}
+    return false;
+  }
+
+  function fdIsConfirmCostsRequired422(detail) {
+    // Backwards-compatible wrapper (used by tests/older codepaths)
+    return fdVgErrorDetailContains(detail, "confirm_provider_costs_required_when_live_flags");
+  }
+
+  function fdScrollToConfirmCosts() {
+    var cb = document.getElementById("fd-vg-confirm-costs");
+    if (!cb) return;
+    try { cb.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) { try { cb.scrollIntoView(true); } catch (e2) {} }
+    try { cb.focus({ preventScroll: true }); } catch (e3) { try { cb.focus(); } catch (e4) {} }
+    // small highlight
+    try {
+      cb.style.outline = "2px solid rgba(251,191,36,.9)";
+      cb.style.outlineOffset = "3px";
+      setTimeout(function() {
+        cb.style.outline = "";
+        cb.style.outlineOffset = "";
+      }, 1400);
+    } catch (e5) {}
+  }
+
+  async function fdLoadVideoGenerateProviderReadiness() {
+    try {
+      const r = await fetch("/founder/dashboard/config", { method: "GET" });
+      if (!r.ok) return;
+      var j = null;
+      try { j = await r.json(); } catch (eJ) {}
+      var pr = j && j.provider_readiness ? j.provider_readiness : null;
+      if (!pr || typeof pr !== "object") return;
+      FD_VG_PROVIDER_READINESS = pr;
+      var la = pr.live_assets || {};
+      var el = pr.voice_elevenlabs || {};
+      var oa = pr.voice_openai || {};
+      var rw = pr.motion_runway || {};
+      var elLa = document.getElementById("fd-vg-pr-live-assets");
+      var elEl = document.getElementById("fd-vg-pr-eleven");
+      var elOa = document.getElementById("fd-vg-pr-openai");
+      var elRw = document.getElementById("fd-vg-pr-runway");
+      if (elLa) elLa.textContent = fdPrStatusWord(la.status);
+      if (elEl) elEl.textContent = fdPrStatusWord(el.status);
+      if (elOa) elOa.textContent = fdPrStatusWord(oa.status);
+      if (elRw) elRw.textContent = fdPrStatusWord(rw.status);
+      fdApplyVideoGenerateProviderReadinessHint();
+      fdApplyVideoGeneratePreflight();
+      fdRenderFixChecklistFromProviderReadiness(pr);
+      fdApplyRealProductionSmokeChecklist();
+      fdApplyInline422Hint();
+    } catch (e) {}
   }
 
   async function fdStartFreshPreviewDryRun() {
@@ -6022,6 +7590,164 @@ try {
   }
 
   var FD_DASHBOARD_MANUAL_RESET_KEY = "fd_dashboard_manual_reset";
+  var FD_EXEC_NEXT_TARGET_KEY = "fd_exec_next_target_v1";
+  var FD_VG_FALLBACK_SIGNALS = ["placeholder", "fallback", "dummy", "no_assets", "no_existing_video_asset", "cinematic_placeholder", "audio_missing_silent_render", "voice_mode_fallback", "no_elevenlabs_key"];
+  var FD_VG_RENDER_LAYER_PLACEHOLDER_SIGNALS = ["ba266_cinematic_placeholder_applied", "audio_missing_silent_render"];
+
+  /** BA 32.80 — Server-Status hat Vorrang vor reinem Warning-Substring-Match. */
+  function fdVgVideoGenerateRunStatusFromPayload(j) {
+    if (!j || j.video_generate_run_status == null) return "";
+    return String(j.video_generate_run_status).trim();
+  }
+
+  function fdVgIsOkRunFallbackPreview(j, warnJoined) {
+    if (!j || !j.ok) return false;
+    var rs = fdVgVideoGenerateRunStatusFromPayload(j);
+    if (rs === "fallback_preview") return true;
+    if (rs === "gold_mini_ready" || rs === "production_ready" || rs === "mixed_preview" || rs === "blocked") return false;
+    if (rs) return false;
+    return fdVgWarnTriggersFallbackPreview(j, warnJoined || "");
+  }
+
+  function fdVgEffectiveVoiceMode(j) {
+    if (!j || typeof j !== "object") return null;
+    var va = j.voice_artifact;
+    if (va && typeof va === "object" && va.effective_voice_mode != null) {
+      var e = String(va.effective_voice_mode).trim().toLowerCase();
+      if (e) return e;
+    }
+    var ra = j.readiness_audit;
+    if (ra && typeof ra === "object" && ra.effective_voice_mode != null) {
+      var e2 = String(ra.effective_voice_mode).trim().toLowerCase();
+      if (e2) return e2;
+    }
+    if (j.effective_voice_mode != null) {
+      var e3 = String(j.effective_voice_mode).trim().toLowerCase();
+      if (e3) return e3;
+    }
+    if (j.requested_voice_mode != null) {
+      var e4 = String(j.requested_voice_mode).trim().toLowerCase();
+      if (e4) return e4;
+    }
+    return null;
+  }
+
+  /** BA 32.32 — bevorzugt readiness_audit.silent_render_expected; sonst BA-32.31-Heuristik. */
+  function fdVgAudioSilentIsExpectedFallback(j) {
+    var ra = j && j.readiness_audit;
+    if (ra && typeof ra === "object" && typeof ra.silent_render_expected === "boolean") {
+      return !!ra.silent_render_expected;
+    }
+    return fdVgEffectiveVoiceMode(j) === "none";
+  }
+
+  /** BA 32.80b — Voice „grün“ wie Python ``_voice_escape_ok_ba3280`` (QC-Reuse). */
+  function fdVgVoiceEscapeOkBa3280(j) {
+    var va = j && j.voice_artifact;
+    var ra = j && j.readiness_audit;
+    var eff = fdVgEffectiveVoiceMode(j);
+    if (eff === "none") return true;
+    if (!eff && ra && String(ra.requested_voice_mode || "").trim().toLowerCase() === "none") return true;
+    if (va && typeof va === "object" && va.is_dummy) {
+      var req = String(va.requested_voice_mode || (ra && ra.requested_voice_mode) || "").trim().toLowerCase();
+      return req === "dummy";
+    }
+    if (va && va.voice_ready) return true;
+    if (ra && ra.voice_file_ready) return true;
+    return false;
+  }
+
+  /** Entfernt harmlose Teilstrings, die ``fallback`` nur im Namen tragen (BA 32.80b). */
+  function fdVgSanitizeJoinedForFallbackPreview(j, joinedLower) {
+    var jn = joinedLower || "";
+    if (fdVgVoiceEscapeOkBa3280(j)) {
+      jn = jn.split("elevenlabs_voice_id_default_fallback").join(" ");
+    }
+    return jn;
+  }
+
+  /** BA 32.31 — audio_missing_silent_render zählt nur als Fallback, wenn Voice erwartet wurde (nicht ``none``). */
+  function fdVgWarnTriggersFallbackPreview(j, joinedLower) {
+    var jn = fdVgSanitizeJoinedForFallbackPreview(j, joinedLower || "");
+    for (var i = 0; i < FD_VG_FALLBACK_SIGNALS.length; i++) {
+      var s = String(FD_VG_FALLBACK_SIGNALS[i]);
+      if (jn.indexOf(s) < 0) continue;
+      if (s === "audio_missing_silent_render" && fdVgAudioSilentIsExpectedFallback(j)) continue;
+      return true;
+    }
+    return false;
+  }
+
+  function fdVgRenderLayerPlaceholderHit(joinedLower, readiness, payload) {
+    var jn = joinedLower || "";
+    if (readiness && typeof readiness.render_used_placeholders === "boolean") {
+      var ru = !!readiness.render_used_placeholders;
+      if (ru && jn.indexOf("audio_missing_silent_render") >= 0 && fdVgVoiceEscapeOkBa3280(payload) && jn.indexOf("ba266_cinematic_placeholder_applied") < 0) {
+        return false;
+      }
+      return ru;
+    }
+    if (jn.indexOf("ba266_cinematic_placeholder_applied") >= 0) return true;
+    if (jn.indexOf("audio_missing_silent_render") >= 0 && !fdVgAudioSilentIsExpectedFallback(payload)) {
+      if (fdVgVoiceEscapeOkBa3280(payload)) return false;
+      return true;
+    }
+    return false;
+  }
+
+  /** BA 32.29 — voice_artifact hat Vorrang vor readiness_audit; sonst Warning-Signale (wie Python _voice_qc). */
+  function fdVgVoiceArtifactPresent(j) {
+    var va = j && j.voice_artifact;
+    return !!(va && typeof va === "object" && Object.keys(va).length > 0);
+  }
+
+  function fdVgVoiceQcRowTuple(j, raQc, hasVoiceFallback) {
+    if (fdVgVoiceArtifactPresent(j)) {
+      var va2 = j.voice_artifact;
+      var eff2 = va2.effective_voice_mode != null ? String(va2.effective_voice_mode).trim().toLowerCase() : "";
+      if (!eff2) eff2 = "none";
+      if (eff2 === "none") {
+        return ["Echte Voice verwendet", "Nicht verfügbar", "Keine Voice ausgewählt."];
+      }
+      if (va2.is_dummy) {
+        return ["Echte Voice verwendet", "Prüfen", "Dummy Voice verwendet."];
+      }
+      if (va2.voice_ready) {
+        return ["Echte Voice verwendet", "OK", "Echte Voice-Datei vorhanden."];
+      }
+      if (va2.voice_file_path) {
+        return ["Echte Voice verwendet", "Prüfen", "Voice-Datei fehlt."];
+      }
+      return ["Echte Voice verwendet", hasVoiceFallback ? "Prüfen" : "OK", hasVoiceFallback ? "Dummy/Fallback-Signal in warnings" : "keine Voice-Fallback-Signale erkannt"];
+    }
+    var raV = raQc && typeof raQc === "object" ? raQc : {};
+    var effR = raV.effective_voice_mode != null ? String(raV.effective_voice_mode).trim().toLowerCase() : "";
+    if (effR === "none") {
+      return ["Echte Voice verwendet", "Nicht verfügbar", "Keine Voice ausgewählt."];
+    }
+    if (raV.voice_is_dummy === true) {
+      return ["Echte Voice verwendet", "Prüfen", "Dummy Voice verwendet."];
+    }
+    if (raV.voice_file_ready === true && !raV.voice_is_dummy) {
+      return ["Echte Voice verwendet", "OK", "Echte Voice-Datei vorhanden."];
+    }
+    if (raV.voice_file_path_present === true && raV.voice_file_ready !== true) {
+      return ["Echte Voice verwendet", "Prüfen", "Voice-Datei fehlt."];
+    }
+    return ["Echte Voice verwendet", hasVoiceFallback ? "Prüfen" : "OK", hasVoiceFallback ? "Dummy/Fallback-Signal in warnings" : "keine Voice-Fallback-Signale erkannt"];
+  }
+
+  function fdVgWarnJoinedLower(warnings) {
+    try { return (warnings || []).map(function(x) { return String(x || ""); }).join(" ").toLowerCase(); } catch (eW) { return ""; }
+  }
+
+  function fdVgHasAnySignal(joinedLower, signals) {
+    if (!joinedLower) return false;
+    for (var i = 0; i < signals.length; i++) {
+      if (joinedLower.indexOf(String(signals[i])) >= 0) return true;
+    }
+    return false;
+  }
 
   function fdDashboardManualResetActive() {
     try { return localStorage.getItem(FD_DASHBOARD_MANUAL_RESET_KEY) === "1"; } catch (e) { return false; }
@@ -6033,6 +7759,111 @@ try {
 
   function fdSetDashboardManualResetFlag() {
     try { localStorage.setItem(FD_DASHBOARD_MANUAL_RESET_KEY, "1"); } catch (e) {}
+  }
+
+  function fdSetExecNextTarget(targetId) {
+    var tid = String(targetId || "").trim();
+    if (!tid) tid = "fd-video-generate-url";
+    try { localStorage.setItem(FD_EXEC_NEXT_TARGET_KEY, tid); } catch (e) {}
+    var btn = document.getElementById("fp-exec-next-step-btn");
+    if (btn) btn.setAttribute("data-fd-exec-next-target", tid);
+  }
+
+  function fdGetExecNextTarget() {
+    try {
+      var tid = localStorage.getItem(FD_EXEC_NEXT_TARGET_KEY);
+      return tid ? String(tid) : "fd-video-generate-url";
+    } catch (e) {
+      return "fd-video-generate-url";
+    }
+  }
+
+  function fdExecSetNextStep(text, targetId, hint) {
+    var exNx = document.getElementById("fp-exec-next-step-short");
+    var hNext = document.getElementById("fp-exec-hint-next");
+    if (exNx) {
+      var s = String(text || "").trim();
+      exNx.textContent = s ? (s.length > 72 ? s.slice(0, 72) + "…" : s) : "Gib eine URL ein und starte Video generieren.";
+      exNx.setAttribute("title", s || "");
+    }
+    if (hNext) hNext.textContent = String(hint || "");
+    fdSetExecNextTarget(targetId || "fd-video-generate-url");
+  }
+
+  function fdSetGuidedFlowVideoGenerateState(st, nextAction) {
+    var host = document.getElementById("fd-guided-flow-steps");
+    var nx = document.getElementById("fd-guided-flow-next-action");
+    var lb = document.getElementById("fd-guided-flow-next-label");
+    if (!host || !nx || !lb) return;
+    host.innerHTML = "";
+    var steps = [
+      { id: "video_input", order: 1, label: "URL eingeben", detail: "Einen Artikel/Video-Link einfügen", status: (st === "running" || st === "ok" || st === "blocked") ? "done" : "active" },
+      { id: "video_generate", order: 2, label: "Video generieren", detail: "Startet den URL→Final-Lauf (BA 32.3)", status: st === "running" ? "active" : (st === "ok" ? "done" : (st === "blocked" ? "blocked" : "pending")) },
+      { id: "video_check", order: 3, label: "Ergebnis prüfen", detail: "Pfade, Warnungen und Video-Output prüfen", status: st === "ok" ? "active" : (st === "blocked" ? "active" : "pending") },
+    ];
+    steps.forEach(function(step) {
+      var div = document.createElement("div");
+      div.className = "fd-guided-flow-step";
+      div.innerHTML =
+        '<div class="fd-guided-flow-step-num">Schritt ' + String(step.order) + '</div>' +
+        '<div class="fd-guided-flow-step-label">' + String(step.label).replace(/</g, "&lt;") + '</div>' +
+        (step.detail ? '<div class="fd-guided-flow-step-detail">' + String(step.detail).replace(/</g, "&lt;") + '</div>' : '') +
+        '<span class="' + fdGuidedStatusBadgeClass(step.status) + '">' + fdGuidedStatusLabel(step.status) + '</span>';
+      host.appendChild(div);
+    });
+    lb.textContent = "BA 32.3 — URL → Video";
+    nx.textContent = nextAction || "—";
+  }
+
+  function fdUpdateVideoGenerateExecutiveState(payload, phase) {
+    var j = payload || null;
+    if (phase === "neutral") {
+      var exRun0 = document.getElementById("fp-exec-latest-run");
+      if (exRun0) exRun0.textContent = "Kein aktiver Run";
+      var exFs0 = document.getElementById("fp-exec-fresh-status");
+      if (exFs0) exFs0.textContent = "Kein angezeigter Stand";
+      fdExecSetNextStep("Gib eine URL ein und starte Video generieren.", "fd-video-generate-url", "");
+      fdSetGuidedFlowVideoGenerateState("neutral", "Gib eine URL ein und starte Video generieren.");
+      return;
+    }
+    if (String(phase || "").toLowerCase() === "running") {
+      fdRenderVideoGenerateOperatorResult({ ok: false, run_id: "", blocking_reasons: [], warnings: [] }, "running");
+    }
+    var isRunning = phase === "running";
+    if (isRunning) {
+      var exRun = document.getElementById("fp-exec-latest-run");
+      if (exRun) exRun.textContent = "Video läuft …";
+      var exFs = document.getElementById("fp-exec-fresh-status");
+      if (exFs) exFs.textContent = "Video-Status: läuft";
+      fdExecSetNextStep("Video wird erzeugt … warte auf Ergebnis.", "fd-video-generate-result", "Nach Abschluss: Ergebnis prüfen");
+      fdSetGuidedFlowVideoGenerateState("running", "Warte auf den Abschluss der Video-Generierung");
+      return;
+    }
+    var ok = !!(j && j.ok);
+    var rid = j && j.run_id ? String(j.run_id) : "";
+    var blocking = (j && j.blocking_reasons && j.blocking_reasons.length) ? j.blocking_reasons : [];
+    var warnings = (j && j.warnings && j.warnings.length) ? j.warnings : [];
+    var warnJoined = fdVgWarnJoinedLower(warnings);
+    var isFallbackPreview = ok && fdVgIsOkRunFallbackPreview(j, warnJoined);
+    var exRun2 = document.getElementById("fp-exec-latest-run");
+    if (exRun2) exRun2.textContent = rid ? ("Letzter Videolauf: " + rid) : "Kein aktiver Run";
+    var exFs2 = document.getElementById("fp-exec-fresh-status");
+    if (exFs2) exFs2.textContent = ok ? (isFallbackPreview ? "Video-Status: Fallback-Preview erstellt" : "Video-Status: fertig") : (blocking && blocking.length ? "Video-Status: blockiert" : "Video-Status: beendet");
+    if (ok) {
+      if (isFallbackPreview) {
+        fdExecSetNextStep("Fallback-Preview erstellt. Provider/Assets prüfen oder Preview öffnen.", "fd-video-generate-result", "");
+        fdSetGuidedFlowVideoGenerateState("ok", "Provider/Assets prüfen oder Preview öffnen, dann Ergebnis validieren");
+      } else {
+        fdExecSetNextStep("Video-Generierung abgeschlossen. Prüfe Ergebnis, Pfade und Warnungen.", "fd-video-generate-result", "");
+        fdSetGuidedFlowVideoGenerateState("ok", "Ergebnis prüfen (JSON, Pfade, Warnungen) und final_video.mp4 validieren");
+      }
+    } else if (blocking && blocking.length) {
+      fdExecSetNextStep("Video konnte nicht erzeugt werden. Prüfe Blocker im Ergebnisbereich.", "fd-video-generate-result", "");
+      fdSetGuidedFlowVideoGenerateState("blocked", "Blocker prüfen und beheben, dann erneut starten");
+    } else {
+      fdExecSetNextStep("Video-Lauf beendet. Prüfe Ergebnis und Warnungen.", "fd-video-generate-result", "");
+      fdSetGuidedFlowVideoGenerateState("blocked", "Ergebnis prüfen und ggf. erneut starten");
+    }
   }
 
   function fdFpResetOperatorReviewNeutral() {
@@ -6139,6 +7970,7 @@ try {
       exNx.textContent = "Gib eine URL ein und starte Video generieren.";
       exNx.setAttribute("title", "");
     }
+    fdSetExecNextTarget("fd-video-generate-url");
     var hFresh = document.getElementById("fp-exec-hint-fresh");
     if (hFresh) hFresh.textContent = "Nur die Ansicht — Dateien bleiben auf der Festplatte.";
     var hScore = document.getElementById("fp-exec-hint-score");
@@ -6147,6 +7979,8 @@ try {
     if (hRun) hRun.textContent = "";
     var hNext = document.getElementById("fp-exec-hint-next");
     if (hNext) hNext.textContent = "";
+    var exBtn = document.getElementById("fp-exec-next-step-btn");
+    if (exBtn) exBtn.disabled = false;
     var nextBox = document.getElementById("fp-next-step-box");
     var nextText = document.getElementById("fp-operator-next-step");
     if (nextBox && nextText) {
@@ -6336,12 +8170,28 @@ try {
     });
   }
 
+  function fdBindExecNextStepButton() {
+    var btn = document.getElementById("fp-exec-next-step-btn");
+    if (!btn) return;
+    try {
+      var tid0 = btn.getAttribute("data-fd-exec-next-target") || fdGetExecNextTarget();
+      btn.setAttribute("data-fd-exec-next-target", tid0);
+    } catch (eTid) {}
+    btn.addEventListener("click", function(ev) {
+      ev.preventDefault();
+      var tid = btn.getAttribute("data-fd-exec-next-target") || fdGetExecNextTarget();
+      if (!tid) return;
+      openPanelAndScroll(null, tid);
+    });
+  }
+
   function fdBootstrapDashboard() {
     try {
       console.log("FD_BOOTSTRAP_START");
       showError("FD_BOOTSTRAP_START");
     } catch (eBootLog) {}
     fdBindSidebarNav();
+    fdBindExecNextStepButton();
     var autoBtn = document.getElementById("btn-intake-body");
     if (!autoBtn) {
       try {
@@ -6371,7 +8221,7 @@ try {
       autoBtn.addEventListener("click", async function() {
         var btn = autoBtn;
         clearWarnings();
-        await withActionButton(btn, "coll-source-intake", "coll-input-panel", async function() {
+        await withActionButton(btn, "coll-legacy-debug", "coll-input-panel", async function() {
           await runBuildBodyFromIntake();
         });
       });
@@ -6392,7 +8242,7 @@ try {
   $("btn-full-pipeline").onclick = async function() {
     var btn = this;
     clearWarnings();
-    await withActionButton(btn, "coll-full-pipeline", "coll-full-pipeline", runFullPipelineOrchestrator);
+    await withActionButton(btn, "coll-legacy-debug", "coll-full-pipeline", runFullPipelineOrchestrator);
   };
 
   $("lab-left").addEventListener("change", renderPromptLab);
@@ -6639,6 +8489,93 @@ try {
     if (vgClr) {
       vgClr.addEventListener("click", function() {
         fdClearVideoGenerateForm();
+      });
+    }
+    var vgLive = document.getElementById("fd-vg-live-assets");
+    if (vgLive) {
+      vgLive.addEventListener("change", function() {
+        try { fdApplyVideoGenerateAssetsModeHint(); } catch (eHint) {}
+        try { fdApplyVideoGenerateProviderReadinessHint(); } catch (eHint3) {}
+        try { fdApplyVideoGeneratePreflight(); } catch (ePf) {}
+        try { fdRenderFixChecklistFromProviderReadiness(FD_VG_PROVIDER_READINESS); } catch (eFix) {}
+        try { fdApplyRealProductionSmokeChecklist(); } catch (eRs) {}
+        try { fdApplyInline422Hint(); } catch (e422) {}
+      });
+    }
+    var vgVoice = document.getElementById("fd-vg-voice-mode");
+    if (vgVoice) {
+      vgVoice.addEventListener("change", function() {
+        try { fdApplyVideoGeneratePreflight(); } catch (ePf2) {}
+        try { fdApplyVideoGenerateProviderReadinessHint(); } catch (eHint4) {}
+        try { fdRenderFixChecklistFromProviderReadiness(FD_VG_PROVIDER_READINESS); } catch (eFix2) {}
+        try { fdApplyRealProductionSmokeChecklist(); } catch (eRs2) {}
+        try { fdApplyInline422Hint(); } catch (e422b) {}
+      });
+    }
+    var vgCosts = document.getElementById("fd-vg-confirm-costs");
+    if (vgCosts) {
+      vgCosts.addEventListener("change", function() {
+        try { fdApplyInline422Hint(); } catch (e422c) {}
+        try { fdApplyVideoGeneratePreflight(); } catch (ePf3) {}
+        try { fdApplyRealProductionSmokeChecklist(); } catch (eRs3) {}
+      });
+    }
+    var vgThumbPack = document.getElementById("fd-vg-generate-thumbnail-pack");
+    if (vgThumbPack) {
+      vgThumbPack.addEventListener("change", function() {
+        try { fdVgDispatchInputChange(vgThumbPack); } catch (eTb) {}
+        try { fdApplyInline422Hint(); } catch (e422tp) {}
+        try { fdApplyVideoGeneratePreflight(); } catch (ePftp) {}
+      });
+    }
+    var vgDevKeys = [
+      document.getElementById("fd-vg-dev-openai-api-key"),
+      document.getElementById("fd-vg-dev-elevenlabs-api-key"),
+      document.getElementById("fd-vg-dev-runway-api-key"),
+      document.getElementById("fd-vg-dev-leonardo-api-key")
+    ];
+    vgDevKeys.forEach(function(inp) {
+      if (!inp) return;
+      inp.addEventListener("input", function() {
+        try { fdVgApplyDevKeyOverrideHint(); } catch (eDk) {}
+      });
+    });
+    try { fdApplyVideoGenerateAssetsModeHint(); } catch (eHint2) {}
+    try { fdLoadVideoGenerateProviderReadiness(); } catch (ePr) {}
+    try { fdApplyInline422Hint(); } catch (e422d) {}
+    try { fdVgApplyDevKeyOverrideHint(); } catch (eDk0) {}
+    try { fdVgRenderLastRunSummary(fdVgLoadLastRunSummary()); } catch (eLast) {}
+    var vgPrRef = document.getElementById("fd-vg-provider-refresh");
+    if (vgPrRef) {
+      vgPrRef.addEventListener("click", async function() {
+        try { await fdLoadVideoGenerateProviderReadiness(); } catch (ePr2) {}
+      });
+    }
+    var vgGoCosts = document.getElementById("fd-vg-go-confirm-costs");
+    if (vgGoCosts) {
+      vgGoCosts.addEventListener("click", function() {
+        try { fdScrollToConfirmCosts(); } catch (eSc) {}
+      });
+    }
+    var vgForget = document.getElementById("fd-vg-forget-last-run");
+    if (vgForget) {
+      vgForget.addEventListener("click", function() {
+        try { fdVgForgetLastRunSummary(); } catch (eF) {}
+        try { FD_VG_LAST_VIDEO_GENERATE = null; } catch (eF2) {}
+        try { fdVgRenderLastRunSummary(null); } catch (eF3) {}
+        try { fdApplyRealProductionSmokeChecklist(); } catch (eF4) {}
+      });
+    }
+    var vgPreset = document.getElementById("fd-vg-real-smoke-preset");
+    if (vgPreset) {
+      vgPreset.addEventListener("click", function() {
+        try { fdApplyRealProductionSmokePreset(); } catch (ePs) {}
+      });
+    }
+    var vgOaiMini = document.getElementById("fd-vg-openai-image-mini-preset");
+    if (vgOaiMini) {
+      vgOaiMini.addEventListener("click", function() {
+        try { fdApplyOpenAiImageMiniSmokePreset(); } catch (eOm) {}
       });
     }
     var fpCopyHandoff = document.getElementById("fp-btn-copy-handoff-cli");

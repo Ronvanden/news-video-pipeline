@@ -10,7 +10,10 @@ class GenerateScriptRequest(BaseModel):
     duration_minutes: int = 10
     video_template: str = Field(
         default="generic",
-        description="BA 9: generic | true_crime | mystery_explainer | history_deep_dive",
+        description=(
+            "BA 9: generic | true_crime | mystery_explainer | history_deep_dive | documentary "
+            "(API-Alias: documentary_story) | real_estate_story (API-Alias: real_estate)"
+        ),
     )
     template_conformance_level: TemplateConformanceLevelLiteral = Field(
         default="warn",
@@ -27,7 +30,10 @@ class YouTubeGenerateScriptRequest(BaseModel):
     duration_minutes: int = 10
     video_template: str = Field(
         default="generic",
-        description="BA 9: generic | true_crime | mystery_explainer | history_deep_dive",
+        description=(
+            "BA 9: generic | true_crime | mystery_explainer | history_deep_dive | documentary "
+            "(API-Alias: documentary_story) | real_estate_story (API-Alias: real_estate)"
+        ),
     )
     template_conformance_level: TemplateConformanceLevelLiteral = Field(
         default="warn",
@@ -52,7 +58,10 @@ class GenerateHookRequest(BaseModel):
 
     video_template: str = Field(
         default="generic",
-        description="generic | true_crime | mystery_explainer | history_deep_dive",
+        description=(
+            "generic | true_crime | mystery_explainer | history_deep_dive | documentary "
+            "(Alias: documentary_story) | real_estate_story (Alias: real_estate)"
+        ),
     )
     topic: str = ""
     title: str = ""

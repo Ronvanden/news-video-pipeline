@@ -13,7 +13,7 @@ _REGISTRY: Tuple[Dict[str, Any], ...] = (
     {
         "id": "hv_doc_led_v1",
         "label": "Dokumentarischer Einstieg",
-        "default_for_templates": frozenset({"history_deep_dive", "generic"}),
+        "default_for_templates": frozenset({"history_deep_dive", "documentary", "generic"}),
         "hook_type_tags": frozenset(
             {"authority_stat", "timeline_tease", "cold_open_facts"}
         ),
