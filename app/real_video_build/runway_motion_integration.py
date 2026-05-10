@@ -1,4 +1,4 @@
-"""BA 32.63 — Erster Motion-Slot → Runway-Clip → Asset-Manifest (max. 1 Slot pro Lauf)."""
+"""BA 32.66 — Bounded Runway Motion-Slots → Asset-Manifest (max. 2 Slots pro Lauf)."""
 
 from __future__ import annotations
 
@@ -82,17 +82,25 @@ def apply_first_runway_motion_slot_to_manifest(
     smoke_runner: Optional[RunwaySmokeRunner] = None,
 ) -> Tuple[Dict[str, Any], Dict[str, Any], List[str]]:
     """
-    Plant Motion-Slots (wie BA 32.62), versucht höchstens **einen** Runway-Clip für Slot 1.
+    Plant Motion-Slots (wie BA 32.62), versucht höchstens **zwei** Runway-Clips.
 
-    Schreibt ``asset_manifest.json`` bei Erfolg neu (video_path + Metadaten für die Szene).
+    Kompatibilität/Safety:
+    - ``max_motion_clips=0`` plant keine Slots und führt keine Provider-Calls aus.
+    - ``max_motion_clips=1`` bleibt der bisherige First-Slot-Smoke.
+    - ``max_motion_clips>=2`` ist in BA 32.66 bewusst auf zwei Slots pro Lauf begrenzt.
+
+    Schreibt ``asset_manifest.json`` bei Erfolg neu (video_path + Metadaten je Szene).
     """
     extra: List[str] = []
     artifact: Dict[str, Any] = {
         "planned_count": 0,
+        "attempted_count": 0,
         "rendered_count": 0,
         "failed_count": 0,
         "skipped_count": 0,
+        "max_render_attempts": 0,
         "video_clip_paths": [],
+        "slot_results": [],
         "warnings": [],
     }
 
@@ -126,117 +134,185 @@ def apply_first_runway_motion_slot_to_manifest(
     if not plan.get("enabled") or not slots:
         return plan, artifact, extra
 
-    # Nur erster Slot (Smoke / minimaler Hybrid).
-    slot0 = dict(slots[0])
-    slot_idx = int(slot0.get("slot_index") or 1)
-    sn = int(slot0.get("scene_number") or 1)
+    max_attempts = max(0, min(2, int(max_motion_clips), len(slots)))
+    artifact["max_render_attempts"] = max_attempts
+    if int(max_motion_clips) > 2:
+        extra.append("runway_motion_clips_capped_at_2")
 
+    target_indexes = list(range(max_attempts))
     if not smoke_runner and not (os.environ.get("RUNWAY_API_KEY") or "").strip():
-        slot0["status"] = "skipped"
-        slots[0] = slot0
+        for idx in target_indexes:
+            slot = dict(slots[idx])
+            slot["status"] = "skipped"
+            slots[idx] = slot
+            artifact["slot_results"].append(
+                {
+                    "slot_index": int(slot.get("slot_index") or idx + 1),
+                    "scene_number": int(slot.get("scene_number") or 0),
+                    "status": "skipped",
+                    "reason": "runway_key_missing_motion_skipped",
+                }
+            )
         plan["slots"] = slots
-        artifact["skipped_count"] = 1
+        artifact["skipped_count"] = len(target_indexes)
         extra.append("runway_key_missing_motion_skipped")
         return plan, artifact, extra
 
-    vp = visual_prompt_for_scene_from_pack(pack, sn).strip()
-    if not vp:
-        vp = _DEFAULT_VIDEO_PROMPT_FALLBACK
-
     assets = man.get("assets") or []
-    row: Optional[Dict[str, Any]] = None
-    for a in assets:
-        if isinstance(a, dict) and int(a.get("scene_number") or 0) == sn:
-            row = a
-            break
     gen_dir = Path(manifest_path).resolve().parent
-    if row is None:
-        slot0["status"] = "failed"
-        slots[0] = slot0
-        plan["slots"] = slots
-        artifact["failed_count"] = 1
-        extra.append("runway_video_generation_failed:asset_row_missing")
-        return plan, artifact, extra
+    rendered_paths: List[str] = []
+    warnings_seen: List[str] = []
+    processed_scene_numbers: set[int] = set()
+    manifest_dirty = False
 
-    img_rel = str(row.get("image_path") or "").strip()
-    if not img_rel:
-        slot0["status"] = "failed"
-        slots[0] = slot0
-        plan["slots"] = slots
-        artifact["failed_count"] = 1
-        extra.append("runway_video_generation_failed:image_path_missing")
-        return plan, artifact, extra
+    for idx in target_indexes:
+        slot = dict(slots[idx])
+        slot_idx = int(slot.get("slot_index") or idx + 1)
+        sn = int(slot.get("scene_number") or 1)
 
-    img_abs = gen_dir / img_rel
-    clip_name = f"scene_{sn:03d}_motion.mp4"
-    clip_abs = gen_dir / clip_name
-
-    dur = int(slot0.get("duration_seconds") or motion_clip_duration_seconds)
-    rid = f"{(run_id or '').strip() or 'run'}_ms{slot_idx}"
-
-    res = run_runway_motion_clip_live(
-        prompt=vp,
-        duration_seconds=max(5, min(10, dur)),
-        image_path=img_abs,
-        output_path=clip_abs,
-        run_id=rid,
-        smoke_runner=smoke_runner,
-    )
-
-    for w in res.warnings:
-        if w and w not in extra:
-            extra.append(str(w))
-    artifact["warnings"] = [x for x in res.warnings if x]
-
-    if not res.ok:
-        slot0["status"] = "failed"
-        slots[0] = slot0
-        plan["slots"] = slots
-        artifact["failed_count"] = 1
-        if not any("runway_video_generation_failed" in x for x in extra):
-            extra.append(
-                f"runway_video_generation_failed:{(res.safe_failure_reason or 'unknown')[:80]}"
+        if sn in processed_scene_numbers:
+            slot["status"] = "skipped"
+            slots[idx] = slot
+            artifact["skipped_count"] = int(artifact["skipped_count"] or 0) + 1
+            artifact["slot_results"].append(
+                {
+                    "slot_index": slot_idx,
+                    "scene_number": sn,
+                    "status": "skipped",
+                    "reason": "runway_motion_duplicate_scene_skipped",
+                }
             )
-        return plan, artifact, extra
+            extra.append("runway_motion_duplicate_scene_skipped")
+            continue
 
-    row["video_path"] = clip_name
-    row["generation_mode"] = res.generation_mode
-    row["provider_used"] = res.provider_used
-    row["motion_slot_index"] = slot_idx
-    # Timeline bevorzugt video wenn Datei existiert; image_path als Fallback beibehalten.
-    # BA 32.66: Render nutzt Playback-Fenster (kein Loop über die volle Szenenlänge).
-    try:
-        drow = row.get("duration_seconds")
-        if drow is None:
-            drow = row.get("estimated_duration_seconds")
-        scene_total_i = max(1, int(drow)) if drow is not None else 0
-    except (TypeError, ValueError):
-        scene_total_i = 0
-    if scene_total_i <= 0:
-        scene_total_i = max(1, int(slot0.get("duration_seconds") or motion_clip_duration_seconds))
-    slot_play = int(slot0.get("duration_seconds") or motion_clip_duration_seconds)
-    playback = max(1, min(slot_play, scene_total_i))
-    rest = max(0, scene_total_i - playback)
-    row["motion_clip_playback_seconds"] = playback
-    row["motion_clip_rest_image_seconds"] = rest
-    row["motion_clip_window_respected"] = True
+        row: Optional[Dict[str, Any]] = None
+        for a in assets:
+            if isinstance(a, dict) and int(a.get("scene_number") or 0) == sn:
+                row = a
+                break
+        if row is None:
+            slot["status"] = "failed"
+            slots[idx] = slot
+            artifact["failed_count"] = int(artifact["failed_count"] or 0) + 1
+            artifact["slot_results"].append(
+                {
+                    "slot_index": slot_idx,
+                    "scene_number": sn,
+                    "status": "failed",
+                    "reason": "asset_row_missing",
+                }
+            )
+            extra.append("runway_video_generation_failed:asset_row_missing")
+            continue
 
-    try:
-        Path(manifest_path).write_text(
-            json.dumps(man, ensure_ascii=False, indent=2),
-            encoding="utf-8",
+        img_rel = str(row.get("image_path") or "").strip()
+        if not img_rel:
+            slot["status"] = "failed"
+            slots[idx] = slot
+            artifact["failed_count"] = int(artifact["failed_count"] or 0) + 1
+            artifact["slot_results"].append(
+                {
+                    "slot_index": slot_idx,
+                    "scene_number": sn,
+                    "status": "failed",
+                    "reason": "image_path_missing",
+                }
+            )
+            extra.append("runway_video_generation_failed:image_path_missing")
+            continue
+
+        vp = visual_prompt_for_scene_from_pack(pack, sn).strip() or _DEFAULT_VIDEO_PROMPT_FALLBACK
+        img_abs = gen_dir / img_rel
+        clip_name = f"scene_{sn:03d}_motion.mp4" if slot_idx == 1 else f"scene_{sn:03d}_motion_s{slot_idx:03d}.mp4"
+        clip_abs = gen_dir / clip_name
+        dur = int(slot.get("duration_seconds") or motion_clip_duration_seconds)
+        rid = f"{(run_id or '').strip() or 'run'}_ms{slot_idx}"
+
+        artifact["attempted_count"] = int(artifact["attempted_count"] or 0) + 1
+        res = run_runway_motion_clip_live(
+            prompt=vp,
+            duration_seconds=max(5, min(10, dur)),
+            image_path=img_abs,
+            output_path=clip_abs,
+            run_id=rid,
+            smoke_runner=smoke_runner,
         )
-    except OSError as exc:
-        slot0["status"] = "failed"
-        slots[0] = slot0
-        plan["slots"] = slots
-        artifact["failed_count"] = 1
-        extra.append(f"runway_video_generation_failed:{type(exc).__name__}")
-        return plan, artifact, extra
 
-    slot0["status"] = "rendered"
-    slots[0] = slot0
+        for w in res.warnings:
+            sw = str(w or "").strip()
+            if sw and sw not in extra:
+                extra.append(sw)
+            if sw and sw not in warnings_seen:
+                warnings_seen.append(sw)
+
+        if not res.ok:
+            slot["status"] = "failed"
+            slots[idx] = slot
+            artifact["failed_count"] = int(artifact["failed_count"] or 0) + 1
+            reason = (res.safe_failure_reason or "unknown")[:80]
+            processed_scene_numbers.add(sn)
+            artifact["slot_results"].append(
+                {
+                    "slot_index": slot_idx,
+                    "scene_number": sn,
+                    "status": "failed",
+                    "reason": reason,
+                }
+            )
+            if not any("runway_video_generation_failed" in x for x in extra):
+                extra.append(f"runway_video_generation_failed:{reason}")
+            continue
+
+        row["video_path"] = clip_name
+        row["generation_mode"] = res.generation_mode
+        row["provider_used"] = res.provider_used
+        row["motion_slot_index"] = slot_idx
+        try:
+            drow = row.get("duration_seconds")
+            if drow is None:
+                drow = row.get("estimated_duration_seconds")
+            scene_total_i = max(1, int(drow)) if drow is not None else 0
+        except (TypeError, ValueError):
+            scene_total_i = 0
+        if scene_total_i <= 0:
+            scene_total_i = max(1, int(slot.get("duration_seconds") or motion_clip_duration_seconds))
+        slot_play = int(slot.get("duration_seconds") or motion_clip_duration_seconds)
+        playback = max(1, min(slot_play, scene_total_i))
+        rest = max(0, scene_total_i - playback)
+        row["motion_clip_playback_seconds"] = playback
+        row["motion_clip_rest_image_seconds"] = rest
+        row["motion_clip_window_respected"] = True
+
+        slot["status"] = "rendered"
+        slots[idx] = slot
+        processed_scene_numbers.add(sn)
+        rendered_paths.append(clip_name)
+        artifact["rendered_count"] = int(artifact["rendered_count"] or 0) + 1
+        artifact["slot_results"].append(
+            {
+                "slot_index": slot_idx,
+                "scene_number": sn,
+                "status": "rendered",
+                "video_path": clip_name,
+            }
+        )
+        manifest_dirty = True
+
     plan["slots"] = slots
-    artifact["rendered_count"] = 1
-    artifact["video_clip_paths"] = [clip_name]
+    artifact["video_clip_paths"] = rendered_paths
+    artifact["warnings"] = warnings_seen
+
+    if manifest_dirty:
+        try:
+            Path(manifest_path).write_text(
+                json.dumps(man, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            reason = type(exc).__name__
+            artifact["failed_count"] = int(artifact["failed_count"] or 0) + int(artifact["rendered_count"] or 0)
+            artifact["rendered_count"] = 0
+            artifact["video_clip_paths"] = []
+            extra.append(f"runway_video_generation_failed:{reason}")
+
     return plan, artifact, extra

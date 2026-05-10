@@ -781,6 +781,91 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         self.assertFalse(d["motion_ready"])
         self.assertFalse(d["motion_requested"])
 
+    def test_derive_motion_readiness_counts_two_clip_status_ba3267(self) -> None:
+        d = derive_motion_readiness_fields(
+            allow_live_motion=False,
+            live_motion_available=False,
+            max_motion_clips=2,
+            motion_slot_plan={"enabled": True, "planned_count": 2, "slots": []},
+            motion_clip_artifact={
+                "planned_count": 2,
+                "attempted_count": 2,
+                "rendered_count": 2,
+                "failed_count": 0,
+                "skipped_count": 0,
+            },
+            generation_modes={},
+        )
+        self.assertTrue(d["motion_requested"])
+        self.assertTrue(d["motion_rendered"])
+        self.assertTrue(d["motion_ready"])
+        self.assertEqual(d["motion_requested_count"], 2)
+        self.assertEqual(d["motion_attempted_count"], 2)
+        self.assertEqual(d["motion_rendered_count"], 2)
+        self.assertEqual(d["motion_failed_count"], 0)
+        self.assertEqual(d["motion_skipped_count"], 0)
+        self.assertTrue(d["motion_used_real_clips"])
+        self.assertFalse(d["motion_used_placeholders"])
+
+    def test_derive_motion_readiness_counts_skipped_without_provider_ba3267(self) -> None:
+        d = derive_motion_readiness_fields(
+            allow_live_motion=False,
+            live_motion_available=False,
+            max_motion_clips=2,
+            motion_slot_plan={"enabled": True, "planned_count": 2, "slots": []},
+            motion_clip_artifact={
+                "planned_count": 2,
+                "attempted_count": 0,
+                "rendered_count": 0,
+                "failed_count": 0,
+                "skipped_count": 2,
+            },
+            generation_modes={},
+        )
+        self.assertTrue(d["motion_requested"])
+        self.assertFalse(d["motion_rendered"])
+        self.assertFalse(d["motion_ready"])
+        self.assertEqual(d["motion_requested_count"], 2)
+        self.assertEqual(d["motion_attempted_count"], 0)
+        self.assertEqual(d["motion_rendered_count"], 0)
+        self.assertEqual(d["motion_skipped_count"], 2)
+        self.assertFalse(d["motion_used_real_clips"])
+        self.assertTrue(d["motion_used_placeholders"])
+
+    def test_open_me_readiness_shows_two_clip_counts_ba3267(self) -> None:
+        p = self._qc_voice_base()
+        p["run_id"] = "r_motion_two"
+        p["readiness_audit"] = {
+            "motion_ready": True,
+            "motion_requested": True,
+            "motion_rendered": True,
+            "motion_requested_count": 2,
+            "motion_attempted_count": 2,
+            "motion_rendered_count": 2,
+            "motion_failed_count": 0,
+            "motion_skipped_count": 0,
+            "motion_used_real_clips": True,
+            "motion_used_placeholders": False,
+            "effective_voice_mode": "elevenlabs",
+        }
+        p["motion_clip_artifact"] = {
+            "planned_count": 2,
+            "attempted_count": 2,
+            "rendered_count": 2,
+            "failed_count": 0,
+            "skipped_count": 0,
+            "max_render_attempts": 2,
+            "video_clip_paths": ["scene_001_motion.mp4", "scene_002_motion_s002.mp4"],
+        }
+        p["voice_artifact"] = {"effective_voice_mode": "elevenlabs", "voice_ready": True, "is_dummy": False}
+        html_out = build_open_me_video_result_html(p)
+        self.assertIn("motion_requested_count", html_out)
+        self.assertIn("motion_attempted_count", html_out)
+        self.assertIn("motion_rendered_count", html_out)
+        self.assertIn("motion_used_real_clips", html_out)
+        self.assertIn("attempted_count", html_out)
+        self.assertIn("scene_002_motion_s002.mp4", html_out)
+
     def test_qc_rows_motion_bereit_ok_when_readiness_motion_ready_ba3264(self) -> None:
         p = self._qc_voice_base()
         p["readiness_audit"] = {"motion_ready": True, "effective_voice_mode": "elevenlabs"}

@@ -78,10 +78,10 @@ def _build_leonardo_generation_payload(
     # Nur die fünf Keys — optional setzt der Server Alchemy o. ä. per Default (siehe API-Doku).
     return {
         "prompt": prompt.strip(),
-        "modelId": model_id,
         "width": 512,
         "height": 512,
         "num_images": 1,
+        "modelId": model_id,
     }
 
 

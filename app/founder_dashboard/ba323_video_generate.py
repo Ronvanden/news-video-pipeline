@@ -1113,6 +1113,13 @@ def build_open_me_video_result_html(payload: Dict[str, Any]) -> str:
             "motion_ready",
             "motion_requested",
             "motion_rendered",
+            "motion_requested_count",
+            "motion_attempted_count",
+            "motion_rendered_count",
+            "motion_failed_count",
+            "motion_skipped_count",
+            "motion_used_real_clips",
+            "motion_used_placeholders",
             "render_used_placeholders",
             "provider_blockers",
             "effective_voice_mode",
@@ -1193,9 +1200,12 @@ def build_open_me_video_result_html(payload: Dict[str, Any]) -> str:
     if isinstance(mac, dict) and mac:
         ma_rows = "\n".join(
             [
+                f"<tr><td class='k'>planned_count</td><td class='v'><code>{esc(mac.get('planned_count'))}</code></td><td class='b'></td></tr>",
+                f"<tr><td class='k'>attempted_count</td><td class='v'><code>{esc(mac.get('attempted_count'))}</code></td><td class='b'></td></tr>",
                 f"<tr><td class='k'>rendered_count</td><td class='v'><code>{esc(mac.get('rendered_count'))}</code></td><td class='b'></td></tr>",
                 f"<tr><td class='k'>failed_count</td><td class='v'><code>{esc(mac.get('failed_count'))}</code></td><td class='b'></td></tr>",
                 f"<tr><td class='k'>skipped_count</td><td class='v'><code>{esc(mac.get('skipped_count'))}</code></td><td class='b'></td></tr>",
+                f"<tr><td class='k'>max_render_attempts</td><td class='v'><code>{esc(mac.get('max_render_attempts'))}</code></td><td class='b'></td></tr>",
                 f"<tr><td class='k'>video_clip_paths</td><td class='v'><code>{esc(mac.get('video_clip_paths'))}</code></td><td class='b'></td></tr>",
             ]
         )
@@ -1433,7 +1443,11 @@ def derive_motion_readiness_fields(
 
     planned_slots = _i(msp.get("planned_count"))
     planned_art = _i(mac.get("planned_count"))
+    requested = max(_i(max_motion_clips), planned_slots, planned_art)
+    attempted = _i(mac.get("attempted_count"))
     rendered = _i(mac.get("rendered_count"))
+    failed = _i(mac.get("failed_count"))
+    skipped = _i(mac.get("skipped_count"))
     runway_live = _i(gm.get("runway_video_live"))
 
     motion_requested = (
@@ -1442,13 +1456,22 @@ def derive_motion_readiness_fields(
         or planned_slots > 0
         or planned_art > 0
     )
-    motion_rendered = rendered > 0 or runway_live > 0
+    motion_rendered_count = max(rendered, runway_live)
+    motion_rendered = motion_rendered_count > 0
     motion_ready = motion_rendered or (bool(live_motion_available) and bool(allow_live_motion))
+    placeholders_used = bool(motion_requested) and motion_rendered_count <= 0
 
     return {
         "motion_requested": bool(motion_requested),
         "motion_rendered": bool(motion_rendered),
         "motion_ready": bool(motion_ready),
+        "motion_requested_count": int(requested if motion_requested else 0),
+        "motion_attempted_count": int(attempted),
+        "motion_rendered_count": int(motion_rendered_count),
+        "motion_failed_count": int(failed),
+        "motion_skipped_count": int(skipped),
+        "motion_used_real_clips": bool(motion_rendered),
+        "motion_used_placeholders": bool(placeholders_used),
     }
 
 
@@ -1733,6 +1756,10 @@ def execute_dashboard_video_generate(
         "max_motion_clips": int(max_motion_clips),
         "planned_motion_slot_count": planned_slots_int,
         "runway_motion_rendered_count": rendered_int,
+        "motion_requested_count": int(motion_rd.get("motion_requested_count") or 0),
+        "motion_attempted_count": int(motion_rd.get("motion_attempted_count") or 0),
+        "motion_failed_count": int(motion_rd.get("motion_failed_count") or 0),
+        "motion_skipped_count": int(motion_rd.get("motion_skipped_count") or 0),
         "motion_requested": bool(motion_rd["motion_requested"]),
         "motion_rendered": bool(motion_rd["motion_rendered"]),
         "live_motion_available": bool(live_motion_available),
@@ -1812,6 +1839,13 @@ def execute_dashboard_video_generate(
         "motion_ready": bool(motion_rd["motion_ready"]),
         "motion_requested": bool(motion_rd["motion_requested"]),
         "motion_rendered": bool(motion_rd["motion_rendered"]),
+        "motion_requested_count": int(motion_rd.get("motion_requested_count") or 0),
+        "motion_attempted_count": int(motion_rd.get("motion_attempted_count") or 0),
+        "motion_rendered_count": int(motion_rd.get("motion_rendered_count") or 0),
+        "motion_failed_count": int(motion_rd.get("motion_failed_count") or 0),
+        "motion_skipped_count": int(motion_rd.get("motion_skipped_count") or 0),
+        "motion_used_real_clips": bool(motion_rd.get("motion_used_real_clips")),
+        "motion_used_placeholders": bool(motion_rd.get("motion_used_placeholders")),
         "render_used_placeholders": (
             any(sig in joined for sig in ("ba266_cinematic_placeholder_applied",))
             or (

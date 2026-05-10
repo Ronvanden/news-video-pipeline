@@ -11,9 +11,9 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 
 **BA 32.62 (Motion Slot Planner):** Aus **Asset-Manifest-Szenen** nach Fit-to-Voice (vor Timeline-Build) plant die Pipeline **Hybrid-Motion-Zeitfenster** (`app/real_video_build/motion_slot_planner.build_motion_slots`): z. B. alle 60 s ein geplanter 10-s-Clip, begrenzt durch `max_motion_clips` und die **Summe der Szenendauern**. Ausgabe additiv in `run_summary.json` (`motion_slot_plan`, `motion_slot_count`), Dashboard (`motion_strategy.planned_motion_slot_count`) und `OPEN_ME_VIDEO_RESULT.html`. Ohne BA 32.63: **keine** Runway-Calls; Slots bleiben `status: planned` (sofern nicht später überschrieben).
 
-**BA 32.63 (Runway Motion Slot Smoke / Integration):** Nach **Fit-to-Voice** und **vor** `build_timeline_manifest` wertet `run_ba265_url_to_final` bei `max_motion_clips >= 1` das **Asset-Manifest** aus, plant Slots (wie BA 32.62) und versucht **höchstens einen** Runway Image-to-Video-Clip für Slot 1 (`app/production_connectors/runway_video_connector.py`, `app/real_video_build/runway_motion_integration.py`). Erfolg → `video_path` z. B. `scene_NNN_motion.mp4`, `generation_mode: runway_video_live`, `provider_used: runway`, erster Slot `status: rendered`; Fehler/ohne Key → `failed` / `skipped` + Warnungen ohne Crash. Additiv: `run_summary.motion_clip_artifact`, Dashboard/OPEN_ME.
+**BA 32.63/32.66 (Runway Motion Slot Smoke / Integration):** Nach **Fit-to-Voice** und **vor** `build_timeline_manifest` wertet `run_ba265_url_to_final` bei `max_motion_clips >= 1` das **Asset-Manifest** aus, plant Slots (wie BA 32.62) und versucht Runway Image-to-Video-Clips über `app/production_connectors/runway_video_connector.py` / `app/real_video_build/runway_motion_integration.py`. **Ein-Clip-Verhalten:** `max_motion_clips=1` bleibt der bisherige First-Slot-Smoke (`scene_001_motion.mp4`). **Zwei-Clip-Smoke:** `max_motion_clips=2` kann zwei unterschiedliche Szenen als `video_path` markieren (z. B. `scene_001_motion.mp4`, `scene_002_motion_s002.mp4`). **Safety-Cap:** Werte über 2 werden in dieser BA weiterhin auf zwei Render-Versuche pro Lauf begrenzt (`runway_motion_clips_capped_at_2`), damit Kosten/Last nicht unkontrolliert steigen. Fehler/ohne Key → `failed` / `skipped` + Warnungen ohne Crash. Additiv: `run_summary.motion_clip_artifact`, Dashboard/OPEN_ME.
 
-**BA 32.64 (Motion Readiness vs. gerenderte Clips):** `readiness_audit` im Video-Generate-Payload setzt u. a. **`motion_ready`** / **`motion_requested`** / **`motion_rendered`** konsistent zu Slot-Plan und Manifest (`derive_motion_readiness_fields` in `app/founder_dashboard/ba323_video_generate.py`). Nach erfolgreichem Runway-Render gilt **`live_motion_not_available`** nicht mehr als `provider_blockers`-Eintrag, wenn **`motion_rendered`** wahr ist.
+**BA 32.64/32.67 (Motion Readiness vs. gerenderte Clips):** `readiness_audit` im Video-Generate-Payload setzt u. a. **`motion_ready`** / **`motion_requested`** / **`motion_rendered`** konsistent zu Slot-Plan und Manifest (`derive_motion_readiness_fields` in `app/founder_dashboard/ba323_video_generate.py`). Zusätzlich werden die Operator-Zähler **requested / attempted / rendered / failed / skipped** sowie **`motion_used_real_clips`** / **`motion_used_placeholders`** angezeigt. Nach erfolgreichem Runway-Render gilt **`live_motion_not_available`** nicht mehr als `provider_blockers`-Eintrag, wenn **`motion_rendered`** wahr ist.
 
 **BA 26.4e (Acceptance Smoke):** Vor **BA 26.5** gibt es einen trockenen Acceptance-Smoke-Test (`tests/test_ba264e_provider_routing_acceptance_smoke.py`), der 5 synthetische Assets durch Routing/Partition/Guard/Policy-Report jagt und sicherstellt, dass kein `needs_review` entsteht und alle Provider-Ziele (`leonardo`, `openai_images`, `runway`, `render_layer`) mindestens einmal erreicht werden — **ohne** Live-Calls.
 
@@ -54,11 +54,12 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 | `motion_slot_plan.planned_count` | `1` |
 | `motion_slot_count` (Top-Level `run_summary`) | `1` |
 | `motion_slot_plan.slots[0].status` | `rendered` |
-| `motion_clip_artifact.planned_count` | `1` |
-| `motion_clip_artifact.rendered_count` | `1` |
-| `motion_clip_artifact.failed_count` | `0` |
-| `motion_clip_artifact.skipped_count` | `0` |
-| `motion_clip_artifact.video_clip_paths` | `["scene_001_motion.mp4"]` |
+| `motion_clip_artifact.planned_count` | `1` (Ein-Clip) / `2` (Zwei-Clip-Smoke) |
+| `motion_clip_artifact.attempted_count` | Provider-Versuche; ohne Key `0` |
+| `motion_clip_artifact.rendered_count` | `1` oder `2` bei erfolgreichem Mock/Live-Smoke |
+| `motion_clip_artifact.failed_count` | Fehlgeschlagene Provider-/Manifest-Versuche |
+| `motion_clip_artifact.skipped_count` | z. B. ohne Key oder Duplicate-Szene |
+| `motion_clip_artifact.video_clip_paths` | z. B. `["scene_001_motion.mp4", "scene_002_motion_s002.mp4"]` |
 | `generation_modes` (Asset-Artifact / Manifest-Histogramm) | `runway_video_live`: **1**, `gemini_image_live`: **2** |
 | `asset_manifest_file_count` | `3` |
 | `real_asset_file_count` | `3` |
@@ -80,7 +81,7 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 ### Was dieser Lauf beweist
 
 - **Motion Slot Planning** (BA 32.62) liefert nutzbare Slots im Summary.
-- **Slot 1** kann in einen **echten Runway-Clip** überführt werden (BA 32.63).
+- **Slot 1** kann in einen **echten Runway-Clip** überführt werden (BA 32.63); **Slot 1–2** sind als bounded Zwei-Clip-Smoke möglich (BA 32.66).
 - Das **Asset Manifest** kann **Video- und Bildassets** gemeinsam führen (`video_path` + Bilder für weitere Szenen).
 - **`generation_mode: runway_video_live`** wird im Manifest korrekt ausgewiesen.
 - **Gemini-Bilder** bleiben parallel nutzbar (hier zwei Live-Gemini-Assets).
@@ -100,20 +101,21 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 
 - **`allow_live_motion_requested`:** expliziter **Dashboard-/API-Wunsch** (Checkbox „Live Motion“ / `allow_live_motion`), gekoppelt an Runway-Key-Pflicht (**BA 32.1**).
 - **`motion_requested`:** Slots/Plan aktiv (`motion_slot_plan.enabled`, `planned_count`) oder **`max_motion_clips` > 0** bzw. Artefakt-`planned_count`.
-- **`motion_rendered`:** mindestens ein Runway-Clip erzeugt (`motion_clip_artifact.rendered_count`) **oder** Histogramm `generation_modes.runway_video_live` > 0.
+- **`motion_rendered`:** mindestens ein Runway-Clip erzeugt (`motion_clip_artifact.rendered_count`) **oder** Histogramm `generation_modes.runway_video_live` > 0. BA 32.67 ergänzt die Zähler `motion_requested_count`, `motion_attempted_count`, `motion_rendered_count`, `motion_failed_count`, `motion_skipped_count`, plus `motion_used_real_clips` / `motion_used_placeholders`.
 - **`motion_ready`:** `true`, wenn **`motion_rendered`** **oder** der klassische Pfad (**`live_motion_available`** und **`allow_live_motion_requested`**).
 - **`live_motion_not_available`** erscheint **nicht** in `provider_blockers`, wenn **`motion_rendered`** wahr ist (**BA 32.64**).
 
-### Nächster sinnvoller Schritt — BA 32.66 (2-Clip Hybrid Smoke)
+### Nächster sinnvoller Schritt nach BA 32.68
 
-- **`max_motion_clips=2`**, zwei Runway-Clips (sobald Pipeline/Erweiterung mehr als Slot 1 unterstützt), mehrere Gemini-Bilder, ElevenLabs Voice.
-- Prüfen, ob **Manifest / Timeline / Timing** mit **mehr als einem Video-Clip** stabil bleiben.
+- **Empfohlen:** optionaler, manuell bestätigter **Live-2-Clip-Smoke** mit `max_motion_clips=2`, kleinem Szenen-/Dauer-Cap, mehreren echten Bildern und produktiver Voice nur bei bewusst gesetzten Keys/Kostenfreigaben.
+- Alternativ zuerst **4-Clip-Mock-Smoke**, falls Kosten-/Provider-Risiko oder Timeline-Last noch unklar sind.
+- Weiterhin prüfen: Manifest / Timeline / Timing / ffmpeg-Last bei mehr als zwei Video-Clips, bevor längere 5–10-Minuten-Produktionen freigegeben werden.
 
 ## Existing Building Blocks
 
 | Schritt | Script | Input | Output | Real/Placeholder | Hinweise |
 |---|---|---|---|---|---|
-| 0b. Founder Dashboard URL→MP4 (BA 32.3) | *(HTTP)* `POST /founder/dashboard/video/generate` → `run_ba265_url_to_final` | JSON: `url`, Dauer, `max_scenes`, Live-Flags + Kostenbestätigung | `output/video_generate/<run_id>/final_video.mp4` + `run_summary.json` | placeholder/live wie gewählt | Eigenes UI-Panel vor Fresh Preview. Motion-Metadaten im Pack; **`run_summary`**: `motion_slot_plan` (**BA 32.62**) + optional **ein** Runway-Clip für Slot 1 bei **`max_motion_clips` ≥ 1** + **`RUNWAY_API_KEY`** (**BA 32.63**). Checkbox **Live Motion** ohne Key → **422** (**BA 32.1**). Chronik Erstlauf: **BA 32.65**. |
+| 0b. Founder Dashboard URL→MP4 (BA 32.3) | *(HTTP)* `POST /founder/dashboard/video/generate` → `run_ba265_url_to_final` | JSON: `url`, Dauer, `max_scenes`, Live-Flags + Kostenbestätigung | `output/video_generate/<run_id>/final_video.mp4` + `run_summary.json` | placeholder/live wie gewählt | Eigenes UI-Panel vor Fresh Preview. Motion-Metadaten im Pack; **`run_summary`**: `motion_slot_plan` (**BA 32.62**) + optional **ein bis zwei** Runway-Clips bei **`max_motion_clips` 1–2** + **`RUNWAY_API_KEY`** (bei höheren Werten capped; **BA 32.66**). Checkbox **Live Motion** ohne Key → **422** (**BA 32.1**). Chronik Erstlauf: **BA 32.65**. |
 | 1. Script / Story Pack Input | *(extern / API / Export)* | URL, `ProductionPromptPlan.json`, oder `GenerateScriptResponse`/Story‑Pack | **Plan/Pack** für nachfolgende Schritte | real | Aktuell gibt es mehrere mögliche Quellen (API, CLI, Exporte). |
 | 2. Scene Asset Pack Export | `scripts/export_scene_asset_pack.py` | `--url` **oder** `--prompt-plan-json` | `output/scene_asset_pack_<run_id>/scene_asset_pack.json` + `leonardo_prompts.txt` + `shot_plan.md` + `founder_summary.txt` | real | Baut/erzwingt Scene Expansion im Plan. `--duration-minutes` wirkt nur auf Plan‑Erzeugung via URL. |
 | 3. Asset Runner | `scripts/run_asset_runner.py` | `scene_asset_pack.json` | `output/generated_assets_<run_id>/scene_001.png…` + optional `scene_XXX.mp4`/`.mov`/`.webm` + `asset_manifest.json` | **placeholder default** / optional live | Default `--mode placeholder` erzeugt bewusst PIL‑Placeholder‑PNGs. `--mode live` nutzt Leonardo nur mit `LEONARDO_API_KEY`, sonst Fallback + Warnungen. **BA 26.3:** Beats können **lokale** Clips referenzieren (`video_path`, `runway_clip_path`, …) — Validierung (Datei, Endung, kein Symlink); Kopie ins `generated_assets_*`‑Ordner; `asset_manifest` mit `asset_type`/`video_path` + optional `image_path` (Fallback). |
@@ -316,6 +318,16 @@ python -m pytest tests -k ba265 -q
 python -m pytest tests -k ba264 -q
 python -m pytest tests -k ba263 -q
 ```
+
+
+### BA 32.66–32.68 — Multi-Clip Hybrid Smoke Boundaries
+
+- **Mocked vs. live:** Automatisierte Tests nutzen ausschließlich `smoke_runner`-Mocks; sie prüfen Manifest-, Artifact-, Status- und Timeline-Handoff ohne Provider-HTTP. Ein Live-Smoke bleibt ein bewusster Operator-Schritt mit gesetztem `RUNWAY_API_KEY`, Kostenbestätigung und kleinem `max_motion_clips`.
+- **Ein-Clip-Pfad:** `max_motion_clips=1` rendert weiter nur den ersten Motion-Slot und schreibt `scene_NNN_motion.mp4` in `asset_manifest.assets[*].video_path`.
+- **Zwei-Clip-Pfad:** `max_motion_clips=2` rendert höchstens zwei unterschiedliche Szenen. Jede erfolgreiche Szene erhält `video_path`, `generation_mode: runway_video_live`, `provider_used: runway`, `motion_slot_index`, `motion_clip_playback_seconds`, `motion_clip_rest_image_seconds`, `motion_clip_window_respected`.
+- **No-provider safety:** Ohne `RUNWAY_API_KEY` und ohne Mock wird kein HTTP versucht; die bounded Slots werden `skipped`, `attempted_count=0`, und `runway_key_missing_motion_skipped` bleibt die operative Warnung.
+- **Render-Handoff:** `build_timeline_manifest` übernimmt `video_path` und Motion-Playback-Felder; `render_final_story_video` kann mehrere Video-Segmente mit Bild-Restfenstern konsumieren.
+- **Restrisiken vor längeren Runs:** Live-Kosten/Provider-Rate-Limits, zwei Clips in derselben langen Szene (Duplicate-Szene wird derzeit safe geskippt), Qualität/Continuity über mehr als zwei Clips, ffmpeg-Last und Cloud-Worker-Architektur für längere 5–10-Minuten-Läufe.
 
 ### BA 26.6 — Visual Founder Upgrade
 
