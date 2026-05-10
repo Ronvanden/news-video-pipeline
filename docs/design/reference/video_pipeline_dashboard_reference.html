@@ -1,0 +1,389 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--color-text-primary)}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:600px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;background:var(--color-background-secondary)}
+.sidebar{background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);padding:1rem 0}
+.sidebar-title{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.08em;padding:0 1rem 0.75rem}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 1rem;cursor:pointer;font-size:14px;color:var(--color-text-secondary);border-left:2px solid transparent;transition:all 0.15s}
+.nav-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.nav-item.active{color:#185FA5;border-left-color:#185FA5;background:var(--color-background-info);font-weight:500}
+.nav-item i{font-size:16px}
+.step-badge{margin-left:auto;font-size:11px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:1px 7px;color:var(--color-text-tertiary)}
+.nav-item.done .step-badge{background:#EAF3DE;color:#3B6D11;border-color:#97C459}
+.nav-item.active .step-badge{background:#E6F1FB;color:#185FA5;border-color:#85B7EB}
+.main{padding:1.5rem;overflow-y:auto}
+.panel{display:none}
+.panel.active{display:block}
+.panel-title{font-size:16px;font-weight:500;margin-bottom:1.25rem;display:flex;align-items:center;gap:8px}
+.panel-title i{color:#185FA5}
+.field-label{font-size:13px;color:var(--color-text-secondary);margin-bottom:6px;display:block}
+.field-group{margin-bottom:1.25rem}
+input[type=text],input[type=url],textarea,select{width:100%;font-size:14px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);outline:none}
+input[type=text]:focus,input[type=url]:focus,textarea:focus,select:focus{border-color:#378ADD;box-shadow:0 0 0 2px rgba(55,138,221,0.15)}
+textarea{min-height:100px;resize:vertical;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.card-title{font-size:13px;font-weight:500;margin-bottom:0.75rem;color:var(--color-text-primary)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;font-size:13px;color:var(--color-text-primary);transition:all 0.15s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn.primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn.primary:hover{background:#0C447C}
+.btn.success{background:#3B6D11;color:#fff;border-color:#3B6D11}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:0.75rem}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:0.75rem}
+.chip{font-size:12px;padding:4px 10px;border-radius:20px;border:0.5px solid var(--color-border-secondary);cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all 0.12s}
+.chip.sel{background:#E6F1FB;border-color:#85B7EB;color:#185FA5;font-weight:500}
+.script-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:1rem;font-size:13px;line-height:1.7;color:var(--color-text-primary);margin-bottom:0.75rem;min-height:80px}
+.image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:0.75rem}
+.img-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);overflow:hidden;position:relative;cursor:pointer;background:var(--color-background-secondary)}
+.img-thumb{width:100%;height:70px;display:flex;align-items:center;justify-content:center;font-size:24px}
+.img-label{font-size:11px;color:var(--color-text-secondary);padding:4px 6px;text-align:center}
+.img-card.selected{border:2px solid #185FA5}
+.img-card.selected::after{content:'✓';position:absolute;top:4px;right:4px;width:16px;height:16px;background:#185FA5;color:#fff;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:16px;text-align:center}
+.timeline{display:flex;align-items:center;gap:0;margin:1rem 0;overflow-x:auto;padding-bottom:4px}
+.tl-seg{display:flex;align-items:center;flex-direction:column;min-width:80px;cursor:pointer}
+.tl-bar{height:36px;border-radius:4px;margin:0 2px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:500;transition:opacity 0.15s}
+.tl-bar:hover{opacity:0.85}
+.tl-label{font-size:10px;color:var(--color-text-tertiary);margin-top:4px;text-align:center;max-width:72px}
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.progress-label{font-size:13px;min-width:140px;color:var(--color-text-secondary)}
+.progress-bar{flex:1;height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.3s}
+.progress-pct{font-size:12px;color:var(--color-text-tertiary);min-width:30px;text-align:right}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot-done{background:#639922}.dot-run{background:#378ADD;animation:pulse 1s infinite}.dot-wait{background:#B4B2A9}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.thumb-preview{width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--border-radius-md);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:0.75rem}
+.thumb-text{color:#fff;font-size:18px;font-weight:500;text-align:center;padding:1rem;text-shadow:0 2px 8px rgba(0,0,0,0.5)}
+.thumb-badge{position:absolute;top:10px;right:10px;background:#E24B4A;color:#fff;font-size:11px;padding:3px 8px;border-radius:4px;font-weight:500}
+.sep{height:0.5px;background:var(--color-border-tertiary);margin:1.25rem 0}
+.info-box{background:#E6F1FB;border:0.5px solid #85B7EB;border-radius:var(--border-radius-md);padding:10px 14px;font-size:13px;color:#0C447C;margin-bottom:1rem}
+.info-box i{margin-right:6px}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 14px}
+.stat-val{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.stat-lbl{font-size:12px;color:var(--color-text-tertiary);margin-top:2px}
+</style>
+
+<h2 class="sr-only">Video Pipeline Dashboard – automatisierter YouTube-Video-Workflow</h2>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-title">Pipeline-Schritte</div>
+    <div class="nav-item done" onclick="show(0)" id="nav0"><i class="ti ti-link" aria-hidden="true"></i> URL & Quelle <span class="step-badge">✓</span></div>
+    <div class="nav-item done" onclick="show(1)" id="nav1"><i class="ti ti-file-text" aria-hidden="true"></i> Skript <span class="step-badge">✓</span></div>
+    <div class="nav-item active" onclick="show(2)" id="nav2"><i class="ti ti-photo" aria-hidden="true"></i> Bilder & Video <span class="step-badge">3</span></div>
+    <div class="nav-item" onclick="show(3)" id="nav3"><i class="ti ti-layout" aria-hidden="true"></i> Thumbnail <span class="step-badge">4</span></div>
+    <div class="nav-item" onclick="show(4)" id="nav4"><i class="ti ti-scissors" aria-hidden="true"></i> Schnitt & Timeline <span class="step-badge">5</span></div>
+    <div class="nav-item" onclick="show(5)" id="nav5"><i class="ti ti-rocket" aria-hidden="true"></i> Export & Upload <span class="step-badge">6</span></div>
+    <div style="height:1px;background:var(--color-border-tertiary);margin:1rem 0"></div>
+    <div class="sidebar-title">Projekt</div>
+    <div class="nav-item" style="font-size:13px"><i class="ti ti-clock" aria-hidden="true"></i> 10 min Ziel</div>
+    <div class="nav-item" style="font-size:13px"><i class="ti ti-photo" aria-hidden="true"></i> 12 Bilder geplant</div>
+    <div class="nav-item" style="font-size:13px"><i class="ti ti-brand-youtube" aria-hidden="true"></i> YouTube DE</div>
+  </div>
+
+  <div class="main">
+
+    <!-- Panel 0: URL -->
+    <div class="panel" id="p0">
+      <div class="panel-title"><i class="ti ti-link" aria-hidden="true"></i> Quelle eingeben</div>
+      <div class="field-group">
+        <label class="field-label">URL (Artikel oder YouTube-Video)</label>
+        <input type="url" value="https://www.spiegel.de/beispiel-artikel" />
+      </div>
+      <div class="row2">
+        <div class="field-group">
+          <label class="field-label">Ausgabesprache</label>
+          <select><option selected>Deutsch</option><option>Englisch</option><option>Spanisch</option></select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Ziel-Videolänge</label>
+          <select><option>3 Minuten</option><option>5 Minuten</option><option selected>10 Minuten</option><option>15 Minuten</option><option>20 Minuten</option></select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field-group">
+          <label class="field-label">Inhalt extrahieren als</label>
+          <select><option selected>Erzähler-Skript (1. Person)</option><option>Erklärvideo-Skript</option><option>News-Format</option></select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Schreibstil</label>
+          <select><option selected>Informell & gesprächig</option><option>Professionell</option><option>Spannend / Hook-Fokus</option></select>
+        </div>
+      </div>
+      <div class="info-box"><i class="ti ti-info-circle" aria-hidden="true"></i> Das Skript wird automatisch paraphrasiert – kein 1:1-Kopieren. Plagiate werden vermieden.</div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="show(1)"><i class="ti ti-wand" aria-hidden="true"></i> Skript generieren ↗</button>
+      </div>
+    </div>
+
+    <!-- Panel 1: Skript -->
+    <div class="panel" id="p1">
+      <div class="panel-title"><i class="ti ti-file-text" aria-hidden="true"></i> Skript bearbeiten</div>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-val">847</div><div class="stat-lbl">Wörter</div></div>
+        <div class="stat"><div class="stat-val">~10</div><div class="stat-lbl">Minuten</div></div>
+        <div class="stat"><div class="stat-val">8</div><div class="stat-lbl">Abschnitte</div></div>
+        <div class="stat"><div class="stat-val">DE</div><div class="stat-lbl">Sprache</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎬 Hook (0:00 – 0:30)</div>
+        <textarea style="min-height:60px">Stell dir vor, du könntest in nur 10 Minuten verstehen, was Experten jahrelang erforscht haben. Genau das zeige ich dir heute – und es wird deine Sichtweise für immer verändern.</textarea>
+      </div>
+      <div class="card">
+        <div class="card-title">📖 Einleitung (0:30 – 2:00)</div>
+        <textarea>Das Thema, über das wir heute sprechen, betrifft uns alle. Es geht um etwas, das in den letzten Jahren immer relevanter geworden ist – und viele Menschen wissen noch nicht einmal, dass es existiert. Lass mich das für dich aufschlüsseln...</textarea>
+      </div>
+      <div class="card">
+        <div class="card-title">🔑 Hauptteil – Teil 1 (2:00 – 5:00)</div>
+        <textarea>Beginnen wir mit dem wichtigsten Punkt. Forscher der Universität Berlin haben herausgefunden, dass...</textarea>
+      </div>
+      <div class="sep"></div>
+      <div class="card-title" style="margin-bottom:8px;font-size:13px">Bild-Prompts (automatisch generiert)</div>
+      <div class="script-box">📷 Hook: <em>Cinematic aerial shot of a futuristic city at golden hour, dramatic lighting, 4K, photorealistic</em></div>
+      <div class="script-box">📷 Einleitung: <em>Close-up of a person reading a newspaper with blurred city background, soft natural light</em></div>
+      <div class="btn-row">
+        <button class="btn" onclick="show(0)"><i class="ti ti-arrow-left" aria-hidden="true"></i> Zurück</button>
+        <button class="btn primary" onclick="show(2)">Weiter zu Bilder ↗</button>
+        <button class="btn"><i class="ti ti-file-export" aria-hidden="true"></i> Als .txt speichern</button>
+      </div>
+    </div>
+
+    <!-- Panel 2: Bilder & Video -->
+    <div class="panel active" id="p2">
+      <div class="panel-title"><i class="ti ti-photo" aria-hidden="true"></i> Bilder & Videoclips</div>
+      <div class="row2">
+        <div class="field-group">
+          <label class="field-label">Bild-Plattform</label>
+          <div class="chip-row">
+            <div class="chip sel" id="c-leo" onclick="togChip('leo')">Leonardo AI</div>
+            <div class="chip" id="c-mid" onclick="togChip('mid')">Midjourney</div>
+            <div class="chip" id="c-fal" onclick="togChip('fal')">Fal.ai</div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Video-Plattform (10 sek. Clips)</label>
+          <div class="chip-row">
+            <div class="chip sel" id="c-run" onclick="togChip2('run')">Runway Gen-3</div>
+            <div class="chip" id="c-kling" onclick="togChip2('kling')">Kling</div>
+            <div class="chip" id="c-pika" onclick="togChip2('pika')">Pika Labs</div>
+          </div>
+        </div>
+      </div>
+      <div class="row3">
+        <div class="field-group">
+          <label class="field-label">Anzahl Bilder</label>
+          <select><option>6</option><option selected>12</option><option>18</option><option>24</option></select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Anzahl Videoclips</label>
+          <select><option>2</option><option selected>4</option><option>6</option><option>8</option></select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Bildformat</label>
+          <select><option selected>16:9 (YouTube)</option><option>9:16 (Shorts)</option><option>1:1</option></select>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="card-title" style="margin-bottom:10px;font-size:13px">Generierte Bilder – auswählen oder austauschen</div>
+      <div class="image-grid" id="imgGrid"></div>
+      <div class="btn-row">
+        <button class="btn"><i class="ti ti-upload" aria-hidden="true"></i> Eigene Bilder hochladen</button>
+        <button class="btn"><i class="ti ti-refresh" aria-hidden="true"></i> Alle neu generieren</button>
+        <button class="btn primary" onclick="show(3)">Weiter zu Thumbnail ↗</button>
+      </div>
+    </div>
+
+    <!-- Panel 3: Thumbnail -->
+    <div class="panel" id="p3">
+      <div class="panel-title"><i class="ti ti-layout" aria-hidden="true"></i> Thumbnail erstellen</div>
+      <div class="row2">
+        <div>
+          <div class="thumb-preview" id="thumbPrev">
+            <div class="thumb-text" id="thumbTxt">Diese eine Methode verändert alles – und niemand spricht darüber</div>
+            <div class="thumb-badge">NEU 2024</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn"><i class="ti ti-refresh" aria-hidden="true"></i> Neu generieren</button>
+            <button class="btn"><i class="ti ti-download" aria-hidden="true"></i> Download</button>
+          </div>
+        </div>
+        <div>
+          <div class="field-group">
+            <label class="field-label">Thumbnail-Titel</label>
+            <input type="text" id="thumbInput" value="Diese eine Methode verändert alles – und niemand spricht darüber" oninput="document.getElementById('thumbTxt').textContent=this.value" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Stil</label>
+            <select><option selected>Dramatisch / Dunkel</option><option>Hell & Clean</option><option>MrBeast-Style</option><option>Minimalistisch</option></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Badge / Label</label>
+            <input type="text" value="NEU 2024" />
+          </div>
+          <div class="field-group">
+            <label class="field-label">Gesicht im Thumbnail?</label>
+            <select><option selected>Nein</option><option>Foto hochladen</option><option>KI-generiert</option></select>
+          </div>
+          <div class="info-box"><i class="ti ti-bulb" aria-hidden="true"></i> Hooks werden ebenfalls automatisch generiert (5 Varianten).</div>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <div class="card-title" style="margin-bottom:8px;font-size:13px">Auto-generierte Hooks / Titel-Varianten</div>
+      <div class="chip-row">
+        <div class="chip sel">Das weiß kaum jemand...</div>
+        <div class="chip">Ich hab es ausprobiert</div>
+        <div class="chip">Experten hassen das</div>
+        <div class="chip">Der versteckte Trick</div>
+        <div class="chip">Warum niemand redet</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="show(2)"><i class="ti ti-arrow-left" aria-hidden="true"></i> Zurück</button>
+        <button class="btn primary" onclick="show(4)">Weiter zum Schnitt ↗</button>
+      </div>
+    </div>
+
+    <!-- Panel 4: Schnitt & Timeline -->
+    <div class="panel" id="p4">
+      <div class="panel-title"><i class="ti ti-scissors" aria-hidden="true"></i> Schnitt & Timeline</div>
+      <div class="info-box"><i class="ti ti-player-play" aria-hidden="true"></i> Klicke auf ein Segment um es zu bearbeiten. Ziehen zum Umsortieren.</div>
+      <div class="timeline" id="timeline"></div>
+      <div class="card" style="margin-top:1rem">
+        <div class="card-title">Segment-Einstellungen</div>
+        <div class="row3">
+          <div class="field-group">
+            <label class="field-label">Übergang</label>
+            <select><option selected>Crossfade</option><option>Cut</option><option>Zoom</option><option>Slide</option></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Musik</label>
+            <select><option selected>Ambient Cinematic</option><option>Upbeat</option><option>Keine</option><option>Eigene hochladen</option></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Voiceover</label>
+            <select><option selected>ElevenLabs (DE)</option><option>Google TTS</option><option>Eigene Stimme</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field-group">
+            <label class="field-label">Shorts-Version erstellen?</label>
+            <select><option selected>Ja – bestes Segment (60 sek.)</option><option>Nein</option><option>Manuell auswählen</option></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Untertitel</label>
+            <select><option selected>Auto-generiert (DE)</option><option>Ohne</option><option>DE + EN</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="show(3)"><i class="ti ti-arrow-left" aria-hidden="true"></i> Zurück</button>
+        <button class="btn primary" onclick="show(5)">Finales Video rendern ↗</button>
+      </div>
+    </div>
+
+    <!-- Panel 5: Export & Upload -->
+    <div class="panel" id="p5">
+      <div class="panel-title"><i class="ti ti-rocket" aria-hidden="true"></i> Export & Upload</div>
+      <div class="stat-row">
+        <div class="stat"><div class="stat-val">9:52</div><div class="stat-lbl">Videolänge</div></div>
+        <div class="stat"><div class="stat-val">1080p</div><div class="stat-lbl">Auflösung</div></div>
+        <div class="stat"><div class="stat-val">847 MB</div><div class="stat-lbl">Dateigröße</div></div>
+        <div class="stat"><div class="stat-val">✓ Shorts</div><div class="stat-lbl">Erstellt</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Render-Fortschritt</div>
+        <div class="progress-row"><div class="progress-label"><span class="status-dot dot-done"></span>Voiceover generieren</div><div class="progress-bar"><div class="progress-fill" style="width:100%;background:#639922"></div></div><div class="progress-pct">100%</div></div>
+        <div class="progress-row"><div class="progress-label"><span class="status-dot dot-done"></span>Bilder zusammenführen</div><div class="progress-bar"><div class="progress-fill" style="width:100%;background:#639922"></div></div><div class="progress-pct">100%</div></div>
+        <div class="progress-row"><div class="progress-label"><span class="status-dot dot-run"></span>Video rendern</div><div class="progress-bar"><div class="progress-fill" style="width:67%;background:#378ADD"></div></div><div class="progress-pct">67%</div></div>
+        <div class="progress-row"><div class="progress-label"><span class="status-dot dot-wait"></span>Shorts exportieren</div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#B4B2A9"></div></div><div class="progress-pct">–</div></div>
+        <div class="progress-row"><div class="progress-label"><span class="status-dot dot-wait"></span>YouTube hochladen</div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#B4B2A9"></div></div><div class="progress-pct">–</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">YouTube-Metadaten</div>
+        <div class="field-group">
+          <label class="field-label">Videotitel</label>
+          <input type="text" value="Diese eine Methode verändert alles – und niemand spricht darüber" />
+        </div>
+        <div class="row2">
+          <div class="field-group">
+            <label class="field-label">Kategorie</label>
+            <select><option selected>Bildung</option><option>Wissenschaft & Technik</option><option>Unterhaltung</option></select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Sichtbarkeit</label>
+            <select><option>Öffentlich</option><option selected>Geplant</option><option>Privat</option></select>
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Beschreibung (auto-generiert)</label>
+          <textarea>In diesem Video erkläre ich, wie... #deutsch #erklärvideo #wissen</textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Tags</label>
+          <input type="text" value="wissen, erklärvideo, deutsch, 2024, lernen" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="show(4)"><i class="ti ti-arrow-left" aria-hidden="true"></i> Zurück</button>
+        <button class="btn"><i class="ti ti-download" aria-hidden="true"></i> Lokal speichern</button>
+        <button class="btn success"><i class="ti ti-brand-youtube" aria-hidden="true"></i> Zu YouTube hochladen</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const panels=document.querySelectorAll('.panel');
+const navs=document.querySelectorAll('.nav-item');
+function show(i){
+  panels.forEach((p,j)=>{p.classList.toggle('active',j===i)});
+  navs.forEach((n,j)=>{n.classList.remove('active');if(j<i&&!n.classList.contains('done'))n.classList.add('done');if(j===i)n.classList.add('active')});
+}
+
+const emojis=['🌆','🌊','🏔','🔬','💡','🤖','🎯','🌍','⚡','🎬','🌿','🔮'];
+const labels=['Hook','Intro','Teil 1','Teil 1b','Teil 2','Teil 2b','Teil 3','Teil 3b','Fazit','Outro','Bonus','Extra'];
+const grid=document.getElementById('imgGrid');
+emojis.forEach((e,i)=>{
+  const d=document.createElement('div');
+  d.className='img-card'+(i<4?' selected':'');
+  d.innerHTML=`<div class="img-thumb">${e}</div><div class="img-label">${labels[i]}</div>`;
+  d.onclick=()=>d.classList.toggle('selected');
+  grid.appendChild(d);
+});
+
+const tlData=[
+  {label:'Hook',dur:30,color:'#185FA5'},
+  {label:'Intro',dur:90,color:'#3B6D11'},
+  {label:'Clip 1',dur:10,color:'#BA7517'},
+  {label:'Teil 1',dur:120,color:'#185FA5'},
+  {label:'Clip 2',dur:10,color:'#BA7517'},
+  {label:'Teil 2',dur:150,color:'#185FA5'},
+  {label:'Clip 3',dur:10,color:'#BA7517'},
+  {label:'Teil 3',dur:120,color:'#185FA5'},
+  {label:'Clip 4',dur:10,color:'#BA7517'},
+  {label:'Fazit',dur:60,color:'#993556'},
+  {label:'CTA',dur:30,color:'#3B6D11'},
+];
+const total=tlData.reduce((s,x)=>s+x.dur,0);
+const tl=document.getElementById('timeline');
+tlData.forEach(seg=>{
+  const w=Math.max(50,Math.round(seg.dur/total*580));
+  const s=document.createElement('div');
+  s.className='tl-seg';
+  s.innerHTML=`<div class="tl-bar" style="width:${w}px;background:${seg.color}">${seg.label}</div><div class="tl-label">${seg.dur>=60?Math.floor(seg.dur/60)+'m '+(seg.dur%60?seg.dur%60+'s':''):seg.dur+'s'}</div>`;
+  tl.appendChild(s);
+});
+
+function togChip(id){
+  ['leo','mid','fal'].forEach(x=>document.getElementById('c-'+x).classList.remove('sel'));
+  document.getElementById('c-'+id).classList.add('sel');
+}
+function togChip2(id){
+  ['run','kling','pika'].forEach(x=>document.getElementById('c-'+x).classList.remove('sel'));
+  document.getElementById('c-'+id).classList.add('sel');
+}
+</script>
