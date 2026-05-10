@@ -691,6 +691,12 @@ def run_local_asset_runner(
         or (os.environ.get("GOOGLE_API_KEY") or "").strip()
     )
     image_prov = _effective_image_provider(image_provider)
+    if leonardo_beat_fn is not None:
+        # A passed Leonardo beat callable is an explicit test/runtime contract for
+        # Leonardo behavior.  Do not let ambient IMAGE_PROVIDER settings reroute
+        # these runs to OpenAI/Gemini and bypass the injected provider.
+        image_prov = "leonardo"
+    leonardo_live_ready = bool(env_live or leonardo_beat_fn is not None)
     om_resolved = resolve_openai_image_model_for_runner(image_prov, openai_image_model)
     oai_runner_opts: Optional[Dict[str, Any]] = None
     if (
@@ -720,7 +726,7 @@ def run_local_asset_runner(
         elif image_prov == "placeholder":
             full_live_fallback = False
         else:
-            full_live_fallback = not env_live
+            full_live_fallback = not leonardo_live_ready
             if full_live_fallback:
                 warnings.append("leonardo_env_missing_fallback_placeholder")
 
@@ -1100,13 +1106,13 @@ def run_local_asset_runner(
                 camera_motion_hint=cam,
             )
 
-        live_cap_provider_ok = (image_prov == "leonardo" and env_live) or (
+        live_cap_provider_ok = (image_prov == "leonardo" and leonardo_live_ready) or (
             image_prov == "openai_image" and openai_live_ready
         )
         use_leonardo = (
             image_prov == "leonardo"
             and mode_l == "live"
-            and env_live
+            and leonardo_live_ready
             and live_attempt_cap is not None
             and (i <= live_attempt_cap)
         )
@@ -1219,7 +1225,7 @@ def run_local_asset_runner(
         assets.append(asset_row2)
 
     if mode_l == "live" and not full_live_fallback:
-        if image_prov == "leonardo" and env_live:
+        if image_prov == "leonardo" and leonardo_live_ready:
             if any_leonardo_ok and not beat_live_failed:
                 top_mode = "leonardo_live"
             else:

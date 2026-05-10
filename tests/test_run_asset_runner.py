@@ -269,6 +269,34 @@ def test_live_failed_beat_placeholder_continues(asset_runner_mod, tmp_path, monk
     assert any("leonardo_live_beat_failed_fallback_placeholder:1" in w for w in meta["warnings"])
 
 
+def test_live_leonardo_beat_fn_ignores_ambient_openai_provider(asset_runner_mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("IMAGE_PROVIDER", "openai_image")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("LEONARDO_API_KEY", raising=False)
+    calls = {"count": 0}
+
+    def fake_beat(vp: str, dest: Path) -> tuple[bool, list[str]]:
+        calls["count"] += 1
+        dest.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return True, []
+
+    pack = _minimal_pack(tmp_path)
+    meta = asset_runner_mod.run_local_asset_runner(
+        pack,
+        tmp_path / "out",
+        run_id="leofn_env_openai",
+        mode="live",
+        max_assets_live=2,
+        leonardo_beat_fn=fake_beat,
+    )
+    man = json.loads((Path(meta["output_dir"]) / "asset_manifest.json").read_text(encoding="utf-8"))
+    assert calls["count"] == 2
+    assert meta["effective_image_provider"] == "leonardo"
+    assert man["generation_mode"] == "leonardo_live"
+    assert all(a["generation_mode"] == "leonardo_live" for a in man["assets"])
+    assert "openai_image_key_missing_fallback_placeholder" not in meta["warnings"]
+
+
 def test_chunk_helpers_generation_id_nested(asset_runner_mod):
     gid = asset_runner_mod._generation_id_from_dict(
         {"sdGenerationJob": {"generationId": "abc-123", "status": "PENDING"}}
