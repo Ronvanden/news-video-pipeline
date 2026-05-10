@@ -104,10 +104,14 @@ Vom **echten Script/Story-Pack** zu einem **lokal gespeicherten Video** (Preview
 - **`motion_ready`:** `true`, wenn **`motion_rendered`** **oder** der klassische Pfad (**`live_motion_available`** und **`allow_live_motion_requested`**).
 - **`live_motion_not_available`** erscheint **nicht** in `provider_blockers`, wenn **`motion_rendered`** wahr ist (**BA 32.64**).
 
-### Nächster sinnvoller Schritt — BA 32.66 (2-Clip Hybrid Smoke)
+### BA 32.69 — Optional Live 2-Clip Smoke Checklist
 
-- **`max_motion_clips=2`**, zwei Runway-Clips (sobald Pipeline/Erweiterung mehr als Slot 1 unterstützt), mehrere Gemini-Bilder, ElevenLabs Voice.
-- Prüfen, ob **Manifest / Timeline / Timing** mit **mehr als einem Video-Clip** stabil bleiben.
+Vor einem weiteren Live-Hybrid-Smoke gilt das neue manuelle Sicherheitsgate: [live_2_clip_smoke_checklist.md](live_2_clip_smoke_checklist.md). Der Lauf bleibt **optional**, **nicht CI-fähig**, kostenbewusst und auf **`max_motion_clips=2`** begrenzt.
+
+- Der Readiness-Helper `scripts/check_live_2_clip_smoke_readiness.py` ist **dry-run/readiness only**: keine Runway/OpenAI/Leonardo/ElevenLabs/Gemini-Calls, keine `.env`-Reads, keine Secret-Werte im Output.
+- Pflicht vor Live-Run: `RUNWAY_API_KEY`-Präsenz, passender Image-/Voice-Provider-Key als Name/Präsenzcheck, explizite Provider-Kostenbestätigung, kurze Dauer (1–2 Minuten), kleiner Scene Cap (2–4), Motion-Clip-Dauer 5–10 Sekunden.
+- Nach dem Lauf: `run_summary.json`, `asset_manifest.json`, `OPEN_ME_VIDEO_RESULT.html`, `final_video.mp4` und `scene_###_motion.mp4` prüfen; Placeholder vs. echte Clips über Manifest-Metadaten (`generation_mode`, `provider_used`, `video_path`) unterscheiden.
+- Nicht fortfahren bei CI, fehlendem Key, unklarer Billing-Lage, `max_motion_clips` ≠ `2`, unreviewter Quelle, fehlgeschlagenen Mock-Tests oder fehlender Operator-Aufsicht.
 
 ## Existing Building Blocks
 
