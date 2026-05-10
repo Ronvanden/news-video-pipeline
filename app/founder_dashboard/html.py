@@ -1019,15 +1019,66 @@ button.fd-sidebar-link:hover:not(:disabled), button.fd-sidebar-link:focus-visibl
   background: rgba(251, 191, 36, 0.08);
 }
 #fd-video-generate-form {
-  gap: 0.65rem 1rem;
+  gap: 0.9rem 1.15rem;
   align-items: start;
 }
-#fd-video-generate-form > div {
+#fd-video-generate-form > div,
+#fd-video-generate-form > details {
   min-width: 0;
 }
 #fd-video-generate-form label {
   font-weight: 650;
   letter-spacing: 0.01em;
+}
+.fd-vg-primary-note {
+  grid-column: 1 / -1;
+  margin: -0.2rem 0 0.1rem;
+  padding: 0.72rem 0.85rem;
+  border: 1px solid rgba(78, 128, 255, 0.28);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(0, 70, 255, 0.10), rgba(3, 10, 20, 0.20));
+  color: rgba(207, 219, 238, 0.94);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.fd-vg-advanced-params {
+  grid-column: 1 / -1;
+  margin: 0.15rem 0 0;
+  padding: 0.35rem 0.85rem 0.85rem;
+  border: 1px solid rgba(64, 83, 113, 0.62);
+  border-radius: 14px;
+  background: rgba(2, 8, 18, 0.24);
+}
+.fd-vg-advanced-params > summary {
+  cursor: pointer;
+  padding: 0.45rem 0;
+  color: rgba(237, 244, 255, 0.96);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.fd-vg-advanced-params > summary::marker { color: rgba(94, 134, 255, 0.95); }
+.fd-vg-advanced-copy {
+  margin: 0 0 0.75rem;
+  color: rgba(160, 176, 198, 0.94);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.fd-vg-advanced-grid { gap: 0.75rem 1rem; }
+.fd-vg-primary-action {
+  margin-top: 0.35rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(78, 128, 255, 0.34);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(0, 70, 255, 0.12), rgba(3, 10, 20, 0.28));
+}
+button.fd-vg-main-cta {
+  min-height: 3rem;
+  padding: 0.78rem 1.45rem;
+  font-size: 0.98rem;
+  font-weight: 850;
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset, 0 12px 34px rgba(0, 70, 255, 0.34);
 }
 input[type="text"], input[type="number"], input[type="url"], input[type="password"], textarea, select {
   min-height: 2.55rem;
@@ -2394,26 +2445,6 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <label for="fd-vg-duration">Dauer (Sekunden)</label>
         <input type="number" id="fd-vg-duration" min="60" max="1800" value="600"/>
       </div>
-      <div>
-        <label for="fd-vg-max-scenes">Max. Szenen</label>
-        <input type="number" id="fd-vg-max-scenes" min="1" max="80" value="24"/>
-      </div>
-      <div>
-        <label for="fd-vg-max-live">Max. Live-Assets</label>
-        <input type="number" id="fd-vg-max-live" min="0" max="80" value="24"/>
-      </div>
-      <div>
-        <label for="fd-vg-motion-every">Motion Clip alle (Sek.)</label>
-        <input type="number" id="fd-vg-motion-every" min="15" max="600" value="60"/>
-      </div>
-      <div>
-        <label for="fd-vg-motion-dur">Motion-Clip-Dauer (Sek.)</label>
-        <input type="number" id="fd-vg-motion-dur" min="1" max="120" value="10"/>
-      </div>
-      <div>
-        <label for="fd-vg-max-motion">Max. Motion-Clips</label>
-        <input type="number" id="fd-vg-max-motion" min="0" max="30" value="10"/>
-      </div>
       <div style="grid-column:1/-1">
         <label for="fd-vg-image-provider">Image-Provider Override (optional, BA 32.72)</label>
         <select id="fd-vg-image-provider">
@@ -2424,18 +2455,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
           <option value="placeholder">placeholder</option>
         </select>
       </div>
-      <div>
-        <label for="fd-vg-openai-image-model">OpenAI Bild-Modell (optional)</label>
-        <input type="text" id="fd-vg-openai-image-model" placeholder="gpt-image-2" maxlength="128" autocomplete="off"/>
-      </div>
-      <div>
-        <label for="fd-vg-openai-image-size">OpenAI Bildgröße (optional)</label>
-        <input type="text" id="fd-vg-openai-image-size" placeholder="1024x1024" maxlength="64" autocomplete="off"/>
-      </div>
-      <div>
-        <label for="fd-vg-openai-image-timeout">OpenAI Timeout (Sek., optional)</label>
-        <input type="number" id="fd-vg-openai-image-timeout" min="15" max="600" placeholder="z. B. 120"/>
-      </div>
+      <p class="fd-vg-primary-note"><strong>Standardwerte reichen für normale Tests.</strong><br/>Advanced nur ändern, wenn du bewusst Provider-Kosten/Renderlast steuerst.</p>
       <div style="grid-column:1/-1">
         <label for="fd-vg-voice-mode">Voice-Modus</label>
         <select id="fd-vg-voice-mode">
@@ -2455,51 +2475,89 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <label><input type="checkbox" id="fd-vg-generate-thumbnail-pack"/> Thumbnail Pack erzeugen (BA 32.78)</label>
         <span class="muted" style="font-size:0.78rem;display:block;margin:0.25rem 0 0">Erzeugt nach erfolgreichem Video-Lauf zusätzliche <strong>OpenAI-Bilder</strong> (Kandidaten) und lokale Text-Overlays. Erfordert OpenAI-Key und <strong>Kostenbestätigung</strong>.</span>
       </div>
-      <div>
-        <label for="fd-vg-thumb-cand-count">Thumbnail-Kandidaten (1–3)</label>
-        <input type="number" id="fd-vg-thumb-cand-count" min="1" max="3" value="3"/>
-      </div>
-      <div>
-        <label for="fd-vg-thumb-max-out">Max. Overlay-Outputs (1–6)</label>
-        <input type="number" id="fd-vg-thumb-max-out" min="1" max="6" value="6"/>
-      </div>
-      <div>
-        <label for="fd-vg-thumb-model">Thumbnail OpenAI-Modell (optional)</label>
-        <input type="text" id="fd-vg-thumb-model" placeholder="gpt-image-2" maxlength="128" autocomplete="off"/>
-      </div>
-      <div>
-        <label for="fd-vg-thumb-size">Thumbnail Bildgröße (optional)</label>
-        <input type="text" id="fd-vg-thumb-size" placeholder="1024x1024" maxlength="64" autocomplete="off"/>
-      </div>
-      <div style="grid-column:1/-1">
-        <label for="fd-vg-thumb-presets">Style-Presets (optional, kommagetrennt)</label>
-        <input type="text" id="fd-vg-thumb-presets" placeholder="impact_youtube, urgent_mystery" maxlength="120" autocomplete="off"/>
-      </div>
-      <details class="muted" style="grid-column:1/-1;margin-top:0.35rem" id="fd-vg-dev-keys" data-ba3272b-dev-keys="1">
-        <summary><strong>Provider Keys / Local Test (dev-only)</strong> — nur im Request, nie speichern</summary>
-        <p class="muted" style="margin:0.35rem 0 0;font-size:0.78rem;line-height:1.35">
-          Diese Felder werden <strong>nur</strong> im aktuellen <code>POST /founder/dashboard/video/generate</code> übertragen.
-          Es gibt <strong>keine</strong> Speicherung (kein localStorage/sessionStorage), <strong>kein</strong> Echo im Ergebnis-JSON, <strong>kein</strong> OPEN_ME und <strong>keine</strong> Logs.
-        </p>
-        <div class="fp-dry-run-grid" style="margin-top:0.6rem">
-          <div style="grid-column:1/-1">
-            <label for="fd-vg-dev-openai-api-key">OPENAI_API_KEY (Request Override)</label>
-            <input type="password" id="fd-vg-dev-openai-api-key" placeholder="sk-…" autocomplete="off" spellcheck="false"/>
+      <details class="fd-vg-advanced-params" id="fd-vg-advanced-production-params" data-ba3292-video-generate-polish="1">
+        <summary>Erweiterte Produktionsparameter</summary>
+        <p class="fd-vg-advanced-copy"><strong>Standardwerte reichen für normale Tests.</strong> Advanced nur ändern, wenn du bewusst Provider-Kosten/Renderlast steuerst.</p>
+        <div class="fp-dry-run-grid fd-vg-advanced-grid">
+          <div>
+            <label for="fd-vg-max-scenes">Max. Szenen</label>
+            <input type="number" id="fd-vg-max-scenes" min="1" max="80" value="24"/>
           </div>
           <div>
-            <label for="fd-vg-dev-elevenlabs-api-key">ELEVENLABS_API_KEY (optional)</label>
-            <input type="password" id="fd-vg-dev-elevenlabs-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+            <label for="fd-vg-max-live">Max. Live-Assets</label>
+            <input type="number" id="fd-vg-max-live" min="0" max="80" value="24"/>
           </div>
           <div>
-            <label for="fd-vg-dev-runway-api-key">RUNWAY_API_KEY (optional)</label>
-            <input type="password" id="fd-vg-dev-runway-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+            <label for="fd-vg-motion-every">Motion Clip alle (Sek.)</label>
+            <input type="number" id="fd-vg-motion-every" min="15" max="600" value="60"/>
+          </div>
+          <div>
+            <label for="fd-vg-motion-dur">Motion-Clip-Dauer (Sek.)</label>
+            <input type="number" id="fd-vg-motion-dur" min="1" max="120" value="10"/>
+          </div>
+          <div>
+            <label for="fd-vg-max-motion">Max. Motion-Clips</label>
+            <input type="number" id="fd-vg-max-motion" min="0" max="30" value="10"/>
+          </div>
+          <div>
+            <label for="fd-vg-openai-image-model">OpenAI Bild-Modell (optional)</label>
+            <input type="text" id="fd-vg-openai-image-model" placeholder="gpt-image-2" maxlength="128" autocomplete="off"/>
+          </div>
+          <div>
+            <label for="fd-vg-openai-image-size">OpenAI Bildgröße (optional)</label>
+            <input type="text" id="fd-vg-openai-image-size" placeholder="1024x1024" maxlength="64" autocomplete="off"/>
+          </div>
+          <div>
+            <label for="fd-vg-openai-image-timeout">OpenAI Timeout (Sek., optional)</label>
+            <input type="number" id="fd-vg-openai-image-timeout" min="15" max="600" placeholder="z. B. 120"/>
+          </div>
+          <div>
+            <label for="fd-vg-thumb-cand-count">Thumbnail-Kandidaten (1–3)</label>
+            <input type="number" id="fd-vg-thumb-cand-count" min="1" max="3" value="3"/>
+          </div>
+          <div>
+            <label for="fd-vg-thumb-max-out">Max. Overlay-Outputs (1–6)</label>
+            <input type="number" id="fd-vg-thumb-max-out" min="1" max="6" value="6"/>
+          </div>
+          <div>
+            <label for="fd-vg-thumb-model">Thumbnail OpenAI-Modell (optional)</label>
+            <input type="text" id="fd-vg-thumb-model" placeholder="gpt-image-2" maxlength="128" autocomplete="off"/>
+          </div>
+          <div>
+            <label for="fd-vg-thumb-size">Thumbnail Bildgröße (optional)</label>
+            <input type="text" id="fd-vg-thumb-size" placeholder="1024x1024" maxlength="64" autocomplete="off"/>
           </div>
           <div style="grid-column:1/-1">
-            <label for="fd-vg-dev-leonardo-api-key">LEONARDO_API_KEY (optional)</label>
-            <input type="password" id="fd-vg-dev-leonardo-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+            <label for="fd-vg-thumb-presets">Style-Presets (optional, kommagetrennt)</label>
+            <input type="text" id="fd-vg-thumb-presets" placeholder="impact_youtube, urgent_mystery" maxlength="120" autocomplete="off"/>
           </div>
         </div>
-        <p class="muted" id="fd-vg-dev-keys-hint" style="margin:0.35rem 0 0;font-size:0.78rem"></p>
+        <details class="muted" style="margin-top:0.65rem" id="fd-vg-dev-keys" data-ba3272b-dev-keys="1">
+          <summary><strong>Provider Keys / Local Test (dev-only)</strong> — nur im Request, nie speichern</summary>
+          <p class="muted" style="margin:0.35rem 0 0;font-size:0.78rem;line-height:1.35">
+            Diese Felder werden <strong>nur</strong> im aktuellen <code>POST /founder/dashboard/video/generate</code> übertragen.
+            Es gibt <strong>keine</strong> Speicherung (kein localStorage/sessionStorage), <strong>kein</strong> Echo im Ergebnis-JSON, <strong>kein</strong> OPEN_ME und <strong>keine</strong> Logs.
+          </p>
+          <div class="fp-dry-run-grid" style="margin-top:0.6rem">
+            <div style="grid-column:1/-1">
+              <label for="fd-vg-dev-openai-api-key">OPENAI_API_KEY (Request Override)</label>
+              <input type="password" id="fd-vg-dev-openai-api-key" placeholder="sk-…" autocomplete="off" spellcheck="false"/>
+            </div>
+            <div>
+              <label for="fd-vg-dev-elevenlabs-api-key">ELEVENLABS_API_KEY (optional)</label>
+              <input type="password" id="fd-vg-dev-elevenlabs-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+            </div>
+            <div>
+              <label for="fd-vg-dev-runway-api-key">RUNWAY_API_KEY (optional)</label>
+              <input type="password" id="fd-vg-dev-runway-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+            </div>
+            <div style="grid-column:1/-1">
+              <label for="fd-vg-dev-leonardo-api-key">LEONARDO_API_KEY (optional)</label>
+              <input type="password" id="fd-vg-dev-leonardo-api-key" placeholder="…" autocomplete="off" spellcheck="false"/>
+            </div>
+          </div>
+          <p class="muted" id="fd-vg-dev-keys-hint" style="margin:0.35rem 0 0;font-size:0.78rem"></p>
+        </details>
       </details>
       <div style="grid-column:1/-1">
         <p class="muted" id="fd-vg-assets-mode-hint" style="margin:0.15rem 0 0;font-size:0.82rem"><strong>Preview/Fallback-Modus</strong> — keine Live-Provider, Platzhalter sind erwartbar.</p>
@@ -2578,8 +2636,8 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
           <div class="fd-vg-kv-row"><span class="fd-vg-k">Empfehlung</span><span class="fd-vg-v" id="fd-vg-rs-reco">Unbekannt</span></div>
         </div>
       </div>
-      <div style="grid-column:1/-1" class="fp-dry-run-actions">
-        <button type="button" class="primary" id="fd-video-generate-submit" data-ba323-video-generate="1">Video generieren</button>
+      <div style="grid-column:1/-1" class="fp-dry-run-actions fd-vg-primary-action">
+        <button type="button" class="primary fd-vg-main-cta" id="fd-video-generate-submit" data-ba323-video-generate="1">Video generieren</button>
         <button type="button" class="sm" id="fd-video-generate-clear" data-ba323-video-generate="1">Zurücksetzen</button>
       </div>
       <div style="grid-column:1/-1">
