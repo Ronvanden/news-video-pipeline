@@ -25,6 +25,21 @@ def asset_runner_mod():
     return mod
 
 
+def _isolate_leonardo_image_provider(monkeypatch, *, leonardo_api_key: str | None = None) -> None:
+    """Keep Leonardo live-path tests independent from ambient image-provider ENV."""
+    monkeypatch.delenv("IMAGE_PROVIDER", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_IMAGE_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_IMAGE_SIZE", raising=False)
+    monkeypatch.delenv("OPENAI_IMAGE_TIMEOUT_SECONDS", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    if leonardo_api_key is None:
+        monkeypatch.delenv("LEONARDO_API_KEY", raising=False)
+    else:
+        monkeypatch.setenv("LEONARDO_API_KEY", leonardo_api_key)
+
+
 def _minimal_pack(tmp_path: Path) -> Path:
     pack = {
         "export_version": "18.2-v1",
@@ -194,7 +209,7 @@ def test_empty_beats_raises(asset_runner_mod, tmp_path):
 
 
 def test_live_without_key_fallback_all_placeholders(asset_runner_mod, tmp_path, monkeypatch):
-    monkeypatch.delenv("LEONARDO_API_KEY", raising=False)
+    _isolate_leonardo_image_provider(monkeypatch)
     pack = _minimal_pack(tmp_path)
     meta = asset_runner_mod.run_local_asset_runner(
         pack,
@@ -214,7 +229,7 @@ def test_live_without_key_fallback_all_placeholders(asset_runner_mod, tmp_path, 
 
 
 def test_live_max_assets_limits_leonardo_attempts(asset_runner_mod, tmp_path, monkeypatch):
-    monkeypatch.setenv("LEONARDO_API_KEY", "fake-key")
+    _isolate_leonardo_image_provider(monkeypatch, leonardo_api_key="fake-key")
 
     def fake_beat(vp: str, dest: Path) -> tuple[bool, list[str]]:
         dest.write_bytes(b"\x89PNG\r\n\x1a\n")
@@ -242,7 +257,7 @@ def test_live_max_assets_limits_leonardo_attempts(asset_runner_mod, tmp_path, mo
 
 
 def test_live_failed_beat_placeholder_continues(asset_runner_mod, tmp_path, monkeypatch):
-    monkeypatch.setenv("LEONARDO_API_KEY", "fake-key")
+    _isolate_leonardo_image_provider(monkeypatch, leonardo_api_key="fake-key")
     n = {"c": 0}
 
     def fake_beat(vp: str, dest: Path) -> tuple[bool, list[str]]:
@@ -270,9 +285,8 @@ def test_live_failed_beat_placeholder_continues(asset_runner_mod, tmp_path, monk
 
 
 def test_live_leonardo_beat_fn_ignores_ambient_openai_provider(asset_runner_mod, tmp_path, monkeypatch):
+    _isolate_leonardo_image_provider(monkeypatch)
     monkeypatch.setenv("IMAGE_PROVIDER", "openai_image")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.delenv("LEONARDO_API_KEY", raising=False)
     calls = {"count": 0}
 
     def fake_beat(vp: str, dest: Path) -> tuple[bool, list[str]]:
