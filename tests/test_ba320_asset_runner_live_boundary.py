@@ -6,10 +6,40 @@ import json
 import os
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
-from unittest.mock import patch
 
 from scripts.run_asset_runner import run_local_asset_runner
+
+
+_IMAGE_PROVIDER_ENV_KEYS = (
+    "IMAGE_PROVIDER",
+    "OPENAI_API_KEY",
+    "OPENAI_IMAGE_MODEL",
+    "OPENAI_IMAGE_SIZE",
+    "OPENAI_IMAGE_TIMEOUT_SECONDS",
+    "GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
+    "LEONARDO_API_KEY",
+)
+
+
+@contextmanager
+def _leonardo_provider_env(*, leonardo_api_key: str | None = None):
+    """Temporarily isolate Leonardo tests from ambient image-provider ENV."""
+    saved = {key: os.environ.get(key) for key in _IMAGE_PROVIDER_ENV_KEYS}
+    try:
+        for key in _IMAGE_PROVIDER_ENV_KEYS:
+            os.environ.pop(key, None)
+        if leonardo_api_key is not None:
+            os.environ["LEONARDO_API_KEY"] = leonardo_api_key
+        yield
+    finally:
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
 
 
 def _write_min_scene_asset_pack(path: Path) -> None:
@@ -42,7 +72,7 @@ class AssetRunnerLiveBoundaryTests(unittest.TestCase):
                 out_png.write_bytes(b"\x89PNG\r\n\x1a\n")  # tiny dummy file
                 return True, []
 
-            with patch.dict(os.environ, {"LEONARDO_API_KEY": "present"}, clear=False):
+            with _leonardo_provider_env(leonardo_api_key="present"):
                 meta = run_local_asset_runner(
                     pack_path=pack_path,
                     out_root=out_root,
@@ -69,7 +99,7 @@ class AssetRunnerLiveBoundaryTests(unittest.TestCase):
             pack_path = out_root / "scene_asset_pack.json"
             _write_min_scene_asset_pack(pack_path)
 
-            with patch.dict(os.environ, {"LEONARDO_API_KEY": ""}, clear=False):
+            with _leonardo_provider_env():
                 meta = run_local_asset_runner(
                     pack_path=pack_path,
                     out_root=out_root,
@@ -90,7 +120,7 @@ class AssetRunnerLiveBoundaryTests(unittest.TestCase):
             def _fail_fn(_prompt: str, _out_png: Path):
                 return False, ["leonardo_stub_failure"]
 
-            with patch.dict(os.environ, {"LEONARDO_API_KEY": "present"}, clear=False):
+            with _leonardo_provider_env(leonardo_api_key="present"):
                 meta = run_local_asset_runner(
                     pack_path=pack_path,
                     out_root=out_root,
