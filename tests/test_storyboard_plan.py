@@ -40,6 +40,10 @@ def test_storyboard_from_prompt_plan_maps_scene_contract():
     assert out.scenes[1].asset_type in ("image_keyframe", "image_to_video_candidate")
     assert out.scenes[1].voice_text
     assert out.scenes[1].image_prompt.startswith("Documentary")
+    assert out.scenes[1].visual_prompt_effective
+    assert out.scenes[1].negative_prompt
+    assert out.scenes[1].visual_style_profile == "documentary_realism"
+    assert isinstance(out.scenes[1].prompt_quality_score, int)
     assert "Motion direction:" in out.scenes[1].video_prompt
     assert out.total_duration_seconds == sum(s.duration_seconds for s in out.scenes)
 
@@ -62,6 +66,34 @@ def test_storyboard_from_script_chapters_reuses_scene_prompt_builder():
     assert not any("provider_call" in w for w in out.warnings)
 
 
+def test_storyboard_hook_visual_prompt_uses_engine_sanitizing():
+    out = build_storyboard_plan(
+        StoryboardBuildRequest(
+            hook="A sharp opening line.",
+            video_template="documentary",
+            chapters=[{"title": "Chapter One", "content": "Enough narration text for a grounded scene. " * 8}],
+        )
+    )
+    hook_scene = out.scenes[0]
+    prompt_blob = "\n".join(
+        [
+            hook_scene.image_prompt,
+            hook_scene.video_prompt,
+            hook_scene.visual_prompt_raw,
+            hook_scene.visual_prompt_effective,
+        ]
+    )
+    assert hook_scene.chapter_title == "Hook"
+    assert "Hook" not in prompt_blob
+    assert "cinematic opening beat" in prompt_blob
+    assert "no fishing hook" in hook_scene.negative_prompt.lower()
+    assert "no literal hook object" in hook_scene.negative_prompt.lower()
+    assert "[visual_no_text_guard_v26_4]" in hook_scene.visual_prompt_effective
+    assert "internal_term_sanitized:hook" in hook_scene.visual_policy_warnings
+    assert hook_scene.visual_style_profile == "documentary_realism"
+    assert isinstance(hook_scene.normalized_controls, dict)
+
+
 def test_storyboard_endpoint_accepts_direct_chapters():
     client = TestClient(app)
     r = client.post(
@@ -82,4 +114,7 @@ def test_storyboard_endpoint_accepts_direct_chapters():
     assert len(data["scenes"]) == 3
     assert {"visual_intent", "voice_text", "image_prompt", "video_prompt", "asset_type"} <= set(
         data["scenes"][1].keys()
+    )
+    assert {"visual_prompt_raw", "visual_prompt_effective", "negative_prompt", "prompt_quality_score"} <= set(
+        data["scenes"][0].keys()
     )

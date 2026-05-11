@@ -16,6 +16,7 @@ from app.storyboard.schema import (
     StoryboardScene,
     StoryboardTransition,
 )
+from app.visual_plan.engine_v1 import VisualPromptEngineContext, VisualPromptEngineResult, build_visual_prompt_v1
 from app.visual_plan.prompt_engine import build_scene_prompts_v1
 
 
@@ -110,6 +111,36 @@ def _video_prompt(image_prompt: str, role: TimelineRole) -> str:
     }.get(role, "subtle motion")
     base, _ = _clip(image_prompt, 640)
     return f"{base}. Motion direction: {motion}."
+
+
+def _visual_engine_result(
+    *,
+    scene_title: str,
+    narration: str,
+    video_template: str,
+    beat_role: str,
+) -> VisualPromptEngineResult:
+    return build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title=scene_title,
+            narration=narration,
+            video_template=video_template,
+            beat_role=beat_role,
+        )
+    )
+
+
+def _visual_engine_fields(result: VisualPromptEngineResult) -> dict:
+    return {
+        "visual_prompt_raw": result.visual_prompt_raw,
+        "visual_prompt_effective": result.visual_prompt_effective,
+        "negative_prompt": result.negative_prompt,
+        "visual_policy_warnings": list(result.visual_policy_warnings or []),
+        "visual_style_profile": result.visual_style_profile,
+        "prompt_quality_score": result.prompt_quality_score,
+        "prompt_risk_flags": list(result.prompt_risk_flags or []),
+        "normalized_controls": dict(result.normalized_controls or {}),
+    }
 
 
 def _chapter_to_model(ch: StoryboardChapterInput) -> Chapter:
@@ -222,9 +253,13 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
     out: List[StoryboardScene] = []
     scene_no = 1
     if _norm(hook):
-        hook_prompt, hook_truncated = _clip(
-            f"Editorial hook visual for {video_template}: {_norm(hook)}", _PROMPT_CAP
+        hook_engine = _visual_engine_result(
+            scene_title="Hook",
+            narration=hook,
+            video_template=video_template,
+            beat_role="hook",
         )
+        hook_prompt, hook_truncated = _clip(hook_engine.visual_prompt_effective, _PROMPT_CAP)
         if hook_truncated:
             warnings.append("storyboard_hook_prompt_truncated")
         out.append(
@@ -237,6 +272,7 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
                 voice_text=_clip(hook, _VOICE_CAP)[0],
                 image_prompt=hook_prompt,
                 video_prompt=_video_prompt(hook_prompt, "hook"),
+                **_visual_engine_fields(hook_engine),
                 duration_seconds=_duration_for_role("hook"),
                 transition=_transition_for_role("hook"),
                 asset_type=_asset_type_for_role("hook"),
@@ -270,6 +306,12 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
             scene_warnings.append("storyboard_image_prompt_truncated")
 
         voice_text = _chapter_voice_text(ch)
+        scene_engine = _visual_engine_result(
+            scene_title=ch.title or f"Scene {scene_no}",
+            narration=image_prompt or voice_text,
+            video_template=video_template,
+            beat_role=role,
+        )
         if not voice_text:
             scene_warnings.append("storyboard_voice_text_missing")
             warnings.append(f"storyboard_voice_text_missing:{idx + 1}")
@@ -284,6 +326,7 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
                 voice_text=voice_text,
                 image_prompt=image_prompt,
                 video_prompt=_video_prompt(image_prompt, role),
+                **_visual_engine_fields(scene_engine),
                 duration_seconds=duration,
                 transition=_transition_for_role(role),
                 asset_type=_asset_type_for_role(role),

@@ -48,6 +48,14 @@ class StoryboardScene(BaseModel):
     voice_text: str = ""
     image_prompt: str = ""
     video_prompt: str = ""
+    visual_prompt_raw: str = ""
+    visual_prompt_effective: str = ""
+    negative_prompt: str = ""
+    visual_policy_warnings: List[str] = Field(default_factory=list)
+    visual_style_profile: str = ""
+    prompt_quality_score: int = Field(default=0, ge=0, le=100)
+    prompt_risk_flags: List[str] = Field(default_factory=list)
+    normalized_controls: Dict[str, str] = Field(default_factory=dict)
     duration_seconds: int = Field(default=0, ge=0)
     transition: StoryboardTransition = "cut"
     asset_type: StoryboardAssetType = "image_keyframe"
