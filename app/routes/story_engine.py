@@ -29,6 +29,7 @@ from app.storyboard import (
     AssetGenerationPlanRequest,
     AssetExecutionRequest,
     AssetExecutionResult,
+    OpenAIImageLiveExecutionRequest,
     StoryboardBuildRequest,
     StoryboardPlan,
     StoryboardReadinessRequest,
@@ -37,6 +38,7 @@ from app.storyboard import (
     build_storyboard_plan,
     evaluate_storyboard_readiness_request,
     execute_asset_generation_plan_stub_request,
+    execute_openai_image_live_request,
 )
 from app.story_engine.export_package import build_export_package_v1
 from app.story_engine.export_formats import list_export_formats
@@ -226,6 +228,20 @@ async def story_engine_asset_execution_stub(req: AssetExecutionRequest) -> Asset
     writes, no Firestore writes, and no GenerateScriptResponse changes.
     """
     return execute_asset_generation_plan_stub_request(req)
+
+
+@router.post(
+    "/story-engine/openai-image-live-execution",
+    response_model=AssetExecutionResult,
+)
+async def story_engine_openai_image_live_execution(req: OpenAIImageLiveExecutionRequest) -> AssetExecutionResult:
+    """
+    First live storyboard asset path: OpenAI Image for at most one image task.
+
+    Requires explicit provider-cost confirmation. Writes only the generated image file
+    under the requested output root; no Firestore writes and no GenerateScriptResponse changes.
+    """
+    return execute_openai_image_live_request(req)
 
 
 @router.post(

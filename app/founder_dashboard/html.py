@@ -3088,6 +3088,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" id="btn-storyboard-readiness" data-label="Storyboard prüfen">Storyboard prüfen</button>
         <button type="button" id="btn-asset-generation-plan" data-label="Asset Plan erstellen">Asset Plan erstellen</button>
         <button type="button" id="btn-asset-execution-stub" data-label="Asset Tasks simulieren">Asset Tasks simulieren</button>
+        <button type="button" id="btn-openai-image-live" data-label="OpenAI Bild erzeugen">OpenAI Bild erzeugen</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
         <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
         <button type="button" id="btn-optimize" data-label="Optimize Provider Prompts">Optimize Provider Prompts</button>
@@ -3095,6 +3096,10 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" id="btn-formats" data-label="Export Formats">Export Formats</button>
       </div>
       <p class="muted" style="margin-top:0.75rem">Batch Template Compare lädt alle IDs aus dem Template-Selector und ruft nacheinander Preview + Readiness auf.</p>
+      <div class="row-check" style="margin-top:0.65rem">
+        <input type="checkbox" id="storyboard-openai-confirm-costs"/>
+        <label for="storyboard-openai-confirm-costs" style="margin:0">OpenAI Image Kosten bestätigen (max. 1 Bild)</label>
+      </div>
       <div class="actions">
         <button type="button" id="btn-batch-compare" data-label="Batch Template Compare">Batch Template Compare</button>
         <span class="muted" id="batch-status"></span>
@@ -3205,6 +3210,22 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" class="sm tb-txt" data-pre="out-asset-execution-stub" data-dlname="asset-execution-stub.txt">TXT</button>
       </div>
       <pre class="out out-empty" id="out-asset-execution-stub">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-openai-image-live">
+    <summary>OpenAI Image Live</summary>
+    <div class="coll-body">
+      <div id="openai-image-live-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-openai-image-live-panel="1">
+        <strong>OpenAI Image Live</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Live-Bild — Kosten bestätigen und „OpenAI Bild erzeugen“ klicken.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-openai-image-live">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-openai-image-live" data-dlname="openai-image-live.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-openai-image-live" data-dlname="openai-image-live.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-openai-image-live">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
@@ -3508,6 +3529,7 @@ try {
   let lastStoryboardReadiness = null;
   let lastAssetPlan = null;
   let lastAssetExecutionStub = null;
+  let lastOpenAIImageLive = null;
   let lastOptimize = null;
   let lastPreview = null;
   let lastReadiness = null;
@@ -3824,6 +3846,47 @@ try {
     });
   }
 
+  function clearOpenAIImageLiveSummary() {
+    var box = $("openai-image-live-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>OpenAI Image Live</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Live-Bild — Kosten bestätigen und „OpenAI Bild erzeugen“ klicken.</p>';
+  }
+
+  function renderOpenAIImageLiveSummary(result) {
+    var box = $("openai-image-live-summary");
+    if (!box || !result) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "OpenAI Image Live";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(result.execution_status || "—") + " · Provider Calls: " + String(result.estimated_provider_calls || 0);
+    box.appendChild(meta);
+    var outs = result.estimated_outputs || [];
+    var out = document.createElement("p");
+    out.style.margin = "0.28rem 0 0";
+    out.style.fontSize = "0.78rem";
+    out.textContent = "Output: " + (outs.length ? outs.join(", ") : "—");
+    box.appendChild(out);
+    (result.task_results || []).forEach(function(task) {
+      var p = document.createElement("p");
+      p.style.margin = "0.35rem 0 0";
+      p.style.fontSize = "0.78rem";
+      p.textContent = String(task.task_id || "task") + " · " + String(task.execution_status || "—") + " · " + String(task.planned_output_path || "—");
+      box.appendChild(p);
+    });
+    if (result.warnings && result.warnings.length) {
+      var w = document.createElement("p");
+      w.style.margin = "0.35rem 0 0";
+      w.style.fontSize = "0.78rem";
+      w.textContent = "Warnings: " + result.warnings.join(", ");
+      box.appendChild(w);
+    }
+  }
+
   function validateExportFormForStoryEngine() {
     if (!$("fd-title")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-title");
     if (!$("fd-topic")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-topic");
@@ -3938,6 +4001,10 @@ try {
       if (!Array.isArray(data.task_results) || typeof data.estimated_provider_calls !== "number") {
         throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (task_results)");
       }
+    } else if (kind === "openai_image_live") {
+      if (!Array.isArray(data.task_results) || typeof data.estimated_provider_calls !== "number") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (openai image live)");
+      }
     } else if (kind === "optimize") {
       if (!data.optimized_prompts || typeof data.optimized_prompts !== "object") {
         throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (optimized_prompts)");
@@ -4024,6 +4091,10 @@ try {
     if (lastAssetExecutionStub) {
       addList(lastAssetExecutionStub.warnings);
       addList(lastAssetExecutionStub.blocking_issues);
+    }
+    if (lastOpenAIImageLive) {
+      addList(lastOpenAIImageLive.warnings);
+      addList(lastOpenAIImageLive.blocking_issues);
     }
     if (lastPreview && lastPreview.top_warnings) addList(lastPreview.top_warnings);
     if (lastReadiness) {
@@ -4789,6 +4860,7 @@ try {
       lastStoryboardReadiness: lastStoryboardReadiness,
       lastAssetPlan: lastAssetPlan,
       lastAssetExecutionStub: lastAssetExecutionStub,
+      lastOpenAIImageLive: lastOpenAIImageLive,
       lastPreview: lastPreview,
       lastReadiness: lastReadiness,
       lastOptimize: lastOptimize,
@@ -5131,6 +5203,7 @@ try {
         lastStoryboardReadiness: lastStoryboardReadiness,
         lastAssetPlan: lastAssetPlan,
         lastAssetExecutionStub: lastAssetExecutionStub,
+        lastOpenAIImageLive: lastOpenAIImageLive,
         lastPreview: lastPreview,
         lastReadiness: lastReadiness,
         lastOptimize: lastOptimize,
@@ -5426,6 +5499,7 @@ try {
     lastStoryboardReadiness = null;
     lastAssetPlan = null;
     lastAssetExecutionStub = null;
+    lastOpenAIImageLive = null;
     lastPreview = null;
     lastReadiness = null;
     lastOptimize = null;
@@ -5436,6 +5510,7 @@ try {
     setOut("out-storyboard-readiness", null);
     setOut("out-asset-generation-plan", null);
     setOut("out-asset-execution-stub", null);
+    setOut("out-openai-image-live", null);
     setOut("out-hook", null);
     setOut("out-pq-score", null);
     setOut("out-pq-detail", null);
@@ -5456,6 +5531,7 @@ try {
     clearStoryboardReadinessSummary();
     clearAssetGenerationPlanSummary();
     clearAssetExecutionStubSummary();
+    clearOpenAIImageLiveSummary();
     setExportActionStatus("", "");
   }
 
@@ -5657,6 +5733,39 @@ try {
     openPanelAndScroll("coll-asset-execution-stub", "asset-execution-stub-summary");
     if (data.execution_status === "failed") {
       throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Asset Execution Stub fehlgeschlagen.");
+    }
+    return data;
+  }
+
+  async function runOpenAIImageLiveOnlyInternal() {
+    if (!lastAssetPlan) {
+      await runAssetGenerationPlanOnlyInternal();
+    }
+    var cb = $("storyboard-openai-confirm-costs");
+    var confirmed = !!(cb && cb.checked);
+    const data = await fetchJson("/story-engine/openai-image-live-execution", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        asset_generation_plan: lastAssetPlan,
+        confirm_provider_costs: confirmed,
+        max_live_image_tasks: 1,
+        run_id: "dashboard_storyboard_openai_image",
+        output_root: "output",
+        openai_image_model: "gpt-image-2",
+        openai_image_size: "1024x1024",
+        openai_image_timeout_seconds: 120
+      })
+    });
+    assertCompleteStoryResponse("/story-engine/openai-image-live-execution", data, "openai_image_live");
+    lastOpenAIImageLive = data;
+    setOut("out-openai-image-live", data);
+    renderOpenAIImageLiveSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-openai-image-live", "openai-image-live-summary");
+    if (data.execution_status === "failed") {
+      throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "OpenAI Image Live fehlgeschlagen.");
     }
     return data;
   }
@@ -5941,6 +6050,15 @@ try {
     } else {
       setOut("out-asset-execution-stub", null);
       clearAssetExecutionStubSummary();
+    }
+    if (lastOpenAIImageLive) {
+      setOut("out-openai-image-live", lastOpenAIImageLive);
+      renderOpenAIImageLiveSummary(lastOpenAIImageLive);
+      mergeWarnings(lastOpenAIImageLive.warnings || []);
+      mergeWarnings(lastOpenAIImageLive.blocking_issues || []);
+    } else {
+      setOut("out-openai-image-live", null);
+      clearOpenAIImageLiveSummary();
     }
     if (lastReadiness) setOut("out-readiness", lastReadiness);
     else setOut("out-readiness", null);
@@ -9824,6 +9942,14 @@ try {
     });
   };
 
+  $("btn-openai-image-live").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-openai-image-live", "openai-image-live-summary", async function() {
+      await runOpenAIImageLiveOnlyInternal();
+    });
+  };
+
   $("btn-preview").onclick = async function(){
     var btn = this;
     clearWarnings();
@@ -9948,6 +10074,7 @@ try {
       lastStoryboardReadiness = pack.lastStoryboardReadiness || null;
       lastAssetPlan = pack.lastAssetPlan || null;
       lastAssetExecutionStub = pack.lastAssetExecutionStub || null;
+      lastOpenAIImageLive = pack.lastOpenAIImageLive || null;
       lastPreview = pack.lastPreview || null;
       lastReadiness = pack.lastReadiness || null;
       lastOptimize = pack.lastOptimize || null;

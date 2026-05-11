@@ -107,3 +107,18 @@ Output:
 - `estimated_outputs`
 
 Blocked asset plans return `failed` and no normal task execution. Planned tasks return `dry_run` in dry-run mode or `completed_stub` in stub mode. Missing prompts or missing provider hints are reported per task so later real provider adapters can replace the stub result shape directly.
+
+## OpenAI Image Live V1
+
+`POST /story-engine/openai-image-live-execution` is the first live provider path for the Storyboard chain. It executes at most one `image` task from an `AssetGenerationPlan` through the existing OpenAI Image connector.
+
+Safety defaults:
+
+- requires `confirm_provider_costs=true`
+- `max_live_image_tasks` is capped at `1`
+- default model: `gpt-image-2`
+- default size: `1024x1024`
+- output root: `output`
+- output path pattern: `output/storyboard_runs/<run_id>/<scene_id>/image.png`
+
+The Founder Dashboard exposes this as a manual action only: `OpenAI Bild erzeugen` plus the `OpenAI Image Kosten bestätigen` checkbox. It is intentionally not part of the automatic full-pipeline button, so the plan-only flow remains safe by default.
