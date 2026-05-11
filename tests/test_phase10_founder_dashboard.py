@@ -538,6 +538,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("renderStoryboardLocalRenderExecuteSummary", text)
         self.assertIn("3. Storyboard Plan", text)
         self.assertIn("4. Storyboard Readiness", text)
+        self.assertIn("ready_with_warnings", text)
         self.assertIn("5. Asset Plan", text)
         self.assertIn("6. Asset Execution Stub", text)
         self.assertIn("7. Render Timeline", text)

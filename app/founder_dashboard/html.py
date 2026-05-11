@@ -4427,7 +4427,7 @@ try {
       Number((lastOpenAIImageLive && lastOpenAIImageLive.estimated_provider_calls) || 0) +
       Number((lastElevenLabsVoiceLive && lastElevenLabsVoiceLive.estimated_provider_calls) || 0) +
       Number((lastRunwayMotionLive && lastRunwayMotionLive.estimated_provider_calls) || 0);
-    var reviewStatus = blockers.length ? "blocked" : (finalExists && imageFiles > 0 && voiceFiles > 0 ? (warnings.length ? "warning" : "ready") : "warning");
+    var reviewStatus = blockers.length ? "blocked" : (finalExists && imageFiles > 0 && voiceFiles > 0 ? (warnings.length ? "ready_with_warnings" : "ready") : "warning");
     return {
       review_version: "storyboard_live_run_review_v1",
       review_status: reviewStatus,
@@ -4460,6 +4460,13 @@ try {
     meta.style.fontSize = "0.8rem";
     meta.textContent = "Status: " + String(result.review_status || "—") + " · Bilder: " + String(result.image_files || 0) + " · Voice: " + String(result.voice_files || 0) + " · Motion: " + String(result.motion_clips || 0) + " · Provider Calls: " + String(result.provider_calls_estimated || 0);
     box.appendChild(meta);
+    if (result.review_status === "ready_with_warnings") {
+      var tol = document.createElement("p");
+      tol.style.margin = "0.15rem 0 0";
+      tol.style.fontSize = "0.78rem";
+      tol.textContent = "Finales Video ist fertig; verbleibende Warnungen sind im Review toleriert.";
+      box.appendChild(tol);
+    }
     var p = document.createElement("p");
     p.style.margin = "0.35rem 0 0";
     p.style.fontSize = "0.78rem";
