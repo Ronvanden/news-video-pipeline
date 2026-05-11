@@ -2431,3 +2431,26 @@ I --> I3[Story Engine operativ reif]
 4. **Commits**: nur mit Tests/Checks laut [AGENTS.md](AGENTS.md) und Statusabgleich hier.
 
 Letzte inhaltliche Überarbeitung dieser Plan-Datei: **2026-04-30** — **Phase 7 V1** (Bausteine **7.2–7.5**, **7.7–7.8**, ohne optionales **7.6**) in Endpunktliste und Phasenblock verankert: u. a. **`POST …/voice/synthesize`** → **`production_files`** (Metadaten), **`voice_production_file_refs`** / **`voice_artefakte`**, Audit‑ und **`production_costs`‑Warnpfade**, Ops‑Docs; Regression **`tests/test_phase7_73_voice_synthesize_commit.py`**; Stub **Makro‑Phase 8** in **`docs/phases/phase8_image_sceneplan_bauplan.md`**. Zuvor u. a. **2026-05-04**: Phase‑7.2‑Preview‑Slice (`tests/test_phase7_72_voice_provider_contract.py`).
+# BA 32.55 Implementation Note
+
+BA 32.55 ist als kontrolliertes `ba3255`-Profil in `scripts/run_live_video_smoke.py` umgesetzt: `duration_target_seconds=180`, `max_scenes=8`, `max_live_assets=8`, `image_provider=gemini_image`, `voice_mode=elevenlabs`, `motion_mode=static`, `max_motion_clips=0`. Tests: `tests/test_ba356_live_smoke_runner.py`. Keine echten Provider-Calls in Tests.
+
+# Storyboard Orchestration V1
+
+Neue plan-only Zwischenschicht: `app/storyboard/` und `POST /story-engine/storyboard-plan` erzeugen aus `ProductionPromptPlan` oder Script-Kapiteln einen `StoryboardPlan` mit Szenen, visueller Absicht, Voice-Text, Bildprompt, Videoprompt, Dauer, Übergang und Asset-Typ. Keine Provider-Calls, keine Persistenz, keine Änderung am `GenerateScriptResponse`-Vertrag. Dokumentation: `docs/modules/storyboard_orchestration_v1.md`. Tests: `tests/test_storyboard_plan.py`.
+
+# Dashboard-Anschluss Storyboard V1
+
+Das Founder Dashboard bindet `POST /story-engine/storyboard-plan` als plan-only Schritt an: Button `Storyboard erstellen`, Panel `Storyboard Plan` und Full-Pipeline-Reihenfolge `Generate -> Export Package -> Storyboard Plan -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle`. Fehler im Storyboard-Schritt markieren die Pipeline-Timeline als failed und brechen den Flow sichtbar ab. Keine Provider-Calls, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests: `tests/test_phase10_founder_dashboard.py`.
+
+# Storyboard Readiness / Production Gate V1
+
+Neues plan-only Gate `POST /story-engine/storyboard-readiness`: prüft einen `StoryboardPlan` vor späteren Provider-Calls auf Szenen, Visual Intent, Voice-Text, benötigte Image-/Video-Prompts, Dauer, Gesamtzeit, Provider-Hints und einfache Prompt-Duplikate. Ergebnis: `overall_status`, `score`, `blocking_issues`, `warnings`, `scene_results`, `production_recommendation`. Dashboard ergänzt Button `Storyboard prüfen`, Panel `Storyboard Readiness` und Full-Pipeline-Reihenfolge `Generate -> Export Package -> Storyboard Plan -> Storyboard Readiness -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle`; `blocked` bricht sichtbar ab, `warning`/`ready` laufen weiter. Keine Provider-Calls, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests: `tests/test_storyboard_readiness.py`, `tests/test_phase10_founder_dashboard.py`.
+
+# Asset Generation Plan V1
+
+Neue plan-only Auftragsplanung `POST /story-engine/asset-generation-plan`: erzeugt aus `StoryboardPlan` plus optionalem `StoryboardReadinessResult` deterministische `AssetGenerationTask`s für `image`, `video`, `voice`, `thumbnail`, `subtitle` und `render_hint` inklusive `task_id`, Szene, Provider-Hinweis, Prompt, Zielpfad, Dependencies und Warnings. Bei `readiness_result.overall_status=blocked` entsteht `plan_status=blocked` ohne normale Task-Liste. Dashboard ergänzt Button `Asset Plan erstellen`, Panel `Asset Plan` und Full-Pipeline-Reihenfolge `Generate -> Export Package -> Storyboard Plan -> Storyboard Readiness -> Asset Plan -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle`. Keine Provider-Calls, keine Dateischreibvorgänge, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests: `tests/test_asset_generation_plan.py`, `tests/test_phase10_founder_dashboard.py`.
+
+# Asset Task Execution Stub V1
+
+Neue trockene Ausführungsschicht `POST /story-engine/asset-execution-stub`: simuliert `AssetGenerationTask`s aus einem `AssetGenerationPlan` und liefert `AssetExecutionResult` mit `execution_status`, `task_results`, `warnings`, `blocking_issues`, `estimated_provider_calls` und `estimated_outputs`. Blockierte Asset-Pläne führen zu `failed`; geplante Tasks werden im Dry-Run als `dry_run` oder im Stub-Modus als `completed_stub` markiert. Fehlende Prompts/Provider-Hints werden taskweise gemeldet. Dashboard ergänzt Button `Asset Tasks simulieren`, Panel `Asset Execution Stub` und Full-Pipeline-Reihenfolge `Generate -> Export Package -> Storyboard Plan -> Storyboard Readiness -> Asset Plan -> Asset Execution Stub -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle`; `failed` bricht sichtbar ab. Keine Provider-Calls, keine Dateischreibvorgänge, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests: `tests/test_asset_execution_stub.py`, `tests/test_phase10_founder_dashboard.py`.

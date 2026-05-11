@@ -12,6 +12,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.models import GenerateScriptResponse
 
 
 class FounderDashboardRouteTests(unittest.TestCase):
@@ -430,6 +431,75 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="btn-intake-body"', text)
         self.assertIn('id="btn-full-pipeline"', text)
         self.assertIn("runFullPipelineOrchestrator", text)
+        # Storyboard Orchestration V1 — Dashboard-Anschluss, plan-only.
+        self.assertIn("Storyboard erstellen", text)
+        self.assertIn("Storyboard Plan", text)
+        self.assertIn("Storyboard prüfen", text)
+        self.assertIn("Storyboard Readiness", text)
+        self.assertIn("Asset Plan erstellen", text)
+        self.assertIn("Asset Plan", text)
+        self.assertIn("Asset Tasks simulieren", text)
+        self.assertIn("Asset Execution Stub", text)
+        self.assertIn('id="btn-storyboard-plan"', text)
+        self.assertIn('id="btn-storyboard-readiness"', text)
+        self.assertIn('id="btn-asset-generation-plan"', text)
+        self.assertIn('id="btn-asset-execution-stub"', text)
+        self.assertIn('id="storyboard-plan-summary"', text)
+        self.assertIn('id="storyboard-readiness-summary"', text)
+        self.assertIn('id="asset-generation-plan-summary"', text)
+        self.assertIn('id="asset-execution-stub-summary"', text)
+        self.assertIn('id="out-storyboard-plan"', text)
+        self.assertIn('id="out-storyboard-readiness"', text)
+        self.assertIn('id="out-asset-generation-plan"', text)
+        self.assertIn('id="out-asset-execution-stub"', text)
+        self.assertIn("/story-engine/storyboard-plan", text)
+        self.assertIn("/story-engine/storyboard-readiness", text)
+        self.assertIn("/story-engine/asset-generation-plan", text)
+        self.assertIn("/story-engine/asset-execution-stub", text)
+        self.assertIn("runStoryboardOnlyInternal", text)
+        self.assertIn("runStoryboardReadinessOnlyInternal", text)
+        self.assertIn("runAssetGenerationPlanOnlyInternal", text)
+        self.assertIn("runAssetExecutionStubOnlyInternal", text)
+        self.assertIn("buildStoryboardRequestFromDashboardState", text)
+        self.assertIn("renderStoryboardPlanSummary", text)
+        self.assertIn("renderStoryboardReadinessSummary", text)
+        self.assertIn("renderAssetGenerationPlanSummary", text)
+        self.assertIn("renderAssetExecutionStubSummary", text)
+        self.assertIn("3. Storyboard Plan", text)
+        self.assertIn("4. Storyboard Readiness", text)
+        self.assertIn("5. Asset Plan", text)
+        self.assertIn("6. Asset Execution Stub", text)
+        orch = text[text.find("async function runFullPipelineOrchestrator") : text.find("function applyInputSnapshot")]
+        self.assertLess(
+            orch.find("await runExportOnlyInternal()"),
+            orch.find("await runStoryboardOnlyInternal()"),
+            msg="Full-Pipeline muss Storyboard nach Export erzeugen",
+        )
+        self.assertLess(
+            orch.find("await runStoryboardOnlyInternal()"),
+            orch.find("await runStoryboardReadinessOnlyInternal()"),
+            msg="Full-Pipeline muss Storyboard Readiness nach Storyboard erzeugen",
+        )
+        self.assertLess(
+            orch.find("await runStoryboardReadinessOnlyInternal()"),
+            orch.find("await runAssetGenerationPlanOnlyInternal()"),
+            msg="Full-Pipeline muss Asset Plan nach Storyboard Readiness erzeugen",
+        )
+        self.assertLess(
+            orch.find("await runAssetGenerationPlanOnlyInternal()"),
+            orch.find("await runAssetExecutionStubOnlyInternal()"),
+            msg="Full-Pipeline muss Asset Execution Stub nach Asset Plan ausführen",
+        )
+        self.assertLess(
+            orch.find("await runAssetExecutionStubOnlyInternal()"),
+            orch.find("await runPreviewOnlyInternal()"),
+            msg="Full-Pipeline muss Asset Execution Stub vor Preview/Readiness/Bundle ausführen",
+        )
+        self.assertIn('if (data.overall_status === "blocked")', text)
+        self.assertIn('throw new Error(data.production_recommendation || "Storyboard Readiness blockiert.")', text)
+        self.assertIn('Asset Plan blockiert: Storyboard Readiness ist blocked.', text)
+        self.assertIn('if (data.execution_status === "failed")', text)
+        self.assertIn("Asset Execution Stub fehlgeschlagen.", text)
         self.assertIn("persistSessionSnapshotSilent", text)
         self.assertIn("Operator Clarity (BA 11.2)", text)
         self.assertIn("Executive Scorecard", text)
@@ -605,6 +675,33 @@ class FounderDashboardRouteTests(unittest.TestCase):
         ctr = client.post("/story-engine/thumbnail-ctr", json=ctr_body)
         self.assertEqual(ctr.status_code, 200, msg=ctr.text)
         self.assertIsInstance(ctr.json().get("ctr_score"), int)
+
+    def test_storyboard_dashboard_markers_and_contract_guard(self):
+        client = TestClient(app)
+        r = client.get("/founder/dashboard")
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        text = r.text
+        self.assertIn("Storyboard erstellen", text)
+        self.assertIn("Storyboard Plan", text)
+        self.assertIn("Storyboard Readiness", text)
+        self.assertIn("Asset Plan", text)
+        self.assertIn("Asset Execution Stub", text)
+        self.assertIn("/story-engine/storyboard-plan", text)
+        self.assertIn("/story-engine/storyboard-readiness", text)
+        self.assertIn("/story-engine/asset-generation-plan", text)
+        self.assertIn("/story-engine/asset-execution-stub", text)
+        self.assertIn("runStoryboardOnlyInternal", text)
+        self.assertIn("runStoryboardReadinessOnlyInternal", text)
+        self.assertIn("runAssetGenerationPlanOnlyInternal", text)
+        self.assertIn("runAssetExecutionStubOnlyInternal", text)
+        self.assertIn("lastStoryboard", text)
+        self.assertIn("lastStoryboardReadiness", text)
+        self.assertIn("lastAssetPlan", text)
+        self.assertIn("lastAssetExecutionStub", text)
+        self.assertEqual(
+            set(GenerateScriptResponse.model_fields.keys()),
+            {"title", "hook", "chapters", "full_script", "sources", "warnings"},
+        )
 
     @unittest.skipUnless(shutil.which("node"), "node nicht im PATH — Syntaxcheck übersprungen")
     def test_dashboard_embedded_script_node_syntax_ok_and_video_handlers_wired(self):

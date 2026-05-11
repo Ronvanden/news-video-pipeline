@@ -24,6 +24,20 @@ from app.models import (
 )
 from app.prompt_engine import build_production_prompt_plan
 from app.prompt_engine.schema import ProductionPromptPlan, PromptPlanRequest
+from app.storyboard import (
+    AssetGenerationPlan,
+    AssetGenerationPlanRequest,
+    AssetExecutionRequest,
+    AssetExecutionResult,
+    StoryboardBuildRequest,
+    StoryboardPlan,
+    StoryboardReadinessRequest,
+    StoryboardReadinessResult,
+    build_asset_generation_plan_request,
+    build_storyboard_plan,
+    evaluate_storyboard_readiness_request,
+    execute_asset_generation_plan_stub_request,
+)
 from app.story_engine.export_package import build_export_package_v1
 from app.story_engine.export_formats import list_export_formats
 from app.story_engine.founder_preview import build_export_preview
@@ -155,6 +169,63 @@ async def story_engine_scene_prompts(req: ScenePromptsRequest):
     **`GenerateScriptResponse`** unverändert.
     """
     return build_scene_prompts_v1(req)
+
+
+@router.post(
+    "/story-engine/storyboard-plan",
+    response_model=StoryboardPlan,
+)
+async def story_engine_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
+    """
+    Storyboard orchestration side-channel.
+
+    Builds a structured plan for image prompts, future video clips, voice text and render
+    timing from either a ProductionPromptPlan or script-style chapters. No provider calls,
+    no persistence, and no change to GenerateScriptResponse.
+    """
+    return build_storyboard_plan(req)
+
+
+@router.post(
+    "/story-engine/storyboard-readiness",
+    response_model=StoryboardReadinessResult,
+)
+async def story_engine_storyboard_readiness(req: StoryboardReadinessRequest) -> StoryboardReadinessResult:
+    """
+    Storyboard production gate side-channel.
+
+    Evaluates a provided StoryboardPlan, or builds one from a supplied build_request first.
+    No provider calls, no persistence, and no change to GenerateScriptResponse.
+    """
+    return evaluate_storyboard_readiness_request(req)
+
+
+@router.post(
+    "/story-engine/asset-generation-plan",
+    response_model=AssetGenerationPlan,
+)
+async def story_engine_asset_generation_plan(req: AssetGenerationPlanRequest) -> AssetGenerationPlan:
+    """
+    Asset generation planning side-channel.
+
+    Builds deterministic task IDs and output paths from a StoryboardPlan plus optional
+    StoryboardReadinessResult. No provider calls, no file writes, no persistence.
+    """
+    return build_asset_generation_plan_request(req)
+
+
+@router.post(
+    "/story-engine/asset-execution-stub",
+    response_model=AssetExecutionResult,
+)
+async def story_engine_asset_execution_stub(req: AssetExecutionRequest) -> AssetExecutionResult:
+    """
+    Asset execution dry-run/stub side-channel.
+
+    Simulates task execution from an AssetGenerationPlan. No provider calls, no file
+    writes, no Firestore writes, and no GenerateScriptResponse changes.
+    """
+    return execute_asset_generation_plan_stub_request(req)
 
 
 @router.post(

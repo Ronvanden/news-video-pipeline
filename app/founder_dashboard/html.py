@@ -3031,12 +3031,16 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <ol id="pipeline-timeline" class="pipe-timeline" aria-label="Pipeline Timeline">
           <li class="pipe-step pending" data-pi="0"><span class="ps-label">1. Generate (Quelle)</span><span class="ps-msg"></span></li>
           <li class="pipe-step pending" data-pi="1"><span class="ps-label">2. Export Package</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="2"><span class="ps-label">3. Preview</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="3"><span class="ps-label">4. Readiness</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="4"><span class="ps-label">5. Optimize</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="5"><span class="ps-label">6. Thumbnail CTR</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="6"><span class="ps-label">7. Founder Summary</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="7"><span class="ps-label">8. Production Bundle</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="2"><span class="ps-label">3. Storyboard Plan</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="3"><span class="ps-label">4. Storyboard Readiness</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="4"><span class="ps-label">5. Asset Plan</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="5"><span class="ps-label">6. Asset Execution Stub</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="6"><span class="ps-label">7. Preview</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="7"><span class="ps-label">8. Readiness</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="8"><span class="ps-label">9. Optimize</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="9"><span class="ps-label">10. Thumbnail CTR</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="10"><span class="ps-label">11. Founder Summary</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="11"><span class="ps-label">12. Production Bundle</span><span class="ps-msg"></span></li>
         </ol>
         <div class="actions">
           <button type="button" class="primary" id="btn-full-pipeline" data-label="Run Full Pipeline">Run Full Pipeline</button>
@@ -3080,6 +3084,10 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       <p id="export-action-status" class="export-action-status muted" role="status" aria-live="polite"></p>
       <div class="actions">
         <button type="button" class="primary" id="btn-export-package" data-label="Build Export Package">Build Export Package</button>
+        <button type="button" id="btn-storyboard-plan" data-label="Storyboard erstellen">Storyboard erstellen</button>
+        <button type="button" id="btn-storyboard-readiness" data-label="Storyboard prüfen">Storyboard prüfen</button>
+        <button type="button" id="btn-asset-generation-plan" data-label="Asset Plan erstellen">Asset Plan erstellen</button>
+        <button type="button" id="btn-asset-execution-stub" data-label="Asset Tasks simulieren">Asset Tasks simulieren</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
         <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
         <button type="button" id="btn-optimize" data-label="Optimize Provider Prompts">Optimize Provider Prompts</button>
@@ -3133,6 +3141,70 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" class="sm tb-txt" data-pre="out-export-full" data-dlname="export-package.txt">TXT</button>
       </div>
       <pre class="out out-empty" id="out-export-full">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-storyboard">
+    <summary>Storyboard Plan</summary>
+    <div class="coll-body">
+      <div id="storyboard-plan-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-plan-panel="1">
+        <strong>Storyboard Plan</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Storyboard — zuerst „Storyboard erstellen“.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-storyboard-plan">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-storyboard-plan" data-dlname="storyboard-plan.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-storyboard-plan" data-dlname="storyboard-plan.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-storyboard-plan">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-storyboard-readiness">
+    <summary>Storyboard Readiness</summary>
+    <div class="coll-body">
+      <div id="storyboard-readiness-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-readiness-panel="1">
+        <strong>Storyboard Readiness</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Prüfung — zuerst „Storyboard prüfen“.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-storyboard-readiness">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-storyboard-readiness" data-dlname="storyboard-readiness.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-storyboard-readiness" data-dlname="storyboard-readiness.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-storyboard-readiness">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-asset-generation-plan">
+    <summary>Asset Plan</summary>
+    <div class="coll-body">
+      <div id="asset-generation-plan-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-asset-generation-plan-panel="1">
+        <strong>Asset Plan</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Asset Plan — zuerst „Asset Plan erstellen“.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-asset-generation-plan">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-asset-generation-plan" data-dlname="asset-generation-plan.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-asset-generation-plan" data-dlname="asset-generation-plan.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-asset-generation-plan">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-asset-execution-stub">
+    <summary>Asset Execution Stub</summary>
+    <div class="coll-body">
+      <div id="asset-execution-stub-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-asset-execution-stub-panel="1">
+        <strong>Asset Execution Stub</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Simulation — zuerst „Asset Tasks simulieren“.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-asset-execution-stub">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-asset-execution-stub" data-dlname="asset-execution-stub.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-asset-execution-stub" data-dlname="asset-execution-stub.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-asset-execution-stub">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
@@ -3432,6 +3504,10 @@ try {
     if (b) b.textContent = msg || "";
   }
   let lastExport = null;
+  let lastStoryboard = null;
+  let lastStoryboardReadiness = null;
+  let lastAssetPlan = null;
+  let lastAssetExecutionStub = null;
   let lastOptimize = null;
   let lastPreview = null;
   let lastReadiness = null;
@@ -3559,6 +3635,195 @@ try {
     addLi("Hook Score: " + (typeof hk.hook_score === "number" ? String(hk.hook_score) : "—"));
   }
 
+  function clearStoryboardPlanSummary() {
+    var box = $("storyboard-plan-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Storyboard Plan</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Storyboard — zuerst „Storyboard erstellen“.</p>';
+  }
+
+  function renderStoryboardPlanSummary(plan) {
+    var box = $("storyboard-plan-summary");
+    if (!box || !plan) return;
+    var scenes = Array.isArray(plan.scenes) ? plan.scenes : [];
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Storyboard Plan";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(plan.status || "—") + " · Szenen: " + String(scenes.length) + " · Dauer: " + String(plan.total_duration_seconds || 0) + "s";
+    box.appendChild(meta);
+    scenes.forEach(function(scene) {
+      var card = document.createElement("div");
+      card.style.borderTop = "1px solid var(--border)";
+      card.style.padding = "0.55rem 0 0";
+      card.style.margin = "0.55rem 0 0";
+      var title = document.createElement("strong");
+      title.textContent = "Szene " + String(scene.scene_number || "?") + " · " + String(scene.chapter_title || scene.title || "Ohne Titel");
+      card.appendChild(title);
+      var rows = [
+        ["visual_intent", scene.visual_intent],
+        ["voice_text", scene.voice_text],
+        ["image_prompt", scene.image_prompt],
+        ["video_prompt", scene.video_prompt],
+        ["duration_seconds", scene.duration_seconds],
+        ["transition", scene.transition],
+        ["asset_type", scene.asset_type],
+        ["provider_hints", Array.isArray(scene.provider_hints) ? scene.provider_hints.join(", ") : scene.provider_hints]
+      ];
+      rows.forEach(function(row) {
+        var p = document.createElement("p");
+        p.style.margin = "0.28rem 0 0";
+        p.style.fontSize = "0.78rem";
+        p.style.whiteSpace = "pre-wrap";
+        p.textContent = row[0] + ": " + String(row[1] == null || row[1] === "" ? "—" : row[1]);
+        card.appendChild(p);
+      });
+      box.appendChild(card);
+    });
+  }
+
+  function clearStoryboardReadinessSummary() {
+    var box = $("storyboard-readiness-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Storyboard Readiness</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Prüfung — zuerst „Storyboard prüfen“.</p>';
+  }
+
+  function renderStoryboardReadinessSummary(result) {
+    var box = $("storyboard-readiness-summary");
+    if (!box || !result) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Storyboard Readiness";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Gesamtstatus: " + String(result.overall_status || "—") + " · Score: " + String(result.score != null ? result.score : "—");
+    box.appendChild(meta);
+    [
+      ["Blocker", result.blocking_issues || []],
+      ["Warnings", result.warnings || []]
+    ].forEach(function(row) {
+      var p = document.createElement("p");
+      p.style.margin = "0.28rem 0 0";
+      p.style.fontSize = "0.78rem";
+      var arr = Array.isArray(row[1]) ? row[1] : [];
+      p.textContent = row[0] + ": " + (arr.length ? arr.join(", ") : "—");
+      box.appendChild(p);
+    });
+    var rec = document.createElement("p");
+    rec.style.margin = "0.45rem 0 0";
+    rec.style.fontSize = "0.8rem";
+    rec.textContent = "Empfehlung: " + String(result.production_recommendation || "—");
+    box.appendChild(rec);
+    (result.scene_results || []).forEach(function(scene) {
+      var p = document.createElement("p");
+      p.style.margin = "0.35rem 0 0";
+      p.style.fontSize = "0.78rem";
+      p.textContent = "Szene " + String(scene.scene_number || "?") + " · " + String(scene.status || "—") + " · Score " + String(scene.score != null ? scene.score : "—") + " · " + (scene.issues && scene.issues.length ? scene.issues.join(", ") : "OK");
+      box.appendChild(p);
+    });
+  }
+
+  function clearAssetGenerationPlanSummary() {
+    var box = $("asset-generation-plan-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Asset Plan</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Asset Plan — zuerst „Asset Plan erstellen“.</p>';
+  }
+
+  function renderAssetGenerationPlanSummary(plan) {
+    var box = $("asset-generation-plan-summary");
+    if (!box || !plan) return;
+    var tasks = Array.isArray(plan.tasks) ? plan.tasks : [];
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Asset Plan";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(plan.plan_status || "—") + " · Tasks: " + String(plan.total_tasks || tasks.length) + " · Readiness: " + String(plan.readiness_status || "—");
+    box.appendChild(meta);
+    if (plan.blocking_issues && plan.blocking_issues.length) {
+      var b = document.createElement("p");
+      b.style.margin = "0.28rem 0 0";
+      b.style.fontSize = "0.78rem";
+      b.textContent = "Blocker: " + plan.blocking_issues.join(", ");
+      box.appendChild(b);
+    }
+    tasks.forEach(function(task) {
+      var card = document.createElement("div");
+      card.style.borderTop = "1px solid var(--border)";
+      card.style.padding = "0.55rem 0 0";
+      card.style.margin = "0.55rem 0 0";
+      var title = document.createElement("strong");
+      title.textContent = String(task.task_id || "asset_task") + " · Szene " + String(task.scene_number || "—") + " · " + String(task.asset_type || "—");
+      card.appendChild(title);
+      var prompt = String(task.prompt || "");
+      if (prompt.length > 240) prompt = prompt.slice(0, 237).trim() + "...";
+      [
+        ["provider_hint", task.provider_hint],
+        ["prompt", prompt],
+        ["output_path", task.output_path],
+        ["dependencies", Array.isArray(task.dependencies) ? task.dependencies.join(", ") : task.dependencies],
+        ["warnings", Array.isArray(task.warnings) ? task.warnings.join(", ") : task.warnings]
+      ].forEach(function(row) {
+        var p = document.createElement("p");
+        p.style.margin = "0.28rem 0 0";
+        p.style.fontSize = "0.78rem";
+        p.style.whiteSpace = "pre-wrap";
+        p.textContent = row[0] + ": " + String(row[1] == null || row[1] === "" ? "—" : row[1]);
+        card.appendChild(p);
+      });
+      box.appendChild(card);
+    });
+  }
+
+  function clearAssetExecutionStubSummary() {
+    var box = $("asset-execution-stub-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Asset Execution Stub</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Simulation — zuerst „Asset Tasks simulieren“.</p>';
+  }
+
+  function renderAssetExecutionStubSummary(result) {
+    var box = $("asset-execution-stub-summary");
+    if (!box || !result) return;
+    var rows = Array.isArray(result.task_results) ? result.task_results : [];
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Asset Execution Stub";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(result.execution_status || "—") + " · Provider Calls geschätzt: " + String(result.estimated_provider_calls || 0) + " · Outputs: " + String((result.estimated_outputs || []).length);
+    box.appendChild(meta);
+    [
+      ["Warnings", result.warnings || []],
+      ["Blocker", result.blocking_issues || []],
+      ["Geplante Outputs", result.estimated_outputs || []]
+    ].forEach(function(row) {
+      var p = document.createElement("p");
+      p.style.margin = "0.28rem 0 0";
+      p.style.fontSize = "0.78rem";
+      p.textContent = row[0] + ": " + (row[1] && row[1].length ? row[1].join(", ") : "—");
+      box.appendChild(p);
+    });
+    rows.forEach(function(task) {
+      var p = document.createElement("p");
+      p.style.margin = "0.35rem 0 0";
+      p.style.fontSize = "0.78rem";
+      p.textContent = String(task.task_id || "task") + " · " + String(task.asset_type || "—") + " · " + String(task.execution_status || "—") + " · " + String(task.planned_output_path || "—");
+      box.appendChild(p);
+    });
+  }
+
   function validateExportFormForStoryEngine() {
     if (!$("fd-title")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-title");
     if (!$("fd-topic")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-topic");
@@ -3615,6 +3880,26 @@ try {
     };
   }
 
+  function buildStoryboardRequestFromDashboardState() {
+    var base = buildCurrentExportRequestFromForm();
+    var hookText = "";
+    if (lastExport && lastExport.hook && lastExport.hook.hook_text) hookText = lastExport.hook.hook_text;
+    if (!hookText) hookText = base.source_summary || base.title || "";
+    var scenePrompts = [];
+    if (lastExport && lastExport.scene_prompts && Array.isArray(lastExport.scene_prompts.scenes)) {
+      scenePrompts = lastExport.scene_prompts.scenes.map(function(s) {
+        return String((s && s.positive_expanded) || "");
+      }).filter(function(x) { return !!x.trim(); });
+    }
+    return {
+      hook: hookText,
+      chapters: base.chapters,
+      scene_prompts: scenePrompts,
+      video_template: base.video_template,
+      voice_style: "dashboard_orchestration"
+    };
+  }
+
   function assertCompleteStoryResponse(endpoint, data, kind) {
     if (data === null || typeof data !== "object") {
       throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint);
@@ -3636,6 +3921,22 @@ try {
     } else if (kind === "readiness") {
       if (!data.scores || typeof data.scores !== "object") {
         throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (scores)");
+      }
+    } else if (kind === "storyboard") {
+      if (!Array.isArray(data.scenes)) {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (scenes)");
+      }
+    } else if (kind === "storyboard_readiness") {
+      if (typeof data.score !== "number" || !Array.isArray(data.scene_results)) {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (score/scene_results)");
+      }
+    } else if (kind === "asset_plan") {
+      if (!Array.isArray(data.tasks) || typeof data.total_tasks !== "number") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (tasks)");
+      }
+    } else if (kind === "asset_execution_stub") {
+      if (!Array.isArray(data.task_results) || typeof data.estimated_provider_calls !== "number") {
+        throw new Error("Endpoint antwortet leer oder unvollständig: " + endpoint + " (task_results)");
       }
     } else if (kind === "optimize") {
       if (!data.optimized_prompts || typeof data.optimized_prompts !== "object") {
@@ -3710,6 +4011,19 @@ try {
       addList(lastExport.warnings);
       if (lastExport.hook && lastExport.hook.warnings) addList(lastExport.hook.warnings);
       if (lastExport.scene_prompts && lastExport.scene_prompts.warnings) addList(lastExport.scene_prompts.warnings);
+    }
+    if (lastStoryboard && lastStoryboard.warnings) addList(lastStoryboard.warnings);
+    if (lastStoryboardReadiness) {
+      addList(lastStoryboardReadiness.warnings);
+      addList(lastStoryboardReadiness.blocking_issues);
+    }
+    if (lastAssetPlan) {
+      addList(lastAssetPlan.warnings);
+      addList(lastAssetPlan.blocking_issues);
+    }
+    if (lastAssetExecutionStub) {
+      addList(lastAssetExecutionStub.warnings);
+      addList(lastAssetExecutionStub.blocking_issues);
     }
     if (lastPreview && lastPreview.top_warnings) addList(lastPreview.top_warnings);
     if (lastReadiness) {
@@ -4471,6 +4785,10 @@ try {
       timestamp: new Date().toISOString(),
       export_request: buildExportBody(),
       lastExport: lastExport,
+      lastStoryboard: lastStoryboard,
+      lastStoryboardReadiness: lastStoryboardReadiness,
+      lastAssetPlan: lastAssetPlan,
+      lastAssetExecutionStub: lastAssetExecutionStub,
       lastPreview: lastPreview,
       lastReadiness: lastReadiness,
       lastOptimize: lastOptimize,
@@ -4809,6 +5127,10 @@ try {
         timestamp: new Date().toISOString(),
         input: getInputSnapshot(),
         lastExport: lastExport,
+        lastStoryboard: lastStoryboard,
+        lastStoryboardReadiness: lastStoryboardReadiness,
+        lastAssetPlan: lastAssetPlan,
+        lastAssetExecutionStub: lastAssetExecutionStub,
         lastPreview: lastPreview,
         lastReadiness: lastReadiness,
         lastOptimize: lastOptimize,
@@ -5100,12 +5422,20 @@ try {
 
   function resetPipelineStoryOutputs() {
     lastExport = null;
+    lastStoryboard = null;
+    lastStoryboardReadiness = null;
+    lastAssetPlan = null;
+    lastAssetExecutionStub = null;
     lastPreview = null;
     lastReadiness = null;
     lastOptimize = null;
     lastCtrPayload = null;
     lastNumericPq = null;
     setOut("out-export-full", null);
+    setOut("out-storyboard-plan", null);
+    setOut("out-storyboard-readiness", null);
+    setOut("out-asset-generation-plan", null);
+    setOut("out-asset-execution-stub", null);
     setOut("out-hook", null);
     setOut("out-pq-score", null);
     setOut("out-pq-detail", null);
@@ -5122,6 +5452,10 @@ try {
     renderPromptLab();
     renderProviderPromptCards();
     clearExportScenePlanSummary();
+    clearStoryboardPlanSummary();
+    clearStoryboardReadinessSummary();
+    clearAssetGenerationPlanSummary();
+    clearAssetExecutionStubSummary();
     setExportActionStatus("", "");
   }
 
@@ -5234,6 +5568,96 @@ try {
     if (cx && cx.tagName === "DETAILS") cx.open = true;
     openPanelAndScroll("coll-export", "out-export-full");
     setExportActionStatus("Build Export: fertig — Rohpaket & Hook Preview aktualisiert.", "success");
+    return data;
+  }
+
+  async function runStoryboardOnlyInternal() {
+    const body = buildStoryboardRequestFromDashboardState();
+    var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
+    setStoryEngineRequestDebug("Storyboard Request gebaut: Template=" + body.video_template + " | Kapitel=" + nc + " | Scene Prompts=" + String((body.scene_prompts || []).length));
+    const data = await fetchJson("/story-engine/storyboard-plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    assertCompleteStoryResponse("/story-engine/storyboard-plan", data, "storyboard");
+    lastStoryboard = data;
+    setOut("out-storyboard-plan", data);
+    renderStoryboardPlanSummary(data);
+    mergeWarnings(data.warnings || []);
+    openPanelAndScroll("coll-storyboard", "storyboard-plan-summary");
+    return data;
+  }
+
+  async function runStoryboardReadinessOnlyInternal() {
+    if (!lastStoryboard) {
+      await runStoryboardOnlyInternal();
+    }
+    const data = await fetchJson("/story-engine/storyboard-readiness", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storyboard_plan: lastStoryboard })
+    });
+    assertCompleteStoryResponse("/story-engine/storyboard-readiness", data, "storyboard_readiness");
+    lastStoryboardReadiness = data;
+    setOut("out-storyboard-readiness", data);
+    renderStoryboardReadinessSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-storyboard-readiness", "storyboard-readiness-summary");
+    if (data.overall_status === "blocked") {
+      throw new Error(data.production_recommendation || "Storyboard Readiness blockiert.");
+    }
+    return data;
+  }
+
+  async function runAssetGenerationPlanOnlyInternal() {
+    if (!lastStoryboard) {
+      await runStoryboardOnlyInternal();
+    }
+    if (!lastStoryboardReadiness) {
+      await runStoryboardReadinessOnlyInternal();
+    }
+    if (lastStoryboardReadiness && lastStoryboardReadiness.overall_status === "blocked") {
+      throw new Error(lastStoryboardReadiness.production_recommendation || "Asset Plan blockiert: Storyboard Readiness ist blocked.");
+    }
+    const data = await fetchJson("/story-engine/asset-generation-plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storyboard_plan: lastStoryboard, readiness_result: lastStoryboardReadiness })
+    });
+    assertCompleteStoryResponse("/story-engine/asset-generation-plan", data, "asset_plan");
+    lastAssetPlan = data;
+    setOut("out-asset-generation-plan", data);
+    renderAssetGenerationPlanSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-asset-generation-plan", "asset-generation-plan-summary");
+    if (data.plan_status === "blocked") {
+      throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Asset Generation Plan blockiert.");
+    }
+    return data;
+  }
+
+  async function runAssetExecutionStubOnlyInternal() {
+    if (!lastAssetPlan) {
+      await runAssetGenerationPlanOnlyInternal();
+    }
+    const data = await fetchJson("/story-engine/asset-execution-stub", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ asset_generation_plan: lastAssetPlan, dry_run: true })
+    });
+    assertCompleteStoryResponse("/story-engine/asset-execution-stub", data, "asset_execution_stub");
+    lastAssetExecutionStub = data;
+    setOut("out-asset-execution-stub", data);
+    renderAssetExecutionStubSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-asset-execution-stub", "asset-execution-stub-summary");
+    if (data.execution_status === "failed") {
+      throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Asset Execution Stub fehlgeschlagen.");
+    }
     return data;
   }
 
@@ -5358,30 +5782,50 @@ try {
 
       stepIdx = 2;
       setPipelineStep(stepIdx, "active", "");
-      await runPreviewOnlyInternal();
+      await runStoryboardOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 3;
       setPipelineStep(stepIdx, "active", "");
-      await runReadinessOnlyInternal();
+      await runStoryboardReadinessOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 4;
       setPipelineStep(stepIdx, "active", "");
-      await runOptimizeOnlyInternal();
+      await runAssetGenerationPlanOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 5;
       setPipelineStep(stepIdx, "active", "");
-      await runCtrOnlyInternal();
+      await runAssetExecutionStubOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 6;
       setPipelineStep(stepIdx, "active", "");
-      refreshFounderInterpretation();
+      await runPreviewOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 7;
+      setPipelineStep(stepIdx, "active", "");
+      await runReadinessOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 8;
+      setPipelineStep(stepIdx, "active", "");
+      await runOptimizeOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 9;
+      setPipelineStep(stepIdx, "active", "");
+      await runCtrOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 10;
+      setPipelineStep(stepIdx, "active", "");
+      refreshFounderInterpretation();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 11;
       setPipelineStep(stepIdx, "active", "");
       await runDownloadProductionBundle();
       setPipelineStep(stepIdx, "done", "");
@@ -5462,6 +5906,41 @@ try {
       setOut("out-pq-score", lastPreview.prompt_quality_score);
       setOut("out-pq-detail", { prompt_quality_score: lastPreview.prompt_quality_score, scene_count: lastPreview.scene_count });
       mergeWarnings(lastPreview.top_warnings || []);
+    }
+    if (lastStoryboard) {
+      setOut("out-storyboard-plan", lastStoryboard);
+      renderStoryboardPlanSummary(lastStoryboard);
+      mergeWarnings(lastStoryboard.warnings || []);
+    } else {
+      setOut("out-storyboard-plan", null);
+      clearStoryboardPlanSummary();
+    }
+    if (lastStoryboardReadiness) {
+      setOut("out-storyboard-readiness", lastStoryboardReadiness);
+      renderStoryboardReadinessSummary(lastStoryboardReadiness);
+      mergeWarnings(lastStoryboardReadiness.warnings || []);
+      mergeWarnings(lastStoryboardReadiness.blocking_issues || []);
+    } else {
+      setOut("out-storyboard-readiness", null);
+      clearStoryboardReadinessSummary();
+    }
+    if (lastAssetPlan) {
+      setOut("out-asset-generation-plan", lastAssetPlan);
+      renderAssetGenerationPlanSummary(lastAssetPlan);
+      mergeWarnings(lastAssetPlan.warnings || []);
+      mergeWarnings(lastAssetPlan.blocking_issues || []);
+    } else {
+      setOut("out-asset-generation-plan", null);
+      clearAssetGenerationPlanSummary();
+    }
+    if (lastAssetExecutionStub) {
+      setOut("out-asset-execution-stub", lastAssetExecutionStub);
+      renderAssetExecutionStubSummary(lastAssetExecutionStub);
+      mergeWarnings(lastAssetExecutionStub.warnings || []);
+      mergeWarnings(lastAssetExecutionStub.blocking_issues || []);
+    } else {
+      setOut("out-asset-execution-stub", null);
+      clearAssetExecutionStubSummary();
     }
     if (lastReadiness) setOut("out-readiness", lastReadiness);
     else setOut("out-readiness", null);
@@ -9313,6 +9792,38 @@ try {
 
   bindBuildExportPackageButton();
 
+  $("btn-storyboard-plan").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-storyboard", "storyboard-plan-summary", async function() {
+      await runStoryboardOnlyInternal();
+    });
+  };
+
+  $("btn-storyboard-readiness").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-storyboard-readiness", "storyboard-readiness-summary", async function() {
+      await runStoryboardReadinessOnlyInternal();
+    });
+  };
+
+  $("btn-asset-generation-plan").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-asset-generation-plan", "asset-generation-plan-summary", async function() {
+      await runAssetGenerationPlanOnlyInternal();
+    });
+  };
+
+  $("btn-asset-execution-stub").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-asset-execution-stub", "asset-execution-stub-summary", async function() {
+      await runAssetExecutionStubOnlyInternal();
+    });
+  };
+
   $("btn-preview").onclick = async function(){
     var btn = this;
     clearWarnings();
@@ -9433,6 +9944,10 @@ try {
       var pack = JSON.parse(raw);
       applyInputSnapshot(pack.input);
       lastExport = pack.lastExport || null;
+      lastStoryboard = pack.lastStoryboard || null;
+      lastStoryboardReadiness = pack.lastStoryboardReadiness || null;
+      lastAssetPlan = pack.lastAssetPlan || null;
+      lastAssetExecutionStub = pack.lastAssetExecutionStub || null;
       lastPreview = pack.lastPreview || null;
       lastReadiness = pack.lastReadiness || null;
       lastOptimize = pack.lastOptimize || null;
