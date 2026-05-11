@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -24,6 +24,7 @@ AssetGenerationTaskType = Literal["image", "video", "voice", "thumbnail", "music
 AssetTaskExecutionStatus = Literal["dry_run", "completed_stub", "live_completed", "skipped", "failed"]
 StoryboardRenderTimelineStatus = Literal["ready", "warning", "blocked"]
 StoryboardRenderTimelineSegmentStatus = Literal["ready", "image_fallback", "skipped", "missing", "blocked"]
+StoryboardLocalRenderPackageStatus = Literal["ready", "warning", "blocked"]
 
 
 class StoryboardChapterInput(BaseModel):
@@ -255,3 +256,28 @@ class StoryboardRenderTimelineRequest(BaseModel):
     image_execution_result: Optional[AssetExecutionResult] = None
     voice_execution_result: Optional[AssetExecutionResult] = None
     motion_execution_result: Optional[AssetExecutionResult] = None
+
+
+class StoryboardLocalRenderPackageRequest(BaseModel):
+    """Input for creating a local renderer handoff package from a render timeline."""
+
+    render_timeline: StoryboardRenderTimelineResult
+    run_id: str = "storyboard_local_render_v1"
+    output_root: str = "output"
+
+
+class StoryboardLocalRenderPackageResult(BaseModel):
+    """Plan-only local render package. No render is started and no files are written."""
+
+    package_version: str = "storyboard_local_render_package_v1"
+    overall_status: StoryboardLocalRenderPackageStatus = "blocked"
+    run_id: str = "storyboard_local_render_v1"
+    timeline_manifest_path: str = ""
+    asset_manifest_path: str = ""
+    final_video_path: str = ""
+    timeline_manifest: Dict[str, Any] = Field(default_factory=dict)
+    asset_manifest: Dict[str, Any] = Field(default_factory=dict)
+    render_command_hint: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    blocking_issues: List[str] = Field(default_factory=list)
+    render_recommendation: str = ""

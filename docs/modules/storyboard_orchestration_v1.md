@@ -45,7 +45,11 @@ The Founder Dashboard exposes the endpoint as a plan-only step:
 - Output panel: `Asset Plan`
 - Button: `Asset Tasks simulieren`
 - Output panel: `Asset Execution Stub`
-- Full pipeline order: Generate -> Export Package -> Storyboard Plan -> Storyboard Readiness -> Asset Plan -> Asset Execution Stub -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle
+- Button: `Render Timeline bauen`
+- Output panel: `Storyboard Render Timeline`
+- Button: `Local Render Package bauen`
+- Output panel: `Storyboard Local Render Package`
+- Full pipeline order: Generate -> Export Package -> Storyboard Plan -> Storyboard Readiness -> Asset Plan -> Asset Execution Stub -> Render Timeline -> Local Render Package -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle
 
 On failure, the dashboard marks the Storyboard timeline step as failed, shows the readable error message, and stops the flow. The dashboard call does not write to Firestore, does not start providers, and does not change `GenerateScriptResponse`.
 
@@ -157,3 +161,27 @@ The endpoint returns a deterministic render handoff:
 - `render_recommendation`
 
 No render is started and no files are written. If a scene requested motion but no clip path exists while an image is available, the segment uses `render_mode=image_only`, `motion_status=skipped`, and warning `motion_requested_but_no_clip_fallback_to_image` instead of treating the missing clip as a placeholder. The Founder Dashboard exposes this as `Render Timeline bauen`.
+
+## Storyboard Local Render Package V1
+
+`POST /story-engine/storyboard-local-render-package` converts a `StoryboardRenderTimelineResult` into deterministic manifest shapes for the existing local renderer.
+
+Input:
+
+- `render_timeline`
+- `run_id` (default `storyboard_local_render_v1`)
+- `output_root` (default `output`)
+
+Output:
+
+- `timeline_manifest_path`
+- `asset_manifest_path`
+- `final_video_path`
+- `timeline_manifest`
+- `asset_manifest`
+- `render_command_hint`
+- `warnings`
+- `blocking_issues`
+- `render_recommendation`
+
+This step does not write manifest files and does not start ffmpeg. It prepares the handoff for a later local render step. Multiple per-scene Voice files are surfaced as `storyboard_render_voice_mixdown_required`, because the current renderer expects one global `audio_path`.

@@ -449,6 +449,8 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("ElevenLabs Voice Live", text)
         self.assertIn("Render Timeline bauen", text)
         self.assertIn("Storyboard Render Timeline", text)
+        self.assertIn("Local Render Package bauen", text)
+        self.assertIn("Storyboard Local Render Package", text)
         self.assertIn('id="btn-storyboard-plan"', text)
         self.assertIn('id="btn-storyboard-readiness"', text)
         self.assertIn('id="btn-asset-generation-plan"', text)
@@ -458,6 +460,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="btn-elevenlabs-voice-live"', text)
         self.assertIn('id="storyboard-elevenlabs-confirm-costs"', text)
         self.assertIn('id="btn-storyboard-render-timeline"', text)
+        self.assertIn('id="btn-storyboard-local-render-package"', text)
         self.assertIn('id="storyboard-plan-summary"', text)
         self.assertIn('id="storyboard-readiness-summary"', text)
         self.assertIn('id="asset-generation-plan-summary"', text)
@@ -465,6 +468,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="openai-image-live-summary"', text)
         self.assertIn('id="elevenlabs-voice-live-summary"', text)
         self.assertIn('id="storyboard-render-timeline-summary"', text)
+        self.assertIn('id="storyboard-local-render-package-summary"', text)
         self.assertIn('id="out-storyboard-plan"', text)
         self.assertIn('id="out-storyboard-readiness"', text)
         self.assertIn('id="out-asset-generation-plan"', text)
@@ -472,6 +476,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="out-openai-image-live"', text)
         self.assertIn('id="out-elevenlabs-voice-live"', text)
         self.assertIn('id="out-storyboard-render-timeline"', text)
+        self.assertIn('id="out-storyboard-local-render-package"', text)
         self.assertIn("/story-engine/storyboard-plan", text)
         self.assertIn("/story-engine/storyboard-readiness", text)
         self.assertIn("/story-engine/asset-generation-plan", text)
@@ -479,6 +484,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("/story-engine/openai-image-live-execution", text)
         self.assertIn("/story-engine/elevenlabs-voice-live-execution", text)
         self.assertIn("/story-engine/storyboard-render-timeline", text)
+        self.assertIn("/story-engine/storyboard-local-render-package", text)
         self.assertIn("runStoryboardOnlyInternal", text)
         self.assertIn("runStoryboardReadinessOnlyInternal", text)
         self.assertIn("runAssetGenerationPlanOnlyInternal", text)
@@ -486,6 +492,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("runOpenAIImageLiveOnlyInternal", text)
         self.assertIn("runElevenLabsVoiceLiveOnlyInternal", text)
         self.assertIn("runStoryboardRenderTimelineOnlyInternal", text)
+        self.assertIn("runStoryboardLocalRenderPackageOnlyInternal", text)
         self.assertIn("buildStoryboardRequestFromDashboardState", text)
         self.assertIn("renderStoryboardPlanSummary", text)
         self.assertIn("renderStoryboardReadinessSummary", text)
@@ -494,10 +501,13 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("renderOpenAIImageLiveSummary", text)
         self.assertIn("renderElevenLabsVoiceLiveSummary", text)
         self.assertIn("renderStoryboardRenderTimelineSummary", text)
+        self.assertIn("renderStoryboardLocalRenderPackageSummary", text)
         self.assertIn("3. Storyboard Plan", text)
         self.assertIn("4. Storyboard Readiness", text)
         self.assertIn("5. Asset Plan", text)
         self.assertIn("6. Asset Execution Stub", text)
+        self.assertIn("7. Render Timeline", text)
+        self.assertIn("8. Local Render Package", text)
         orch = text[text.find("async function runFullPipelineOrchestrator") : text.find("function applyInputSnapshot")]
         self.assertLess(
             orch.find("await runExportOnlyInternal()"),
@@ -525,6 +535,21 @@ class FounderDashboardRouteTests(unittest.TestCase):
             msg="Full-Pipeline muss Asset Execution Stub vor Preview/Readiness/Bundle ausführen",
         )
         self.assertIn('if (data.overall_status === "blocked")', text)
+        self.assertLess(
+            orch.find("await runAssetExecutionStubOnlyInternal()"),
+            orch.find("await runStoryboardRenderTimelineOnlyInternal()"),
+            msg="Full-Pipeline muss Render Timeline nach Asset Execution Stub bauen",
+        )
+        self.assertLess(
+            orch.find("await runStoryboardRenderTimelineOnlyInternal()"),
+            orch.find("await runStoryboardLocalRenderPackageOnlyInternal()"),
+            msg="Full-Pipeline muss Local Render Package nach Render Timeline bauen",
+        )
+        self.assertLess(
+            orch.find("await runStoryboardLocalRenderPackageOnlyInternal()"),
+            orch.find("await runPreviewOnlyInternal()"),
+            msg="Full-Pipeline muss Local Render Package vor Preview bauen",
+        )
         self.assertIn('throw new Error(data.production_recommendation || "Storyboard Readiness blockiert.")', text)
         self.assertIn('Asset Plan blockiert: Storyboard Readiness ist blocked.', text)
         self.assertIn('if (data.execution_status === "failed")', text)
@@ -543,6 +568,10 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Warnings / Voice failed", text)
         self.assertIn("motion_requested_but_no_clip_fallback_to_image", text)
         self.assertIn("Motion skipped", text)
+        self.assertIn("Storyboard Local Render Package blockiert.", text)
+        self.assertIn("timeline_manifest:", text)
+        self.assertIn("asset_manifest:", text)
+        self.assertIn("final_video:", text)
         self.assertIn("persistSessionSnapshotSilent", text)
         self.assertIn("Operator Clarity (BA 11.2)", text)
         self.assertIn("Executive Scorecard", text)

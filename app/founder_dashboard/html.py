@@ -3027,7 +3027,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
 
       <section class="panel" id="coll-full-pipeline" style="margin-top:0.75rem">
         <h2>Run Full Pipeline (BA 11.1)</h2>
-        <p class="muted">Orchestrierung: Generate → Export → Preview → Readiness → Optimize → CTR → Founder Summary → Production Bundle (Downloads). Bei Fehler: Schritt rot, Pipeline stoppt. Ende: Session Snapshot speichern.</p>
+        <p class="muted">Orchestrierung: Generate → Export → Storyboard → Assets → Render Handoff → Preview → Readiness → Optimize → CTR → Founder Summary → Production Bundle (Downloads). Bei Fehler: Schritt rot, Pipeline stoppt. Ende: Session Snapshot speichern.</p>
         <ol id="pipeline-timeline" class="pipe-timeline" aria-label="Pipeline Timeline">
           <li class="pipe-step pending" data-pi="0"><span class="ps-label">1. Generate (Quelle)</span><span class="ps-msg"></span></li>
           <li class="pipe-step pending" data-pi="1"><span class="ps-label">2. Export Package</span><span class="ps-msg"></span></li>
@@ -3035,12 +3035,14 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
           <li class="pipe-step pending" data-pi="3"><span class="ps-label">4. Storyboard Readiness</span><span class="ps-msg"></span></li>
           <li class="pipe-step pending" data-pi="4"><span class="ps-label">5. Asset Plan</span><span class="ps-msg"></span></li>
           <li class="pipe-step pending" data-pi="5"><span class="ps-label">6. Asset Execution Stub</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="6"><span class="ps-label">7. Preview</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="7"><span class="ps-label">8. Readiness</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="8"><span class="ps-label">9. Optimize</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="9"><span class="ps-label">10. Thumbnail CTR</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="10"><span class="ps-label">11. Founder Summary</span><span class="ps-msg"></span></li>
-          <li class="pipe-step pending" data-pi="11"><span class="ps-label">12. Production Bundle</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="6"><span class="ps-label">7. Render Timeline</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="7"><span class="ps-label">8. Local Render Package</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="8"><span class="ps-label">9. Preview</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="9"><span class="ps-label">10. Readiness</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="10"><span class="ps-label">11. Optimize</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="11"><span class="ps-label">12. Thumbnail CTR</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="12"><span class="ps-label">13. Founder Summary</span><span class="ps-msg"></span></li>
+          <li class="pipe-step pending" data-pi="13"><span class="ps-label">14. Production Bundle</span><span class="ps-msg"></span></li>
         </ol>
         <div class="actions">
           <button type="button" class="primary" id="btn-full-pipeline" data-label="Run Full Pipeline">Run Full Pipeline</button>
@@ -3091,6 +3093,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" id="btn-openai-image-live" data-label="OpenAI Bild erzeugen">OpenAI Bild erzeugen</button>
         <button type="button" id="btn-elevenlabs-voice-live" data-label="ElevenLabs Voice erzeugen">ElevenLabs Voice erzeugen</button>
         <button type="button" id="btn-storyboard-render-timeline" data-label="Render Timeline bauen">Render Timeline bauen</button>
+        <button type="button" id="btn-storyboard-local-render-package" data-label="Local Render Package bauen">Local Render Package bauen</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
         <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
         <button type="button" id="btn-optimize" data-label="Optimize Provider Prompts">Optimize Provider Prompts</button>
@@ -3264,6 +3267,22 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" class="sm tb-txt" data-pre="out-storyboard-render-timeline" data-dlname="storyboard-render-timeline.txt">TXT</button>
       </div>
       <pre class="out out-empty" id="out-storyboard-render-timeline">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-storyboard-local-render-package">
+    <summary>Storyboard Local Render Package</summary>
+    <div class="coll-body">
+      <div id="storyboard-local-render-package-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-local-render-package-panel="1">
+        <strong>Storyboard Local Render Package</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Render Package — erst Render Timeline bauen.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-storyboard-local-render-package">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-storyboard-local-render-package" data-dlname="storyboard-local-render-package.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-storyboard-local-render-package" data-dlname="storyboard-local-render-package.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-storyboard-local-render-package">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
@@ -3570,6 +3589,7 @@ try {
   let lastOpenAIImageLive = null;
   let lastElevenLabsVoiceLive = null;
   let lastStoryboardRenderTimeline = null;
+  let lastStoryboardLocalRenderPackage = null;
   let lastOptimize = null;
   let lastPreview = null;
   let lastReadiness = null;
@@ -4010,6 +4030,55 @@ try {
       p.textContent = "Szene " + String(seg.scene_number || "—") + " · " + String(seg.status || "—") + " · " + String(seg.render_mode || "—") + " · Motion: " + String(seg.motion_status || "—") + " · Bild: " + String(seg.image_path || "—") + " · Voice: " + String(seg.voice_path || "—");
       box.appendChild(p);
     });
+    if (result.render_recommendation) {
+      var rec = document.createElement("p");
+      rec.style.margin = "0.35rem 0 0";
+      rec.style.fontSize = "0.78rem";
+      rec.textContent = "Empfehlung: " + String(result.render_recommendation);
+      box.appendChild(rec);
+    }
+    if (result.warnings && result.warnings.length) {
+      var w = document.createElement("p");
+      w.style.margin = "0.35rem 0 0";
+      w.style.fontSize = "0.78rem";
+      w.textContent = "Warnings: " + result.warnings.join(", ");
+      box.appendChild(w);
+    }
+    if (result.blocking_issues && result.blocking_issues.length) {
+      var b = document.createElement("p");
+      b.style.margin = "0.35rem 0 0";
+      b.style.fontSize = "0.78rem";
+      b.textContent = "Blocker: " + result.blocking_issues.join(", ");
+      box.appendChild(b);
+    }
+  }
+
+  function clearStoryboardLocalRenderPackageSummary() {
+    var box = $("storyboard-local-render-package-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Storyboard Local Render Package</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Render Package — erst Render Timeline bauen.</p>';
+  }
+
+  function renderStoryboardLocalRenderPackageSummary(result) {
+    var box = $("storyboard-local-render-package-summary");
+    if (!box || !result) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Storyboard Local Render Package";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    var total = result.timeline_manifest && result.timeline_manifest.total_scenes ? result.timeline_manifest.total_scenes : 0;
+    var duration = result.timeline_manifest && result.timeline_manifest.estimated_duration_seconds ? result.timeline_manifest.estimated_duration_seconds : 0;
+    meta.textContent = "Status: " + String(result.overall_status || "—") + " · Szenen: " + String(total) + " · Dauer: " + String(duration) + "s";
+    box.appendChild(meta);
+    var paths = document.createElement("p");
+    paths.style.margin = "0.35rem 0 0";
+    paths.style.fontSize = "0.78rem";
+    paths.textContent = "timeline_manifest: " + String(result.timeline_manifest_path || "—") + " · asset_manifest: " + String(result.asset_manifest_path || "—") + " · final_video: " + String(result.final_video_path || "—");
+    box.appendChild(paths);
     if (result.render_recommendation) {
       var rec = document.createElement("p");
       rec.style.margin = "0.35rem 0 0";
@@ -5017,6 +5086,7 @@ try {
       lastOpenAIImageLive: lastOpenAIImageLive,
       lastElevenLabsVoiceLive: lastElevenLabsVoiceLive,
       lastStoryboardRenderTimeline: lastStoryboardRenderTimeline,
+      lastStoryboardLocalRenderPackage: lastStoryboardLocalRenderPackage,
       lastPreview: lastPreview,
       lastReadiness: lastReadiness,
       lastOptimize: lastOptimize,
@@ -5362,6 +5432,7 @@ try {
         lastOpenAIImageLive: lastOpenAIImageLive,
         lastElevenLabsVoiceLive: lastElevenLabsVoiceLive,
         lastStoryboardRenderTimeline: lastStoryboardRenderTimeline,
+        lastStoryboardLocalRenderPackage: lastStoryboardLocalRenderPackage,
         lastPreview: lastPreview,
         lastReadiness: lastReadiness,
         lastOptimize: lastOptimize,
@@ -5660,6 +5731,7 @@ try {
     lastOpenAIImageLive = null;
     lastElevenLabsVoiceLive = null;
     lastStoryboardRenderTimeline = null;
+    lastStoryboardLocalRenderPackage = null;
     lastPreview = null;
     lastReadiness = null;
     lastOptimize = null;
@@ -5673,6 +5745,7 @@ try {
     setOut("out-openai-image-live", null);
     setOut("out-elevenlabs-voice-live", null);
     setOut("out-storyboard-render-timeline", null);
+    setOut("out-storyboard-local-render-package", null);
     setOut("out-hook", null);
     setOut("out-pq-score", null);
     setOut("out-pq-detail", null);
@@ -5696,6 +5769,7 @@ try {
     clearOpenAIImageLiveSummary();
     clearElevenLabsVoiceLiveSummary();
     clearStoryboardRenderTimelineSummary();
+    clearStoryboardLocalRenderPackageSummary();
     setExportActionStatus("", "");
   }
 
@@ -5997,6 +6071,32 @@ try {
     return data;
   }
 
+  async function runStoryboardLocalRenderPackageOnlyInternal() {
+    if (!lastStoryboardRenderTimeline) {
+      await runStoryboardRenderTimelineOnlyInternal();
+    }
+    const data = await fetchJson("/story-engine/storyboard-local-render-package", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        render_timeline: lastStoryboardRenderTimeline,
+        run_id: "dashboard_storyboard_local_render",
+        output_root: "output"
+      })
+    });
+    assertCompleteStoryResponse("/story-engine/storyboard-local-render-package", data, "storyboard_local_render_package");
+    lastStoryboardLocalRenderPackage = data;
+    setOut("out-storyboard-local-render-package", data);
+    renderStoryboardLocalRenderPackageSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-storyboard-local-render-package", "storyboard-local-render-package-summary");
+    if (data.overall_status === "blocked") {
+      throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Storyboard Local Render Package blockiert.");
+    }
+    return data;
+  }
+
   async function runPreviewOnlyInternal() {
     const body = buildCurrentExportRequestFromForm();
     var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
@@ -6138,30 +6238,40 @@ try {
 
       stepIdx = 6;
       setPipelineStep(stepIdx, "active", "");
-      await runPreviewOnlyInternal();
+      await runStoryboardRenderTimelineOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 7;
       setPipelineStep(stepIdx, "active", "");
-      await runReadinessOnlyInternal();
+      await runStoryboardLocalRenderPackageOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 8;
       setPipelineStep(stepIdx, "active", "");
-      await runOptimizeOnlyInternal();
+      await runPreviewOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 9;
       setPipelineStep(stepIdx, "active", "");
-      await runCtrOnlyInternal();
+      await runReadinessOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 10;
       setPipelineStep(stepIdx, "active", "");
-      refreshFounderInterpretation();
+      await runOptimizeOnlyInternal();
       setPipelineStep(stepIdx, "done", "");
 
       stepIdx = 11;
+      setPipelineStep(stepIdx, "active", "");
+      await runCtrOnlyInternal();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 12;
+      setPipelineStep(stepIdx, "active", "");
+      refreshFounderInterpretation();
+      setPipelineStep(stepIdx, "done", "");
+
+      stepIdx = 13;
       setPipelineStep(stepIdx, "active", "");
       await runDownloadProductionBundle();
       setPipelineStep(stepIdx, "done", "");
@@ -6304,6 +6414,15 @@ try {
     } else {
       setOut("out-storyboard-render-timeline", null);
       clearStoryboardRenderTimelineSummary();
+    }
+    if (lastStoryboardLocalRenderPackage) {
+      setOut("out-storyboard-local-render-package", lastStoryboardLocalRenderPackage);
+      renderStoryboardLocalRenderPackageSummary(lastStoryboardLocalRenderPackage);
+      mergeWarnings(lastStoryboardLocalRenderPackage.warnings || []);
+      mergeWarnings(lastStoryboardLocalRenderPackage.blocking_issues || []);
+    } else {
+      setOut("out-storyboard-local-render-package", null);
+      clearStoryboardLocalRenderPackageSummary();
     }
     if (lastReadiness) setOut("out-readiness", lastReadiness);
     else setOut("out-readiness", null);
@@ -10216,6 +10335,14 @@ try {
     });
   };
 
+  $("btn-storyboard-local-render-package").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-storyboard-local-render-package", "storyboard-local-render-package-summary", async function() {
+      await runStoryboardLocalRenderPackageOnlyInternal();
+    });
+  };
+
   $("btn-preview").onclick = async function(){
     var btn = this;
     clearWarnings();
@@ -10343,6 +10470,7 @@ try {
       lastOpenAIImageLive = pack.lastOpenAIImageLive || null;
       lastElevenLabsVoiceLive = pack.lastElevenLabsVoiceLive || null;
       lastStoryboardRenderTimeline = pack.lastStoryboardRenderTimeline || null;
+      lastStoryboardLocalRenderPackage = pack.lastStoryboardLocalRenderPackage || null;
       lastPreview = pack.lastPreview || null;
       lastReadiness = pack.lastReadiness || null;
       lastOptimize = pack.lastOptimize || null;

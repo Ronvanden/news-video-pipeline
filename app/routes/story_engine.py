@@ -32,6 +32,8 @@ from app.storyboard import (
     ElevenLabsVoiceLiveExecutionRequest,
     OpenAIImageLiveExecutionRequest,
     StoryboardBuildRequest,
+    StoryboardLocalRenderPackageRequest,
+    StoryboardLocalRenderPackageResult,
     StoryboardPlan,
     StoryboardReadinessRequest,
     StoryboardReadinessResult,
@@ -39,6 +41,7 @@ from app.storyboard import (
     StoryboardRenderTimelineResult,
     build_asset_generation_plan_request,
     build_storyboard_render_timeline_request,
+    build_storyboard_local_render_package_request,
     build_storyboard_plan,
     evaluate_storyboard_readiness_request,
     execute_asset_generation_plan_stub_request,
@@ -276,6 +279,23 @@ async def story_engine_storyboard_render_timeline(req: StoryboardRenderTimelineR
     Firestore writes or GenerateScriptResponse changes happen here.
     """
     return build_storyboard_render_timeline_request(req)
+
+
+@router.post(
+    "/story-engine/storyboard-local-render-package",
+    response_model=StoryboardLocalRenderPackageResult,
+)
+async def story_engine_storyboard_local_render_package(
+    req: StoryboardLocalRenderPackageRequest,
+) -> StoryboardLocalRenderPackageResult:
+    """
+    Local render package handoff.
+
+    Converts the storyboard render timeline into deterministic asset/timeline
+    manifest shapes for the existing local renderer. No render is started, no
+    files are written, and no providers or Firestore writes are used.
+    """
+    return build_storyboard_local_render_package_request(req)
 
 
 @router.post(
