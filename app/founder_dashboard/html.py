@@ -3090,6 +3090,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" id="btn-asset-execution-stub" data-label="Asset Tasks simulieren">Asset Tasks simulieren</button>
         <button type="button" id="btn-openai-image-live" data-label="OpenAI Bild erzeugen">OpenAI Bild erzeugen</button>
         <button type="button" id="btn-elevenlabs-voice-live" data-label="ElevenLabs Voice erzeugen">ElevenLabs Voice erzeugen</button>
+        <button type="button" id="btn-storyboard-render-timeline" data-label="Render Timeline bauen">Render Timeline bauen</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
         <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
         <button type="button" id="btn-optimize" data-label="Optimize Provider Prompts">Optimize Provider Prompts</button>
@@ -3247,6 +3248,22 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" class="sm tb-txt" data-pre="out-elevenlabs-voice-live" data-dlname="elevenlabs-voice-live.txt">TXT</button>
       </div>
       <pre class="out out-empty" id="out-elevenlabs-voice-live">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-storyboard-render-timeline">
+    <summary>Storyboard Render Timeline</summary>
+    <div class="coll-body">
+      <div id="storyboard-render-timeline-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-render-timeline-panel="1">
+        <strong>Storyboard Render Timeline</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Render Timeline — erst Storyboard/Assets bauen.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-storyboard-render-timeline">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-storyboard-render-timeline" data-dlname="storyboard-render-timeline.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-storyboard-render-timeline" data-dlname="storyboard-render-timeline.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-storyboard-render-timeline">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
@@ -3552,6 +3569,7 @@ try {
   let lastAssetExecutionStub = null;
   let lastOpenAIImageLive = null;
   let lastElevenLabsVoiceLive = null;
+  let lastStoryboardRenderTimeline = null;
   let lastOptimize = null;
   let lastPreview = null;
   let lastReadiness = null;
@@ -3966,6 +3984,55 @@ try {
     }
   }
 
+  function clearStoryboardRenderTimelineSummary() {
+    var box = $("storyboard-render-timeline-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Storyboard Render Timeline</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Render Timeline — erst Storyboard/Assets bauen.</p>';
+  }
+
+  function renderStoryboardRenderTimelineSummary(result) {
+    var box = $("storyboard-render-timeline-summary");
+    if (!box || !result) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Storyboard Render Timeline";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(result.overall_status || "—") + " · Dauer: " + String(result.total_duration_seconds || 0) + "s · Bilder: " + String(result.image_segments_ready || 0) + " · Voice: " + String(result.voice_segments_ready || 0) + " · Motion skipped: " + String(result.motion_segments_skipped || 0);
+    box.appendChild(meta);
+    (result.segments || []).forEach(function(seg) {
+      var p = document.createElement("p");
+      p.style.margin = "0.35rem 0 0";
+      p.style.fontSize = "0.78rem";
+      p.textContent = "Szene " + String(seg.scene_number || "—") + " · " + String(seg.status || "—") + " · " + String(seg.render_mode || "—") + " · Motion: " + String(seg.motion_status || "—") + " · Bild: " + String(seg.image_path || "—") + " · Voice: " + String(seg.voice_path || "—");
+      box.appendChild(p);
+    });
+    if (result.render_recommendation) {
+      var rec = document.createElement("p");
+      rec.style.margin = "0.35rem 0 0";
+      rec.style.fontSize = "0.78rem";
+      rec.textContent = "Empfehlung: " + String(result.render_recommendation);
+      box.appendChild(rec);
+    }
+    if (result.warnings && result.warnings.length) {
+      var w = document.createElement("p");
+      w.style.margin = "0.35rem 0 0";
+      w.style.fontSize = "0.78rem";
+      w.textContent = "Warnings: " + result.warnings.join(", ");
+      box.appendChild(w);
+    }
+    if (result.blocking_issues && result.blocking_issues.length) {
+      var b = document.createElement("p");
+      b.style.margin = "0.35rem 0 0";
+      b.style.fontSize = "0.78rem";
+      b.textContent = "Blocker: " + result.blocking_issues.join(", ");
+      box.appendChild(b);
+    }
+  }
+
   function validateExportFormForStoryEngine() {
     if (!$("fd-title")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-title");
     if (!$("fd-topic")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-topic");
@@ -4178,6 +4245,10 @@ try {
     if (lastElevenLabsVoiceLive) {
       addList(lastElevenLabsVoiceLive.warnings);
       addList(lastElevenLabsVoiceLive.blocking_issues);
+    }
+    if (lastStoryboardRenderTimeline) {
+      addList(lastStoryboardRenderTimeline.warnings);
+      addList(lastStoryboardRenderTimeline.blocking_issues);
     }
     if (lastPreview && lastPreview.top_warnings) addList(lastPreview.top_warnings);
     if (lastReadiness) {
@@ -4945,6 +5016,7 @@ try {
       lastAssetExecutionStub: lastAssetExecutionStub,
       lastOpenAIImageLive: lastOpenAIImageLive,
       lastElevenLabsVoiceLive: lastElevenLabsVoiceLive,
+      lastStoryboardRenderTimeline: lastStoryboardRenderTimeline,
       lastPreview: lastPreview,
       lastReadiness: lastReadiness,
       lastOptimize: lastOptimize,
@@ -5289,6 +5361,7 @@ try {
         lastAssetExecutionStub: lastAssetExecutionStub,
         lastOpenAIImageLive: lastOpenAIImageLive,
         lastElevenLabsVoiceLive: lastElevenLabsVoiceLive,
+        lastStoryboardRenderTimeline: lastStoryboardRenderTimeline,
         lastPreview: lastPreview,
         lastReadiness: lastReadiness,
         lastOptimize: lastOptimize,
@@ -5586,6 +5659,7 @@ try {
     lastAssetExecutionStub = null;
     lastOpenAIImageLive = null;
     lastElevenLabsVoiceLive = null;
+    lastStoryboardRenderTimeline = null;
     lastPreview = null;
     lastReadiness = null;
     lastOptimize = null;
@@ -5598,6 +5672,7 @@ try {
     setOut("out-asset-execution-stub", null);
     setOut("out-openai-image-live", null);
     setOut("out-elevenlabs-voice-live", null);
+    setOut("out-storyboard-render-timeline", null);
     setOut("out-hook", null);
     setOut("out-pq-score", null);
     setOut("out-pq-detail", null);
@@ -5620,6 +5695,7 @@ try {
     clearAssetExecutionStubSummary();
     clearOpenAIImageLiveSummary();
     clearElevenLabsVoiceLiveSummary();
+    clearStoryboardRenderTimelineSummary();
     setExportActionStatus("", "");
   }
 
@@ -5887,6 +5963,36 @@ try {
     openPanelAndScroll("coll-elevenlabs-voice-live", "elevenlabs-voice-live-summary");
     if (data.execution_status === "failed") {
       throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "ElevenLabs Voice Live fehlgeschlagen.");
+    }
+    return data;
+  }
+
+  async function runStoryboardRenderTimelineOnlyInternal() {
+    if (!lastStoryboard) {
+      await runStoryboardOnlyInternal();
+    }
+    if (!lastAssetPlan) {
+      await runAssetGenerationPlanOnlyInternal();
+    }
+    const data = await fetchJson("/story-engine/storyboard-render-timeline", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storyboard_plan: lastStoryboard,
+        asset_generation_plan: lastAssetPlan,
+        image_execution_result: lastOpenAIImageLive,
+        voice_execution_result: lastElevenLabsVoiceLive
+      })
+    });
+    assertCompleteStoryResponse("/story-engine/storyboard-render-timeline", data, "storyboard_render_timeline");
+    lastStoryboardRenderTimeline = data;
+    setOut("out-storyboard-render-timeline", data);
+    renderStoryboardRenderTimelineSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-storyboard-render-timeline", "storyboard-render-timeline-summary");
+    if (data.overall_status === "blocked") {
+      throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Storyboard Render Timeline blockiert.");
     }
     return data;
   }
@@ -6189,6 +6295,15 @@ try {
     } else {
       setOut("out-elevenlabs-voice-live", null);
       clearElevenLabsVoiceLiveSummary();
+    }
+    if (lastStoryboardRenderTimeline) {
+      setOut("out-storyboard-render-timeline", lastStoryboardRenderTimeline);
+      renderStoryboardRenderTimelineSummary(lastStoryboardRenderTimeline);
+      mergeWarnings(lastStoryboardRenderTimeline.warnings || []);
+      mergeWarnings(lastStoryboardRenderTimeline.blocking_issues || []);
+    } else {
+      setOut("out-storyboard-render-timeline", null);
+      clearStoryboardRenderTimelineSummary();
     }
     if (lastReadiness) setOut("out-readiness", lastReadiness);
     else setOut("out-readiness", null);
@@ -10093,6 +10208,14 @@ try {
     });
   };
 
+  $("btn-storyboard-render-timeline").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-storyboard-render-timeline", "storyboard-render-timeline-summary", async function() {
+      await runStoryboardRenderTimelineOnlyInternal();
+    });
+  };
+
   $("btn-preview").onclick = async function(){
     var btn = this;
     clearWarnings();
@@ -10219,6 +10342,7 @@ try {
       lastAssetExecutionStub = pack.lastAssetExecutionStub || null;
       lastOpenAIImageLive = pack.lastOpenAIImageLive || null;
       lastElevenLabsVoiceLive = pack.lastElevenLabsVoiceLive || null;
+      lastStoryboardRenderTimeline = pack.lastStoryboardRenderTimeline || null;
       lastPreview = pack.lastPreview || null;
       lastReadiness = pack.lastReadiness || null;
       lastOptimize = pack.lastOptimize || null;

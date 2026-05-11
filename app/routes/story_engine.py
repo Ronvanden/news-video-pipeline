@@ -35,7 +35,10 @@ from app.storyboard import (
     StoryboardPlan,
     StoryboardReadinessRequest,
     StoryboardReadinessResult,
+    StoryboardRenderTimelineRequest,
+    StoryboardRenderTimelineResult,
     build_asset_generation_plan_request,
+    build_storyboard_render_timeline_request,
     build_storyboard_plan,
     evaluate_storyboard_readiness_request,
     execute_asset_generation_plan_stub_request,
@@ -258,6 +261,21 @@ async def story_engine_elevenlabs_voice_live_execution(req: ElevenLabsVoiceLiveE
     under the requested output root; no Firestore writes and no GenerateScriptResponse changes.
     """
     return execute_elevenlabs_voice_live_request(req)
+
+
+@router.post(
+    "/story-engine/storyboard-render-timeline",
+    response_model=StoryboardRenderTimelineResult,
+)
+async def story_engine_storyboard_render_timeline(req: StoryboardRenderTimelineRequest) -> StoryboardRenderTimelineResult:
+    """
+    Storyboard render timeline handoff.
+
+    Combines StoryboardPlan, AssetGenerationPlan and optional live execution results into
+    a deterministic render timeline. No render is started, no files are written, and no
+    Firestore writes or GenerateScriptResponse changes happen here.
+    """
+    return build_storyboard_render_timeline_request(req)
 
 
 @router.post(

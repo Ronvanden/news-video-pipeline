@@ -22,6 +22,8 @@ StoryboardReadinessStatus = Literal["ready", "warning", "blocked"]
 AssetGenerationPlanStatus = Literal["planned", "blocked"]
 AssetGenerationTaskType = Literal["image", "video", "voice", "thumbnail", "music", "subtitle", "render_hint"]
 AssetTaskExecutionStatus = Literal["dry_run", "completed_stub", "live_completed", "skipped", "failed"]
+StoryboardRenderTimelineStatus = Literal["ready", "warning", "blocked"]
+StoryboardRenderTimelineSegmentStatus = Literal["ready", "image_fallback", "skipped", "missing", "blocked"]
 
 
 class StoryboardChapterInput(BaseModel):
@@ -207,3 +209,49 @@ class ElevenLabsVoiceLiveExecutionRequest(BaseModel):
     elevenlabs_voice_id: str = ""
     elevenlabs_model_id: str = "eleven_multilingual_v2"
     elevenlabs_timeout_seconds: float = Field(default=120.0, ge=15.0, le=600.0)
+
+
+class StoryboardRenderTimelineSegment(BaseModel):
+    """One render-timeline segment derived from storyboard plus generated assets."""
+
+    scene_id: str = ""
+    scene_number: int = Field(ge=1)
+    title: str = ""
+    start_seconds: float = Field(default=0, ge=0)
+    end_seconds: float = Field(default=0, ge=0)
+    duration_seconds: float = Field(default=0, ge=0)
+    status: StoryboardRenderTimelineSegmentStatus = "missing"
+    image_path: str = ""
+    video_path: str = ""
+    voice_path: str = ""
+    transition: StoryboardTransition = "cut"
+    motion_status: Literal["ready", "skipped", "not_requested", "missing"] = "not_requested"
+    render_mode: Literal["image_only", "video_clip", "missing_media"] = "missing_media"
+    warnings: List[str] = Field(default_factory=list)
+    blocking_issues: List[str] = Field(default_factory=list)
+
+
+class StoryboardRenderTimelineResult(BaseModel):
+    """Plan-only render timeline handoff for later local/worker rendering."""
+
+    timeline_version: str = "storyboard_render_timeline_v1"
+    overall_status: StoryboardRenderTimelineStatus = "blocked"
+    total_duration_seconds: float = Field(default=0, ge=0)
+    segments: List[StoryboardRenderTimelineSegment] = Field(default_factory=list)
+    image_segments_ready: int = Field(default=0, ge=0)
+    voice_segments_ready: int = Field(default=0, ge=0)
+    video_segments_ready: int = Field(default=0, ge=0)
+    motion_segments_skipped: int = Field(default=0, ge=0)
+    warnings: List[str] = Field(default_factory=list)
+    blocking_issues: List[str] = Field(default_factory=list)
+    render_recommendation: str = ""
+
+
+class StoryboardRenderTimelineRequest(BaseModel):
+    """Input for storyboard render timeline handoff."""
+
+    storyboard_plan: StoryboardPlan
+    asset_generation_plan: Optional[AssetGenerationPlan] = None
+    image_execution_result: Optional[AssetExecutionResult] = None
+    voice_execution_result: Optional[AssetExecutionResult] = None
+    motion_execution_result: Optional[AssetExecutionResult] = None

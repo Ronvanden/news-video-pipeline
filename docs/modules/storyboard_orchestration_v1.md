@@ -138,3 +138,22 @@ Safety defaults:
 - output path pattern: `output/storyboard_runs/<run_id>/<scene_id>/voice.mp3`
 
 The Founder Dashboard exposes this as a manual action only: `ElevenLabs Voice erzeugen` plus the `ElevenLabs Voice Kosten bestätigen` checkbox. The automatic full-pipeline button still stops at plan/stub execution and does not start live voice providers.
+
+## Storyboard Render Timeline V1
+
+`POST /story-engine/storyboard-render-timeline` combines:
+
+- `storyboard_plan`
+- optional `asset_generation_plan`
+- optional `image_execution_result`
+- optional `voice_execution_result`
+- optional `motion_execution_result`
+
+The endpoint returns a deterministic render handoff:
+
+- `overall_status`: `ready`, `warning`, or `blocked`
+- `segments[]` with scene timing, image path, optional video path, optional voice path, transition, render mode, motion status, warnings and blockers
+- aggregate counts for ready image/voice/video segments and skipped motion segments
+- `render_recommendation`
+
+No render is started and no files are written. If a scene requested motion but no clip path exists while an image is available, the segment uses `render_mode=image_only`, `motion_status=skipped`, and warning `motion_requested_but_no_clip_fallback_to_image` instead of treating the missing clip as a placeholder. The Founder Dashboard exposes this as `Render Timeline bauen`.

@@ -48,7 +48,8 @@ Der neue Storyboard-Orchestration-Strang ist weiterhin vom `GenerateScriptRespon
 - **OpenAI Image Live:** `POST /story-engine/openai-image-live-execution`, bis zu **10** bestätigte Image-Tasks pro Lauf, Output unter `output/storyboard_runs/<run_id>/<scene_id>/image.png`.
 - **ElevenLabs Voice Live:** `POST /story-engine/elevenlabs-voice-live-execution`, bis zu **10** bestätigte Voice-Tasks pro Lauf, Voice-ID über Request oder `ELEVENLABS_VOICE_ID`, Output unter `output/storyboard_runs/<run_id>/<scene_id>/voice.mp3`.
 - **Dashboard:** manuelle Buttons `OpenAI Bild erzeugen` und `ElevenLabs Voice erzeugen`; der automatische Full-Pipeline-Button startet weiterhin keine Live-Provider.
-- **Nächster Anschluss:** Render-Timeline aus Storyboard + erzeugten Bild-/Voice-Dateien bauen; Runway Motion danach als optionaler, begrenzter Live-Schritt mit sauberem Image-Fallback.
+- **Render Timeline:** `POST /story-engine/storyboard-render-timeline` baut einen renderbaren Handoff aus Storyboard, Asset Plan und optionalen Live-Ergebnissen. Motion ohne Clip-Pfad wird `skipped` mit `motion_requested_but_no_clip_fallback_to_image`, nicht Placeholder.
+- **Nächster Anschluss:** lokaler Render aus dieser Storyboard Render Timeline; Runway Motion danach als optionaler, begrenzter Live-Schritt mit sauberem Image-Fallback.
 
 ---
 
