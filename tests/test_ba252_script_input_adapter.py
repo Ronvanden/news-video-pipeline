@@ -47,8 +47,10 @@ def test_documentary_story_visual_prompt_grounded(adapter_mod):
     pack = adapter_mod.build_scene_asset_pack_from_generate_script_response(data, run_id="rid_doc")
     beats = _beats(pack)
     eff = str(beats[0].get("visual_prompt_effective") or beats[0].get("visual_prompt") or "").lower()
-    assert "realistic documentary" in eff
-    assert "fantasy" in eff or "avoid fantasy" in eff
+    neg = str(beats[0].get("negative_prompt") or "").lower()
+    assert "documentary realism" in eff
+    assert "grounded_realism" in eff
+    assert "no_fantasy" in neg
 
 
 def test_generate_script_response_with_chapters_builds_pack(adapter_mod):
@@ -79,6 +81,10 @@ def test_generate_script_response_with_chapters_builds_pack(adapter_mod):
     assert b0.get("visual_text_guard_applied") is True
     assert "[visual_no_text_guard_v26_4]" in str(b0.get("visual_prompt_effective") or "")
     assert b0.get("visual_policy_status") in ("safe", "text_extracted", "needs_review")
+    assert b0.get("visual_style_profile") == "documentary_realism"
+    assert isinstance(b0.get("prompt_quality_score"), int)
+    assert isinstance(b0.get("prompt_risk_flags"), list)
+    assert isinstance(b0.get("normalized_controls"), dict)
 
 
 def test_hook_title_is_sanitized_for_visual_prompt(adapter_mod):
@@ -101,6 +107,10 @@ def test_hook_title_is_sanitized_for_visual_prompt(adapter_mod):
     assert "cinematic opening beat" in prompt_blob
     assert first.get("scene_title") == "Hook"
     assert "no fishing hook" in str(first.get("negative_prompt") or "").lower()
+    assert "no literal hook object" in str(first.get("negative_prompt") or "").lower()
+    assert "[visual_no_text_guard_v26_4]" in str(first.get("visual_prompt_effective") or "")
+    assert "internal_term_sanitized:hook" in (first.get("visual_policy_warnings") or [])
+    assert first.get("visual_style_profile") == "documentary_realism"
 
 
 def test_full_script_without_chapters_is_chunked(adapter_mod):

@@ -5,8 +5,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from app.story_engine.templates import normalize_story_template_id
-from app.visual_plan.visual_no_text import append_no_text_guard, partition_visual_overlay_text
+from app.visual_plan.engine_v1 import VisualPromptEngineContext, VisualPromptEngineResult, build_visual_prompt_v1
+from app.visual_plan.visual_no_text import partition_visual_overlay_text
 from app.visual_plan.visual_provider_router import route_visual_provider
 from app.visual_plan.visual_policy_report import build_visual_policy_fields, ensure_effective_prompt
 
@@ -133,39 +133,6 @@ def _list_str(v: Any) -> List[str]:
 
 def _collapse_ws(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").strip())
-
-
-_HOOK_VISUAL_LABEL = "cinematic opening beat"
-_HOOK_NEGATIVE_GUARDS = (
-    "no fishing hook",
-    "no metal hook",
-    "no literal hook object",
-    "no hook-shaped object",
-)
-
-
-def _looks_like_internal_hook_title(title: str) -> bool:
-    t = _collapse_ws(title).lower()
-    if not t:
-        return False
-    t_ascii = t.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
-    return t_ascii in {
-        "hook",
-        "the hook",
-        "opening hook",
-        "intro hook",
-        "viral hook",
-        "aufhaenger",
-        "auftakt-hook",
-        "intro-hook",
-    }
-
-
-def _visual_title_and_negative_guards(title: str) -> Tuple[str, List[str]]:
-    t = _s(title)
-    if _looks_like_internal_hook_title(t):
-        return _HOOK_VISUAL_LABEL, list(_HOOK_NEGATIVE_GUARDS)
-    return t, []
 
 
 def _scene(title: str, narration: str) -> Dict[str, str]:
@@ -335,44 +302,47 @@ def _visual_prompt_from_text(
     narration: str,
     *,
     video_template: Optional[str] = None,
-) -> Tuple[str, str, List[str], bool, List[str]]:
+) -> Tuple[VisualPromptEngineResult, List[str], bool]:
     """
-    Textfreier Mood-Prompt + Overlay-Auszüge. Narration löst ``text_sensitive`` für Routing aus.
+    Build visual prompt fields through Visual Prompt Engine V1.
 
-    BA 32.60: Kanonisch ``documentary`` (Alias-Eingabe ``documentary_story``) — geerdete dokumentarische Positiv-Leitplanken
-    statt mystisch-dramatischer B-Roll-Defaults.
+    Overlay extraction and text-sensitive routing stay in the adapter because
+    they are existing scene_asset_pack compatibility fields.
     """
-    vt_id, _ = normalize_story_template_id(video_template)
     t = _s(title)
-    visual_title, negative_guards = _visual_title_and_negative_guards(t)
     narr = _collapse_ws(narration)
-    combo = f"{visual_title}. {narr}" if visual_title and narr else (visual_title or narr)
+    combo = f"{t}. {narr}" if t and narr else (t or narr)
     cleaned, overlay, ts_part = partition_visual_overlay_text(combo)
     ts = bool(ts_part or narr)
-    doc_lead = ""
-    if vt_id == "documentary":
-        doc_lead = (
-            "Realistic documentary photography, cinematic but grounded, natural light, real-world location, "
-            "believable people and environments; avoid fantasy, surreal, horror-monster, gore, cartoonish "
-            "exaggeration — "
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title=t,
+            narration=cleaned if overlay else narr,
+            video_template=_s(video_template),
+            beat_role=t,
         )
-    if overlay:
-        visual_core = doc_lead + cleaned
-    else:
-        label = visual_title or "Kapitel"
-        if vt_id == "documentary":
-            visual_core = (
-                doc_lead
-                + f"Editorial documentary still for „{label}“, grounded everyday context, "
-                "spacious composition for later text overlays — keine eingezeichnete Schrift."
-            )
-        else:
-            visual_core = (
-                f"Cinematic editorial B-roll für „{label}“, symbolisches Motiv, dramatisches Licht, "
-                "großzügige Freiflächen für spätere Text-Overlays — keine eingezeichnete Schrift."
-            )
-    eff = append_no_text_guard(_collapse_ws(visual_core))
-    return combo, eff, overlay, ts, negative_guards
+    )
+    return result, overlay, ts
+
+
+def _merge_policy_warnings(policy_fields: Dict[str, Any], engine_result: VisualPromptEngineResult) -> Dict[str, Any]:
+    out = dict(policy_fields or {})
+    merged: List[str] = []
+    for w in list(out.get("visual_policy_warnings") or []) + list(engine_result.visual_policy_warnings or []):
+        t = _s(w)
+        if t and t not in merged:
+            merged.append(t)
+    out["visual_policy_warnings"] = merged
+    return out
+
+
+def _engine_result_fields(engine_result: VisualPromptEngineResult) -> Dict[str, Any]:
+    return {
+        "visual_style_profile": engine_result.visual_style_profile,
+        "prompt_quality_score": engine_result.prompt_quality_score,
+        "prompt_risk_flags": list(engine_result.prompt_risk_flags or []),
+        "normalized_controls": dict(engine_result.normalized_controls or {}),
+    }
 
 
 def _build_scene_asset_pack(
@@ -390,12 +360,21 @@ def _build_scene_asset_pack(
     # Optional: hook as first beat if present (keeps orchestration narration useful)
     beat_index = 0
     if hook:
-        vp_raw, vp_eff, ov_int, ts, neg_guards = _visual_prompt_from_text(
+        engine_result, ov_int, ts = _visual_prompt_from_text(
             "Hook", hook, video_template=vt
         )
         still_route = route_visual_provider("keyframe_still", text_sensitive=ts)
         vid_route = route_visual_provider("motion_clip", text_sensitive=False)
-        vp_eff2, _ = ensure_effective_prompt(vp_eff)
+        vp_eff2, _ = ensure_effective_prompt(engine_result.visual_prompt_effective)
+        policy_fields = build_visual_policy_fields(
+            visual_prompt_raw=engine_result.visual_prompt_raw,
+            visual_prompt_effective=vp_eff2,
+            overlay_intent=ov_int,
+            text_sensitive=ts,
+            visual_asset_kind="keyframe_still",
+            routed_visual_provider=str(still_route.get("provider") or ""),
+            routed_image_provider=str(still_route.get("image_provider") or ""),
+        )
         expanded.append(
             {
                 "chapter_index": 0,
@@ -410,22 +389,15 @@ def _build_scene_asset_pack(
                 "narration": hook,
                 "voiceover_text": hook,
                 "scene_title": "Hook",
-                "negative_prompt": ", ".join(neg_guards),
+                "negative_prompt": engine_result.negative_prompt,
                 "overlay_intent": ov_int,
                 "text_sensitive": ts,
                 "routed_visual_provider": still_route.get("provider"),
                 "routed_image_provider": still_route.get("image_provider"),
                 "video_provider_routed": vid_route.get("provider"),
                 "visual_asset_kind": "keyframe_still",
-                **build_visual_policy_fields(
-                    visual_prompt_raw=vp_raw,
-                    visual_prompt_effective=vp_eff2,
-                    overlay_intent=ov_int,
-                    text_sensitive=ts,
-                    visual_asset_kind="keyframe_still",
-                    routed_visual_provider=str(still_route.get("provider") or ""),
-                    routed_image_provider=str(still_route.get("image_provider") or ""),
-                ),
+                **_engine_result_fields(engine_result),
+                **_merge_policy_warnings(policy_fields, engine_result),
             }
         )
         beat_index += 1
@@ -435,7 +407,7 @@ def _build_scene_asset_pack(
         if not narration:
             continue
         sc_title = _s((sc or {}).get("title")) or f"Szene {i}"
-        vp_raw, vp_eff, ov_int, ts, neg_guards = _visual_prompt_from_text(
+        engine_result, ov_int, ts = _visual_prompt_from_text(
             sc_title, narration, video_template=vt
         )
         if hook:
@@ -444,7 +416,16 @@ def _build_scene_asset_pack(
             still_kind = "keyframe_still" if beat_index == 0 else "cinematic_broll"
         still_route = route_visual_provider(still_kind, text_sensitive=ts)
         vid_route = route_visual_provider("motion_clip", text_sensitive=False)
-        vp_eff2, _ = ensure_effective_prompt(vp_eff)
+        vp_eff2, _ = ensure_effective_prompt(engine_result.visual_prompt_effective)
+        policy_fields = build_visual_policy_fields(
+            visual_prompt_raw=engine_result.visual_prompt_raw,
+            visual_prompt_effective=vp_eff2,
+            overlay_intent=ov_int,
+            text_sensitive=ts,
+            visual_asset_kind=still_kind,
+            routed_visual_provider=str(still_route.get("provider") or ""),
+            routed_image_provider=str(still_route.get("image_provider") or ""),
+        )
         expanded.append(
             {
                 "chapter_index": 0,
@@ -460,22 +441,15 @@ def _build_scene_asset_pack(
                 "voiceover_text": narration,
                 "scene_title": sc_title,
                 "estimated_duration_seconds": _estimate_duration_seconds(narration),
-                "negative_prompt": ", ".join(neg_guards),
+                "negative_prompt": engine_result.negative_prompt,
                 "overlay_intent": ov_int,
                 "text_sensitive": ts,
                 "routed_visual_provider": still_route.get("provider"),
                 "routed_image_provider": still_route.get("image_provider"),
                 "video_provider_routed": vid_route.get("provider"),
                 "visual_asset_kind": still_kind,
-                **build_visual_policy_fields(
-                    visual_prompt_raw=vp_raw,
-                    visual_prompt_effective=vp_eff2,
-                    overlay_intent=ov_int,
-                    text_sensitive=ts,
-                    visual_asset_kind=still_kind,
-                    routed_visual_provider=str(still_route.get("provider") or ""),
-                    routed_image_provider=str(still_route.get("image_provider") or ""),
-                ),
+                **_engine_result_fields(engine_result),
+                **_merge_policy_warnings(policy_fields, engine_result),
             }
         )
         beat_index += 1
