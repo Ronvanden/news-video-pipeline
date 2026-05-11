@@ -160,6 +160,9 @@ def _filter_warnings_for_fallback_join_ba3280(payload: Dict[str, Any]) -> List[s
         if s == "elevenlabs_voice_id_default_fallback":
             if bool(va.get("voice_ready")) and not bool(va.get("is_dummy")):
                 continue
+        if s == "motion_requested_but_no_clip_fallback_to_image":
+            if _motion_fallback_to_image_ok_ba3280(payload):
+                continue
         if not motion_requested and not allow_live:
             low = s.lower()
             if "live_motion_not_available" in low or "live_motion_disabled_or_connector_missing" in low:
@@ -177,9 +180,37 @@ def _warn_joined_lower_ba3280(payload: Dict[str, Any]) -> str:
         return ""
 
 
+def _asset_strict_ready_ba3280(payload: Dict[str, Any]) -> bool:
+    ra = payload.get("readiness_audit") if isinstance(payload.get("readiness_audit"), dict) else {}
+    aa = payload.get("asset_artifact") if isinstance(payload.get("asset_artifact"), dict) else {}
+    gate = aa.get("asset_quality_gate") if isinstance(aa.get("asset_quality_gate"), dict) else {}
+    return bool(ra.get("asset_strict_ready")) or bool(gate.get("strict_ready"))
+
+
+def _motion_fallback_to_image_ok_ba3280(payload: Dict[str, Any], joined_lower: Optional[str] = None) -> bool:
+    """Motion is optional when the final render safely used image assets instead of a missing clip."""
+    ra = payload.get("readiness_audit") if isinstance(payload.get("readiness_audit"), dict) else {}
+    if bool(ra.get("motion_ready")) or not bool(ra.get("motion_requested")):
+        return False
+    if bool(ra.get("motion_fallback_to_image")):
+        return True
+    if not bool(str(payload.get("final_video_path") or "").strip()):
+        return False
+    joined = joined_lower if joined_lower is not None else _warn_joined_lower(payload)
+    if _render_layer_placeholder_hit_from_payload(payload, joined):
+        return False
+    if not _asset_strict_ready_ba3280(payload):
+        return False
+    if _voice_dummy_productive_penalty_ba3280(payload):
+        return False
+    return _voice_escape_ok_ba3280(payload)
+
+
 def _motion_penalty_ba3280(payload: Dict[str, Any]) -> bool:
     ra = payload.get("readiness_audit") if isinstance(payload.get("readiness_audit"), dict) else {}
     if not bool(ra.get("motion_requested")):
+        return False
+    if _motion_fallback_to_image_ok_ba3280(payload):
         return False
     return not bool(ra.get("motion_ready"))
 
@@ -243,7 +274,7 @@ def _ba3280_operator_green_escape(payload: Dict[str, Any]) -> Optional[str]:
     if isinstance(br, list) and len(br) > 0:
         return None
     ra = payload.get("readiness_audit") if isinstance(payload.get("readiness_audit"), dict) else {}
-    if bool(ra.get("motion_requested")):
+    if bool(ra.get("motion_requested")) and not _motion_fallback_to_image_ok_ba3280(payload):
         return None
     aa = payload.get("asset_artifact") if isinstance(payload.get("asset_artifact"), dict) else {}
     gate = aa.get("asset_quality_gate") if isinstance(aa.get("asset_quality_gate"), dict) else {}
@@ -695,9 +726,14 @@ def build_video_generate_operator_ui_ba3280(status: str, payload: Dict[str, Any]
             "badge_class": "ok",
         }
     # production_ready
+    sub_ready = (
+        "Motion wurde übersprungen; der finale Render nutzt saubere Bild-Assets als Fallback."
+        if motion_req and not motion_ok and _motion_fallback_to_image_ok_ba3280(payload)
+        else "Finales Ergebnis prüfen und Preview öffnen."
+    )
     return {
         "headline": "Video-Generierung abgeschlossen",
-        "subline": "Finales Ergebnis prüfen und Preview öffnen.",
+        "subline": sub_ready,
         "smoke_line": "Real Production Smoke erfolgreich prüfen",
         "badge": "Ready",
         "badge_class": "ok",
@@ -811,6 +847,14 @@ def _qc_rows(payload: Dict[str, Any]) -> List[Tuple[str, str, str]]:
                 "Motion bereit (Audit)",
                 "OK",
                 "motion_ready: Runway-Clip gerendert oder Live-Motion-Connector angefragt und verfügbar.",
+            )
+        )
+    elif bool(ra.get("motion_requested")) and _motion_fallback_to_image_ok_ba3280(payload, joined):
+        rows.append(
+            (
+                "Motion bereit (Audit)",
+                "OK",
+                "Motion übersprungen / Fallback auf Bild: kein Clip-Pfad, finaler Render nutzt Image-only.",
             )
         )
     elif bool(ra.get("motion_requested")):
@@ -1735,6 +1779,8 @@ def execute_dashboard_video_generate(
         "runway_motion_rendered_count": rendered_int,
         "motion_requested": bool(motion_rd["motion_requested"]),
         "motion_rendered": bool(motion_rd["motion_rendered"]),
+        "motion_fallback_to_image": False,
+        "motion_skipped_reason": None,
         "live_motion_available": bool(live_motion_available),
         "allow_live_motion_requested": bool(allow_live_motion),
     }
@@ -1772,6 +1818,31 @@ def execute_dashboard_video_generate(
         output_dir=Path(output_dir).resolve(),
         requested_voice_mode=requested_voice_mode,
         effective_voice_mode=vm,
+    )
+    render_used_placeholders = (
+        any(sig in joined for sig in ("ba266_cinematic_placeholder_applied",))
+        or (
+            _RENDER_LAYER_AUDIO_SILENT_SIGNAL in joined
+            and (vm != "none")
+            and not silent_render_expected
+            and not bool(voice_artifact.get("voice_ready"))
+        )
+    )
+    motion_fallback_to_image = (
+        bool(motion_rd["motion_requested"])
+        and not bool(motion_rd["motion_rendered"])
+        and bool(str(doc.get("final_video_path") or "").strip())
+        and requested_live_assets
+        and int(asset_artifact.get("real_asset_file_count") or 0) > 0
+        and bool(((asset_artifact.get("asset_quality_gate") or {}).get("strict_ready")) if isinstance(asset_artifact.get("asset_quality_gate"), dict) else False)
+        and bool(voice_artifact.get("voice_ready"))
+        and not render_used_placeholders
+    )
+    if motion_fallback_to_image and "motion_requested_but_no_clip_fallback_to_image" not in warnings:
+        warnings.append("motion_requested_but_no_clip_fallback_to_image")
+    motion_strategy["motion_fallback_to_image"] = bool(motion_fallback_to_image)
+    motion_strategy["motion_skipped_reason"] = (
+        "motion_requested_but_no_clip_fallback_to_image" if motion_fallback_to_image else None
     )
 
     readiness_audit = {
@@ -1812,15 +1883,9 @@ def execute_dashboard_video_generate(
         "motion_ready": bool(motion_rd["motion_ready"]),
         "motion_requested": bool(motion_rd["motion_requested"]),
         "motion_rendered": bool(motion_rd["motion_rendered"]),
-        "render_used_placeholders": (
-            any(sig in joined for sig in ("ba266_cinematic_placeholder_applied",))
-            or (
-                _RENDER_LAYER_AUDIO_SILENT_SIGNAL in joined
-                and (vm != "none")
-                and not silent_render_expected
-                and not bool(voice_artifact.get("voice_ready"))
-            )
-        ),
+        "motion_fallback_to_image": bool(motion_fallback_to_image),
+        "motion_skipped_reason": "motion_requested_but_no_clip_fallback_to_image" if motion_fallback_to_image else None,
+        "render_used_placeholders": bool(render_used_placeholders),
         "provider_blockers": provider_blockers,
         "effective_voice_mode": vm,
         "live_motion_available": bool(live_motion_available),

@@ -7274,14 +7274,18 @@ try {
       var clipEvery = Math.max(15, fdVgTimelineNumberish(ms.motion_clip_every_seconds, 60));
       var clipDur = Math.max(1, fdVgTimelineNumberish(ms.motion_clip_duration_seconds, 10));
       var motionRequested = !!(ms.motion_requested || ra.motion_requested || planned > 0);
+      var motionArtifact = j.motion_clip_artifact || {};
+      var motionPaths = Array.isArray(motionArtifact.video_clip_paths) ? motionArtifact.video_clip_paths : [];
       if (motionRequested || planned > 0) {
         var slots = Math.max(1, Math.min(12, planned || fdVgTimelineNumberish(ms.max_motion_clips, 1)));
         for (var i = 0; i < slots; i++) {
           var st = Math.min(Math.max(0, i * clipEvery), Math.max(0, duration - clipDur));
-          segments.push(fdVgTimelineSegment(j, { label: "Motion " + String(i + 1), type: "motion", start: st, end: Math.min(duration, st + clipDur), status: i < rendered ? "ready" : (ms.live_motion_available ? "placeholder" : "missing"), path: "", media_kind: "video", detail: i < rendered ? "Live-Motion gerendert" : "Motion-Slot ohne Clip-Pfad", is_motion: true }));
+          var clipPath = String(motionPaths[i] || "").trim();
+          var hasClip = !!clipPath;
+          segments.push(fdVgTimelineSegment(j, { label: "Motion " + String(i + 1), type: "motion", start: st, end: Math.min(duration, st + clipDur), status: hasClip ? "ready" : "skipped", path: clipPath, media_kind: hasClip ? "video" : "", detail: hasClip ? "Live-Motion gerendert" : "Motion übersprungen / Fallback auf Bild · motion_requested_but_no_clip_fallback_to_image", is_motion: true }));
         }
       } else {
-        segments.push(fdVgTimelineSegment(j, { label: "Motion", type: "motion", start: 0, end: Math.min(duration, 10), status: "skipped", path: "", media_kind: "video", detail: "Motion nicht angefordert oder nicht verfügbar", is_motion: true }));
+        segments.push(fdVgTimelineSegment(j, { label: "Motion", type: "motion", start: 0, end: Math.min(duration, 10), status: "skipped", path: "", media_kind: "", detail: "Motion nicht angefordert oder nicht verfügbar", is_motion: true }));
       }
       segments.push(fdVgTimelineSegment(j, { label: "Preview", type: "preview", start: 0, end: duration, status: previewPath ? "ready" : (finalPath ? "skipped" : "missing"), path: previewPath, media_kind: "video", detail: "Vorschau-/Loop-Medium" }));
       segments.push(fdVgTimelineSegment(j, { label: "Render", type: "render", start: 0, end: duration, status: finalPath ? "ready" : (!!j.ok ? "missing" : "failed"), path: finalPath, media_kind: "video", detail: "Finaler Render" }));
@@ -7353,14 +7357,15 @@ try {
     var tl = fdVgBuildProductionTimeline(payload);
     var duration = tl.duration || 1;
     if (durEl) durEl.textContent = "0:00 → " + fdVgTimelineFmt(duration);
-    var ready = 0, placeholder = 0, missing = 0, motion = 0;
+    var ready = 0, placeholder = 0, missing = 0, skipped = 0, motion = 0;
     (tl.segments || []).forEach(function(seg) {
       if (seg.status === "ready") ready += 1;
       if (seg.status === "placeholder") placeholder += 1;
       if (seg.status === "missing" || seg.status === "failed") missing += 1;
+      if (seg.status === "skipped") skipped += 1;
       if (seg.is_motion || seg.type === "motion") motion += 1;
     });
-    if (meta) meta.textContent = String((tl.segments || []).length) + " Segmente · " + String(ready) + " ready · " + String(placeholder) + " placeholder · " + String(missing) + " missing/failed · " + String(motion) + " Motion";
+    if (meta) meta.textContent = String((tl.segments || []).length) + " Segmente · " + String(ready) + " ready · " + String(placeholder) + " placeholder · " + String(skipped) + " skipped · " + String(missing) + " missing/failed · " + String(motion) + " Motion";
     [0, duration / 2, duration].forEach(function(t, idx) {
       var sp = document.createElement("span");
       sp.textContent = idx === 0 ? "0:00" : fdVgTimelineFmt(t);

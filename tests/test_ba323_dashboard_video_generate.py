@@ -788,6 +788,122 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         rows = {r[0]: r for r in _qc_rows(p)}
         self.assertEqual(rows["Motion bereit (Audit)"][1], "OK")
 
+    def test_motion_requested_no_clip_fallback_to_image_not_quality_blocker(self) -> None:
+        payload = self._qc_voice_base()
+        payload.update(
+            {
+                "ok": True,
+                "blocking_reasons": [],
+                "warnings": [
+                    "runway_task_poll_timeout",
+                    "runway_video_generation_failed:smoke_not_ok",
+                    "motion_requested_but_no_clip_fallback_to_image",
+                ],
+                "final_video_path": "/tmp/final.mp4",
+                "readiness_audit": {
+                    "motion_requested": True,
+                    "motion_ready": False,
+                    "motion_rendered": False,
+                    "asset_strict_ready": True,
+                    "render_used_placeholders": False,
+                    "effective_voice_mode": "elevenlabs",
+                },
+                "asset_artifact": {
+                    "real_asset_file_count": 3,
+                    "placeholder_asset_count": 0,
+                    "asset_quality_gate": {"status": "production_ready", "strict_ready": True},
+                },
+                "voice_artifact": {
+                    "effective_voice_mode": "elevenlabs",
+                    "voice_ready": True,
+                    "is_dummy": False,
+                    "voice_file_path": "/tmp/voice.mp3",
+                },
+                "motion_strategy": {
+                    "motion_requested": True,
+                    "motion_rendered": False,
+                    "runway_motion_rendered_count": 0,
+                    "planned_motion_slot_count": 1,
+                    "motion_fallback_to_image": True,
+                },
+            }
+        )
+        self.assertEqual(derive_video_generate_status(payload), "production_ready")
+        rows = {r[0]: r for r in _qc_rows(payload)}
+        self.assertEqual(rows["Render-Layer"][1], "OK")
+        self.assertEqual(rows["Motion bereit (Audit)"][1], "OK")
+        self.assertIn("Fallback auf Bild", rows["Motion bereit (Audit)"][2])
+
+    def test_execute_video_generate_marks_optional_motion_no_clip_as_image_fallback(self) -> None:
+        class _FakeMod:
+            def run_ba265_url_to_final(self, **kwargs):
+                out_dir = Path(str(kwargs.get("out_dir") or "")).resolve()
+                gen_dir = out_dir / "generated_assets_x"
+                gen_dir.mkdir(parents=True, exist_ok=True)
+                (gen_dir / "scene_001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+                voice = out_dir / "voice.mp3"
+                voice.write_bytes(b"voice")
+                (out_dir / "run_summary.json").write_text(
+                    json.dumps({"voice_file_path": str(voice), "voice_duration_seconds": 10}),
+                    encoding="utf-8",
+                )
+                mp = gen_dir / "asset_manifest.json"
+                mp.write_text(
+                    json.dumps(
+                        {
+                            "asset_count": 1,
+                            "generation_mode": "openai_image_live",
+                            "warnings": [],
+                            "assets": [
+                                {
+                                    "scene_number": 1,
+                                    "image_path": "scene_001.png",
+                                    "generation_mode": "openai_image_live",
+                                }
+                            ],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                final = out_dir / "final_video.mp4"
+                final.write_bytes(b"video")
+                return {
+                    "ok": True,
+                    "output_dir": str(out_dir),
+                    "final_video_path": str(final),
+                    "script_path": str(out_dir / "script.json"),
+                    "scene_asset_pack_path": str(out_dir / "scene_asset_pack.json"),
+                    "asset_manifest_path": str(mp),
+                    "warnings": ["runway_task_poll_timeout", "runway_video_generation_failed:smoke_not_ok"],
+                    "blocking_reasons": [],
+                    "motion_slot_plan": {"enabled": True, "planned_count": 1, "slots": [{"status": "failed"}]},
+                    "motion_clip_artifact": {"planned_count": 1, "rendered_count": 0, "failed_count": 1, "video_clip_paths": []},
+                }
+
+        with tempfile.TemporaryDirectory() as td:
+            with patch("app.founder_dashboard.ba323_video_generate._load_run_url_to_final_mod", lambda: _FakeMod()):
+                with patch.dict(os.environ, {"ELEVENLABS_API_KEY": "test", "RUNWAY_API_KEY": "test"}, clear=False):
+                    out = execute_dashboard_video_generate(
+                        url="https://example.com/motion",
+                        output_dir=Path(td),
+                        run_id="motion_fallback",
+                        duration_target_seconds=60,
+                        max_scenes=1,
+                        max_live_assets=1,
+                        motion_clip_every_seconds=60,
+                        motion_clip_duration_seconds=10,
+                        max_motion_clips=1,
+                        allow_live_assets=True,
+                        allow_live_motion=True,
+                        voice_mode="elevenlabs",
+                        motion_mode="basic",
+                    )
+        self.assertTrue(out["ok"])
+        self.assertIn("motion_requested_but_no_clip_fallback_to_image", out["warnings"])
+        self.assertTrue((out["readiness_audit"] or {}).get("motion_fallback_to_image"))
+        self.assertFalse((out["readiness_audit"] or {}).get("render_used_placeholders"))
+        self.assertEqual(out.get("video_generate_run_status"), "production_ready")
+
     def test_open_me_readiness_shows_motion_requested_ba3264(self) -> None:
         p = self._qc_voice_base()
         p["run_id"] = "r_motion"
