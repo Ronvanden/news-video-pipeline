@@ -51,6 +51,8 @@ The Founder Dashboard exposes the endpoint as a plan-only step:
 - Output panel: `Storyboard Voice Mixdown`
 - Button: `Local Render Package bauen`
 - Output panel: `Storyboard Local Render Package`
+- Button: `Local Render starten`
+- Output panel: `Storyboard Local Render Execute`
 - Full pipeline order: Generate -> Export Package -> Storyboard Plan -> Storyboard Readiness -> Asset Plan -> Asset Execution Stub -> Render Timeline -> Local Render Package -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle
 
 On failure, the dashboard marks the Storyboard timeline step as failed, shows the readable error message, and stops the flow. The dashboard call does not write to Firestore, does not start providers, and does not change `GenerateScriptResponse`.
@@ -187,6 +189,35 @@ Output:
 - `render_recommendation`
 
 This step does not write manifest files and does not start ffmpeg. It prepares the handoff for a later local render step. Multiple per-scene Voice files are surfaced as `storyboard_render_voice_mixdown_required`, because the current renderer expects one global `audio_path`.
+
+## Storyboard Local Render Execute V1
+
+`POST /story-engine/storyboard-local-render-execute` writes the planned `asset_manifest.json` and `timeline_manifest.json` from a `StoryboardLocalRenderPackageResult` and then invokes the existing `scripts/render_final_story_video.py` path.
+
+Input:
+
+- `local_render_package`
+- `run_id` (default `storyboard_local_render_execute_v1`)
+- `output_root` (default `output`)
+- `dry_run` (default `false`)
+- `motion_mode` (default `basic`)
+
+Output:
+
+- `execution_status`
+- `asset_manifest_path`
+- `timeline_manifest_path`
+- `final_video_path`
+- `render_output_manifest_path`
+- `manifest_written`
+- `video_created`
+- `output_exists`
+- `file_size_bytes`
+- `warnings`
+- `blocking_issues`
+- `render_recommendation`
+
+With `dry_run=true`, the step writes manifests only. With `dry_run=false`, it runs the existing local renderer and returns the resulting `final_video_path` plus `render_output_manifest_path` when available. No provider calls, no Firestore writes, and no `GenerateScriptResponse` changes occur here.
 
 ## Storyboard Voice Mixdown V1
 

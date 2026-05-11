@@ -34,6 +34,8 @@ from app.storyboard import (
     StoryboardBuildRequest,
     StoryboardLocalRenderPackageRequest,
     StoryboardLocalRenderPackageResult,
+    StoryboardLocalRenderExecutionRequest,
+    StoryboardLocalRenderExecutionResult,
     StoryboardPlan,
     StoryboardReadinessRequest,
     StoryboardReadinessResult,
@@ -49,6 +51,7 @@ from app.storyboard import (
     execute_asset_generation_plan_stub_request,
     execute_elevenlabs_voice_live_request,
     execute_openai_image_live_request,
+    execute_storyboard_local_render_request,
     execute_storyboard_voice_mixdown_request,
 )
 from app.story_engine.export_package import build_export_package_v1
@@ -296,6 +299,23 @@ async def story_engine_storyboard_voice_mixdown(req: StoryboardVoiceMixdownReque
     Firestore writes, and no GenerateScriptResponse changes.
     """
     return execute_storyboard_voice_mixdown_request(req)
+
+
+@router.post(
+    "/story-engine/storyboard-local-render-execute",
+    response_model=StoryboardLocalRenderExecutionResult,
+)
+async def story_engine_storyboard_local_render_execute(
+    req: StoryboardLocalRenderExecutionRequest,
+) -> StoryboardLocalRenderExecutionResult:
+    """
+    Local storyboard render execution.
+
+    Writes the planned asset/timeline manifests and invokes the existing local
+    ffmpeg renderer. No providers, Firestore writes, or GenerateScriptResponse
+    changes occur here.
+    """
+    return execute_storyboard_local_render_request(req)
 
 
 @router.post(

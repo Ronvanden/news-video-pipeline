@@ -26,6 +26,7 @@ StoryboardRenderTimelineStatus = Literal["ready", "warning", "blocked"]
 StoryboardRenderTimelineSegmentStatus = Literal["ready", "image_fallback", "skipped", "missing", "blocked"]
 StoryboardLocalRenderPackageStatus = Literal["ready", "warning", "blocked"]
 StoryboardVoiceMixdownStatus = Literal["dry_run", "completed", "skipped", "failed"]
+StoryboardLocalRenderExecutionStatus = Literal["dry_run", "completed", "failed"]
 
 
 class StoryboardChapterInput(BaseModel):
@@ -305,6 +306,36 @@ class StoryboardVoiceMixdownResult(BaseModel):
     output_exists: bool = False
     file_size_bytes: Optional[int] = None
     input_voice_paths: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    blocking_issues: List[str] = Field(default_factory=list)
+    render_recommendation: str = ""
+
+
+class StoryboardLocalRenderExecutionRequest(BaseModel):
+    """Input for local storyboard render execution."""
+
+    local_render_package: StoryboardLocalRenderPackageResult
+    run_id: str = "storyboard_local_render_execute_v1"
+    output_root: str = "output"
+    dry_run: bool = False
+    motion_mode: str = "basic"
+
+
+class StoryboardLocalRenderExecutionResult(BaseModel):
+    """Local storyboard render execution result."""
+
+    execution_version: str = "storyboard_local_render_execution_v1"
+    execution_status: StoryboardLocalRenderExecutionStatus = "failed"
+    dry_run: bool = False
+    run_id: str = "storyboard_local_render_execute_v1"
+    asset_manifest_path: str = ""
+    timeline_manifest_path: str = ""
+    final_video_path: str = ""
+    render_output_manifest_path: str = ""
+    manifest_written: bool = False
+    video_created: bool = False
+    output_exists: bool = False
+    file_size_bytes: Optional[int] = None
     warnings: List[str] = Field(default_factory=list)
     blocking_issues: List[str] = Field(default_factory=list)
     render_recommendation: str = ""

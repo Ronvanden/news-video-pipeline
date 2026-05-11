@@ -17,6 +17,10 @@ from app.storyboard.local_render_package import (
     build_storyboard_local_render_package,
     build_storyboard_local_render_package_request,
 )
+from app.storyboard.local_render_execute import (
+    execute_storyboard_local_render,
+    execute_storyboard_local_render_request,
+)
 from app.storyboard.voice_mixdown import (
     execute_storyboard_voice_mixdown,
     execute_storyboard_voice_mixdown_request,
@@ -34,6 +38,8 @@ from app.storyboard.schema import (
     StoryboardChapterInput,
     StoryboardLocalRenderPackageRequest,
     StoryboardLocalRenderPackageResult,
+    StoryboardLocalRenderExecutionRequest,
+    StoryboardLocalRenderExecutionResult,
     StoryboardPlan,
     StoryboardReadinessRequest,
     StoryboardReadinessResult,
@@ -59,6 +65,8 @@ __all__ = [
     "StoryboardChapterInput",
     "StoryboardLocalRenderPackageRequest",
     "StoryboardLocalRenderPackageResult",
+    "StoryboardLocalRenderExecutionRequest",
+    "StoryboardLocalRenderExecutionResult",
     "StoryboardPlan",
     "StoryboardReadinessRequest",
     "StoryboardReadinessResult",
@@ -87,4 +95,6 @@ __all__ = [
     "execute_openai_image_live_request",
     "execute_storyboard_voice_mixdown",
     "execute_storyboard_voice_mixdown_request",
+    "execute_storyboard_local_render",
+    "execute_storyboard_local_render_request",
 ]

@@ -3095,6 +3095,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" id="btn-storyboard-render-timeline" data-label="Render Timeline bauen">Render Timeline bauen</button>
         <button type="button" id="btn-storyboard-voice-mixdown" data-label="Voice Mixdown">Voice Mixdown</button>
         <button type="button" id="btn-storyboard-local-render-package" data-label="Local Render Package bauen">Local Render Package bauen</button>
+        <button type="button" id="btn-storyboard-local-render-execute" data-label="Local Render starten">Local Render starten</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
         <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
         <button type="button" id="btn-optimize" data-label="Optimize Provider Prompts">Optimize Provider Prompts</button>
@@ -3284,6 +3285,22 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" class="sm tb-txt" data-pre="out-storyboard-local-render-package" data-dlname="storyboard-local-render-package.txt">TXT</button>
       </div>
       <pre class="out out-empty" id="out-storyboard-local-render-package">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-storyboard-local-render-execute">
+    <summary>Storyboard Local Render Execute</summary>
+    <div class="coll-body">
+      <div id="storyboard-local-render-execute-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-local-render-execute-panel="1">
+        <strong>Storyboard Local Render Execute</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein lokaler Render — erst Local Render Package bauen.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-storyboard-local-render-execute">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-storyboard-local-render-execute" data-dlname="storyboard-local-render-execute.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-storyboard-local-render-execute" data-dlname="storyboard-local-render-execute.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-storyboard-local-render-execute">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
@@ -3608,6 +3625,7 @@ try {
   let lastStoryboardRenderTimeline = null;
   let lastStoryboardVoiceMixdown = null;
   let lastStoryboardLocalRenderPackage = null;
+  let lastStoryboardLocalRenderExecute = null;
   let lastOptimize = null;
   let lastPreview = null;
   let lastReadiness = null;
@@ -4144,6 +4162,58 @@ try {
     paths.style.fontSize = "0.78rem";
     paths.textContent = "timeline_manifest: " + String(result.timeline_manifest_path || "—") + " · asset_manifest: " + String(result.asset_manifest_path || "—") + " · final_video: " + String(result.final_video_path || "—");
     box.appendChild(paths);
+    if (result.render_recommendation) {
+      var rec = document.createElement("p");
+      rec.style.margin = "0.35rem 0 0";
+      rec.style.fontSize = "0.78rem";
+      rec.textContent = "Empfehlung: " + String(result.render_recommendation);
+      box.appendChild(rec);
+    }
+    if (result.warnings && result.warnings.length) {
+      var w = document.createElement("p");
+      w.style.margin = "0.35rem 0 0";
+      w.style.fontSize = "0.78rem";
+      w.textContent = "Warnings: " + result.warnings.join(", ");
+      box.appendChild(w);
+    }
+    if (result.blocking_issues && result.blocking_issues.length) {
+      var b = document.createElement("p");
+      b.style.margin = "0.35rem 0 0";
+      b.style.fontSize = "0.78rem";
+      b.textContent = "Blocker: " + result.blocking_issues.join(", ");
+      box.appendChild(b);
+    }
+  }
+
+  function clearStoryboardLocalRenderExecuteSummary() {
+    var box = $("storyboard-local-render-execute-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Storyboard Local Render Execute</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein lokaler Render â€” erst Local Render Package bauen.</p>';
+  }
+
+  function renderStoryboardLocalRenderExecuteSummary(result) {
+    var box = $("storyboard-local-render-execute-summary");
+    if (!box || !result) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Storyboard Local Render Execute";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(result.execution_status || "â€”") + " Â· video_created: " + String(result.video_created === true) + " Â· manifest_written: " + String(result.manifest_written === true);
+    box.appendChild(meta);
+    var p = document.createElement("p");
+    p.style.margin = "0.35rem 0 0";
+    p.style.fontSize = "0.78rem";
+    p.textContent = "final_video_path: " + String(result.final_video_path || "â€”") + (result.output_exists === true ? " Â· Final Video gespeichert" : " Â· output_exists=false") + (result.file_size_bytes ? " Â· file_size_bytes=" + String(result.file_size_bytes) : "");
+    box.appendChild(p);
+    var manifest = document.createElement("p");
+    manifest.style.margin = "0.35rem 0 0";
+    manifest.style.fontSize = "0.78rem";
+    manifest.textContent = "asset_manifest: " + String(result.asset_manifest_path || "â€”") + " Â· timeline_manifest: " + String(result.timeline_manifest_path || "â€”") + " Â· render_output_manifest: " + String(result.render_output_manifest_path || "â€”");
+    box.appendChild(manifest);
     if (result.render_recommendation) {
       var rec = document.createElement("p");
       rec.style.margin = "0.35rem 0 0";
@@ -5153,6 +5223,7 @@ try {
       lastStoryboardRenderTimeline: lastStoryboardRenderTimeline,
       lastStoryboardVoiceMixdown: lastStoryboardVoiceMixdown,
       lastStoryboardLocalRenderPackage: lastStoryboardLocalRenderPackage,
+      lastStoryboardLocalRenderExecute: lastStoryboardLocalRenderExecute,
       lastPreview: lastPreview,
       lastReadiness: lastReadiness,
       lastOptimize: lastOptimize,
@@ -5500,6 +5571,7 @@ try {
         lastStoryboardRenderTimeline: lastStoryboardRenderTimeline,
         lastStoryboardVoiceMixdown: lastStoryboardVoiceMixdown,
         lastStoryboardLocalRenderPackage: lastStoryboardLocalRenderPackage,
+        lastStoryboardLocalRenderExecute: lastStoryboardLocalRenderExecute,
         lastPreview: lastPreview,
         lastReadiness: lastReadiness,
         lastOptimize: lastOptimize,
@@ -5800,6 +5872,7 @@ try {
     lastStoryboardRenderTimeline = null;
     lastStoryboardVoiceMixdown = null;
     lastStoryboardLocalRenderPackage = null;
+    lastStoryboardLocalRenderExecute = null;
     lastPreview = null;
     lastReadiness = null;
     lastOptimize = null;
@@ -5815,6 +5888,7 @@ try {
     setOut("out-storyboard-render-timeline", null);
     setOut("out-storyboard-voice-mixdown", null);
     setOut("out-storyboard-local-render-package", null);
+    setOut("out-storyboard-local-render-execute", null);
     setOut("out-hook", null);
     setOut("out-pq-score", null);
     setOut("out-pq-detail", null);
@@ -5840,6 +5914,7 @@ try {
     clearStoryboardRenderTimelineSummary();
     clearStoryboardVoiceMixdownSummary();
     clearStoryboardLocalRenderPackageSummary();
+    clearStoryboardLocalRenderExecuteSummary();
     setExportActionStatus("", "");
   }
 
@@ -6164,6 +6239,34 @@ try {
     openPanelAndScroll("coll-storyboard-local-render-package", "storyboard-local-render-package-summary");
     if (data.overall_status === "blocked") {
       throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Storyboard Local Render Package blockiert.");
+    }
+    return data;
+  }
+
+  async function runStoryboardLocalRenderExecuteOnlyInternal() {
+    if (!lastStoryboardLocalRenderPackage) {
+      await runStoryboardLocalRenderPackageOnlyInternal();
+    }
+    const data = await fetchJson("/story-engine/storyboard-local-render-execute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        local_render_package: lastStoryboardLocalRenderPackage,
+        run_id: "dashboard_storyboard_local_render_execute",
+        output_root: "output",
+        dry_run: false,
+        motion_mode: "basic"
+      })
+    });
+    assertCompleteStoryResponse("/story-engine/storyboard-local-render-execute", data, "storyboard_local_render_execute");
+    lastStoryboardLocalRenderExecute = data;
+    setOut("out-storyboard-local-render-execute", data);
+    renderStoryboardLocalRenderExecuteSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-storyboard-local-render-execute", "storyboard-local-render-execute-summary");
+    if (data.execution_status === "failed") {
+      throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Storyboard Local Render Execute fehlgeschlagen.");
     }
     return data;
   }
@@ -6530,6 +6633,15 @@ try {
     } else {
       setOut("out-storyboard-local-render-package", null);
       clearStoryboardLocalRenderPackageSummary();
+    }
+    if (lastStoryboardLocalRenderExecute) {
+      setOut("out-storyboard-local-render-execute", lastStoryboardLocalRenderExecute);
+      renderStoryboardLocalRenderExecuteSummary(lastStoryboardLocalRenderExecute);
+      mergeWarnings(lastStoryboardLocalRenderExecute.warnings || []);
+      mergeWarnings(lastStoryboardLocalRenderExecute.blocking_issues || []);
+    } else {
+      setOut("out-storyboard-local-render-execute", null);
+      clearStoryboardLocalRenderExecuteSummary();
     }
     if (lastReadiness) setOut("out-readiness", lastReadiness);
     else setOut("out-readiness", null);
@@ -10458,6 +10570,14 @@ try {
     });
   };
 
+  $("btn-storyboard-local-render-execute").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-storyboard-local-render-execute", "storyboard-local-render-execute-summary", async function() {
+      await runStoryboardLocalRenderExecuteOnlyInternal();
+    });
+  };
+
   $("btn-preview").onclick = async function(){
     var btn = this;
     clearWarnings();
@@ -10587,6 +10707,7 @@ try {
       lastStoryboardRenderTimeline = pack.lastStoryboardRenderTimeline || null;
       lastStoryboardVoiceMixdown = pack.lastStoryboardVoiceMixdown || null;
       lastStoryboardLocalRenderPackage = pack.lastStoryboardLocalRenderPackage || null;
+      lastStoryboardLocalRenderExecute = pack.lastStoryboardLocalRenderExecute || null;
       lastPreview = pack.lastPreview || null;
       lastReadiness = pack.lastReadiness || null;
       lastOptimize = pack.lastOptimize || null;

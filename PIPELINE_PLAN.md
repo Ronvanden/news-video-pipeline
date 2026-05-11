@@ -51,7 +51,8 @@ Der neue Storyboard-Orchestration-Strang ist weiterhin vom `GenerateScriptRespon
 - **Render Timeline:** `POST /story-engine/storyboard-render-timeline` baut einen renderbaren Handoff aus Storyboard, Asset Plan und optionalen Live-Ergebnissen. Motion ohne Clip-Pfad wird `skipped` mit `motion_requested_but_no_clip_fallback_to_image`, nicht Placeholder.
 - **Voice Mixdown:** `POST /story-engine/storyboard-voice-mixdown` verbindet mehrere lokale ElevenLabs-Szenen-MP3s per ffmpeg zu einer Renderer-Datei `storyboard_voice_mixdown.mp3` oder plant den Pfad im Dry-Run.
 - **Local Render Package:** `POST /story-engine/storyboard-local-render-package` übersetzt die Storyboard Render Timeline in `asset_manifest`-/`timeline_manifest`-Shapes, geplante Manifest-Pfade, `final_video_path` und `render_command_hint`; schreibt nichts und startet keinen Renderer.
-- **Nächster Anschluss:** kontrollierter lokaler Render aus dem Package mit gemischtem `audio_path`; Runway Motion danach als optionaler, begrenzter Live-Schritt mit sauberem Image-Fallback.
+- **Local Render Execute:** `POST /story-engine/storyboard-local-render-execute` schreibt die geplanten Manifeste und startet den vorhandenen lokalen ffmpeg-Renderer kontrolliert aus dem Storyboard-Strang.
+- **Nächster Anschluss:** Motion/Runway sauber in denselben lokalen Renderpfad einklinken und danach Dashboard-Artefakt-Links für das finale Video ergänzen.
 
 ---
 
@@ -2478,3 +2479,7 @@ Neuer plan-only Handoff `POST /story-engine/storyboard-local-render-package`: er
 # Storyboard Voice Mixdown V1
 
 Neuer lokaler Anschluss `POST /story-engine/storyboard-voice-mixdown`: nimmt die Voice-Pfade aus der `StoryboardRenderTimelineResult`, plant oder erzeugt `output/storyboard_runs/<run_id>/audio/storyboard_voice_mixdown.mp3` und liefert `mixed_audio_path`, `output_exists`, `file_size_bytes`, `input_voice_paths`, Warnings und Blocker zurück. Bei genau einer Voice-Datei wird ein lokaler Passthrough-Copy genutzt; bei mehreren Dateien ffmpeg concat; ohne vorhandene Inputs oder ohne ffmpeg scheitert der Schritt lesbar. Dashboard ergänzt Button `Voice Mixdown` und Panel `Storyboard Voice Mixdown`. Keine Provider-Calls, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests: `tests/test_storyboard_voice_mixdown.py`, `tests/test_storyboard_local_render_package.py`, `tests/test_phase10_founder_dashboard.py`.
+
+# Storyboard Local Render Execute V1
+
+Neuer lokaler Execute-Schritt `POST /story-engine/storyboard-local-render-execute`: nimmt ein `StoryboardLocalRenderPackageResult`, schreibt `asset_manifest.json` und `timeline_manifest.json` an die geplanten Pfade und ruft danach den bestehenden Renderer `scripts/render_final_story_video.py` auf. Der Schritt unterstützt `dry_run=true` zum reinen Manifest-Schreiben sowie `motion_mode` für den Renderaufruf. Ergebnisfelder: `final_video_path`, `render_output_manifest_path`, `manifest_written`, `video_created`, `output_exists`, `file_size_bytes`, Warnings und Blocker. Dashboard ergänzt Button `Local Render starten` und Panel `Storyboard Local Render Execute`. Keine Provider-Calls, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests: `tests/test_storyboard_local_render_execute.py`, `tests/test_phase10_founder_dashboard.py`.
