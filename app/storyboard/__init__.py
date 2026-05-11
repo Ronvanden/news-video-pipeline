@@ -6,6 +6,10 @@ from app.storyboard.asset_executor import (
     execute_asset_generation_plan_stub_request,
 )
 from app.storyboard.builder import build_storyboard_plan, build_storyboard_plan_from_prompt_plan
+from app.storyboard.elevenlabs_voice_live import (
+    execute_elevenlabs_voice_live_from_asset_plan,
+    execute_elevenlabs_voice_live_request,
+)
 from app.storyboard.openai_image_live import execute_openai_image_live_from_asset_plan, execute_openai_image_live_request
 from app.storyboard.readiness import evaluate_storyboard_readiness, evaluate_storyboard_readiness_request
 from app.storyboard.schema import (
@@ -15,6 +19,7 @@ from app.storyboard.schema import (
     AssetExecutionRequest,
     AssetExecutionResult,
     AssetTaskExecutionResult,
+    ElevenLabsVoiceLiveExecutionRequest,
     OpenAIImageLiveExecutionRequest,
     StoryboardBuildRequest,
     StoryboardChapterInput,
@@ -32,6 +37,7 @@ __all__ = [
     "AssetExecutionRequest",
     "AssetExecutionResult",
     "AssetTaskExecutionResult",
+    "ElevenLabsVoiceLiveExecutionRequest",
     "OpenAIImageLiveExecutionRequest",
     "StoryboardBuildRequest",
     "StoryboardChapterInput",
@@ -48,6 +54,8 @@ __all__ = [
     "evaluate_storyboard_readiness_request",
     "execute_asset_generation_plan_stub",
     "execute_asset_generation_plan_stub_request",
+    "execute_elevenlabs_voice_live_from_asset_plan",
+    "execute_elevenlabs_voice_live_request",
     "execute_openai_image_live_from_asset_plan",
     "execute_openai_image_live_request",
 ]

@@ -29,6 +29,7 @@ from app.storyboard import (
     AssetGenerationPlanRequest,
     AssetExecutionRequest,
     AssetExecutionResult,
+    ElevenLabsVoiceLiveExecutionRequest,
     OpenAIImageLiveExecutionRequest,
     StoryboardBuildRequest,
     StoryboardPlan,
@@ -38,6 +39,7 @@ from app.storyboard import (
     build_storyboard_plan,
     evaluate_storyboard_readiness_request,
     execute_asset_generation_plan_stub_request,
+    execute_elevenlabs_voice_live_request,
     execute_openai_image_live_request,
 )
 from app.story_engine.export_package import build_export_package_v1
@@ -242,6 +244,20 @@ async def story_engine_openai_image_live_execution(req: OpenAIImageLiveExecution
     under the requested output root; no Firestore writes and no GenerateScriptResponse changes.
     """
     return execute_openai_image_live_request(req)
+
+
+@router.post(
+    "/story-engine/elevenlabs-voice-live-execution",
+    response_model=AssetExecutionResult,
+)
+async def story_engine_elevenlabs_voice_live_execution(req: ElevenLabsVoiceLiveExecutionRequest) -> AssetExecutionResult:
+    """
+    Live storyboard voice path: ElevenLabs for capped voice tasks.
+
+    Requires explicit provider-cost confirmation and a voice id. Writes only MP3 files
+    under the requested output root; no Firestore writes and no GenerateScriptResponse changes.
+    """
+    return execute_elevenlabs_voice_live_request(req)
 
 
 @router.post(

@@ -188,9 +188,22 @@ class OpenAIImageLiveExecutionRequest(BaseModel):
 
     asset_generation_plan: AssetGenerationPlan
     confirm_provider_costs: bool = False
-    max_live_image_tasks: int = Field(default=1, ge=0, le=1)
+    max_live_image_tasks: int = Field(default=10, ge=0, le=10)
     run_id: str = "storyboard_openai_image_v1"
     output_root: str = "output"
     openai_image_model: str = "gpt-image-2"
     openai_image_size: str = "1024x1024"
     openai_image_timeout_seconds: float = Field(default=120.0, ge=15.0, le=600.0)
+
+
+class ElevenLabsVoiceLiveExecutionRequest(BaseModel):
+    """Input for live ElevenLabs voice execution from storyboard voice tasks."""
+
+    asset_generation_plan: AssetGenerationPlan
+    confirm_provider_costs: bool = False
+    max_live_voice_tasks: int = Field(default=10, ge=0, le=10)
+    run_id: str = "storyboard_elevenlabs_voice_v1"
+    output_root: str = "output"
+    elevenlabs_voice_id: str = ""
+    elevenlabs_model_id: str = "eleven_multilingual_v2"
+    elevenlabs_timeout_seconds: float = Field(default=120.0, ge=15.0, le=600.0)

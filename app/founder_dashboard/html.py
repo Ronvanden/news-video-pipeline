@@ -3089,6 +3089,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" id="btn-asset-generation-plan" data-label="Asset Plan erstellen">Asset Plan erstellen</button>
         <button type="button" id="btn-asset-execution-stub" data-label="Asset Tasks simulieren">Asset Tasks simulieren</button>
         <button type="button" id="btn-openai-image-live" data-label="OpenAI Bild erzeugen">OpenAI Bild erzeugen</button>
+        <button type="button" id="btn-elevenlabs-voice-live" data-label="ElevenLabs Voice erzeugen">ElevenLabs Voice erzeugen</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
         <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
         <button type="button" id="btn-optimize" data-label="Optimize Provider Prompts">Optimize Provider Prompts</button>
@@ -3098,7 +3099,11 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       <p class="muted" style="margin-top:0.75rem">Batch Template Compare lädt alle IDs aus dem Template-Selector und ruft nacheinander Preview + Readiness auf.</p>
       <div class="row-check" style="margin-top:0.65rem">
         <input type="checkbox" id="storyboard-openai-confirm-costs"/>
-        <label for="storyboard-openai-confirm-costs" style="margin:0">OpenAI Image Kosten bestätigen (max. 1 Bild)</label>
+        <label for="storyboard-openai-confirm-costs" style="margin:0">OpenAI Image Kosten bestätigen (max. 10 Bilder)</label>
+      </div>
+      <div class="row-check" style="margin-top:0.35rem">
+        <input type="checkbox" id="storyboard-elevenlabs-confirm-costs"/>
+        <label for="storyboard-elevenlabs-confirm-costs" style="margin:0">ElevenLabs Voice Kosten bestätigen (max. 10 Voice Tasks)</label>
       </div>
       <div class="actions">
         <button type="button" id="btn-batch-compare" data-label="Batch Template Compare">Batch Template Compare</button>
@@ -3226,6 +3231,22 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" class="sm tb-txt" data-pre="out-openai-image-live" data-dlname="openai-image-live.txt">TXT</button>
       </div>
       <pre class="out out-empty" id="out-openai-image-live">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-elevenlabs-voice-live">
+    <summary>ElevenLabs Voice Live</summary>
+    <div class="coll-body">
+      <div id="elevenlabs-voice-live-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-elevenlabs-voice-live-panel="1">
+        <strong>ElevenLabs Voice Live</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Live-Voice — Kosten bestätigen und „ElevenLabs Voice erzeugen“ klicken.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-elevenlabs-voice-live">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-elevenlabs-voice-live" data-dlname="elevenlabs-voice-live.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-elevenlabs-voice-live" data-dlname="elevenlabs-voice-live.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-elevenlabs-voice-live">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
@@ -3530,6 +3551,7 @@ try {
   let lastAssetPlan = null;
   let lastAssetExecutionStub = null;
   let lastOpenAIImageLive = null;
+  let lastElevenLabsVoiceLive = null;
   let lastOptimize = null;
   let lastPreview = null;
   let lastReadiness = null;
@@ -3899,6 +3921,51 @@ try {
     }
   }
 
+  function clearElevenLabsVoiceLiveSummary() {
+    var box = $("elevenlabs-voice-live-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>ElevenLabs Voice Live</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch keine Live-Voice — Kosten bestätigen und „ElevenLabs Voice erzeugen“ klicken.</p>';
+  }
+
+  function renderElevenLabsVoiceLiveSummary(result) {
+    var box = $("elevenlabs-voice-live-summary");
+    if (!box || !result) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "ElevenLabs Voice Live";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(result.execution_status || "—") + " · Provider Calls: " + String(result.estimated_provider_calls || 0);
+    box.appendChild(meta);
+    (result.task_results || []).forEach(function(task) {
+      var p = document.createElement("p");
+      p.style.margin = "0.35rem 0 0";
+      p.style.fontSize = "0.78rem";
+      var path = String(task.output_path || task.planned_output_path || "—");
+      var exists = task.output_exists === true;
+      var size = task.file_size_bytes || 0;
+      p.textContent = String(task.task_id || "task") + " · Szene " + String(task.scene_number || "—") + " · " + String(task.execution_status || "—") + " · ElevenLabs · " + String(task.model || "—") + " · output_path: " + path + (exists ? " · Voice-Datei gespeichert" : " · output_exists=false") + (size ? " · file_size_bytes=" + String(size) : "");
+      box.appendChild(p);
+    });
+    if (result.warnings && result.warnings.length) {
+      var w = document.createElement("p");
+      w.style.margin = "0.35rem 0 0";
+      w.style.fontSize = "0.78rem";
+      w.textContent = "Warnings / Voice failed: " + result.warnings.join(", ");
+      box.appendChild(w);
+    }
+    if (result.blocking_issues && result.blocking_issues.length) {
+      var b = document.createElement("p");
+      b.style.margin = "0.35rem 0 0";
+      b.style.fontSize = "0.78rem";
+      b.textContent = "Blocker: " + result.blocking_issues.join(", ");
+      box.appendChild(b);
+    }
+  }
+
   function validateExportFormForStoryEngine() {
     if (!$("fd-title")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-title");
     if (!$("fd-topic")) throw new Error("Story-Engine: Input-Feld nicht gefunden: fd-topic");
@@ -4107,6 +4174,10 @@ try {
     if (lastOpenAIImageLive) {
       addList(lastOpenAIImageLive.warnings);
       addList(lastOpenAIImageLive.blocking_issues);
+    }
+    if (lastElevenLabsVoiceLive) {
+      addList(lastElevenLabsVoiceLive.warnings);
+      addList(lastElevenLabsVoiceLive.blocking_issues);
     }
     if (lastPreview && lastPreview.top_warnings) addList(lastPreview.top_warnings);
     if (lastReadiness) {
@@ -4873,6 +4944,7 @@ try {
       lastAssetPlan: lastAssetPlan,
       lastAssetExecutionStub: lastAssetExecutionStub,
       lastOpenAIImageLive: lastOpenAIImageLive,
+      lastElevenLabsVoiceLive: lastElevenLabsVoiceLive,
       lastPreview: lastPreview,
       lastReadiness: lastReadiness,
       lastOptimize: lastOptimize,
@@ -5216,6 +5288,7 @@ try {
         lastAssetPlan: lastAssetPlan,
         lastAssetExecutionStub: lastAssetExecutionStub,
         lastOpenAIImageLive: lastOpenAIImageLive,
+        lastElevenLabsVoiceLive: lastElevenLabsVoiceLive,
         lastPreview: lastPreview,
         lastReadiness: lastReadiness,
         lastOptimize: lastOptimize,
@@ -5512,6 +5585,7 @@ try {
     lastAssetPlan = null;
     lastAssetExecutionStub = null;
     lastOpenAIImageLive = null;
+    lastElevenLabsVoiceLive = null;
     lastPreview = null;
     lastReadiness = null;
     lastOptimize = null;
@@ -5523,6 +5597,7 @@ try {
     setOut("out-asset-generation-plan", null);
     setOut("out-asset-execution-stub", null);
     setOut("out-openai-image-live", null);
+    setOut("out-elevenlabs-voice-live", null);
     setOut("out-hook", null);
     setOut("out-pq-score", null);
     setOut("out-pq-detail", null);
@@ -5544,6 +5619,7 @@ try {
     clearAssetGenerationPlanSummary();
     clearAssetExecutionStubSummary();
     clearOpenAIImageLiveSummary();
+    clearElevenLabsVoiceLiveSummary();
     setExportActionStatus("", "");
   }
 
@@ -5761,7 +5837,7 @@ try {
       body: JSON.stringify({
         asset_generation_plan: lastAssetPlan,
         confirm_provider_costs: confirmed,
-        max_live_image_tasks: 1,
+        max_live_image_tasks: 10,
         run_id: "dashboard_storyboard_openai_image",
         output_root: "output",
         openai_image_model: "gpt-image-2",
@@ -5778,6 +5854,39 @@ try {
     openPanelAndScroll("coll-openai-image-live", "openai-image-live-summary");
     if (data.execution_status === "failed") {
       throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "OpenAI Image Live fehlgeschlagen.");
+    }
+    return data;
+  }
+
+  async function runElevenLabsVoiceLiveOnlyInternal() {
+    if (!lastAssetPlan) {
+      await runAssetGenerationPlanOnlyInternal();
+    }
+    var cb = $("storyboard-elevenlabs-confirm-costs");
+    var confirmed = !!(cb && cb.checked);
+    const data = await fetchJson("/story-engine/elevenlabs-voice-live-execution", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        asset_generation_plan: lastAssetPlan,
+        confirm_provider_costs: confirmed,
+        max_live_voice_tasks: 10,
+        run_id: "dashboard_storyboard_elevenlabs_voice",
+        output_root: "output",
+        elevenlabs_voice_id: "",
+        elevenlabs_model_id: "eleven_multilingual_v2",
+        elevenlabs_timeout_seconds: 120
+      })
+    });
+    assertCompleteStoryResponse("/story-engine/elevenlabs-voice-live-execution", data, "elevenlabs_voice_live");
+    lastElevenLabsVoiceLive = data;
+    setOut("out-elevenlabs-voice-live", data);
+    renderElevenLabsVoiceLiveSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-elevenlabs-voice-live", "elevenlabs-voice-live-summary");
+    if (data.execution_status === "failed") {
+      throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "ElevenLabs Voice Live fehlgeschlagen.");
     }
     return data;
   }
@@ -6071,6 +6180,15 @@ try {
     } else {
       setOut("out-openai-image-live", null);
       clearOpenAIImageLiveSummary();
+    }
+    if (lastElevenLabsVoiceLive) {
+      setOut("out-elevenlabs-voice-live", lastElevenLabsVoiceLive);
+      renderElevenLabsVoiceLiveSummary(lastElevenLabsVoiceLive);
+      mergeWarnings(lastElevenLabsVoiceLive.warnings || []);
+      mergeWarnings(lastElevenLabsVoiceLive.blocking_issues || []);
+    } else {
+      setOut("out-elevenlabs-voice-live", null);
+      clearElevenLabsVoiceLiveSummary();
     }
     if (lastReadiness) setOut("out-readiness", lastReadiness);
     else setOut("out-readiness", null);
@@ -9967,6 +10085,14 @@ try {
     });
   };
 
+  $("btn-elevenlabs-voice-live").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-elevenlabs-voice-live", "elevenlabs-voice-live-summary", async function() {
+      await runElevenLabsVoiceLiveOnlyInternal();
+    });
+  };
+
   $("btn-preview").onclick = async function(){
     var btn = this;
     clearWarnings();
@@ -10092,6 +10218,7 @@ try {
       lastAssetPlan = pack.lastAssetPlan || null;
       lastAssetExecutionStub = pack.lastAssetExecutionStub || null;
       lastOpenAIImageLive = pack.lastOpenAIImageLive || null;
+      lastElevenLabsVoiceLive = pack.lastElevenLabsVoiceLive || null;
       lastPreview = pack.lastPreview || null;
       lastReadiness = pack.lastReadiness || null;
       lastOptimize = pack.lastOptimize || null;

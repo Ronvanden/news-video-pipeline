@@ -110,15 +110,31 @@ Blocked asset plans return `failed` and no normal task execution. Planned tasks 
 
 ## OpenAI Image Live V1
 
-`POST /story-engine/openai-image-live-execution` is the first live provider path for the Storyboard chain. It executes at most one `image` task from an `AssetGenerationPlan` through the existing OpenAI Image connector.
+`POST /story-engine/openai-image-live-execution` is the first live provider path for the Storyboard chain. It executes capped `image` tasks from an `AssetGenerationPlan` through the existing OpenAI Image connector.
 
 Safety defaults:
 
 - requires `confirm_provider_costs=true`
-- `max_live_image_tasks` is capped at `1`
+- `max_live_image_tasks` is capped at `10`
 - default model: `gpt-image-2`
 - default size: `1024x1024`
 - output root: `output`
 - output path pattern: `output/storyboard_runs/<run_id>/<scene_id>/image.png`
 
-The Founder Dashboard exposes this as a manual action only: `OpenAI Bild erzeugen` plus the `OpenAI Image Kosten bestätigen` checkbox. It is intentionally not part of the automatic full-pipeline button, so the plan-only flow remains safe by default.
+The Founder Dashboard exposes this as a manual action only: `OpenAI Bild erzeugen` plus the `OpenAI Image Kosten bestätigen` checkbox. It can generate up to ten storyboard image tasks in one confirmed run. It is intentionally not part of the automatic full-pipeline button, so the plan-only flow remains safe by default.
+
+## ElevenLabs Voice Live V1
+
+`POST /story-engine/elevenlabs-voice-live-execution` is the first live voice provider path for the Storyboard chain. It executes capped `voice` tasks from an `AssetGenerationPlan` through ElevenLabs and writes MP3 files to deterministic local paths.
+
+Safety defaults:
+
+- requires `confirm_provider_costs=true`
+- requires an ElevenLabs voice id from the request or `ELEVENLABS_VOICE_ID`
+- requires `ELEVENLABS_API_KEY` for real provider execution
+- `max_live_voice_tasks` is capped at `10`
+- default model: `eleven_multilingual_v2`
+- output root: `output`
+- output path pattern: `output/storyboard_runs/<run_id>/<scene_id>/voice.mp3`
+
+The Founder Dashboard exposes this as a manual action only: `ElevenLabs Voice erzeugen` plus the `ElevenLabs Voice Kosten bestätigen` checkbox. The automatic full-pipeline button still stops at plan/stub execution and does not start live voice providers.

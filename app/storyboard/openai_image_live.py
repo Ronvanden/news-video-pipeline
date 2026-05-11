@@ -1,4 +1,4 @@
-"""First live asset executor: OpenAI Image for one planned image task."""
+"""Live asset executor: OpenAI Image for planned storyboard image tasks."""
 
 from __future__ import annotations
 
@@ -103,7 +103,7 @@ def execute_openai_image_live_from_asset_plan(
     openai_image_timeout_seconds: float = 120.0,
     runner: Optional[Callable[..., Tuple[bool, List[str], Dict[str, Any]]]] = None,
 ) -> AssetExecutionResult:
-    """Execute at most one OpenAI image task. This is the first intentionally live path."""
+    """Execute OpenAI image tasks with an explicit, capped live limit."""
     run_image = runner or run_openai_image_live_to_png
     if asset_generation_plan.plan_status == "blocked":
         return AssetExecutionResult(
@@ -138,8 +138,9 @@ def execute_openai_image_live_from_asset_plan(
             warnings=["openai_image_live_no_image_tasks"],
         )
 
-    selected = tasks[:1]
-    skipped = tasks[1:]
+    limit = max(0, min(10, int(max_live_image_tasks)))
+    selected = tasks[:limit]
+    skipped = tasks[limit:]
     task_results: List[AssetTaskExecutionResult] = []
     warnings: List[str] = []
     blockers: List[str] = []
@@ -225,7 +226,7 @@ def execute_openai_image_live_from_asset_plan(
         warnings.extend(tw)
 
     for task in skipped:
-        tw = [f"{task.task_id}_skipped_max_live_image_tasks_1"]
+        tw = [f"{task.task_id}_skipped_max_live_image_tasks_{limit}"]
         dest = _live_output_path(task, output_root=output_root, run_id=run_id)
         output_exists, file_size_bytes = _file_info(dest)
         task_results.append(

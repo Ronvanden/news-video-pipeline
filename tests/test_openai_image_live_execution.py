@@ -95,22 +95,29 @@ def test_executes_one_image_task_with_openai_options():
     assert result.estimated_outputs
 
 
-def test_limits_to_one_live_image_task_and_skips_rest():
+def test_limits_to_requested_live_image_tasks_and_skips_rest():
+    calls = []
+
     def fake_runner(prompt, dest_png: Path, **kwargs):
+        calls.append(str(dest_png))
         dest_png.write_bytes(b"fake-png")
         return True, [], {}
 
+    tasks = [_task(task_id=f"asset_scene_{i:03d}_image", scene_number=i, scene_id=f"scene_{i:03d}") for i in range(1, 12)]
     result = execute_openai_image_live_from_asset_plan(
-        _plan(_task(scene_number=1, scene_id="scene_001"), _task(task_id="asset_scene_002_image", scene_number=2, scene_id="scene_002")),
+        _plan(*tasks),
         confirm_provider_costs=True,
         output_root=str(Path("output") / "test_openai_image_live_limit"),
+        max_live_image_tasks=10,
         runner=fake_runner,
     )
     statuses = {r.task_id: r.execution_status for r in result.task_results}
     assert statuses["asset_scene_001_image"] == "live_completed"
-    assert statuses["asset_scene_002_image"] == "skipped"
-    assert result.estimated_provider_calls == 1
-    assert len(result.estimated_outputs) == 1
+    assert statuses["asset_scene_010_image"] == "live_completed"
+    assert statuses["asset_scene_011_image"] == "skipped"
+    assert result.estimated_provider_calls == 10
+    assert len(result.estimated_outputs) == 10
+    assert len(calls) == 10
 
 
 def test_write_failed_warning_contains_path_and_error_type(tmp_path):

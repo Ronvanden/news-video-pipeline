@@ -41,6 +41,15 @@ Agenten- und Qualitätsregeln: [AGENTS.md](AGENTS.md).
 
 *Reihenfolge-Hinweis:* Die **Story-Engine-Maturity-Linie bis 9.9** ist dokumentarisch/im Code **geschlossen**; für **lokales Video bis MP4** ist die Leitlinie **BA 20.x–32.x** + Runbooks; Makro-**Phase 9/10** (Cloud-Packaging, Publishing) und **GCP-Scheduling** sind separat priorisierbar.
 
+### Storyboard Live Provider Anschluss V1
+
+Der neue Storyboard-Orchestration-Strang ist weiterhin vom `GenerateScriptResponse`-Vertrag getrennt. Der plan-only Ablauf bleibt Standard; Live-Provider werden nur manuell und mit Kostenbestätigung gestartet.
+
+- **OpenAI Image Live:** `POST /story-engine/openai-image-live-execution`, bis zu **10** bestätigte Image-Tasks pro Lauf, Output unter `output/storyboard_runs/<run_id>/<scene_id>/image.png`.
+- **ElevenLabs Voice Live:** `POST /story-engine/elevenlabs-voice-live-execution`, bis zu **10** bestätigte Voice-Tasks pro Lauf, Voice-ID über Request oder `ELEVENLABS_VOICE_ID`, Output unter `output/storyboard_runs/<run_id>/<scene_id>/voice.mp3`.
+- **Dashboard:** manuelle Buttons `OpenAI Bild erzeugen` und `ElevenLabs Voice erzeugen`; der automatische Full-Pipeline-Button startet weiterhin keine Live-Provider.
+- **Nächster Anschluss:** Render-Timeline aus Storyboard + erzeugten Bild-/Voice-Dateien bauen; Runway Motion danach als optionaler, begrenzter Live-Schritt mit sauberem Image-Fallback.
+
 ---
 
 ## Phasenübersicht
