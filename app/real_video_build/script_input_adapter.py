@@ -135,6 +135,39 @@ def _collapse_ws(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").strip())
 
 
+_HOOK_VISUAL_LABEL = "cinematic opening beat"
+_HOOK_NEGATIVE_GUARDS = (
+    "no fishing hook",
+    "no metal hook",
+    "no literal hook object",
+    "no hook-shaped object",
+)
+
+
+def _looks_like_internal_hook_title(title: str) -> bool:
+    t = _collapse_ws(title).lower()
+    if not t:
+        return False
+    t_ascii = t.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+    return t_ascii in {
+        "hook",
+        "the hook",
+        "opening hook",
+        "intro hook",
+        "viral hook",
+        "aufhaenger",
+        "auftakt-hook",
+        "intro-hook",
+    }
+
+
+def _visual_title_and_negative_guards(title: str) -> Tuple[str, List[str]]:
+    t = _s(title)
+    if _looks_like_internal_hook_title(t):
+        return _HOOK_VISUAL_LABEL, list(_HOOK_NEGATIVE_GUARDS)
+    return t, []
+
+
 def _scene(title: str, narration: str) -> Dict[str, str]:
     return {"title": _s(title), "narration": _s(narration)}
 
@@ -302,7 +335,7 @@ def _visual_prompt_from_text(
     narration: str,
     *,
     video_template: Optional[str] = None,
-) -> Tuple[str, str, List[str], bool]:
+) -> Tuple[str, str, List[str], bool, List[str]]:
     """
     Textfreier Mood-Prompt + Overlay-Auszüge. Narration löst ``text_sensitive`` für Routing aus.
 
@@ -311,8 +344,9 @@ def _visual_prompt_from_text(
     """
     vt_id, _ = normalize_story_template_id(video_template)
     t = _s(title)
+    visual_title, negative_guards = _visual_title_and_negative_guards(t)
     narr = _collapse_ws(narration)
-    combo = f"{t}. {narr}" if t and narr else (t or narr)
+    combo = f"{visual_title}. {narr}" if visual_title and narr else (visual_title or narr)
     cleaned, overlay, ts_part = partition_visual_overlay_text(combo)
     ts = bool(ts_part or narr)
     doc_lead = ""
@@ -325,7 +359,7 @@ def _visual_prompt_from_text(
     if overlay:
         visual_core = doc_lead + cleaned
     else:
-        label = t or "Kapitel"
+        label = visual_title or "Kapitel"
         if vt_id == "documentary":
             visual_core = (
                 doc_lead
@@ -338,7 +372,7 @@ def _visual_prompt_from_text(
                 "großzügige Freiflächen für spätere Text-Overlays — keine eingezeichnete Schrift."
             )
     eff = append_no_text_guard(_collapse_ws(visual_core))
-    return combo, eff, overlay, ts
+    return combo, eff, overlay, ts, negative_guards
 
 
 def _build_scene_asset_pack(
@@ -356,7 +390,7 @@ def _build_scene_asset_pack(
     # Optional: hook as first beat if present (keeps orchestration narration useful)
     beat_index = 0
     if hook:
-        vp_raw, vp_eff, ov_int, ts = _visual_prompt_from_text(
+        vp_raw, vp_eff, ov_int, ts, neg_guards = _visual_prompt_from_text(
             "Hook", hook, video_template=vt
         )
         still_route = route_visual_provider("keyframe_still", text_sensitive=ts)
@@ -376,6 +410,7 @@ def _build_scene_asset_pack(
                 "narration": hook,
                 "voiceover_text": hook,
                 "scene_title": "Hook",
+                "negative_prompt": ", ".join(neg_guards),
                 "overlay_intent": ov_int,
                 "text_sensitive": ts,
                 "routed_visual_provider": still_route.get("provider"),
@@ -400,7 +435,7 @@ def _build_scene_asset_pack(
         if not narration:
             continue
         sc_title = _s((sc or {}).get("title")) or f"Szene {i}"
-        vp_raw, vp_eff, ov_int, ts = _visual_prompt_from_text(
+        vp_raw, vp_eff, ov_int, ts, neg_guards = _visual_prompt_from_text(
             sc_title, narration, video_template=vt
         )
         if hook:
@@ -425,6 +460,7 @@ def _build_scene_asset_pack(
                 "voiceover_text": narration,
                 "scene_title": sc_title,
                 "estimated_duration_seconds": _estimate_duration_seconds(narration),
+                "negative_prompt": ", ".join(neg_guards),
                 "overlay_intent": ov_int,
                 "text_sensitive": ts,
                 "routed_visual_provider": still_route.get("provider"),

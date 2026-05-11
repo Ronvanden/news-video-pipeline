@@ -81,6 +81,28 @@ def test_generate_script_response_with_chapters_builds_pack(adapter_mod):
     assert b0.get("visual_policy_status") in ("safe", "text_extracted", "needs_review")
 
 
+def test_hook_title_is_sanitized_for_visual_prompt(adapter_mod):
+    pack = adapter_mod.build_scene_asset_pack_from_generate_script_response(
+        {
+            "title": "Test",
+            "hook": "A sharp opening line.",
+            "chapters": [{"title": "A", "content": "Alpha."}],
+            "full_script": "",
+            "sources": [],
+            "warnings": [],
+        },
+        run_id="rid_hook",
+    )
+    first = _beats(pack)[0]
+    prompt_blob = "\n".join(
+        str(first.get(k) or "") for k in ("visual_prompt", "visual_prompt_raw", "visual_prompt_effective")
+    )
+    assert "Hook" not in prompt_blob
+    assert "cinematic opening beat" in prompt_blob
+    assert first.get("scene_title") == "Hook"
+    assert "no fishing hook" in str(first.get("negative_prompt") or "").lower()
+
+
 def test_full_script_without_chapters_is_chunked(adapter_mod):
     data = {
         "title": "T",
