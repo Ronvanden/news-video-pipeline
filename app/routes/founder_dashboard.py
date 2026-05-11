@@ -20,6 +20,10 @@ from app.founder_dashboard.fresh_preview_artifact_access import (
     fresh_preview_artifact_media_type,
     resolve_fresh_preview_artifact_path,
 )
+from app.founder_dashboard.storyboard_render_artifact_access import (
+    resolve_storyboard_render_artifact_path,
+    storyboard_render_artifact_media_type,
+)
 from app.founder_dashboard.ba323_video_generate import (
     build_video_generate_operator_ui_ba3280,
     derive_video_generate_status,
@@ -692,6 +696,27 @@ async def founder_local_preview_file(run_id: str, filename: str) -> FileResponse
     )
 
 
+@router.get("/founder/dashboard/storyboard-render/file/{run_id}/{artifact_path:path}")
+async def founder_storyboard_render_artifact_file(run_id: str, artifact_path: str) -> FileResponse:
+    """Read-only Storyboard local render artifacts under output/storyboard_runs/<run_id>/."""
+
+    def _resolve() -> tuple:
+        return resolve_storyboard_render_artifact_path(default_local_preview_out_root(), run_id, artifact_path)
+
+    resolved, reason = await run_in_threadpool(_resolve)
+    if reason == "ok" and resolved is not None:
+        return FileResponse(
+            resolved,
+            media_type=storyboard_render_artifact_media_type(resolved),
+            filename=resolved.name,
+        )
+    if reason == "not_found":
+        raise HTTPException(status_code=404, detail="not found")
+    if reason == "too_large":
+        raise HTTPException(status_code=413, detail="payload too large")
+    raise HTTPException(status_code=403, detail="forbidden")
+
+
 _BA223_RUN_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 
 
@@ -998,6 +1023,10 @@ async def founder_dashboard_config() -> dict:
         "local_preview_file_relative": {
             "method": "GET",
             "path": "/founder/dashboard/local-preview/file/{run_id}/{filename}",
+        },
+        "storyboard_render_file_relative": {
+            "method": "GET",
+            "path": "/founder/dashboard/storyboard-render/file/{run_id}/{artifact_path}",
         },
         "production_proof_summary_relative": {"method": "GET", "path": "/founder/production-proof/summary"},
         "story_engine_relative": {

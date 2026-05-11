@@ -234,6 +234,8 @@ Output:
 
 With `dry_run=true`, the step writes manifests only. With `dry_run=false`, it runs the existing local renderer and returns the resulting `final_video_path` plus `render_output_manifest_path` when available. No provider calls, no Firestore writes, and no `GenerateScriptResponse` changes occur here.
 
+The Founder Dashboard turns returned paths below `output/storyboard_runs/<run_id>/` into read-only artifact links via `GET /founder/dashboard/storyboard-render/file/{run_id}/{artifact_path}`. When `output_exists=true`, the dashboard embeds the local MP4 with `<video controls>` and exposes links for the final video plus render, timeline, and asset manifests. The route is limited to Storyboard render runs and allowed artifact suffixes; it does not write files or start providers.
+
 ## Storyboard Voice Mixdown V1
 
 `POST /story-engine/storyboard-voice-mixdown` merges scene-level Voice files from a `StoryboardRenderTimelineResult` into one local MP3 for the renderer.

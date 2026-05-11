@@ -4258,6 +4258,37 @@ try {
     box.innerHTML = '<strong>Storyboard Local Render Execute</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein lokaler Render â€” erst Local Render Package bauen.</p>';
   }
 
+  function storyboardRenderArtifactUrl(path) {
+    var normalized = String(path || "").replace(/\\\\/g, "/");
+    var marker = "output/storyboard_runs/";
+    var idx = normalized.indexOf(marker);
+    if (idx < 0) return "";
+    var rel = normalized.slice(idx + marker.length);
+    var parts = rel.split("/").filter(Boolean);
+    if (parts.length < 2) return "";
+    var runId = parts.shift();
+    if (!/^[A-Za-z0-9_-]{1,160}$/.test(runId)) return "";
+    var safeParts = [];
+    for (var i = 0; i < parts.length; i += 1) {
+      if (!parts[i] || parts[i] === "." || parts[i] === "..") return "";
+      safeParts.push(encodeURIComponent(parts[i]));
+    }
+    return "/founder/dashboard/storyboard-render/file/" + encodeURIComponent(runId) + "/" + safeParts.join("/");
+  }
+
+  function appendStoryboardRenderArtifactLink(parent, label, path) {
+    var url = storyboardRenderArtifactUrl(path);
+    if (!url) return null;
+    var a = document.createElement("a");
+    a.className = "fp-open-artifact";
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = label;
+    parent.appendChild(a);
+    return a;
+  }
+
   function renderStoryboardLocalRenderExecuteSummary(result) {
     var box = $("storyboard-local-render-execute-summary");
     if (!box || !result) return;
@@ -4281,6 +4312,30 @@ try {
     manifest.style.fontSize = "0.78rem";
     manifest.textContent = "asset_manifest: " + String(result.asset_manifest_path || "â€”") + " Â· timeline_manifest: " + String(result.timeline_manifest_path || "â€”") + " Â· render_output_manifest: " + String(result.render_output_manifest_path || "â€”");
     box.appendChild(manifest);
+    var artifactWrap = document.createElement("div");
+    artifactWrap.style.display = "flex";
+    artifactWrap.style.flexWrap = "wrap";
+    artifactWrap.style.gap = "0.45rem";
+    artifactWrap.style.margin = "0.45rem 0 0";
+    appendStoryboardRenderArtifactLink(artifactWrap, "Final Video oeffnen", result.final_video_path);
+    appendStoryboardRenderArtifactLink(artifactWrap, "Render Manifest oeffnen", result.render_output_manifest_path);
+    appendStoryboardRenderArtifactLink(artifactWrap, "Timeline Manifest oeffnen", result.timeline_manifest_path);
+    appendStoryboardRenderArtifactLink(artifactWrap, "Asset Manifest oeffnen", result.asset_manifest_path);
+    if (artifactWrap.childNodes.length) box.appendChild(artifactWrap);
+    var videoUrl = result.output_exists === true ? storyboardRenderArtifactUrl(result.final_video_path) : "";
+    if (videoUrl) {
+      var video = document.createElement("video");
+      video.controls = true;
+      video.preload = "metadata";
+      video.src = videoUrl;
+      video.style.width = "100%";
+      video.style.maxWidth = "520px";
+      video.style.margin = "0.55rem 0 0";
+      video.style.borderRadius = "8px";
+      video.style.border = "1px solid var(--border)";
+      video.setAttribute("aria-label", "Storyboard Final Video Preview");
+      box.appendChild(video);
+    }
     if (result.render_recommendation) {
       var rec = document.createElement("p");
       rec.style.margin = "0.35rem 0 0";
