@@ -449,6 +449,8 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("ElevenLabs Voice Live", text)
         self.assertIn("Runway Motion erzeugen", text)
         self.assertIn("Runway Motion Live", text)
+        self.assertIn("Live Production Run", text)
+        self.assertIn("Storyboard Live Run Review", text)
         self.assertIn("Render Timeline bauen", text)
         self.assertIn("Storyboard Render Timeline", text)
         self.assertIn("Voice Mixdown", text)
@@ -466,6 +468,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="btn-elevenlabs-voice-live"', text)
         self.assertIn('id="storyboard-elevenlabs-confirm-costs"', text)
         self.assertIn('id="btn-runway-motion-live"', text)
+        self.assertIn('id="btn-storyboard-live-production-run"', text)
         self.assertIn('id="storyboard-runway-confirm-costs"', text)
         self.assertIn('id="btn-storyboard-render-timeline"', text)
         self.assertIn('id="btn-storyboard-voice-mixdown"', text)
@@ -478,6 +481,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="openai-image-live-summary"', text)
         self.assertIn('id="elevenlabs-voice-live-summary"', text)
         self.assertIn('id="runway-motion-live-summary"', text)
+        self.assertIn('id="storyboard-live-run-review-summary"', text)
         self.assertIn('id="storyboard-render-timeline-summary"', text)
         self.assertIn('id="storyboard-voice-mixdown-summary"', text)
         self.assertIn('id="storyboard-local-render-package-summary"', text)
@@ -489,6 +493,7 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn('id="out-openai-image-live"', text)
         self.assertIn('id="out-elevenlabs-voice-live"', text)
         self.assertIn('id="out-runway-motion-live"', text)
+        self.assertIn('id="out-storyboard-live-run-review"', text)
         self.assertIn('id="out-storyboard-render-timeline"', text)
         self.assertIn('id="out-storyboard-voice-mixdown"', text)
         self.assertIn('id="out-storyboard-local-render-package"', text)
@@ -511,6 +516,10 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("runOpenAIImageLiveOnlyInternal", text)
         self.assertIn("runElevenLabsVoiceLiveOnlyInternal", text)
         self.assertIn("runRunwayMotionLiveOnlyInternal", text)
+        self.assertIn("runStoryboardLiveProductionRunInternal", text)
+        self.assertIn("ensureStoryboardLiveCostConfirmations", text)
+        self.assertIn("buildStoryboardLiveRunReview", text)
+        self.assertIn("renderStoryboardLiveRunReviewSummary", text)
         self.assertIn("runStoryboardRenderTimelineOnlyInternal", text)
         self.assertIn("runStoryboardVoiceMixdownOnlyInternal", text)
         self.assertIn("runStoryboardLocalRenderPackageOnlyInternal", text)
@@ -534,11 +543,22 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("7. Render Timeline", text)
         self.assertIn("8. Local Render Package", text)
         orch = text[text.find("async function runFullPipelineOrchestrator") : text.find("function applyInputSnapshot")]
+        live_orch = text[text.find("async function runStoryboardLiveProductionRunInternal") : text.find("async function runPreviewOnlyInternal")]
+        self.assertNotIn("runOpenAIImageLiveOnlyInternal", orch)
+        self.assertNotIn("runElevenLabsVoiceLiveOnlyInternal", orch)
+        self.assertNotIn("runRunwayMotionLiveOnlyInternal", orch)
         self.assertLess(
             orch.find("await runExportOnlyInternal()"),
             orch.find("await runStoryboardOnlyInternal()"),
             msg="Full-Pipeline muss Storyboard nach Export erzeugen",
         )
+        self.assertLess(live_orch.find("ensureStoryboardLiveCostConfirmations()"), live_orch.find("await runOpenAIImageLiveOnlyInternal()"))
+        self.assertLess(live_orch.find("await runOpenAIImageLiveOnlyInternal()"), live_orch.find("await runElevenLabsVoiceLiveOnlyInternal()"))
+        self.assertLess(live_orch.find("await runElevenLabsVoiceLiveOnlyInternal()"), live_orch.find("await runRunwayMotionLiveOnlyInternal()"))
+        self.assertLess(live_orch.find("await runRunwayMotionLiveOnlyInternal()"), live_orch.find("await runStoryboardRenderTimelineOnlyInternal()"))
+        self.assertLess(live_orch.find("await runStoryboardRenderTimelineOnlyInternal()"), live_orch.find("await runStoryboardVoiceMixdownOnlyInternal()"))
+        self.assertLess(live_orch.find("await runStoryboardVoiceMixdownOnlyInternal()"), live_orch.find("await runStoryboardLocalRenderPackageOnlyInternal()"))
+        self.assertLess(live_orch.find("await runStoryboardLocalRenderPackageOnlyInternal()"), live_orch.find("await runStoryboardLocalRenderExecuteOnlyInternal()"))
         self.assertLess(
             orch.find("await runStoryboardOnlyInternal()"),
             orch.find("await runStoryboardReadinessOnlyInternal()"),
@@ -615,6 +635,11 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Final Video oeffnen", text)
         self.assertIn("Render Manifest oeffnen", text)
         self.assertIn("Storyboard Final Video Preview", text)
+        self.assertIn("Storyboard Live Run Final Video Review", text)
+        self.assertIn("Live Production Run blockiert: Kosten bestätigen", text)
+        self.assertIn("runway_motion_optional_failed_continuing_image_only", text)
+        self.assertIn("runway_motion_optional_blocker:", text)
+        self.assertIn("review_version: \"storyboard_live_run_review_v1\"", text)
         self.assertIn("persistSessionSnapshotSilent", text)
         self.assertIn("Operator Clarity (BA 11.2)", text)
         self.assertIn("Executive Scorecard", text)

@@ -3093,6 +3093,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" id="btn-openai-image-live" data-label="OpenAI Bild erzeugen">OpenAI Bild erzeugen</button>
         <button type="button" id="btn-elevenlabs-voice-live" data-label="ElevenLabs Voice erzeugen">ElevenLabs Voice erzeugen</button>
         <button type="button" id="btn-runway-motion-live" data-label="Runway Motion erzeugen">Runway Motion erzeugen</button>
+        <button type="button" class="primary" id="btn-storyboard-live-production-run" data-label="Live Production Run">Live Production Run</button>
         <button type="button" id="btn-storyboard-render-timeline" data-label="Render Timeline bauen">Render Timeline bauen</button>
         <button type="button" id="btn-storyboard-voice-mixdown" data-label="Voice Mixdown">Voice Mixdown</button>
         <button type="button" id="btn-storyboard-local-render-package" data-label="Local Render Package bauen">Local Render Package bauen</button>
@@ -3338,6 +3339,22 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" class="sm tb-txt" data-pre="out-storyboard-voice-mixdown" data-dlname="storyboard-voice-mixdown.txt">TXT</button>
       </div>
       <pre class="out out-empty" id="out-storyboard-voice-mixdown">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-storyboard-live-run-review">
+    <summary>Storyboard Live Run Review</summary>
+    <div class="coll-body">
+      <div id="storyboard-live-run-review-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-live-run-review-panel="1">
+        <strong>Storyboard Live Run Review</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Live-Produktionslauf — Kosten bestätigen und „Live Production Run“ starten.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-storyboard-live-run-review">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-storyboard-live-run-review" data-dlname="storyboard-live-run-review.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-storyboard-live-run-review" data-dlname="storyboard-live-run-review.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-storyboard-live-run-review">Noch kein Ergebnis. Klicke auf „Live Production Run“.</pre>
     </div>
   </details>
 
@@ -3648,6 +3665,7 @@ try {
   let lastStoryboardVoiceMixdown = null;
   let lastStoryboardLocalRenderPackage = null;
   let lastStoryboardLocalRenderExecute = null;
+  let lastStoryboardLiveRunReview = null;
   let lastOptimize = null;
   let lastPreview = null;
   let lastReadiness = null;
@@ -4343,6 +4361,139 @@ try {
       rec.textContent = "Empfehlung: " + String(result.render_recommendation);
       box.appendChild(rec);
     }
+    if (result.warnings && result.warnings.length) {
+      var w = document.createElement("p");
+      w.style.margin = "0.35rem 0 0";
+      w.style.fontSize = "0.78rem";
+      w.textContent = "Warnings: " + result.warnings.join(", ");
+      box.appendChild(w);
+    }
+    if (result.blocking_issues && result.blocking_issues.length) {
+      var b = document.createElement("p");
+      b.style.margin = "0.35rem 0 0";
+      b.style.fontSize = "0.78rem";
+      b.textContent = "Blocker: " + result.blocking_issues.join(", ");
+      box.appendChild(b);
+    }
+  }
+
+  function clearStoryboardLiveRunReviewSummary() {
+    var box = $("storyboard-live-run-review-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Storyboard Live Run Review</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Live-Produktionslauf — Kosten bestätigen und „Live Production Run“ starten.</p>';
+  }
+
+  function countLiveTaskOutputs(result, assetType) {
+    var count = 0;
+    (result && result.task_results ? result.task_results : []).forEach(function(task) {
+      if (String(task.asset_type || "") === assetType && task.output_exists === true) count += 1;
+    });
+    return count;
+  }
+
+  function collectResultWarnings() {
+    var out = [];
+    [lastOpenAIImageLive, lastElevenLabsVoiceLive, lastRunwayMotionLive, lastStoryboardRenderTimeline, lastStoryboardVoiceMixdown, lastStoryboardLocalRenderPackage, lastStoryboardLocalRenderExecute].forEach(function(result) {
+      if (!result) return;
+      (result.warnings || []).forEach(function(w) { if (w && out.indexOf(w) < 0) out.push(w); });
+    });
+    if (lastRunwayMotionLive) {
+      (lastRunwayMotionLive.blocking_issues || []).forEach(function(b) {
+        var warning = "runway_motion_optional_blocker:" + String(b);
+        if (b && out.indexOf(warning) < 0) out.push(warning);
+      });
+    }
+    return out;
+  }
+
+  function collectResultBlockers() {
+    var out = [];
+    [lastOpenAIImageLive, lastElevenLabsVoiceLive, lastStoryboardRenderTimeline, lastStoryboardVoiceMixdown, lastStoryboardLocalRenderPackage, lastStoryboardLocalRenderExecute].forEach(function(result) {
+      if (!result) return;
+      (result.blocking_issues || []).forEach(function(b) { if (b && out.indexOf(b) < 0) out.push(b); });
+    });
+    return out;
+  }
+
+  function buildStoryboardLiveRunReview() {
+    var blockers = collectResultBlockers();
+    var warnings = collectResultWarnings();
+    var finalPath = String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.final_video_path) || "");
+    var finalExists = !!(lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.output_exists === true);
+    var imageFiles = countLiveTaskOutputs(lastOpenAIImageLive, "image");
+    var voiceFiles = countLiveTaskOutputs(lastElevenLabsVoiceLive, "voice");
+    var motionClips = countLiveTaskOutputs(lastRunwayMotionLive, "video");
+    var providerCalls =
+      Number((lastOpenAIImageLive && lastOpenAIImageLive.estimated_provider_calls) || 0) +
+      Number((lastElevenLabsVoiceLive && lastElevenLabsVoiceLive.estimated_provider_calls) || 0) +
+      Number((lastRunwayMotionLive && lastRunwayMotionLive.estimated_provider_calls) || 0);
+    var reviewStatus = blockers.length ? "blocked" : (finalExists && imageFiles > 0 && voiceFiles > 0 ? (warnings.length ? "warning" : "ready") : "warning");
+    return {
+      review_version: "storyboard_live_run_review_v1",
+      review_status: reviewStatus,
+      image_files: imageFiles,
+      voice_files: voiceFiles,
+      motion_clips: motionClips,
+      provider_calls_estimated: providerCalls,
+      final_video_path: finalPath,
+      final_video_exists: finalExists,
+      final_video_size_bytes: Number((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.file_size_bytes) || 0),
+      render_output_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.render_output_manifest_path) || ""),
+      timeline_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.timeline_manifest_path) || ""),
+      asset_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.asset_manifest_path) || ""),
+      warnings: warnings,
+      blocking_issues: blockers,
+      next_action: blockers.length ? "Blocker beheben und Live Production Run erneut starten." : (finalExists ? "Finales Video im Review prüfen." : "Local Render Execute prüfen; Final Video fehlt.")
+    };
+  }
+
+  function renderStoryboardLiveRunReviewSummary(result) {
+    var box = $("storyboard-live-run-review-summary");
+    if (!box || !result) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Storyboard Live Run Review";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(result.review_status || "—") + " · Bilder: " + String(result.image_files || 0) + " · Voice: " + String(result.voice_files || 0) + " · Motion: " + String(result.motion_clips || 0) + " · Provider Calls: " + String(result.provider_calls_estimated || 0);
+    box.appendChild(meta);
+    var p = document.createElement("p");
+    p.style.margin = "0.35rem 0 0";
+    p.style.fontSize = "0.78rem";
+    p.textContent = "final_video_path: " + String(result.final_video_path || "—") + (result.final_video_exists ? " · Final Video gespeichert" : " · final_video_exists=false") + (result.final_video_size_bytes ? " · file_size_bytes=" + String(result.final_video_size_bytes) : "");
+    box.appendChild(p);
+    var artifactWrap = document.createElement("div");
+    artifactWrap.style.display = "flex";
+    artifactWrap.style.flexWrap = "wrap";
+    artifactWrap.style.gap = "0.45rem";
+    artifactWrap.style.margin = "0.45rem 0 0";
+    appendStoryboardRenderArtifactLink(artifactWrap, "Final Video oeffnen", result.final_video_path);
+    appendStoryboardRenderArtifactLink(artifactWrap, "Render Manifest oeffnen", result.render_output_manifest_path);
+    appendStoryboardRenderArtifactLink(artifactWrap, "Timeline Manifest oeffnen", result.timeline_manifest_path);
+    appendStoryboardRenderArtifactLink(artifactWrap, "Asset Manifest oeffnen", result.asset_manifest_path);
+    if (artifactWrap.childNodes.length) box.appendChild(artifactWrap);
+    var videoUrl = result.final_video_exists === true ? storyboardRenderArtifactUrl(result.final_video_path) : "";
+    if (videoUrl) {
+      var video = document.createElement("video");
+      video.controls = true;
+      video.preload = "metadata";
+      video.src = videoUrl;
+      video.style.width = "100%";
+      video.style.maxWidth = "520px";
+      video.style.margin = "0.55rem 0 0";
+      video.style.borderRadius = "8px";
+      video.style.border = "1px solid var(--border)";
+      video.setAttribute("aria-label", "Storyboard Live Run Final Video Review");
+      box.appendChild(video);
+    }
+    var next = document.createElement("p");
+    next.style.margin = "0.45rem 0 0";
+    next.style.fontSize = "0.78rem";
+    next.textContent = "Nächster Schritt: " + String(result.next_action || "Finales Ergebnis prüfen.");
+    box.appendChild(next);
     if (result.warnings && result.warnings.length) {
       var w = document.createElement("p");
       w.style.margin = "0.35rem 0 0";
@@ -5347,6 +5498,7 @@ try {
       lastStoryboardVoiceMixdown: lastStoryboardVoiceMixdown,
       lastStoryboardLocalRenderPackage: lastStoryboardLocalRenderPackage,
       lastStoryboardLocalRenderExecute: lastStoryboardLocalRenderExecute,
+      lastStoryboardLiveRunReview: lastStoryboardLiveRunReview,
       lastPreview: lastPreview,
       lastReadiness: lastReadiness,
       lastOptimize: lastOptimize,
@@ -5696,6 +5848,7 @@ try {
         lastStoryboardVoiceMixdown: lastStoryboardVoiceMixdown,
         lastStoryboardLocalRenderPackage: lastStoryboardLocalRenderPackage,
         lastStoryboardLocalRenderExecute: lastStoryboardLocalRenderExecute,
+        lastStoryboardLiveRunReview: lastStoryboardLiveRunReview,
         lastPreview: lastPreview,
         lastReadiness: lastReadiness,
         lastOptimize: lastOptimize,
@@ -5998,6 +6151,7 @@ try {
     lastStoryboardVoiceMixdown = null;
     lastStoryboardLocalRenderPackage = null;
     lastStoryboardLocalRenderExecute = null;
+    lastStoryboardLiveRunReview = null;
     lastPreview = null;
     lastReadiness = null;
     lastOptimize = null;
@@ -6015,6 +6169,7 @@ try {
     setOut("out-storyboard-voice-mixdown", null);
     setOut("out-storyboard-local-render-package", null);
     setOut("out-storyboard-local-render-execute", null);
+    setOut("out-storyboard-live-run-review", null);
     setOut("out-hook", null);
     setOut("out-pq-score", null);
     setOut("out-pq-detail", null);
@@ -6042,6 +6197,7 @@ try {
     clearStoryboardVoiceMixdownSummary();
     clearStoryboardLocalRenderPackageSummary();
     clearStoryboardLocalRenderExecuteSummary();
+    clearStoryboardLiveRunReviewSummary();
     setExportActionStatus("", "");
   }
 
@@ -6461,6 +6617,55 @@ try {
     return data;
   }
 
+  function ensureStoryboardLiveCostConfirmations() {
+    var missing = [];
+    if (!$("storyboard-openai-confirm-costs") || !$("storyboard-openai-confirm-costs").checked) missing.push("OpenAI Image");
+    if (!$("storyboard-elevenlabs-confirm-costs") || !$("storyboard-elevenlabs-confirm-costs").checked) missing.push("ElevenLabs Voice");
+    if (!$("storyboard-runway-confirm-costs") || !$("storyboard-runway-confirm-costs").checked) missing.push("Runway Motion");
+    if (missing.length) {
+      throw new Error("Live Production Run blockiert: Kosten bestätigen für " + missing.join(", ") + ".");
+    }
+  }
+
+  async function runStoryboardLiveProductionRunInternal() {
+    ensureStoryboardLiveCostConfirmations();
+    setIntakeStatus("", "");
+    resetPipelineStoryOutputs();
+    try {
+      validateFormAfterIntake("storyboard_live_production_run");
+    } catch (formErr) {
+      validateIntakeBeforeFullPipeline();
+      await runBuildBodyFromIntake();
+      validateFormAfterIntake("storyboard_live_production_run");
+    }
+    await runExportOnlyInternal();
+    await runStoryboardOnlyInternal();
+    await runStoryboardReadinessOnlyInternal();
+    await runAssetGenerationPlanOnlyInternal();
+    await runOpenAIImageLiveOnlyInternal();
+    await runElevenLabsVoiceLiveOnlyInternal();
+    try {
+      await runRunwayMotionLiveOnlyInternal();
+    } catch (motionErr) {
+      mergeWarnings(["runway_motion_optional_failed_continuing_image_only:" + String(motionErr && motionErr.message ? motionErr.message : motionErr)]);
+    }
+    await runStoryboardRenderTimelineOnlyInternal();
+    await runStoryboardVoiceMixdownOnlyInternal();
+    await runStoryboardLocalRenderPackageOnlyInternal();
+    await runStoryboardLocalRenderExecuteOnlyInternal();
+    lastStoryboardLiveRunReview = buildStoryboardLiveRunReview();
+    setOut("out-storyboard-live-run-review", lastStoryboardLiveRunReview);
+    renderStoryboardLiveRunReviewSummary(lastStoryboardLiveRunReview);
+    mergeWarnings(lastStoryboardLiveRunReview.warnings || []);
+    mergeWarnings(lastStoryboardLiveRunReview.blocking_issues || []);
+    persistSessionSnapshotSilent();
+    openPanelAndScroll("coll-storyboard-live-run-review", "storyboard-live-run-review-summary");
+    if (lastStoryboardLiveRunReview.review_status === "blocked") {
+      throw new Error((lastStoryboardLiveRunReview.blocking_issues && lastStoryboardLiveRunReview.blocking_issues.join(", ")) || "Live Production Run blockiert.");
+    }
+    return lastStoryboardLiveRunReview;
+  }
+
   async function runPreviewOnlyInternal() {
     const body = buildCurrentExportRequestFromForm();
     var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
@@ -6814,6 +7019,15 @@ try {
     } else {
       setOut("out-storyboard-local-render-execute", null);
       clearStoryboardLocalRenderExecuteSummary();
+    }
+    if (lastStoryboardLiveRunReview) {
+      setOut("out-storyboard-live-run-review", lastStoryboardLiveRunReview);
+      renderStoryboardLiveRunReviewSummary(lastStoryboardLiveRunReview);
+      mergeWarnings(lastStoryboardLiveRunReview.warnings || []);
+      mergeWarnings(lastStoryboardLiveRunReview.blocking_issues || []);
+    } else {
+      setOut("out-storyboard-live-run-review", null);
+      clearStoryboardLiveRunReviewSummary();
     }
     if (lastReadiness) setOut("out-readiness", lastReadiness);
     else setOut("out-readiness", null);
@@ -10726,6 +10940,14 @@ try {
     });
   };
 
+  $("btn-storyboard-live-production-run").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-storyboard-live-run-review", "storyboard-live-run-review-summary", async function() {
+      await runStoryboardLiveProductionRunInternal();
+    });
+  };
+
   $("btn-storyboard-render-timeline").onclick = async function(){
     var btn = this;
     clearWarnings();
@@ -10889,6 +11111,7 @@ try {
       lastStoryboardVoiceMixdown = pack.lastStoryboardVoiceMixdown || null;
       lastStoryboardLocalRenderPackage = pack.lastStoryboardLocalRenderPackage || null;
       lastStoryboardLocalRenderExecute = pack.lastStoryboardLocalRenderExecute || null;
+      lastStoryboardLiveRunReview = pack.lastStoryboardLiveRunReview || null;
       lastPreview = pack.lastPreview || null;
       lastReadiness = pack.lastReadiness || null;
       lastOptimize = pack.lastOptimize || null;

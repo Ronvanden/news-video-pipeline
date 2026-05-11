@@ -236,6 +236,34 @@ With `dry_run=true`, the step writes manifests only. With `dry_run=false`, it ru
 
 The Founder Dashboard turns returned paths below `output/storyboard_runs/<run_id>/` into read-only artifact links via `GET /founder/dashboard/storyboard-render/file/{run_id}/{artifact_path}`. When `output_exists=true`, the dashboard embeds the local MP4 with `<video controls>` and exposes links for the final video plus render, timeline, and asset manifests. The route is limited to Storyboard render runs and allowed artifact suffixes; it does not write files or start providers.
 
+## Storyboard Live Production Run V1
+
+The Founder Dashboard exposes a separate manual `Live Production Run` button. It is intentionally distinct from `Run Full Pipeline`, which remains plan-only and does not start live providers.
+
+Guard:
+
+- requires all three cost checkboxes before live execution starts
+- OpenAI Image up to 10 image tasks
+- ElevenLabs Voice up to 10 voice tasks
+- Runway Motion up to 3 motion tasks
+
+Execution order:
+
+1. Export Package
+2. Storyboard Plan
+3. Storyboard Readiness
+4. Asset Plan
+5. OpenAI Image Live
+6. ElevenLabs Voice Live
+7. Runway Motion Live
+8. Storyboard Render Timeline
+9. Storyboard Voice Mixdown
+10. Storyboard Local Render Package
+11. Storyboard Local Render Execute
+12. Storyboard Live Run Review
+
+The review panel summarizes image files, voice files, motion clips, estimated provider calls, warnings, blockers, final video path, manifest paths, and a local MP4 preview when available. Runway Motion is optional inside this live run: a failed motion step is carried as a warning so the render timeline can still fall back to image-only when image assets exist. Runbook: `docs/runbooks/storyboard_live_production_run_v1.md`.
+
 ## Storyboard Voice Mixdown V1
 
 `POST /story-engine/storyboard-voice-mixdown` merges scene-level Voice files from a `StoryboardRenderTimelineResult` into one local MP3 for the renderer.

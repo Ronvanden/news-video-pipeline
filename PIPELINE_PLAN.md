@@ -2492,3 +2492,7 @@ Neuer lokaler Execute-Schritt `POST /story-engine/storyboard-local-render-execut
 # Storyboard Render Artifact Visibility V1
 
 Das Founder Dashboard macht lokale Storyboard-Render-Ergebnisse direkt sichtbar: `GET /founder/dashboard/storyboard-render/file/{run_id}/{artifact_path}` liefert read-only erlaubte Artefakte aus `output/storyboard_runs/<run_id>/` aus. Das Panel `Storyboard Local Render Execute` zeigt Links für Final Video, Render Manifest, Timeline Manifest und Asset Manifest; bei `output_exists=true` wird das MP4 per `<video controls>` eingebettet. Keine Provider-Calls, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests: `tests/test_storyboard_render_artifact_access.py`, `tests/test_phase10_founder_dashboard.py`.
+
+# Storyboard Live Production Run V1
+
+Separater Founder-Dashboard-Button `Live Production Run`: startet nach expliziter Bestätigung aller Kosten-Checkboxen die kontrollierte Live-Reihenfolge `Export -> Storyboard -> Readiness -> Asset Plan -> OpenAI Image -> ElevenLabs Voice -> Runway Motion -> Render Timeline -> Voice Mixdown -> Local Render Package -> Local Render Execute -> Live Run Review`. Der normale `Run Full Pipeline` bleibt plan-only und startet keine Live-Provider. Das neue Review-Panel zeigt Bilder, Voice-Dateien, Motion-Clips, geschätzte Provider Calls, Final-Video-Pfad, Manifest-Links, Warnings und Blocker. Runbook: `docs/runbooks/storyboard_live_production_run_v1.md`. Tests: `tests/test_phase10_founder_dashboard.py`.
