@@ -1,5 +1,7 @@
 """Storyboard local render package tests."""
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -54,6 +56,7 @@ def test_local_render_package_builds_renderer_manifest_shapes():
     assert package.final_video_path.endswith("final_video.mp4")
     assert package.timeline_manifest["total_scenes"] == 1
     assert package.timeline_manifest["audio_path"].endswith("final_voice.mp3")
+    assert Path(package.timeline_manifest["assets_directory"]).is_absolute()
     assert package.timeline_manifest["scenes"][0]["media_type"] == "image"
     assert package.asset_manifest["assets"][0]["image_path"].endswith("scene_001.png")
 

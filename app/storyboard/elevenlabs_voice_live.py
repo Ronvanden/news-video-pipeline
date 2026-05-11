@@ -167,7 +167,11 @@ def execute_elevenlabs_voice_live_from_asset_plan(
             warnings=["elevenlabs_voice_live_cost_confirmation_missing"],
             blocking_issues=["confirm_provider_costs_required_for_elevenlabs_voice_live"],
         )
-    voice_id = _norm(elevenlabs_voice_id) or _norm(os.environ.get("ELEVENLABS_VOICE_ID", ""))
+    voice_id = (
+        _norm(elevenlabs_voice_id)
+        or _norm(os.environ.get("ELEVENLABS_VOICE_ID", ""))
+        or _norm(os.environ.get("VOICE_ID", ""))
+    )
     if not voice_id:
         return AssetExecutionResult(
             execution_version="elevenlabs_voice_live_execution_v1",

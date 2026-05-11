@@ -55,8 +55,11 @@ def test_cost_confirmation_required_blocks_without_voice_call():
     assert calls == []
 
 
-def test_voice_id_required_before_provider_call():
+def test_voice_id_required_before_provider_call(monkeypatch):
     calls = []
+
+    monkeypatch.delenv("ELEVENLABS_VOICE_ID", raising=False)
+    monkeypatch.delenv("VOICE_ID", raising=False)
 
     def fake_runner(*args, **kwargs):
         calls.append((args, kwargs))
@@ -71,6 +74,27 @@ def test_voice_id_required_before_provider_call():
     assert result.execution_status == "failed"
     assert result.blocking_issues == ["elevenlabs_voice_id_required"]
     assert calls == []
+
+
+def test_voice_id_env_fallback_uses_voice_id(monkeypatch):
+    calls = []
+
+    monkeypatch.delenv("ELEVENLABS_VOICE_ID", raising=False)
+    monkeypatch.setenv("VOICE_ID", "voice_from_env")
+
+    def fake_runner(text, dest_mp3: Path, *, api_key, voice_id, model_id, timeout_seconds):
+        calls.append(voice_id)
+        dest_mp3.write_bytes(b"fake-mp3")
+        return True, [], {}
+
+    result = execute_elevenlabs_voice_live_from_asset_plan(
+        _plan(_task()),
+        confirm_provider_costs=True,
+        runner=fake_runner,
+    )
+
+    assert result.execution_status == "live_completed"
+    assert calls == ["voice_from_env"]
 
 
 def test_executes_up_to_ten_voice_tasks(tmp_path):

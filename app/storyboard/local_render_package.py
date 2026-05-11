@@ -132,7 +132,7 @@ def build_storyboard_local_render_package(
     timeline_manifest = {
         "run_id": safe_run_id,
         "asset_manifest_path": _as_posix_path(asset_manifest_path),
-        "assets_directory": _as_posix_path(asset_manifest_path.parent),
+        "assets_directory": _as_posix_path(Path.cwd().resolve()),
         "audio_path": audio_path,
         "total_scenes": len(scenes),
         "estimated_duration_seconds": int(round(render_timeline.total_duration_seconds or 0)),
