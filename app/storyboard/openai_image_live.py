@@ -52,6 +52,45 @@ def _image_tasks(plan: AssetGenerationPlan) -> List[AssetGenerationTask]:
     return [t for t in (plan.tasks or []) if t.asset_type == "image"]
 
 
+def _file_info(path: Path) -> Tuple[bool, Optional[int]]:
+    try:
+        if not path.is_file():
+            return False, None
+        return True, path.stat().st_size
+    except OSError:
+        return False, None
+
+
+def _task_result(
+    task: AssetGenerationTask,
+    *,
+    status: str,
+    dest: Path,
+    warnings: List[str],
+    blocking_issues: Optional[List[str]] = None,
+    output_exists: bool = False,
+    file_size_bytes: Optional[int] = None,
+    openai_image_model: str = "gpt-image-2",
+) -> AssetTaskExecutionResult:
+    path = str(dest)
+    return AssetTaskExecutionResult(
+        task_id=task.task_id,
+        asset_type=task.asset_type,
+        provider_hint="openai_image",
+        execution_status=status,  # type: ignore[arg-type]
+        planned_output_path=path,
+        output_path=path,
+        output_exists=output_exists,
+        file_size_bytes=file_size_bytes,
+        scene_id=task.scene_id,
+        scene_number=task.scene_number,
+        provider="openai_image",
+        model=openai_image_model or "gpt-image-2",
+        warnings=_dedupe(warnings),
+        blocking_issues=blocking_issues or [],
+    )
+
+
 def execute_openai_image_live_from_asset_plan(
     asset_generation_plan: AssetGenerationPlan,
     *,
@@ -105,64 +144,99 @@ def execute_openai_image_live_from_asset_plan(
     warnings: List[str] = []
     blockers: List[str] = []
     outputs: List[str] = []
+    provider_calls = 0
 
     for task in selected:
         tw = list(task.warnings or [])
+        dest = _live_output_path(task, output_root=output_root, run_id=run_id)
         prompt = _norm(task.prompt)
         if not prompt:
             tw.append(f"{task.task_id}_prompt_missing")
             blockers.append(f"{task.task_id}_execution_failed")
             task_results.append(
-                AssetTaskExecutionResult(
-                    task_id=task.task_id,
-                    asset_type=task.asset_type,
-                    provider_hint="openai_image",
-                    execution_status="failed",
-                    planned_output_path="",
-                    warnings=_dedupe(tw),
+                _task_result(
+                    task,
+                    status="failed",
+                    dest=dest,
+                    warnings=tw,
                     blocking_issues=[f"{task.task_id}_execution_failed"],
+                    openai_image_model=openai_image_model,
                 )
             )
             warnings.extend(tw)
             continue
 
-        dest = _live_output_path(task, output_root=output_root, run_id=run_id)
-        ok, runner_warnings, _meta = run_image(
-            prompt,
-            dest,
-            size=openai_image_size or "1024x1024",
-            model=openai_image_model or "gpt-image-2",
-            timeout_seconds=float(openai_image_timeout_seconds),
-        )
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            warning = f"openai_image_live_mkdir_failed:{type(exc).__name__}:path={dest.parent}"
+            tw.append(warning)
+            blockers.append(f"{task.task_id}_execution_failed")
+            task_results.append(
+                _task_result(
+                    task,
+                    status="failed",
+                    dest=dest,
+                    warnings=tw,
+                    blocking_issues=[f"{task.task_id}_execution_failed"],
+                    openai_image_model=openai_image_model,
+                )
+            )
+            warnings.extend(tw)
+            continue
+
+        try:
+            provider_calls += 1
+            ok, runner_warnings, _meta = run_image(
+                prompt,
+                dest,
+                size=openai_image_size or "1024x1024",
+                model=openai_image_model or "gpt-image-2",
+                timeout_seconds=float(openai_image_timeout_seconds),
+            )
+        except Exception as exc:  # provider/write failures must return visible context
+            ok = False
+            runner_warnings = [f"openai_image_live_write_failed:{type(exc).__name__}:path={dest}"]
         tw.extend(runner_warnings or [])
+        output_exists, file_size_bytes = _file_info(dest)
+        if ok and not output_exists:
+            tw.append(f"openai_image_live_output_missing:path={dest}")
+            ok = False
+        if ok and (file_size_bytes is None or file_size_bytes <= 0):
+            tw.append(f"openai_image_live_write_failed:EmptyOutput:path={dest}")
+            ok = False
         status = "live_completed" if ok else "failed"
-        if ok:
+        if ok and output_exists:
             outputs.append(str(dest))
         else:
             blockers.append(f"{task.task_id}_execution_failed")
         task_results.append(
-            AssetTaskExecutionResult(
-                task_id=task.task_id,
-                asset_type=task.asset_type,
-                provider_hint="openai_image",
-                execution_status=status,  # type: ignore[arg-type]
-                planned_output_path=str(dest),
-                warnings=_dedupe(tw),
+            _task_result(
+                task,
+                status=status,
+                dest=dest,
+                warnings=tw,
                 blocking_issues=[f"{task.task_id}_execution_failed"] if not ok else [],
+                output_exists=output_exists,
+                file_size_bytes=file_size_bytes,
+                openai_image_model=openai_image_model,
             )
         )
         warnings.extend(tw)
 
     for task in skipped:
         tw = [f"{task.task_id}_skipped_max_live_image_tasks_1"]
+        dest = _live_output_path(task, output_root=output_root, run_id=run_id)
+        output_exists, file_size_bytes = _file_info(dest)
         task_results.append(
-            AssetTaskExecutionResult(
-                task_id=task.task_id,
-                asset_type=task.asset_type,
-                provider_hint="openai_image",
-                execution_status="skipped",
-                planned_output_path=str(_live_output_path(task, output_root=output_root, run_id=run_id)),
+            _task_result(
+                task,
+                status="skipped",
+                dest=dest,
                 warnings=tw,
+                output_exists=output_exists,
+                file_size_bytes=file_size_bytes,
+                openai_image_model=openai_image_model,
             )
         )
         warnings.extend(tw)
@@ -175,7 +249,7 @@ def execute_openai_image_live_from_asset_plan(
         task_results=task_results,
         warnings=_dedupe(warnings),
         blocking_issues=_dedupe(blockers),
-        estimated_provider_calls=len(selected),
+        estimated_provider_calls=provider_calls,
         estimated_outputs=_dedupe(outputs),
     )
 

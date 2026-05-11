@@ -3875,15 +3875,27 @@ try {
       var p = document.createElement("p");
       p.style.margin = "0.35rem 0 0";
       p.style.fontSize = "0.78rem";
-      p.textContent = String(task.task_id || "task") + " · " + String(task.execution_status || "—") + " · " + String(task.planned_output_path || "—");
+      var path = String(task.output_path || task.planned_output_path || "—");
+      var exists = task.output_exists === true;
+      var size = task.file_size_bytes || 0;
+      var provider = String(task.provider || task.provider_hint || "—");
+      var model = String(task.model || "—");
+      p.textContent = String(task.task_id || "task") + " · Szene " + String(task.scene_number || "—") + " · " + String(task.execution_status || "—") + " · " + provider + " · " + model + " · output_path: " + path + (exists ? " · Bilddatei gespeichert" : " · output_exists=false") + (size ? " · file_size_bytes=" + String(size) : "");
       box.appendChild(p);
     });
     if (result.warnings && result.warnings.length) {
       var w = document.createElement("p");
       w.style.margin = "0.35rem 0 0";
       w.style.fontSize = "0.78rem";
-      w.textContent = "Warnings: " + result.warnings.join(", ");
+      w.textContent = "Warnings / Write failed: " + result.warnings.join(", ");
       box.appendChild(w);
+    }
+    if (result.blocking_issues && result.blocking_issues.length) {
+      var b = document.createElement("p");
+      b.style.margin = "0.35rem 0 0";
+      b.style.fontSize = "0.78rem";
+      b.textContent = "Blocker: " + result.blocking_issues.join(", ");
+      box.appendChild(b);
     }
   }
 

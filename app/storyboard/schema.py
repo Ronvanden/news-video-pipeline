@@ -21,7 +21,7 @@ StoryboardTransition = Literal["cut", "dissolve", "push_in", "match_cut", "fade_
 StoryboardReadinessStatus = Literal["ready", "warning", "blocked"]
 AssetGenerationPlanStatus = Literal["planned", "blocked"]
 AssetGenerationTaskType = Literal["image", "video", "voice", "thumbnail", "music", "subtitle", "render_hint"]
-AssetTaskExecutionStatus = Literal["dry_run", "completed_stub", "skipped", "failed"]
+AssetTaskExecutionStatus = Literal["dry_run", "completed_stub", "live_completed", "skipped", "failed"]
 
 
 class StoryboardChapterInput(BaseModel):
@@ -152,6 +152,13 @@ class AssetTaskExecutionResult(BaseModel):
     provider_hint: str = ""
     execution_status: AssetTaskExecutionStatus = "dry_run"
     planned_output_path: str = ""
+    output_path: str = ""
+    output_exists: bool = False
+    file_size_bytes: Optional[int] = None
+    scene_id: str = ""
+    scene_number: Optional[int] = None
+    provider: str = ""
+    model: str = ""
     warnings: List[str] = Field(default_factory=list)
     blocking_issues: List[str] = Field(default_factory=list)
 
@@ -174,3 +181,16 @@ class AssetExecutionRequest(BaseModel):
 
     asset_generation_plan: AssetGenerationPlan
     dry_run: bool = True
+
+
+class OpenAIImageLiveExecutionRequest(BaseModel):
+    """Input for the first live image execution path."""
+
+    asset_generation_plan: AssetGenerationPlan
+    confirm_provider_costs: bool = False
+    max_live_image_tasks: int = Field(default=1, ge=0, le=1)
+    run_id: str = "storyboard_openai_image_v1"
+    output_root: str = "output"
+    openai_image_model: str = "gpt-image-2"
+    openai_image_size: str = "1024x1024"
+    openai_image_timeout_seconds: float = Field(default=120.0, ge=15.0, le=600.0)

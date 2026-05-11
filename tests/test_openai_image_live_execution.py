@@ -58,18 +58,20 @@ def test_executes_one_image_task_with_openai_options():
     seen = {}
 
     def fake_runner(prompt, dest_png: Path, *, size, model, timeout_seconds):
+        assert dest_png.parent.is_dir()
         seen["prompt"] = prompt
         seen["dest"] = str(dest_png)
         seen["size"] = size
         seen["model"] = model
         seen["timeout"] = timeout_seconds
+        dest_png.write_bytes(b"fake-png")
         return True, ["openai_image_provider:openai_image"], {"bytes_written": 123}
 
     result = execute_openai_image_live_from_asset_plan(
         _plan(_task()),
         confirm_provider_costs=True,
         run_id="unit_test_run",
-        output_root="output",
+        output_root=str(Path("output") / "test_openai_image_live"),
         openai_image_model="gpt-image-2",
         openai_image_size="1024x1024",
         runner=fake_runner,
@@ -77,24 +79,56 @@ def test_executes_one_image_task_with_openai_options():
     assert result.execution_status == "live_completed"
     assert result.task_results[0].execution_status == "live_completed"
     assert result.estimated_provider_calls == 1
+    assert result.task_results[0].output_exists is True
+    assert result.task_results[0].file_size_bytes == len(b"fake-png")
+    assert result.task_results[0].output_path == result.task_results[0].planned_output_path
+    assert result.task_results[0].scene_id == "scene_001"
+    assert result.task_results[0].scene_number == 1
+    assert result.task_results[0].provider == "openai_image"
+    assert result.task_results[0].model == "gpt-image-2"
     assert seen["model"] == "gpt-image-2"
     assert seen["size"] == "1024x1024"
-    assert seen["dest"].endswith("output\\storyboard_runs\\unit_test_run\\scene_001\\image.png") or seen[
-        "dest"
-    ].endswith("output/storyboard_runs/unit_test_run/scene_001/image.png")
+    assert "storyboard_runs" in seen["dest"]
+    assert seen["dest"].endswith("unit_test_run\\scene_001\\image.png") or seen["dest"].endswith(
+        "unit_test_run/scene_001/image.png"
+    )
     assert result.estimated_outputs
 
 
 def test_limits_to_one_live_image_task_and_skips_rest():
+    def fake_runner(prompt, dest_png: Path, **kwargs):
+        dest_png.write_bytes(b"fake-png")
+        return True, [], {}
+
     result = execute_openai_image_live_from_asset_plan(
         _plan(_task(scene_number=1, scene_id="scene_001"), _task(task_id="asset_scene_002_image", scene_number=2, scene_id="scene_002")),
         confirm_provider_costs=True,
-        runner=lambda *args, **kwargs: (True, [], {}),
+        output_root=str(Path("output") / "test_openai_image_live_limit"),
+        runner=fake_runner,
     )
     statuses = {r.task_id: r.execution_status for r in result.task_results}
     assert statuses["asset_scene_001_image"] == "live_completed"
     assert statuses["asset_scene_002_image"] == "skipped"
     assert result.estimated_provider_calls == 1
+    assert len(result.estimated_outputs) == 1
+
+
+def test_write_failed_warning_contains_path_and_error_type(tmp_path):
+    def fake_runner(prompt, dest_png: Path, **kwargs):
+        raise FileNotFoundError("simulated missing path")
+
+    result = execute_openai_image_live_from_asset_plan(
+        _plan(_task()),
+        confirm_provider_costs=True,
+        output_root=str(tmp_path),
+        runner=fake_runner,
+    )
+    assert result.execution_status == "failed"
+    assert result.task_results[0].execution_status == "failed"
+    assert result.task_results[0].output_exists is False
+    joined = " ".join(result.warnings + result.task_results[0].warnings)
+    assert "openai_image_live_write_failed:FileNotFoundError:path=" in joined
+    assert "scene_001" in joined
 
 
 def test_blocked_asset_plan_fails_without_provider_call():
