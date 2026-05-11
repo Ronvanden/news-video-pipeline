@@ -25,6 +25,7 @@ AssetTaskExecutionStatus = Literal["dry_run", "completed_stub", "live_completed"
 StoryboardRenderTimelineStatus = Literal["ready", "warning", "blocked"]
 StoryboardRenderTimelineSegmentStatus = Literal["ready", "image_fallback", "skipped", "missing", "blocked"]
 StoryboardLocalRenderPackageStatus = Literal["ready", "warning", "blocked"]
+StoryboardVoiceMixdownStatus = Literal["dry_run", "completed", "skipped", "failed"]
 
 
 class StoryboardChapterInput(BaseModel):
@@ -262,6 +263,7 @@ class StoryboardLocalRenderPackageRequest(BaseModel):
     """Input for creating a local renderer handoff package from a render timeline."""
 
     render_timeline: StoryboardRenderTimelineResult
+    voice_mixdown_result: Optional["StoryboardVoiceMixdownResult"] = None
     run_id: str = "storyboard_local_render_v1"
     output_root: str = "output"
 
@@ -278,6 +280,31 @@ class StoryboardLocalRenderPackageResult(BaseModel):
     timeline_manifest: Dict[str, Any] = Field(default_factory=dict)
     asset_manifest: Dict[str, Any] = Field(default_factory=dict)
     render_command_hint: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    blocking_issues: List[str] = Field(default_factory=list)
+    render_recommendation: str = ""
+
+
+class StoryboardVoiceMixdownRequest(BaseModel):
+    """Input for local voice mixdown from a storyboard render timeline."""
+
+    render_timeline: StoryboardRenderTimelineResult
+    run_id: str = "storyboard_voice_mixdown_v1"
+    output_root: str = "output"
+    dry_run: bool = False
+
+
+class StoryboardVoiceMixdownResult(BaseModel):
+    """Local ffmpeg-backed or dry-run voice mixdown result."""
+
+    mixdown_version: str = "storyboard_voice_mixdown_v1"
+    execution_status: StoryboardVoiceMixdownStatus = "failed"
+    dry_run: bool = False
+    run_id: str = "storyboard_voice_mixdown_v1"
+    mixed_audio_path: str = ""
+    output_exists: bool = False
+    file_size_bytes: Optional[int] = None
+    input_voice_paths: List[str] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
     blocking_issues: List[str] = Field(default_factory=list)
     render_recommendation: str = ""

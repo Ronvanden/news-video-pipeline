@@ -49,8 +49,9 @@ Der neue Storyboard-Orchestration-Strang ist weiterhin vom `GenerateScriptRespon
 - **ElevenLabs Voice Live:** `POST /story-engine/elevenlabs-voice-live-execution`, bis zu **10** bestätigte Voice-Tasks pro Lauf, Voice-ID über Request oder `ELEVENLABS_VOICE_ID`, Output unter `output/storyboard_runs/<run_id>/<scene_id>/voice.mp3`.
 - **Dashboard:** manuelle Buttons `OpenAI Bild erzeugen` und `ElevenLabs Voice erzeugen`; der automatische Full-Pipeline-Button startet weiterhin keine Live-Provider.
 - **Render Timeline:** `POST /story-engine/storyboard-render-timeline` baut einen renderbaren Handoff aus Storyboard, Asset Plan und optionalen Live-Ergebnissen. Motion ohne Clip-Pfad wird `skipped` mit `motion_requested_but_no_clip_fallback_to_image`, nicht Placeholder.
+- **Voice Mixdown:** `POST /story-engine/storyboard-voice-mixdown` verbindet mehrere lokale ElevenLabs-Szenen-MP3s per ffmpeg zu einer Renderer-Datei `storyboard_voice_mixdown.mp3` oder plant den Pfad im Dry-Run.
 - **Local Render Package:** `POST /story-engine/storyboard-local-render-package` übersetzt die Storyboard Render Timeline in `asset_manifest`-/`timeline_manifest`-Shapes, geplante Manifest-Pfade, `final_video_path` und `render_command_hint`; schreibt nichts und startet keinen Renderer.
-- **Nächster Anschluss:** Voice-Mixdown für mehrere ElevenLabs-Szenendateien und danach kontrollierter lokaler Render aus dem Package; Runway Motion danach als optionaler, begrenzter Live-Schritt mit sauberem Image-Fallback.
+- **Nächster Anschluss:** kontrollierter lokaler Render aus dem Package mit gemischtem `audio_path`; Runway Motion danach als optionaler, begrenzter Live-Schritt mit sauberem Image-Fallback.
 
 ---
 
@@ -2473,3 +2474,7 @@ Erster echter Provider-Pfad für die Storyboard-Kette: `POST /story-engine/opena
 # Storyboard Local Render Package V1
 
 Neuer plan-only Handoff `POST /story-engine/storyboard-local-render-package`: erzeugt aus der `StoryboardRenderTimelineResult` ein lokales Renderer-Paket mit `asset_manifest`, `timeline_manifest`, geplanten Manifest-Pfaden, geplantem `final_video_path` und `render_command_hint`. Dashboard ergänzt Button `Local Render Package bauen`, Panel `Storyboard Local Render Package` und Full-Pipeline-Reihenfolge `Generate -> Export Package -> Storyboard Plan -> Storyboard Readiness -> Asset Plan -> Asset Execution Stub -> Render Timeline -> Local Render Package -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle`. Keine Provider-Calls, keine Dateischreibvorgänge, kein ffmpeg-Start, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Mehrere per-Szene-Voice-Dateien erzeugen `storyboard_render_voice_mixdown_required` als nächsten Anschluss. Tests: `tests/test_storyboard_local_render_package.py`, `tests/test_phase10_founder_dashboard.py`.
+
+# Storyboard Voice Mixdown V1
+
+Neuer lokaler Anschluss `POST /story-engine/storyboard-voice-mixdown`: nimmt die Voice-Pfade aus der `StoryboardRenderTimelineResult`, plant oder erzeugt `output/storyboard_runs/<run_id>/audio/storyboard_voice_mixdown.mp3` und liefert `mixed_audio_path`, `output_exists`, `file_size_bytes`, `input_voice_paths`, Warnings und Blocker zurück. Bei genau einer Voice-Datei wird ein lokaler Passthrough-Copy genutzt; bei mehreren Dateien ffmpeg concat; ohne vorhandene Inputs oder ohne ffmpeg scheitert der Schritt lesbar. Dashboard ergänzt Button `Voice Mixdown` und Panel `Storyboard Voice Mixdown`. Keine Provider-Calls, keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests: `tests/test_storyboard_voice_mixdown.py`, `tests/test_storyboard_local_render_package.py`, `tests/test_phase10_founder_dashboard.py`.

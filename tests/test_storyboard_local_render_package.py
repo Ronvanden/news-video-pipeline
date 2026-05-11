@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.storyboard import (
+    StoryboardVoiceMixdownResult,
     StoryboardRenderTimelineResult,
     StoryboardRenderTimelineSegment,
     build_storyboard_local_render_package,
@@ -71,6 +72,23 @@ def test_multiple_voice_files_warn_that_mixdown_is_required():
     assert "Voice-Dateien" in package.render_recommendation
 
 
+def test_mixdown_result_is_used_as_global_audio_path():
+    package = build_storyboard_local_render_package(
+        _timeline(
+            _segment(1, voice_path="output/audio/scene_001.mp3"),
+            _segment(2, voice_path="output/audio/scene_002.mp3"),
+        ),
+        voice_mixdown_result=StoryboardVoiceMixdownResult(
+            execution_status="completed",
+            mixed_audio_path="output/audio/storyboard_voice_mixdown.mp3",
+            output_exists=True,
+        ),
+    )
+
+    assert package.timeline_manifest["audio_path"].endswith("storyboard_voice_mixdown.mp3")
+    assert "storyboard_render_voice_mixdown_required" not in package.warnings
+
+
 def test_blocked_render_timeline_blocks_package():
     timeline = StoryboardRenderTimelineResult(
         overall_status="blocked",
@@ -89,6 +107,11 @@ def test_endpoint_accepts_render_timeline():
     client = TestClient(app)
     body = {
         "render_timeline": _timeline(_segment()).model_dump(),
+        "voice_mixdown_result": StoryboardVoiceMixdownResult(
+            execution_status="completed",
+            mixed_audio_path="output/audio/storyboard_voice_mixdown.mp3",
+            output_exists=True,
+        ).model_dump(),
         "run_id": "endpoint render",
         "output_root": "output",
     }

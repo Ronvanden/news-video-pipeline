@@ -3093,6 +3093,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" id="btn-openai-image-live" data-label="OpenAI Bild erzeugen">OpenAI Bild erzeugen</button>
         <button type="button" id="btn-elevenlabs-voice-live" data-label="ElevenLabs Voice erzeugen">ElevenLabs Voice erzeugen</button>
         <button type="button" id="btn-storyboard-render-timeline" data-label="Render Timeline bauen">Render Timeline bauen</button>
+        <button type="button" id="btn-storyboard-voice-mixdown" data-label="Voice Mixdown">Voice Mixdown</button>
         <button type="button" id="btn-storyboard-local-render-package" data-label="Local Render Package bauen">Local Render Package bauen</button>
         <button type="button" id="btn-preview" data-label="Preview Founder Metrics">Preview Founder Metrics</button>
         <button type="button" id="btn-readiness" data-label="Provider Readiness">Provider Readiness</button>
@@ -3283,6 +3284,22 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <button type="button" class="sm tb-txt" data-pre="out-storyboard-local-render-package" data-dlname="storyboard-local-render-package.txt">TXT</button>
       </div>
       <pre class="out out-empty" id="out-storyboard-local-render-package">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
+  <details class="fd-coll" open id="coll-storyboard-voice-mixdown">
+    <summary>Storyboard Voice Mixdown</summary>
+    <div class="coll-body">
+      <div id="storyboard-voice-mixdown-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-voice-mixdown-panel="1">
+        <strong>Storyboard Voice Mixdown</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Mixdown — erst Render Timeline und Voice-Dateien bereitstellen.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-storyboard-voice-mixdown">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-storyboard-voice-mixdown" data-dlname="storyboard-voice-mixdown.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-storyboard-voice-mixdown" data-dlname="storyboard-voice-mixdown.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-storyboard-voice-mixdown">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
     </div>
   </details>
 
@@ -3589,6 +3606,7 @@ try {
   let lastOpenAIImageLive = null;
   let lastElevenLabsVoiceLive = null;
   let lastStoryboardRenderTimeline = null;
+  let lastStoryboardVoiceMixdown = null;
   let lastStoryboardLocalRenderPackage = null;
   let lastOptimize = null;
   let lastPreview = null;
@@ -4057,6 +4075,53 @@ try {
     var box = $("storyboard-local-render-package-summary");
     if (!box) return;
     box.innerHTML = '<strong>Storyboard Local Render Package</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Render Package — erst Render Timeline bauen.</p>';
+  }
+
+  function clearStoryboardVoiceMixdownSummary() {
+    var box = $("storyboard-voice-mixdown-summary");
+    if (!box) return;
+    box.innerHTML = '<strong>Storyboard Voice Mixdown</strong><p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Mixdown — erst Render Timeline und Voice-Dateien bereitstellen.</p>';
+  }
+
+  function renderStoryboardVoiceMixdownSummary(result) {
+    var box = $("storyboard-voice-mixdown-summary");
+    if (!box || !result) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Storyboard Voice Mixdown";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Status: " + String(result.execution_status || "—") + " · Inputs: " + String((result.input_voice_paths || []).length) + " · dry_run: " + String(result.dry_run === true);
+    box.appendChild(meta);
+    var p = document.createElement("p");
+    p.style.margin = "0.35rem 0 0";
+    p.style.fontSize = "0.78rem";
+    p.textContent = "mixed_audio_path: " + String(result.mixed_audio_path || "—") + (result.output_exists === true ? " · Mixdown-Datei gespeichert" : " · output_exists=false") + (result.file_size_bytes ? " · file_size_bytes=" + String(result.file_size_bytes) : "");
+    box.appendChild(p);
+    if (result.render_recommendation) {
+      var rec = document.createElement("p");
+      rec.style.margin = "0.35rem 0 0";
+      rec.style.fontSize = "0.78rem";
+      rec.textContent = "Empfehlung: " + String(result.render_recommendation);
+      box.appendChild(rec);
+    }
+    if (result.warnings && result.warnings.length) {
+      var w = document.createElement("p");
+      w.style.margin = "0.35rem 0 0";
+      w.style.fontSize = "0.78rem";
+      w.textContent = "Warnings: " + result.warnings.join(", ");
+      box.appendChild(w);
+    }
+    if (result.blocking_issues && result.blocking_issues.length) {
+      var b = document.createElement("p");
+      b.style.margin = "0.35rem 0 0";
+      b.style.fontSize = "0.78rem";
+      b.textContent = "Blocker: " + result.blocking_issues.join(", ");
+      box.appendChild(b);
+    }
   }
 
   function renderStoryboardLocalRenderPackageSummary(result) {
@@ -5086,6 +5151,7 @@ try {
       lastOpenAIImageLive: lastOpenAIImageLive,
       lastElevenLabsVoiceLive: lastElevenLabsVoiceLive,
       lastStoryboardRenderTimeline: lastStoryboardRenderTimeline,
+      lastStoryboardVoiceMixdown: lastStoryboardVoiceMixdown,
       lastStoryboardLocalRenderPackage: lastStoryboardLocalRenderPackage,
       lastPreview: lastPreview,
       lastReadiness: lastReadiness,
@@ -5432,6 +5498,7 @@ try {
         lastOpenAIImageLive: lastOpenAIImageLive,
         lastElevenLabsVoiceLive: lastElevenLabsVoiceLive,
         lastStoryboardRenderTimeline: lastStoryboardRenderTimeline,
+        lastStoryboardVoiceMixdown: lastStoryboardVoiceMixdown,
         lastStoryboardLocalRenderPackage: lastStoryboardLocalRenderPackage,
         lastPreview: lastPreview,
         lastReadiness: lastReadiness,
@@ -5731,6 +5798,7 @@ try {
     lastOpenAIImageLive = null;
     lastElevenLabsVoiceLive = null;
     lastStoryboardRenderTimeline = null;
+    lastStoryboardVoiceMixdown = null;
     lastStoryboardLocalRenderPackage = null;
     lastPreview = null;
     lastReadiness = null;
@@ -5745,6 +5813,7 @@ try {
     setOut("out-openai-image-live", null);
     setOut("out-elevenlabs-voice-live", null);
     setOut("out-storyboard-render-timeline", null);
+    setOut("out-storyboard-voice-mixdown", null);
     setOut("out-storyboard-local-render-package", null);
     setOut("out-hook", null);
     setOut("out-pq-score", null);
@@ -5769,6 +5838,7 @@ try {
     clearOpenAIImageLiveSummary();
     clearElevenLabsVoiceLiveSummary();
     clearStoryboardRenderTimelineSummary();
+    clearStoryboardVoiceMixdownSummary();
     clearStoryboardLocalRenderPackageSummary();
     setExportActionStatus("", "");
   }
@@ -6080,6 +6150,7 @@ try {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         render_timeline: lastStoryboardRenderTimeline,
+        voice_mixdown_result: lastStoryboardVoiceMixdown,
         run_id: "dashboard_storyboard_local_render",
         output_root: "output"
       })
@@ -6093,6 +6164,33 @@ try {
     openPanelAndScroll("coll-storyboard-local-render-package", "storyboard-local-render-package-summary");
     if (data.overall_status === "blocked") {
       throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Storyboard Local Render Package blockiert.");
+    }
+    return data;
+  }
+
+  async function runStoryboardVoiceMixdownOnlyInternal() {
+    if (!lastStoryboardRenderTimeline) {
+      await runStoryboardRenderTimelineOnlyInternal();
+    }
+    const data = await fetchJson("/story-engine/storyboard-voice-mixdown", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        render_timeline: lastStoryboardRenderTimeline,
+        run_id: "dashboard_storyboard_voice_mixdown",
+        output_root: "output",
+        dry_run: false
+      })
+    });
+    assertCompleteStoryResponse("/story-engine/storyboard-voice-mixdown", data, "storyboard_voice_mixdown");
+    lastStoryboardVoiceMixdown = data;
+    setOut("out-storyboard-voice-mixdown", data);
+    renderStoryboardVoiceMixdownSummary(data);
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    openPanelAndScroll("coll-storyboard-voice-mixdown", "storyboard-voice-mixdown-summary");
+    if (data.execution_status === "failed") {
+      throw new Error((data.blocking_issues && data.blocking_issues.join(", ")) || "Storyboard Voice Mixdown fehlgeschlagen.");
     }
     return data;
   }
@@ -6414,6 +6512,15 @@ try {
     } else {
       setOut("out-storyboard-render-timeline", null);
       clearStoryboardRenderTimelineSummary();
+    }
+    if (lastStoryboardVoiceMixdown) {
+      setOut("out-storyboard-voice-mixdown", lastStoryboardVoiceMixdown);
+      renderStoryboardVoiceMixdownSummary(lastStoryboardVoiceMixdown);
+      mergeWarnings(lastStoryboardVoiceMixdown.warnings || []);
+      mergeWarnings(lastStoryboardVoiceMixdown.blocking_issues || []);
+    } else {
+      setOut("out-storyboard-voice-mixdown", null);
+      clearStoryboardVoiceMixdownSummary();
     }
     if (lastStoryboardLocalRenderPackage) {
       setOut("out-storyboard-local-render-package", lastStoryboardLocalRenderPackage);
@@ -10335,6 +10442,14 @@ try {
     });
   };
 
+  $("btn-storyboard-voice-mixdown").onclick = async function(){
+    var btn = this;
+    clearWarnings();
+    await withActionButton(btn, "coll-storyboard-voice-mixdown", "storyboard-voice-mixdown-summary", async function() {
+      await runStoryboardVoiceMixdownOnlyInternal();
+    });
+  };
+
   $("btn-storyboard-local-render-package").onclick = async function(){
     var btn = this;
     clearWarnings();
@@ -10470,6 +10585,7 @@ try {
       lastOpenAIImageLive = pack.lastOpenAIImageLive || null;
       lastElevenLabsVoiceLive = pack.lastElevenLabsVoiceLive || null;
       lastStoryboardRenderTimeline = pack.lastStoryboardRenderTimeline || null;
+      lastStoryboardVoiceMixdown = pack.lastStoryboardVoiceMixdown || null;
       lastStoryboardLocalRenderPackage = pack.lastStoryboardLocalRenderPackage || null;
       lastPreview = pack.lastPreview || null;
       lastReadiness = pack.lastReadiness || null;

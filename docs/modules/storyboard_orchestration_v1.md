@@ -47,6 +47,8 @@ The Founder Dashboard exposes the endpoint as a plan-only step:
 - Output panel: `Asset Execution Stub`
 - Button: `Render Timeline bauen`
 - Output panel: `Storyboard Render Timeline`
+- Button: `Voice Mixdown`
+- Output panel: `Storyboard Voice Mixdown`
 - Button: `Local Render Package bauen`
 - Output panel: `Storyboard Local Render Package`
 - Full pipeline order: Generate -> Export Package -> Storyboard Plan -> Storyboard Readiness -> Asset Plan -> Asset Execution Stub -> Render Timeline -> Local Render Package -> Preview -> Readiness -> Optimize -> CTR -> Founder Summary -> Production Bundle
@@ -185,3 +187,27 @@ Output:
 - `render_recommendation`
 
 This step does not write manifest files and does not start ffmpeg. It prepares the handoff for a later local render step. Multiple per-scene Voice files are surfaced as `storyboard_render_voice_mixdown_required`, because the current renderer expects one global `audio_path`.
+
+## Storyboard Voice Mixdown V1
+
+`POST /story-engine/storyboard-voice-mixdown` merges scene-level Voice files from a `StoryboardRenderTimelineResult` into one local MP3 for the renderer.
+
+Input:
+
+- `render_timeline`
+- `run_id` (default `storyboard_voice_mixdown_v1`)
+- `output_root` (default `output`)
+- `dry_run` (default `false`)
+
+Output:
+
+- `execution_status`
+- `mixed_audio_path`
+- `output_exists`
+- `file_size_bytes`
+- `input_voice_paths`
+- `warnings`
+- `blocking_issues`
+- `render_recommendation`
+
+With `dry_run=true`, the endpoint only plans the mixdown path. With `dry_run=false`, it uses local ffmpeg concat when multiple scene MP3s exist, or passthrough-copy when exactly one Voice file exists. No provider calls, no Firestore writes, and no `GenerateScriptResponse` changes occur here.

@@ -17,6 +17,10 @@ from app.storyboard.local_render_package import (
     build_storyboard_local_render_package,
     build_storyboard_local_render_package_request,
 )
+from app.storyboard.voice_mixdown import (
+    execute_storyboard_voice_mixdown,
+    execute_storyboard_voice_mixdown_request,
+)
 from app.storyboard.schema import (
     AssetGenerationPlan,
     AssetGenerationPlanRequest,
@@ -38,6 +42,8 @@ from app.storyboard.schema import (
     StoryboardRenderTimelineResult,
     StoryboardRenderTimelineSegment,
     StoryboardScene,
+    StoryboardVoiceMixdownRequest,
+    StoryboardVoiceMixdownResult,
 )
 
 __all__ = [
@@ -61,6 +67,8 @@ __all__ = [
     "StoryboardRenderTimelineResult",
     "StoryboardRenderTimelineSegment",
     "StoryboardScene",
+    "StoryboardVoiceMixdownRequest",
+    "StoryboardVoiceMixdownResult",
     "build_asset_generation_plan",
     "build_asset_generation_plan_request",
     "build_storyboard_plan",
@@ -77,4 +85,6 @@ __all__ = [
     "execute_elevenlabs_voice_live_request",
     "execute_openai_image_live_from_asset_plan",
     "execute_openai_image_live_request",
+    "execute_storyboard_voice_mixdown",
+    "execute_storyboard_voice_mixdown_request",
 ]

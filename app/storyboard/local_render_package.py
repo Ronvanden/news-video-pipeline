@@ -14,6 +14,7 @@ from app.storyboard.schema import (
     StoryboardLocalRenderPackageRequest,
     StoryboardLocalRenderPackageResult,
     StoryboardRenderTimelineResult,
+    StoryboardVoiceMixdownResult,
 )
 
 
@@ -29,6 +30,7 @@ def _as_posix_path(path: Path) -> str:
 def build_storyboard_local_render_package(
     render_timeline: StoryboardRenderTimelineResult,
     *,
+    voice_mixdown_result: StoryboardVoiceMixdownResult | None = None,
     run_id: str = "storyboard_local_render_v1",
     output_root: str = "output",
 ) -> StoryboardLocalRenderPackageResult:
@@ -115,7 +117,9 @@ def build_storyboard_local_render_package(
         scenes.append(scene)
 
     audio_path = ""
-    if len(voice_paths) == 1:
+    if voice_mixdown_result and voice_mixdown_result.execution_status == "completed" and voice_mixdown_result.output_exists:
+        audio_path = str(voice_mixdown_result.mixed_audio_path or "").strip()
+    elif len(voice_paths) == 1:
         audio_path = voice_paths[0]
     elif len(voice_paths) > 1:
         warnings.append("storyboard_render_voice_mixdown_required")
@@ -174,6 +178,7 @@ def build_storyboard_local_render_package_request(
 
     return build_storyboard_local_render_package(
         req.render_timeline,
+        voice_mixdown_result=req.voice_mixdown_result,
         run_id=req.run_id,
         output_root=req.output_root,
     )
