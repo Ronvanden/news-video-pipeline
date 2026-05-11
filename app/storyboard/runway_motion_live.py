@@ -166,6 +166,7 @@ def execute_runway_motion_live_from_asset_plan(
         dest = _live_output_path(task, output_root=output_root, run_id=run_id)
         prompt = _norm(task.prompt)
         image_path = image_paths.get(int(task.scene_number or 0), "")
+        fallback_to_image = False
         if not image_path:
             tw.append(f"{task.task_id}_runway_source_image_missing")
             blockers.append(f"{task.task_id}_execution_failed")
@@ -190,7 +191,10 @@ def execute_runway_motion_live_from_asset_plan(
             runner_warnings = list(getattr(result, "warnings", []) or [])
         except Exception as exc:
             ok = False
+            fallback_to_image = isinstance(exc, FileNotFoundError)
             runner_warnings = [f"runway_motion_live_failed:{type(exc).__name__}:path={dest}"]
+            if fallback_to_image:
+                runner_warnings.append("runway_motion_no_clip_fallback_to_image")
         tw.extend(str(w) for w in runner_warnings if str(w or "").strip())
         output_exists, file_size_bytes = _file_info(dest)
         if ok and not output_exists:
@@ -199,10 +203,10 @@ def execute_runway_motion_live_from_asset_plan(
         if ok and (file_size_bytes is None or file_size_bytes <= 0):
             tw.append(f"runway_motion_live_empty_output:path={dest}")
             ok = False
-        status = "live_completed" if ok else "failed"
+        status = "live_completed" if ok else ("skipped" if fallback_to_image else "failed")
         if ok and output_exists:
             outputs.append(str(dest))
-        else:
+        elif not fallback_to_image:
             blockers.append(f"{task.task_id}_execution_failed")
         task_results.append(
             _task_result(
@@ -210,7 +214,7 @@ def execute_runway_motion_live_from_asset_plan(
                 status=status,
                 dest=dest,
                 warnings=tw,
-                blocking_issues=[f"{task.task_id}_execution_failed"] if not ok else [],
+                blocking_issues=[f"{task.task_id}_execution_failed"] if (not ok and not fallback_to_image) else [],
                 output_exists=output_exists,
                 file_size_bytes=file_size_bytes,
             )
