@@ -47,12 +47,13 @@ Der neue Storyboard-Orchestration-Strang ist weiterhin vom `GenerateScriptRespon
 
 - **OpenAI Image Live:** `POST /story-engine/openai-image-live-execution`, bis zu **10** bestätigte Image-Tasks pro Lauf, Output unter `output/storyboard_runs/<run_id>/<scene_id>/image.png`.
 - **ElevenLabs Voice Live:** `POST /story-engine/elevenlabs-voice-live-execution`, bis zu **10** bestätigte Voice-Tasks pro Lauf, Voice-ID über Request oder `ELEVENLABS_VOICE_ID`, Output unter `output/storyboard_runs/<run_id>/<scene_id>/voice.mp3`.
-- **Dashboard:** manuelle Buttons `OpenAI Bild erzeugen` und `ElevenLabs Voice erzeugen`; der automatische Full-Pipeline-Button startet weiterhin keine Live-Provider.
+- **Runway Motion Live:** `POST /story-engine/runway-motion-live-execution`, bis zu **1** bestätigter Motion-Task im Dashboard, Output unter `output/storyboard_runs/<run_id>/<scene_id>/motion.mp4`.
+- **Dashboard:** manuelle Buttons `OpenAI Bild erzeugen`, `ElevenLabs Voice erzeugen` und `Runway Motion erzeugen`; der automatische Full-Pipeline-Button startet weiterhin keine Live-Provider.
 - **Render Timeline:** `POST /story-engine/storyboard-render-timeline` baut einen renderbaren Handoff aus Storyboard, Asset Plan und optionalen Live-Ergebnissen. Motion ohne Clip-Pfad wird `skipped` mit `motion_requested_but_no_clip_fallback_to_image`, nicht Placeholder.
 - **Voice Mixdown:** `POST /story-engine/storyboard-voice-mixdown` verbindet mehrere lokale ElevenLabs-Szenen-MP3s per ffmpeg zu einer Renderer-Datei `storyboard_voice_mixdown.mp3` oder plant den Pfad im Dry-Run.
 - **Local Render Package:** `POST /story-engine/storyboard-local-render-package` übersetzt die Storyboard Render Timeline in `asset_manifest`-/`timeline_manifest`-Shapes, geplante Manifest-Pfade, `final_video_path` und `render_command_hint`; schreibt nichts und startet keinen Renderer.
 - **Local Render Execute:** `POST /story-engine/storyboard-local-render-execute` schreibt die geplanten Manifeste und startet den vorhandenen lokalen ffmpeg-Renderer kontrolliert aus dem Storyboard-Strang.
-- **Nächster Anschluss:** Motion/Runway sauber in denselben lokalen Renderpfad einklinken und danach Dashboard-Artefakt-Links für das finale Video ergänzen.
+- **Nächster Anschluss:** Dashboard-Artefakt-Links für das finale Video ergänzen und danach optional mehr als einen Motion-Clip kontrolliert freischalten.
 
 ---
 
@@ -2471,6 +2472,10 @@ Neue trockene Ausführungsschicht `POST /story-engine/asset-execution-stub`: sim
 # OpenAI Image Live Execution V1
 
 Erster echter Provider-Pfad für die Storyboard-Kette: `POST /story-engine/openai-image-live-execution` führt bis zu zehn `image`-Tasks aus einem `AssetGenerationPlan` über den bestehenden OpenAI-Image-Connector aus. Erfordert `confirm_provider_costs=true`, ist auf `max_live_image_tasks=10` begrenzt, nutzt standardmäßig `gpt-image-2` und `1024x1024`, und schreibt Bilder nach `output/storyboard_runs/<run_id>/<scene_id>/image.png`. Dashboard ergänzt den manuellen Button `OpenAI Bild erzeugen` und Checkbox `OpenAI Image Kosten bestätigen`; der automatische Full-Pipeline-Button bleibt plan-only/safe und startet diesen Live-Call nicht. Keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests mocken den Connector: `tests/test_openai_image_live_execution.py`, `tests/test_phase10_founder_dashboard.py`.
+
+# Runway Motion Live Execution V1
+
+Erster echter Motion-Provider-Pfad für die Storyboard-Kette: `POST /story-engine/runway-motion-live-execution` führt bestätigte `video`-Tasks aus einem `AssetGenerationPlan` über den bestehenden Runway Image-to-Video-Connector aus. Erfordert `confirm_provider_costs=true`, ein bereits erfolgreiches Live-Bild derselben Szene und ist im Dashboard auf `max_live_motion_tasks=1` begrenzt. Output: `output/storyboard_runs/<run_id>/<scene_id>/motion.mp4`. Dashboard ergänzt den manuellen Button `Runway Motion erzeugen` und Checkbox `Runway Motion Kosten bestätigen`; der automatische Full-Pipeline-Button bleibt plan-only/safe und startet diesen Live-Call nicht. Erfolgreiche Motion-Ergebnisse werden an `POST /story-engine/storyboard-render-timeline` als `motion_execution_result` übergeben. Keine Firestore-Writes, keine Änderung am `GenerateScriptResponse`-Vertrag. Tests mocken den Connector: `tests/test_runway_motion_live_execution.py`, `tests/test_phase10_founder_dashboard.py`.
 
 # Storyboard Local Render Package V1
 

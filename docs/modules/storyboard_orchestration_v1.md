@@ -147,6 +147,21 @@ Safety defaults:
 
 The Founder Dashboard exposes this as a manual action only: `ElevenLabs Voice erzeugen` plus the `ElevenLabs Voice Kosten bestätigen` checkbox. The automatic full-pipeline button still stops at plan/stub execution and does not start live voice providers.
 
+## Runway Motion Live V1
+
+`POST /story-engine/runway-motion-live-execution` is the first live motion provider path for the Storyboard chain. It executes capped `video` tasks from an `AssetGenerationPlan` through the existing Runway image-to-video connector.
+
+Safety defaults:
+
+- requires `confirm_provider_costs=true`
+- requires a completed live image result for the same scene
+- `max_live_motion_tasks` is capped at `2`; the dashboard uses `1`
+- default clip duration: `5` seconds
+- output root: `output`
+- output path pattern: `output/storyboard_runs/<run_id>/<scene_id>/motion.mp4`
+
+The Founder Dashboard exposes this as a manual action only: `Runway Motion erzeugen` plus the `Runway Motion Kosten bestätigen` checkbox. The automatic full-pipeline button still does not start live motion providers. Successful results are passed into `POST /story-engine/storyboard-render-timeline` as `motion_execution_result`, so scenes with live clips switch from `image_only` fallback to `video_clip`.
+
 ## Storyboard Render Timeline V1
 
 `POST /story-engine/storyboard-render-timeline` combines:

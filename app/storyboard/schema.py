@@ -214,6 +214,18 @@ class ElevenLabsVoiceLiveExecutionRequest(BaseModel):
     elevenlabs_timeout_seconds: float = Field(default=120.0, ge=15.0, le=600.0)
 
 
+class RunwayMotionLiveExecutionRequest(BaseModel):
+    """Input for live Runway motion execution from storyboard video tasks."""
+
+    asset_generation_plan: AssetGenerationPlan
+    image_execution_result: Optional[AssetExecutionResult] = None
+    confirm_provider_costs: bool = False
+    max_live_motion_tasks: int = Field(default=1, ge=0, le=2)
+    run_id: str = "storyboard_runway_motion_v1"
+    output_root: str = "output"
+    runway_duration_seconds: int = Field(default=5, ge=5, le=10)
+
+
 class StoryboardRenderTimelineSegment(BaseModel):
     """One render-timeline segment derived from storyboard plus generated assets."""
 

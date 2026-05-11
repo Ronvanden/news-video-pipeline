@@ -13,6 +13,10 @@ from app.storyboard.elevenlabs_voice_live import (
 from app.storyboard.openai_image_live import execute_openai_image_live_from_asset_plan, execute_openai_image_live_request
 from app.storyboard.readiness import evaluate_storyboard_readiness, evaluate_storyboard_readiness_request
 from app.storyboard.render_timeline import build_storyboard_render_timeline, build_storyboard_render_timeline_request
+from app.storyboard.runway_motion_live import (
+    execute_runway_motion_live_from_asset_plan,
+    execute_runway_motion_live_request,
+)
 from app.storyboard.local_render_package import (
     build_storyboard_local_render_package,
     build_storyboard_local_render_package_request,
@@ -34,6 +38,7 @@ from app.storyboard.schema import (
     AssetTaskExecutionResult,
     ElevenLabsVoiceLiveExecutionRequest,
     OpenAIImageLiveExecutionRequest,
+    RunwayMotionLiveExecutionRequest,
     StoryboardBuildRequest,
     StoryboardChapterInput,
     StoryboardLocalRenderPackageRequest,
@@ -61,6 +66,7 @@ __all__ = [
     "AssetTaskExecutionResult",
     "ElevenLabsVoiceLiveExecutionRequest",
     "OpenAIImageLiveExecutionRequest",
+    "RunwayMotionLiveExecutionRequest",
     "StoryboardBuildRequest",
     "StoryboardChapterInput",
     "StoryboardLocalRenderPackageRequest",
@@ -93,6 +99,8 @@ __all__ = [
     "execute_elevenlabs_voice_live_request",
     "execute_openai_image_live_from_asset_plan",
     "execute_openai_image_live_request",
+    "execute_runway_motion_live_from_asset_plan",
+    "execute_runway_motion_live_request",
     "execute_storyboard_voice_mixdown",
     "execute_storyboard_voice_mixdown_request",
     "execute_storyboard_local_render",

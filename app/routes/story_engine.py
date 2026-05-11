@@ -31,6 +31,7 @@ from app.storyboard import (
     AssetExecutionResult,
     ElevenLabsVoiceLiveExecutionRequest,
     OpenAIImageLiveExecutionRequest,
+    RunwayMotionLiveExecutionRequest,
     StoryboardBuildRequest,
     StoryboardLocalRenderPackageRequest,
     StoryboardLocalRenderPackageResult,
@@ -51,6 +52,7 @@ from app.storyboard import (
     execute_asset_generation_plan_stub_request,
     execute_elevenlabs_voice_live_request,
     execute_openai_image_live_request,
+    execute_runway_motion_live_request,
     execute_storyboard_local_render_request,
     execute_storyboard_voice_mixdown_request,
 )
@@ -270,6 +272,20 @@ async def story_engine_elevenlabs_voice_live_execution(req: ElevenLabsVoiceLiveE
     under the requested output root; no Firestore writes and no GenerateScriptResponse changes.
     """
     return execute_elevenlabs_voice_live_request(req)
+
+
+@router.post(
+    "/story-engine/runway-motion-live-execution",
+    response_model=AssetExecutionResult,
+)
+async def story_engine_runway_motion_live_execution(req: RunwayMotionLiveExecutionRequest) -> AssetExecutionResult:
+    """
+    Live storyboard motion path: Runway image-to-video for capped video tasks.
+
+    Requires explicit provider-cost confirmation and live image results. No
+    Firestore writes and no GenerateScriptResponse changes.
+    """
+    return execute_runway_motion_live_request(req)
 
 
 @router.post(
