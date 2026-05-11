@@ -6,11 +6,12 @@ dashboard wiring. Existing production flows can adopt this module later.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-import re
+from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Tuple
+import unicodedata
 
 from app.visual_plan.presets import get_visual_prompt_control_options, normalize_visual_prompt_controls
+from app.visual_plan.prompt_anatomy import VisualPromptAnatomy, build_visual_prompt_anatomy
 from app.visual_plan.visual_no_text import append_no_text_guard
 
 
@@ -47,6 +48,7 @@ class VisualPromptEngineResult:
     prompt_quality_score: int = 0
     prompt_risk_flags: List[str] = field(default_factory=list)
     normalized_controls: Dict[str, str] = field(default_factory=dict)
+    visual_prompt_anatomy: Dict[str, Any] = field(default_factory=dict)
 
 
 def _norm_space(s: str) -> str:
@@ -69,13 +71,26 @@ def _looks_like_internal_hook_title(title: str) -> bool:
     t = _norm_space(title).lower()
     if not t:
         return False
-    t_ascii = t.replace("ä", "ae").replace("ö", "oe").replace("ü", "ue").replace("ß", "ss")
+    t_ascii = "".join(
+        ch for ch in unicodedata.normalize("NFKD", t) if not unicodedata.combining(ch)
+    )
+    t_ascii = (
+        t_ascii.replace("ä", "ae")
+        .replace("ö", "oe")
+        .replace("ü", "ue")
+        .replace("ß", "ss")
+        .replace("Ã¤", "ae")
+        .replace("Ã¶", "oe")
+        .replace("Ã¼", "ue")
+        .replace("ÃŸ", "ss")
+    )
     return t_ascii in {
         "hook",
         "the hook",
         "opening hook",
         "intro hook",
         "viral hook",
+        "aufhanger",
         "aufhaenger",
         "auftakt-hook",
         "intro-hook",
@@ -108,16 +123,6 @@ def _control_payload(ctx: VisualPromptEngineContext) -> Dict[str, Any]:
     }
 
 
-def _narration_excerpt(narration: str, detail_level: str) -> str:
-    text = _norm_space(narration)
-    if not text:
-        return ""
-    cap = {"basic": 120, "enhanced": 260, "deep": 420}.get(detail_level, 260)
-    if len(text) <= cap:
-        return text
-    return text[: max(1, cap - 3)].rsplit(" ", 1)[0].strip() + "..."
-
-
 def _style_phrase(preset: Dict[str, Any], controls: Dict[str, str]) -> str:
     preset_label = str(preset.get("label") or controls.get("visual_preset") or "Visual Preset")
     tags = [str(t) for t in (preset.get("style_tags") or []) if str(t).strip()]
@@ -126,48 +131,54 @@ def _style_phrase(preset: Dict[str, Any], controls: Dict[str, str]) -> str:
     return preset_label
 
 
-def _negative_prompt(existing: str, preset: Dict[str, Any], guards: List[str]) -> str:
-    parts: List[str] = []
-    for source in [existing, "; ".join(str(t) for t in (preset.get("negative_tags") or [])), "; ".join(guards)]:
-        for piece in re.split(r"[;,]", source or ""):
-            p = _norm_space(piece)
-            if p:
-                parts.append(p)
-    return "; ".join(_dedupe(parts))
+def _negative_prompt_from_anatomy(anatomy: VisualPromptAnatomy) -> str:
+    return "; ".join(_dedupe(list(anatomy.negative_constraints or [])))
 
 
-def _raw_prompt(
+def _raw_prompt_from_anatomy(
     *,
-    visual_title: str,
-    narration_excerpt: str,
+    anatomy: VisualPromptAnatomy,
     style_phrase: str,
     ctx: VisualPromptEngineContext,
     controls: Dict[str, str],
 ) -> Tuple[str, List[str]]:
     risk_flags: List[str] = []
-    title = visual_title or "untitled scene"
+    title = anatomy.subject_description or "untitled scene"
     template = _norm_space(ctx.video_template) or "generic video"
     role_raw = _norm_space(ctx.beat_role)
     role = _HOOK_VISUAL_LABEL if _looks_like_internal_hook_title(role_raw) else (role_raw or "scene")
     provider_target = controls.get("provider_target", "generic")
     consistency = controls.get("visual_consistency_mode", "one_style_per_video")
 
-    if narration_excerpt:
-        subject = narration_excerpt
+    if anatomy.source_summary:
+        subject = anatomy.source_summary
     else:
         subject = "grounded editorial scene based on the scene title"
         risk_flags.append("sparse_narration")
 
-    if not visual_title and not narration_excerpt:
+    if not anatomy.subject_description and not anatomy.source_summary:
         risk_flags.append("generic_visual_fallback")
 
     prompt = (
         f"{style_phrase}. Visual scene: {title}. Story context: {subject}. "
         f"Template: {template}. Beat role: {role}. "
-        f"Composition: concrete editorial image, clear focal subject, believable environment, natural framing. "
+        f"Composition: {anatomy.composition or 'concrete editorial image, clear focal subject, believable environment, natural framing'}. "
         f"Provider target: {provider_target}. Consistency mode: {consistency}."
     )
     return _norm_space(prompt), risk_flags
+
+
+def _anatomy_risk_flags(anatomy: VisualPromptAnatomy) -> List[str]:
+    flags: List[str] = []
+    if not _norm_space(anatomy.subject_description):
+        flags.append("subject_missing")
+    if not _norm_space(anatomy.environment):
+        flags.append("environment_missing")
+    if not anatomy.negative_constraints:
+        flags.append("negative_constraints_missing")
+    if not _norm_space(anatomy.text_safety):
+        flags.append("text_safety_missing")
+    return flags
 
 
 def _quality_score(raw_prompt: str, negative_prompt: str, risk_flags: List[str], warnings: List[str]) -> int:
@@ -198,19 +209,26 @@ def build_visual_prompt_v1(context: VisualPromptEngineContext) -> VisualPromptEn
     preset = _preset_by_id(controls.get("visual_preset", ""))
     style_profile = controls.get("visual_preset", "")
     style_phrase = _style_phrase(preset, controls)
-    narration_excerpt = _narration_excerpt(context.narration, controls.get("prompt_detail_level", "enhanced"))
-    raw_prompt, risk_flags = _raw_prompt(
-        visual_title=visual_title,
-        narration_excerpt=narration_excerpt,
+    anatomy = build_visual_prompt_anatomy(
+        context=context,
+        normalized_controls=controls,
+        sanitized_title_or_label=visual_title,
+        sanitizer_guards=sanitizer_guards,
+        sanitizer_warnings=sanitizer_warnings,
+        preset=preset,
+    )
+    raw_prompt, risk_flags = _raw_prompt_from_anatomy(
+        anatomy=anatomy,
         style_phrase=style_phrase,
         ctx=context,
         controls=controls,
     )
+    risk_flags.extend(_anatomy_risk_flags(anatomy))
 
-    if "symbolic" in raw_prompt.lower() and not narration_excerpt:
+    if "symbolic" in raw_prompt.lower() and not anatomy.source_summary:
         risk_flags.append("generic_visual_fallback")
 
-    negative = _negative_prompt(context.existing_negative_prompt, preset, sanitizer_guards)
+    negative = _negative_prompt_from_anatomy(anatomy)
     effective = append_no_text_guard(raw_prompt)
     risk_flags = _dedupe(risk_flags)
     warnings = _dedupe(warnings)
@@ -225,4 +243,5 @@ def build_visual_prompt_v1(context: VisualPromptEngineContext) -> VisualPromptEn
         prompt_quality_score=score,
         prompt_risk_flags=risk_flags,
         normalized_controls=controls,
+        visual_prompt_anatomy=asdict(anatomy),
     )
