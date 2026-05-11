@@ -4415,6 +4415,99 @@ try {
     return out;
   }
 
+  function isStoryboardToleratedWarning(w, review) {
+    var s = String(w || "");
+    if (!s) return false;
+    var gapOk = review && review.audio_gap_tolerated === true;
+    if (s === "audio_shorter_than_timeline_padded_or_continued") return gapOk;
+    if (s.indexOf("openai_image_provider:") === 0 || s.indexOf("openai_image_model:") === 0 || s.indexOf("openai_image_transport:") === 0 || s.indexOf("openai_image_size:") === 0) return true;
+    if (s.indexOf("elevenlabs_provider:") === 0) return true;
+    if (s === "runway_motion_live_no_video_tasks" || s.indexOf("runway_motion_optional_") === 0) return true;
+    return false;
+  }
+
+  function storyboardActiveWarnings(warnings, review) {
+    return (warnings || []).filter(function(w) { return !isStoryboardToleratedWarning(w, review); });
+  }
+
+  function storyboardToleratedWarnings(warnings, review) {
+    return (warnings || []).filter(function(w) { return isStoryboardToleratedWarning(w, review); });
+  }
+
+  function storyboardReviewOperatorHint(status) {
+    if (status === "ready") return "Ready: final video exists, assets and voice are OK, no relevant warnings.";
+    if (status === "ready_with_warnings") return "Ready with warnings: final video exists; remaining warnings are tolerated for this review.";
+    if (status === "warning") return "Warning: final video exists, but this run needs human attention before production greenlight.";
+    if (status === "blocked") return "Blocked: final video is missing or a blocking condition is present.";
+    return "Review status unknown: inspect metrics, warnings, and blockers.";
+  }
+
+  function storyboardAudioGapStatus(result) {
+    if (!result || result.timeline_seconds == null || result.audio_duration_seconds == null || result.audio_gap_seconds == null || result.audio_gap_ratio == null) return "unknown";
+    if (Number(result.audio_gap_seconds) <= 0) return "fits";
+    if (Number(result.audio_gap_seconds) <= 3 || Number(result.audio_gap_ratio) <= 0.05) return "tolerated";
+    return "critical";
+  }
+
+  function fmtStoryboardSeconds(v) {
+    return v == null || Number.isNaN(Number(v)) ? "unknown" : String(Math.round(Number(v) * 100) / 100) + "s";
+  }
+
+  function renderStoryboardTimelinePreview(result) {
+    var wrap = document.createElement("div");
+    wrap.setAttribute("data-storyboard-timeline-preview", "1");
+    wrap.style.margin = "0.55rem 0 0";
+    wrap.style.padding = "0.55rem 0.65rem";
+    wrap.style.border = "1px solid var(--border)";
+    wrap.style.borderRadius = "8px";
+    wrap.style.background = "rgba(255,255,255,0.03)";
+    var title = document.createElement("strong");
+    title.textContent = "Timeline Preview";
+    wrap.appendChild(title);
+    var status = storyboardAudioGapStatus(result);
+    var line = document.createElement("p");
+    line.style.margin = "0.3rem 0 0.45rem";
+    line.style.fontSize = "0.78rem";
+    line.textContent = "Timeline-Länge: " + fmtStoryboardSeconds(result.timeline_seconds) + " · Audio-Länge: " + fmtStoryboardSeconds(result.audio_duration_seconds) + " · Audio-Gap: " + fmtStoryboardSeconds(result.audio_gap_seconds) + " · Gap-Ratio: " + (result.audio_gap_ratio == null ? "unknown" : String(Math.round(Number(result.audio_gap_ratio) * 1000) / 10) + "%") + " · Status: " + status;
+    wrap.appendChild(line);
+    if (status === "unknown") {
+      var missing = document.createElement("p");
+      missing.style.margin = "0.2rem 0 0";
+      missing.style.fontSize = "0.76rem";
+      missing.textContent = "Timeline Preview: Metriken fehlen oder Audio-Dauer ist nicht zuverlässig verfügbar.";
+      wrap.appendChild(missing);
+      return wrap;
+    }
+    var timelineTrack = document.createElement("div");
+    timelineTrack.setAttribute("aria-label", "Video timeline track");
+    timelineTrack.style.height = "10px";
+    timelineTrack.style.borderRadius = "999px";
+    timelineTrack.style.background = "rgba(74,222,128,0.35)";
+    timelineTrack.style.margin = "0.35rem 0";
+    wrap.appendChild(timelineTrack);
+    var audioTrack = document.createElement("div");
+    audioTrack.setAttribute("aria-label", "Audio timeline track");
+    audioTrack.style.height = "10px";
+    audioTrack.style.borderRadius = "999px";
+    audioTrack.style.background = "rgba(255,255,255,0.08)";
+    audioTrack.style.overflow = "hidden";
+    audioTrack.style.display = "flex";
+    var timeline = Math.max(Number(result.timeline_seconds || 0), 0.001);
+    var audioPct = Math.max(0, Math.min(100, (Number(result.audio_duration_seconds || 0) / timeline) * 100));
+    var audioFill = document.createElement("span");
+    audioFill.style.display = "block";
+    audioFill.style.width = String(audioPct) + "%";
+    audioFill.style.background = status === "critical" ? "rgba(251,191,36,0.72)" : "rgba(96,165,250,0.72)";
+    var gapFill = document.createElement("span");
+    gapFill.style.display = "block";
+    gapFill.style.flex = "1";
+    gapFill.style.background = status === "critical" ? "rgba(248,113,113,0.50)" : "rgba(251,191,36,0.35)";
+    audioTrack.appendChild(audioFill);
+    audioTrack.appendChild(gapFill);
+    wrap.appendChild(audioTrack);
+    return wrap;
+  }
+
   function buildStoryboardLiveRunReview() {
     var blockers = collectResultBlockers();
     var warnings = collectResultWarnings();
@@ -4432,8 +4525,11 @@ try {
       Number((lastElevenLabsVoiceLive && lastElevenLabsVoiceLive.estimated_provider_calls) || 0) +
       Number((lastRunwayMotionLive && lastRunwayMotionLive.estimated_provider_calls) || 0);
     var audioGapTolerated = audioGapSeconds != null && (audioGapSeconds <= 3 || (audioGapRatio != null && audioGapRatio <= 0.05));
-    var reviewStatus = blockers.length ? "blocked" : (finalExists && imageFiles > 0 && voiceFiles > 0 ? (warnings.length ? (audioGapTolerated ? "ready_with_warnings" : "warning") : "ready") : "warning");
-    return {
+    var draftReview = { audio_gap_tolerated: audioGapTolerated };
+    var toleratedWarnings = storyboardToleratedWarnings(warnings, draftReview);
+    var activeWarnings = storyboardActiveWarnings(warnings, draftReview);
+    var reviewStatus = (blockers.length || !finalExists) ? "blocked" : (imageFiles > 0 && voiceFiles > 0 ? (activeWarnings.length ? "warning" : (toleratedWarnings.length ? "ready_with_warnings" : "ready")) : "warning");
+    var review = {
       review_version: "storyboard_live_run_review_v1",
       review_status: reviewStatus,
       image_files: imageFiles,
@@ -4447,13 +4543,19 @@ try {
       audio_duration_seconds: audioSeconds,
       audio_gap_seconds: audioGapSeconds,
       audio_gap_ratio: audioGapRatio,
+      audio_gap_tolerated: audioGapTolerated,
+      audio_gap_status: storyboardAudioGapStatus({ timeline_seconds: timelineSeconds, audio_duration_seconds: audioSeconds, audio_gap_seconds: audioGapSeconds, audio_gap_ratio: audioGapRatio }),
       render_output_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.render_output_manifest_path) || ""),
       timeline_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.timeline_manifest_path) || ""),
       asset_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.asset_manifest_path) || ""),
       warnings: warnings,
+      tolerated_warnings: toleratedWarnings,
+      active_warnings: activeWarnings,
       blocking_issues: blockers,
       next_action: blockers.length ? "Blocker beheben und Live Production Run erneut starten." : (finalExists ? "Finales Video im Review prüfen." : "Local Render Execute prüfen; Final Video fehlt.")
     };
+    review.operator_hint = storyboardReviewOperatorHint(review.review_status);
+    return review;
   }
 
   function renderStoryboardLiveRunReviewSummary(result) {
@@ -4469,11 +4571,17 @@ try {
     meta.style.fontSize = "0.8rem";
     meta.textContent = "Status: " + String(result.review_status || "—") + " · Bilder: " + String(result.image_files || 0) + " · Voice: " + String(result.voice_files || 0) + " · Motion: " + String(result.motion_clips || 0) + " · Provider Calls: " + String(result.provider_calls_estimated || 0);
     box.appendChild(meta);
+    var hint = document.createElement("p");
+    hint.style.margin = "0.15rem 0 0";
+    hint.style.fontSize = "0.78rem";
+    hint.textContent = String(result.operator_hint || storyboardReviewOperatorHint(result.review_status));
+    box.appendChild(hint);
     var metrics = document.createElement("p");
     metrics.style.margin = "0.15rem 0 0";
     metrics.style.fontSize = "0.78rem";
     metrics.textContent = "timeline_seconds: " + String(result.timeline_seconds != null ? result.timeline_seconds : "—") + " · audio_duration_seconds: " + String(result.audio_duration_seconds != null ? result.audio_duration_seconds : "—") + " · audio_gap_seconds: " + String(result.audio_gap_seconds != null ? result.audio_gap_seconds : "—") + " · audio_gap_ratio: " + String(result.audio_gap_ratio != null ? result.audio_gap_ratio : "—");
     box.appendChild(metrics);
+    box.appendChild(renderStoryboardTimelinePreview(result));
     if (result.review_status === "ready_with_warnings") {
       var tol = document.createElement("p");
       tol.style.margin = "0.15rem 0 0";
@@ -4521,6 +4629,20 @@ try {
       w.style.fontSize = "0.78rem";
       w.textContent = "Warnings: " + result.warnings.join(", ");
       box.appendChild(w);
+    }
+    if (result.tolerated_warnings && result.tolerated_warnings.length) {
+      var tw = document.createElement("p");
+      tw.style.margin = "0.35rem 0 0";
+      tw.style.fontSize = "0.78rem";
+      tw.textContent = "Tolerierte Warnungen: " + result.tolerated_warnings.join(", ");
+      box.appendChild(tw);
+    }
+    if (result.active_warnings && result.active_warnings.length) {
+      var aw = document.createElement("p");
+      aw.style.margin = "0.35rem 0 0";
+      aw.style.fontSize = "0.78rem";
+      aw.textContent = "Aktive Warnungen: " + result.active_warnings.join(", ");
+      box.appendChild(aw);
     }
     if (result.blocking_issues && result.blocking_issues.length) {
       var b = document.createElement("p");

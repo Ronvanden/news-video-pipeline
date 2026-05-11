@@ -68,6 +68,14 @@ Expected successful signals:
 
 The `Storyboard Live Run Review` panel summarizes image files, voice files, motion clips, estimated provider calls, warnings, blockers, and the final video path. If the final MP4 exists, the dashboard embeds it and exposes read-only artifact links.
 
+## Gold Readiness Review
+
+- `ready`: final video exists, image/voice assets are present, and no relevant warnings remain.
+- `ready_with_warnings`: final video exists and remaining warnings are tolerated for review, such as a small audio gap.
+- `warning`: final video exists, but active warnings need human attention before production greenlight.
+- `blocked`: final video is missing or a blocking condition is present.
+- Audio review uses `timeline_seconds`, `audio_duration_seconds`, `audio_gap_seconds`, and `audio_gap_ratio`; gaps up to 3 seconds or 5 percent are treated as tolerated, larger gaps stay active or blocking.
+
 ## Guard Behavior
 
 - If any cost checkbox is missing, the run aborts before live provider calls.
