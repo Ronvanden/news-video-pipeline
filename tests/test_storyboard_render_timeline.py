@@ -49,8 +49,12 @@ def _asset_task(scene_number: int, kind: str, path: str) -> AssetGenerationTask:
 
 
 def _exec_result(scene_number: int, kind: str, path: str, exists: bool = True) -> AssetExecutionResult:
+    return _exec_result_many([(scene_number, kind, path, exists)])
+
+
+def _exec_result_many(items: list[tuple[int, str, str, bool]]) -> AssetExecutionResult:
     return AssetExecutionResult(
-        execution_version=f"{kind}_live",
+        execution_version="multi_live",
         execution_status="live_completed",
         dry_run=False,
         task_results=[
@@ -65,8 +69,9 @@ def _exec_result(scene_number: int, kind: str, path: str, exists: bool = True) -
                 scene_number=scene_number,
                 provider=kind,
             )
+            for scene_number, kind, path, exists in items
         ],
-        estimated_outputs=[path] if exists else [],
+        estimated_outputs=[path for _scene_number, _kind, path, exists in items if exists],
     )
 
 
@@ -98,6 +103,43 @@ def test_motion_requested_without_clip_is_image_fallback_not_placeholder():
     assert out.segments[0].status == "image_fallback"
     assert out.segments[0].motion_status == "skipped"
     assert "motion_requested_but_no_clip_fallback_to_image" in out.warnings
+
+
+def test_multiple_live_motion_clips_enter_render_timeline():
+    scenes = [
+        _scene(scene_number=1, chapter_title="Scene One", asset_type="image_to_video_candidate"),
+        _scene(scene_number=2, chapter_title="Scene Two", asset_type="image_to_video_candidate"),
+        _scene(scene_number=3, chapter_title="Scene Three", asset_type="image_to_video_candidate"),
+    ]
+    out = build_storyboard_render_timeline(
+        _plan(*scenes),
+        image_execution_result=_exec_result_many(
+            [
+                (1, "image", "output/scene_001/image.png", True),
+                (2, "image", "output/scene_002/image.png", True),
+                (3, "image", "output/scene_003/image.png", True),
+            ]
+        ),
+        voice_execution_result=_exec_result_many(
+            [
+                (1, "voice", "output/scene_001/voice.mp3", True),
+                (2, "voice", "output/scene_002/voice.mp3", True),
+                (3, "voice", "output/scene_003/voice.mp3", True),
+            ]
+        ),
+        motion_execution_result=_exec_result_many(
+            [
+                (1, "video", "output/scene_001/motion.mp4", True),
+                (2, "video", "output/scene_002/motion.mp4", True),
+                (3, "video", "output/scene_003/motion.mp4", True),
+            ]
+        ),
+    )
+
+    assert out.overall_status == "ready"
+    assert out.video_segments_ready == 3
+    assert out.motion_segments_skipped == 0
+    assert [segment.render_mode for segment in out.segments] == ["video_clip", "video_clip", "video_clip"]
 
 
 def test_missing_image_blocks_render_timeline():

@@ -109,7 +109,7 @@ def execute_runway_motion_live_from_asset_plan(
     *,
     image_execution_result: Optional[AssetExecutionResult] = None,
     confirm_provider_costs: bool,
-    max_live_motion_tasks: int = 1,
+    max_live_motion_tasks: int = 3,
     run_id: str = "storyboard_runway_motion_v1",
     output_root: str = "output",
     runway_duration_seconds: int = 5,
@@ -151,7 +151,7 @@ def execute_runway_motion_live_from_asset_plan(
         )
 
     image_paths = _image_paths_by_scene(image_execution_result)
-    limit = max(0, min(2, int(max_live_motion_tasks)))
+    limit = max(0, min(3, int(max_live_motion_tasks)))
     selected = tasks[:limit]
     skipped = tasks[limit:]
     task_results: List[AssetTaskExecutionResult] = []

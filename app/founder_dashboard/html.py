@@ -3114,7 +3114,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       </div>
       <div class="row-check" style="margin-top:0.35rem">
         <input type="checkbox" id="storyboard-runway-confirm-costs"/>
-        <label for="storyboard-runway-confirm-costs" style="margin:0">Runway Motion Kosten bestÃ¤tigen (max. 1 Motion Task)</label>
+        <label for="storyboard-runway-confirm-costs" style="margin:0">Runway Motion Kosten bestÃ¤tigen (max. 3 Motion Tasks)</label>
       </div>
       <div class="actions">
         <button type="button" id="btn-batch-compare" data-label="Batch Template Compare">Batch Template Compare</button>
@@ -6329,7 +6329,7 @@ try {
         asset_generation_plan: lastAssetPlan,
         image_execution_result: lastOpenAIImageLive,
         confirm_provider_costs: confirmed,
-        max_live_motion_tasks: 1,
+        max_live_motion_tasks: 3,
         run_id: "dashboard_storyboard_runway_motion",
         output_root: "output",
         runway_duration_seconds: 5

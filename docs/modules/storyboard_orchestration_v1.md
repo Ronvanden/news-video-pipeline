@@ -155,7 +155,7 @@ Safety defaults:
 
 - requires `confirm_provider_costs=true`
 - requires a completed live image result for the same scene
-- `max_live_motion_tasks` is capped at `2`; the dashboard uses `1`
+- `max_live_motion_tasks` is capped at `3`; the dashboard uses `3`
 - default clip duration: `5` seconds
 - output root: `output`
 - output path pattern: `output/storyboard_runs/<run_id>/<scene_id>/motion.mp4`

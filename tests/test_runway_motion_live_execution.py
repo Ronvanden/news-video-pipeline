@@ -28,23 +28,28 @@ def _plan() -> AssetGenerationPlan:
 
 
 def _image_result(path: Path) -> AssetExecutionResult:
+    return _image_result_many([(1, path)])
+
+
+def _image_result_many(items: list[tuple[int, Path]]) -> AssetExecutionResult:
     return AssetExecutionResult(
         execution_version="openai_image_live_execution_v1",
         execution_status="live_completed",
         dry_run=False,
         task_results=[
             AssetTaskExecutionResult(
-                task_id="asset_scene_001_image",
+                task_id=f"asset_scene_{scene_number:03d}_image",
                 asset_type="image",
                 provider_hint="openai_image",
                 execution_status="live_completed",
                 output_path=str(path),
                 planned_output_path=str(path),
                 output_exists=True,
-                scene_id="scene_001",
-                scene_number=1,
+                scene_id=f"scene_{scene_number:03d}",
+                scene_number=scene_number,
                 provider="openai_image",
             )
+            for scene_number, path in items
         ],
     )
 
@@ -131,3 +136,45 @@ def test_runway_motion_caps_tasks(tmp_path: Path):
     assert len(result.task_results) == 2
     assert result.task_results[1].execution_status == "skipped"
     assert "asset_scene_002_video_skipped_max_live_motion_tasks_1" in result.warnings
+
+
+def test_runway_motion_live_can_execute_three_capped_clips(tmp_path: Path):
+    plan = _plan()
+    for scene_number in (2, 3):
+        plan.tasks.append(
+            AssetGenerationTask(
+                task_id=f"asset_scene_{scene_number:03d}_video",
+                scene_id=f"scene_{scene_number:03d}",
+                scene_number=scene_number,
+                asset_type="video",
+                provider_hint="runway",
+                prompt=f"Motion prompt {scene_number}.",
+                output_path=f"planned/scene_{scene_number:03d}/motion.mp4",
+            )
+        )
+
+    images = []
+    for scene_number in (1, 2, 3):
+        image = tmp_path / f"scene_{scene_number:03d}.png"
+        image.write_bytes(b"png")
+        images.append((scene_number, image))
+
+    def fake_runner(*, output_path: Path, **_kwargs):
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(b"mp4")
+        return RunwayMotionClipResult(ok=True, output_path=output_path, warnings=["runway_mock_ok"])
+
+    result = execute_runway_motion_live_from_asset_plan(
+        plan,
+        image_execution_result=_image_result_many(images),
+        confirm_provider_costs=True,
+        max_live_motion_tasks=3,
+        output_root=str(tmp_path / "out"),
+        runner=fake_runner,
+    )
+
+    assert result.execution_status == "live_completed"
+    assert result.estimated_provider_calls == 3
+    assert len(result.estimated_outputs) == 3
+    assert [task.execution_status for task in result.task_results] == ["live_completed", "live_completed", "live_completed"]
+    assert all(task.output_exists is True for task in result.task_results)
