@@ -344,6 +344,10 @@ class StoryboardLocalRenderExecutionResult(BaseModel):
     timeline_manifest_path: str = ""
     final_video_path: str = ""
     render_output_manifest_path: str = ""
+    timeline_seconds: Optional[float] = None
+    audio_duration_seconds: Optional[float] = None
+    audio_gap_seconds: Optional[float] = None
+    audio_gap_ratio: Optional[float] = None
     manifest_written: bool = False
     video_created: bool = False
     output_exists: bool = False

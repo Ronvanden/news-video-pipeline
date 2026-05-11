@@ -93,6 +93,112 @@ def test_local_render_execute_runs_renderer_and_returns_output(tmp_path: Path):
     assert result.render_output_manifest_path.endswith("render_output_manifest.json")
 
 
+def test_local_render_execute_reports_audio_gap_metrics_within_tolerance(tmp_path: Path, monkeypatch):
+    package = _package(tmp_path)
+    audio_file = tmp_path / "voice.mp3"
+    audio_file.write_bytes(b"audio-bytes")
+    package.timeline_manifest["audio_path"] = audio_file.as_posix()
+
+    monkeypatch.setattr(
+        "app.storyboard.local_render_execute._probe_audio_duration_seconds",
+        lambda _path: (58.5, []),
+    )
+
+    def fake_render(_timeline_path: Path, *, output_video: Path, **_kw):
+        output_video.parent.mkdir(parents=True, exist_ok=True)
+        output_video.write_bytes(b"video-bytes")
+        return {
+            "video_created": True,
+            "render_output_manifest_path": (output_video.parent / "render_output_manifest.json").as_posix(),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
+
+    result = execute_storyboard_local_render(
+        package,
+        output_root=str(tmp_path / "out"),
+        dry_run=False,
+        render_fn=fake_render,
+    )
+
+    assert result.execution_status == "completed"
+    assert result.timeline_seconds == 6
+    assert result.audio_duration_seconds == 58.5
+    assert result.audio_gap_seconds == 0.0
+    assert result.audio_gap_ratio == 0.0
+    assert result.output_exists is True
+
+
+def test_local_render_execute_blocks_on_large_audio_gap(tmp_path: Path, monkeypatch):
+    package = _package(tmp_path)
+    audio_file = tmp_path / "voice.mp3"
+    audio_file.write_bytes(b"audio-bytes")
+    package.timeline_manifest["audio_path"] = audio_file.as_posix()
+    package.timeline_manifest["estimated_duration_seconds"] = 60
+
+    monkeypatch.setattr(
+        "app.storyboard.local_render_execute._probe_audio_duration_seconds",
+        lambda _path: (40.0, []),
+    )
+
+    def fake_render(_timeline_path: Path, *, output_video: Path, **_kw):
+        output_video.parent.mkdir(parents=True, exist_ok=True)
+        output_video.write_bytes(b"video-bytes")
+        return {
+            "video_created": True,
+            "render_output_manifest_path": (output_video.parent / "render_output_manifest.json").as_posix(),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
+
+    result = execute_storyboard_local_render(
+        package,
+        output_root=str(tmp_path / "out"),
+        dry_run=False,
+        render_fn=fake_render,
+    )
+
+    assert result.execution_status == "completed"
+    assert result.audio_gap_seconds == 20.0
+    assert result.audio_gap_ratio == 20.0 / 60.0
+    assert "audio_shorter_than_timeline_blocking_gap" in result.blocking_issues
+
+
+def test_local_render_execute_warns_when_audio_duration_missing(tmp_path: Path, monkeypatch):
+    package = _package(tmp_path)
+    audio_file = tmp_path / "voice.mp3"
+    audio_file.write_bytes(b"audio-bytes")
+    package.timeline_manifest["audio_path"] = audio_file.as_posix()
+
+    monkeypatch.setattr(
+        "app.storyboard.local_render_execute._probe_audio_duration_seconds",
+        lambda _path: (None, ["audio_duration_probe_failed"]),
+    )
+
+    def fake_render(_timeline_path: Path, *, output_video: Path, **_kw):
+        output_video.parent.mkdir(parents=True, exist_ok=True)
+        output_video.write_bytes(b"video-bytes")
+        return {
+            "video_created": True,
+            "render_output_manifest_path": (output_video.parent / "render_output_manifest.json").as_posix(),
+            "warnings": [],
+            "blocking_reasons": [],
+        }
+
+    result = execute_storyboard_local_render(
+        package,
+        output_root=str(tmp_path / "out"),
+        dry_run=False,
+        render_fn=fake_render,
+    )
+
+    assert result.execution_status == "completed"
+    assert result.audio_duration_seconds is None
+    assert result.audio_gap_seconds is None
+    assert result.audio_gap_ratio is None
+    assert "audio_duration_unavailable" in result.warnings
+
+
 def test_local_render_execute_fails_for_blocked_package(tmp_path: Path):
     package = _package(tmp_path)
     package.overall_status = "blocked"

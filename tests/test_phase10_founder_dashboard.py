@@ -520,6 +520,8 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("ensureStoryboardLiveCostConfirmations", text)
         self.assertIn("buildStoryboardLiveRunReview", text)
         self.assertIn("renderStoryboardLiveRunReviewSummary", text)
+        self.assertIn("audio_gap_seconds", text)
+        self.assertIn("ready_with_warnings", text)
         self.assertIn("runStoryboardRenderTimelineOnlyInternal", text)
         self.assertIn("runStoryboardVoiceMixdownOnlyInternal", text)
         self.assertIn("runStoryboardLocalRenderPackageOnlyInternal", text)

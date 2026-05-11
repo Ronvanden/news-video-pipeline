@@ -4420,6 +4420,10 @@ try {
     var warnings = collectResultWarnings();
     var finalPath = String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.final_video_path) || "");
     var finalExists = !!(lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.output_exists === true);
+    var timelineSeconds = (lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.timeline_seconds != null) ? Number(lastStoryboardLocalRenderExecute.timeline_seconds) : null;
+    var audioSeconds = (lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.audio_duration_seconds != null) ? Number(lastStoryboardLocalRenderExecute.audio_duration_seconds) : null;
+    var audioGapSeconds = (lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.audio_gap_seconds != null) ? Number(lastStoryboardLocalRenderExecute.audio_gap_seconds) : null;
+    var audioGapRatio = (lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.audio_gap_ratio != null) ? Number(lastStoryboardLocalRenderExecute.audio_gap_ratio) : null;
     var imageFiles = countLiveTaskOutputs(lastOpenAIImageLive, "image");
     var voiceFiles = countLiveTaskOutputs(lastElevenLabsVoiceLive, "voice");
     var motionClips = countLiveTaskOutputs(lastRunwayMotionLive, "video");
@@ -4427,7 +4431,8 @@ try {
       Number((lastOpenAIImageLive && lastOpenAIImageLive.estimated_provider_calls) || 0) +
       Number((lastElevenLabsVoiceLive && lastElevenLabsVoiceLive.estimated_provider_calls) || 0) +
       Number((lastRunwayMotionLive && lastRunwayMotionLive.estimated_provider_calls) || 0);
-    var reviewStatus = blockers.length ? "blocked" : (finalExists && imageFiles > 0 && voiceFiles > 0 ? (warnings.length ? "ready_with_warnings" : "ready") : "warning");
+    var audioGapTolerated = audioGapSeconds != null && (audioGapSeconds <= 3 || (audioGapRatio != null && audioGapRatio <= 0.05));
+    var reviewStatus = blockers.length ? "blocked" : (finalExists && imageFiles > 0 && voiceFiles > 0 ? (warnings.length ? (audioGapTolerated ? "ready_with_warnings" : "warning") : "ready") : "warning");
     return {
       review_version: "storyboard_live_run_review_v1",
       review_status: reviewStatus,
@@ -4438,6 +4443,10 @@ try {
       final_video_path: finalPath,
       final_video_exists: finalExists,
       final_video_size_bytes: Number((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.file_size_bytes) || 0),
+      timeline_seconds: timelineSeconds,
+      audio_duration_seconds: audioSeconds,
+      audio_gap_seconds: audioGapSeconds,
+      audio_gap_ratio: audioGapRatio,
       render_output_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.render_output_manifest_path) || ""),
       timeline_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.timeline_manifest_path) || ""),
       asset_manifest_path: String((lastStoryboardLocalRenderExecute && lastStoryboardLocalRenderExecute.asset_manifest_path) || ""),
@@ -4460,6 +4469,11 @@ try {
     meta.style.fontSize = "0.8rem";
     meta.textContent = "Status: " + String(result.review_status || "—") + " · Bilder: " + String(result.image_files || 0) + " · Voice: " + String(result.voice_files || 0) + " · Motion: " + String(result.motion_clips || 0) + " · Provider Calls: " + String(result.provider_calls_estimated || 0);
     box.appendChild(meta);
+    var metrics = document.createElement("p");
+    metrics.style.margin = "0.15rem 0 0";
+    metrics.style.fontSize = "0.78rem";
+    metrics.textContent = "timeline_seconds: " + String(result.timeline_seconds != null ? result.timeline_seconds : "—") + " · audio_duration_seconds: " + String(result.audio_duration_seconds != null ? result.audio_duration_seconds : "—") + " · audio_gap_seconds: " + String(result.audio_gap_seconds != null ? result.audio_gap_seconds : "—") + " · audio_gap_ratio: " + String(result.audio_gap_ratio != null ? result.audio_gap_ratio : "—");
+    box.appendChild(metrics);
     if (result.review_status === "ready_with_warnings") {
       var tol = document.createElement("p");
       tol.style.margin = "0.15rem 0 0";
