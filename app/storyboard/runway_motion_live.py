@@ -189,6 +189,9 @@ def execute_runway_motion_live_from_asset_plan(
             )
             ok = bool(getattr(result, "ok", False))
             runner_warnings = list(getattr(result, "warnings", []) or [])
+            if not ok:
+                fallback_to_image = True
+                runner_warnings.append("runway_motion_no_clip_fallback_to_image")
         except Exception as exc:
             ok = False
             fallback_to_image = isinstance(exc, FileNotFoundError)

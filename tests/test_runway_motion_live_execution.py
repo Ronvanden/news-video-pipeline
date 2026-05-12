@@ -125,6 +125,33 @@ def test_runway_motion_file_not_found_falls_back_to_image(tmp_path: Path):
     assert result.task_results[0].execution_status == "skipped"
 
 
+def test_runway_motion_provider_failure_falls_back_to_image(tmp_path: Path):
+    image = tmp_path / "image.png"
+    image.write_bytes(b"png")
+
+    def failing_runner(*_args, **_kwargs):
+        return RunwayMotionClipResult(
+            ok=False,
+            warnings=["runway_video_generation_failed:FileNotFoundError"],
+            safe_failure_reason="FileNotFoundError",
+        )
+
+    result = execute_runway_motion_live_from_asset_plan(
+        _plan(),
+        image_execution_result=_image_result(image),
+        confirm_provider_costs=True,
+        run_id="motion provider failure",
+        output_root=str(tmp_path / "out"),
+        runner=failing_runner,
+    )
+
+    assert result.execution_status == "skipped"
+    assert result.blocking_issues == []
+    assert "runway_video_generation_failed:FileNotFoundError" in result.warnings
+    assert "runway_motion_no_clip_fallback_to_image" in result.warnings
+    assert result.task_results[0].execution_status == "skipped"
+
+
 def test_runway_motion_caps_tasks(tmp_path: Path):
     plan = _plan()
     plan.tasks.append(
