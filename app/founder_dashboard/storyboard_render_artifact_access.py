@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import Optional, Tuple
 
-STORYBOARD_RENDER_ALLOWED_SUFFIXES = frozenset({".mp4", ".json", ".txt", ".md"})
+STORYBOARD_RENDER_ALLOWED_SUFFIXES = frozenset({".mp4", ".png", ".json", ".txt", ".md"})
 _MAX_STORYBOARD_RENDER_ARTIFACT_BYTES = 1024 * 1024 * 1024
 _RUN_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,160}$")
 
@@ -15,6 +15,8 @@ def storyboard_render_artifact_media_type(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".mp4":
         return "video/mp4"
+    if suffix == ".png":
+        return "image/png"
     if suffix == ".json":
         return "application/json; charset=utf-8"
     if suffix == ".md":

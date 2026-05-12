@@ -80,6 +80,20 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("backend_payload sent only to prompt-preview", text)
         self.assertIn("no provider call / no render", text)
         self.assertIn("Visual Prompt Preview derzeit nicht verfuegbar", text)
+        self.assertIn("Single Scene Image Lab", text)
+        self.assertIn('id="coll-single-scene-image-lab"', text)
+        self.assertIn('id="ssil-scene-title"', text)
+        self.assertIn('id="ssil-narration"', text)
+        self.assertIn('id="ssil-provider-target"', text)
+        self.assertIn('id="btn-ssil-prompt-preview"', text)
+        self.assertIn('id="btn-ssil-openai-image"', text)
+        self.assertIn("Generate Prompt Preview", text)
+        self.assertIn("Generate Single OpenAI Image", text)
+        self.assertIn("runSingleSceneImageLabPromptPreviewOnlyInternal", text)
+        self.assertIn("runSingleSceneOpenAIImageOnlyInternal", text)
+        self.assertIn("max_live_image_tasks: 1", text)
+        self.assertIn("single_scene_image_lab_one_image_only", text)
+        self.assertIn("data-single-scene-image-lab-image", text)
         self.assertIn("Prompt Quality Score", text)
         self.assertIn("Risk Flags", text)
         self.assertIn("Visual Style Profile", text)
@@ -608,9 +622,18 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("8. Local Render Package", text)
         orch = text[text.find("async function runFullPipelineOrchestrator") : text.find("function applyInputSnapshot")]
         live_orch = text[text.find("async function runStoryboardLiveProductionRunInternal") : text.find("async function runPreviewOnlyInternal")]
+        lab_flow = text[
+            text.find("async function runSingleSceneOpenAIImageOnlyInternal")
+            : text.find("async function loadVisualPromptControls")
+        ]
         self.assertNotIn("runOpenAIImageLiveOnlyInternal", orch)
         self.assertNotIn("runElevenLabsVoiceLiveOnlyInternal", orch)
         self.assertNotIn("runRunwayMotionLiveOnlyInternal", orch)
+        self.assertIn("/story-engine/openai-image-live-execution", lab_flow)
+        self.assertIn("max_live_image_tasks: 1", lab_flow)
+        self.assertNotIn("runElevenLabsVoiceLiveOnlyInternal", lab_flow)
+        self.assertNotIn("runRunwayMotionLiveOnlyInternal", lab_flow)
+        self.assertNotIn("runStoryboardLocalRenderExecuteOnlyInternal", lab_flow)
         self.assertLess(
             orch.find("await runExportOnlyInternal()"),
             orch.find("await runStoryboardOnlyInternal()"),

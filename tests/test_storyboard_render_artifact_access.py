@@ -54,3 +54,22 @@ def test_dashboard_storyboard_render_file_route_serves_mp4() -> None:
         assert response.content
     finally:
         shutil.rmtree(output_run, ignore_errors=True)
+
+
+def test_dashboard_storyboard_render_file_route_serves_png_for_image_lab() -> None:
+    output_run = Path(__file__).resolve().parents[1] / "output" / "storyboard_runs" / "pytest_storyboard_image_lab"
+    try:
+        image = output_run / "single_scene_image_lab_scene_001" / "image.png"
+        image.parent.mkdir(parents=True, exist_ok=True)
+        image.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+        client = TestClient(app)
+        response = client.get(
+            "/founder/dashboard/storyboard-render/file/pytest_storyboard_image_lab/single_scene_image_lab_scene_001/image.png"
+        )
+
+        assert response.status_code == 200
+        assert "image/png" in (response.headers.get("content-type") or "")
+        assert response.content.startswith(b"\x89PNG")
+    finally:
+        shutil.rmtree(output_run, ignore_errors=True)

@@ -3183,6 +3183,45 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </section>
 
+  <details class="fd-coll" open id="coll-single-scene-image-lab" data-single-scene-image-lab="1">
+    <summary>Single Scene Image Lab</summary>
+    <div class="coll-body">
+      <div class="panel" style="margin:0 0 0.75rem;padding:0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem">
+        <strong>Single Scene Image Lab</strong>
+        <p class="muted" id="single-scene-image-lab-status" style="margin:0.25rem 0 0.55rem;font-size:0.8rem">Isolierter Bildqualitaets-Test: ein Prompt, optional ein OpenAI Image, kein Voice, kein Motion, kein Render.</p>
+        <label for="ssil-scene-title">Scene Title</label>
+        <input type="text" id="ssil-scene-title" placeholder="Warum Vertrauen in Experten ploetzlich broeckelt"/>
+        <label for="ssil-narration">Narration / Summary</label>
+        <textarea id="ssil-narration" placeholder="Kurze Szenenbeschreibung fuer das Bild-Lab"></textarea>
+        <label for="ssil-provider-target">Lab Provider Target</label>
+        <select id="ssil-provider-target">
+          <option value="openai_image" selected>openai_image</option>
+          <option value="generic">generic</option>
+          <option value="runway">runway</option>
+          <option value="kling">kling</option>
+        </select>
+        <div class="row-check" style="margin-top:0.55rem">
+          <input type="checkbox" id="ssil-confirm-openai-costs"/>
+          <label for="ssil-confirm-openai-costs" style="margin:0">OpenAI Image Kosten bestaetigen (Single Image, max. 1 Bild)</label>
+        </div>
+        <div class="actions" style="margin-top:0.6rem">
+          <button type="button" id="btn-ssil-prompt-preview" data-label="Generate Prompt Preview">Generate Prompt Preview</button>
+          <button type="button" id="btn-ssil-openai-image" data-label="Generate Single OpenAI Image">Generate Single OpenAI Image</button>
+        </div>
+      </div>
+      <div id="single-scene-image-lab-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-single-scene-image-lab-result="1">
+        <strong>Single Scene Image Lab Result</strong>
+        <p class="muted" style="margin:0.25rem 0 0;font-size:0.8rem">Noch kein Ergebnis. Erst Prompt Preview erzeugen, dann optional ein einzelnes OpenAI Image.</p>
+      </div>
+      <div class="out-toolbar">
+        <button type="button" class="sm tb-copy" data-pre="out-single-scene-image-lab">Copy</button>
+        <button type="button" class="sm tb-json" data-pre="out-single-scene-image-lab" data-dlname="single-scene-image-lab.json">JSON</button>
+        <button type="button" class="sm tb-txt" data-pre="out-single-scene-image-lab" data-dlname="single-scene-image-lab.txt">TXT</button>
+      </div>
+      <pre class="out out-empty" id="out-single-scene-image-lab">Noch kein Ergebnis. Klicke auf den passenden Action-Button.</pre>
+    </div>
+  </details>
+
   <details class="fd-coll" open id="coll-export">
     <summary>Export Package (roh)</summary>
     <div class="coll-body">
@@ -3704,6 +3743,8 @@ try {
   let lastReadiness = null;
   let lastCtrPayload = null;
   let lastNumericPq = null;
+  let lastSingleSceneImageLabPreview = null;
+  let lastSingleSceneImageLabImage = null;
   let templateIds = [];
   let warningsAcc = [];
   const VISUAL_PROMPT_CONTROL_FIELDS = [
@@ -3981,6 +4022,204 @@ try {
     return data;
   }
 
+  function setSingleSceneImageLabStatus(msg) {
+    var el = $("single-scene-image-lab-status");
+    if (el) el.textContent = msg || "";
+  }
+
+  function singleSceneImageLabNarrationFallback() {
+    var lab = $("ssil-narration") ? String($("ssil-narration").value || "").trim() : "";
+    if (lab) return lab;
+    return visualPromptPreviewNarrationFallback();
+  }
+
+  function buildSingleSceneImageLabPromptPayload() {
+    var controls = getSafeVisualPromptControlsState();
+    var title = $("ssil-scene-title") ? String($("ssil-scene-title").value || "").trim() : "";
+    if (!title && $("fd-title")) title = String($("fd-title").value || "").trim();
+    var labProvider = $("ssil-provider-target") ? String($("ssil-provider-target").value || "").trim() : "";
+    var payload = {
+      scene_title: title || "Hook",
+      narration: singleSceneImageLabNarrationFallback(),
+      video_template: $("fd-template") ? normalizeStoryTemplateId($("fd-template").value) : "",
+      beat_role: "single_scene_image_lab"
+    };
+    VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
+      var key = row[0];
+      payload[key] = controls[key] || "";
+    });
+    payload.provider_target = labProvider || payload.provider_target || "openai_image";
+    return payload;
+  }
+
+  function buildSingleSceneImageLabAssetPlan(preview) {
+    var prompt = preview && (preview.visual_prompt_effective || preview.visual_prompt_raw) ? String(preview.visual_prompt_effective || preview.visual_prompt_raw) : "";
+    return {
+      plan_version: "single_scene_image_lab_asset_plan_v1",
+      plan_status: "planned",
+      storyboard_version: "single_scene_image_lab_v1",
+      readiness_status: "ready",
+      total_tasks: 1,
+      tasks: [{
+        task_id: "single_scene_image_lab_openai_image_001",
+        scene_id: "single_scene_image_lab_scene_001",
+        scene_number: 1,
+        asset_type: "image",
+        provider_hint: "openai_image",
+        prompt: prompt,
+        output_path: "",
+        status: "planned",
+        dependencies: [],
+        warnings: ["single_scene_image_lab_only", "no_voice_no_motion_no_render"]
+      }],
+      warnings: ["single_scene_image_lab_one_image_only"],
+      blocking_issues: []
+    };
+  }
+
+  function renderSingleSceneImageLabResult(preview, imageResult) {
+    var box = $("single-scene-image-lab-summary");
+    if (!box) return;
+    box.innerHTML = "";
+    var head = document.createElement("strong");
+    head.textContent = "Single Scene Image Lab Result";
+    box.appendChild(head);
+    var meta = document.createElement("p");
+    meta.className = "muted";
+    meta.style.margin = "0.25rem 0 0.55rem";
+    meta.style.fontSize = "0.8rem";
+    meta.textContent = "Preview-only Bild-Lab: max. 1 OpenAI Image, kein Voice, kein Motion, kein Render.";
+    box.appendChild(meta);
+    if (preview) {
+      var flags = Array.isArray(preview.prompt_risk_flags) ? preview.prompt_risk_flags.join(", ") : "";
+      [
+        ["prompt_quality_score", preview.prompt_quality_score],
+        ["prompt_risk_flags", flags || "none"],
+        ["visual_style_profile", preview.visual_style_profile || "n/a"],
+        ["negative_prompt", preview.negative_prompt || ""],
+        ["normalized_controls", JSON.stringify(preview.normalized_controls || {})]
+      ].forEach(function(row) {
+        var p = document.createElement("p");
+        p.style.margin = "0.28rem 0 0";
+        p.style.fontSize = "0.78rem";
+        p.style.whiteSpace = "pre-wrap";
+        p.textContent = row[0] + ": " + String(row[1] == null || row[1] === "" ? "n/a" : row[1]);
+        box.appendChild(p);
+      });
+      var raw = document.createElement("div");
+      raw.className = "pc-block";
+      raw.innerHTML = '<label>visual_prompt_raw</label><pre class="pc-pre">' + escapeHtml(preview.visual_prompt_raw || "") + "</pre>";
+      box.appendChild(raw);
+      var details = document.createElement("details");
+      details.style.marginTop = "0.45rem";
+      var summary = document.createElement("summary");
+      summary.textContent = "visual_prompt_anatomy";
+      details.appendChild(summary);
+      var pre = document.createElement("pre");
+      pre.className = "pc-pre";
+      pre.textContent = JSON.stringify(preview.visual_prompt_anatomy || {}, null, 2);
+      details.appendChild(pre);
+      box.appendChild(details);
+    }
+    if (imageResult) {
+      var task = imageResult.task_results && imageResult.task_results.length ? imageResult.task_results[0] : null;
+      var pImg = document.createElement("p");
+      pImg.style.margin = "0.45rem 0 0";
+      pImg.style.fontSize = "0.78rem";
+      pImg.textContent = "single_image_status: " + String(imageResult.execution_status || "n/a") + " | provider_calls: " + String(imageResult.estimated_provider_calls || 0);
+      box.appendChild(pImg);
+      if (task) {
+        var path = String(task.output_path || task.planned_output_path || "");
+        var pPath = document.createElement("p");
+        pPath.style.margin = "0.25rem 0 0";
+        pPath.style.fontSize = "0.78rem";
+        pPath.textContent = "image asset path: " + (path || "n/a");
+        box.appendChild(pPath);
+        var url = storyboardRenderArtifactUrl(path);
+        if (task.output_exists === true && url) {
+          var img = document.createElement("img");
+          img.src = url;
+          img.alt = "Single Scene Image Lab output";
+          img.style.display = "block";
+          img.style.maxWidth = "100%";
+          img.style.borderRadius = "10px";
+          img.style.marginTop = "0.55rem";
+          img.setAttribute("data-single-scene-image-lab-image", "1");
+          box.appendChild(img);
+        }
+      }
+      if (imageResult.warnings && imageResult.warnings.length) {
+        var w = document.createElement("p");
+        w.style.margin = "0.35rem 0 0";
+        w.style.fontSize = "0.78rem";
+        w.textContent = "Warnings: " + imageResult.warnings.join(", ");
+        box.appendChild(w);
+      }
+      if (imageResult.blocking_issues && imageResult.blocking_issues.length) {
+        var b = document.createElement("p");
+        b.style.margin = "0.35rem 0 0";
+        b.style.fontSize = "0.78rem";
+        b.textContent = "Blocker: " + imageResult.blocking_issues.join(", ");
+        box.appendChild(b);
+      }
+    }
+  }
+
+  async function runSingleSceneImageLabPromptPreviewOnlyInternal() {
+    var endpoint = await resolveVisualPromptPreviewEndpoint();
+    var payload = buildSingleSceneImageLabPromptPayload();
+    setSingleSceneImageLabStatus("Generate Prompt Preview laeuft: nur /visual-plan/prompt-preview, kein Provider-Call.");
+    const data = await fetchJson(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    lastSingleSceneImageLabPreview = data;
+    renderSingleSceneImageLabResult(data, lastSingleSceneImageLabImage);
+    setOut("out-single-scene-image-lab", {
+      prompt_preview: data,
+      image_result: lastSingleSceneImageLabImage,
+      request_payload: payload
+    });
+    setSingleSceneImageLabStatus("Prompt Preview bereit. Optional: genau ein OpenAI Image erzeugen.");
+    return data;
+  }
+
+  async function runSingleSceneOpenAIImageOnlyInternal() {
+    if (!lastSingleSceneImageLabPreview) {
+      await runSingleSceneImageLabPromptPreviewOnlyInternal();
+    }
+    var confirmed = !!($("ssil-confirm-openai-costs") && $("ssil-confirm-openai-costs").checked);
+    var assetPlan = buildSingleSceneImageLabAssetPlan(lastSingleSceneImageLabPreview);
+    setSingleSceneImageLabStatus("Generate Single OpenAI Image laeuft: max. 1 Bild, kein Voice, kein Motion, kein Render.");
+    const data = await fetchJson("/story-engine/openai-image-live-execution", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        asset_generation_plan: assetPlan,
+        confirm_provider_costs: confirmed,
+        max_live_image_tasks: 1,
+        run_id: "single_scene_image_lab",
+        output_root: "output",
+        openai_image_model: "gpt-image-2",
+        openai_image_size: "1024x1024",
+        openai_image_timeout_seconds: 120
+      })
+    });
+    assertCompleteStoryResponse("/story-engine/openai-image-live-execution", data, "openai_image_live");
+    lastSingleSceneImageLabImage = data;
+    renderSingleSceneImageLabResult(lastSingleSceneImageLabPreview, data);
+    setOut("out-single-scene-image-lab", {
+      prompt_preview: lastSingleSceneImageLabPreview,
+      asset_generation_plan: assetPlan,
+      image_result: data
+    });
+    mergeWarnings(data.warnings || []);
+    mergeWarnings(data.blocking_issues || []);
+    setSingleSceneImageLabStatus("Single Image Flow abgeschlossen oder sauber blockiert. Kein Voice, kein Motion, kein Render.");
+    return data;
+  }
+
   async function loadVisualPromptControls() {
     try {
       var endpoint = await resolveVisualPresetsEndpoint();
@@ -4029,6 +4268,39 @@ try {
         }
       });
     });
+  }
+
+  function bindSingleSceneImageLabButtons() {
+    var previewBtn = $("btn-ssil-prompt-preview");
+    if (previewBtn && previewBtn.getAttribute("data-ssil-bound") !== "1") {
+      previewBtn.setAttribute("data-ssil-bound", "1");
+      previewBtn.addEventListener("click", async function() {
+        clearWarnings();
+        await withActionButton(previewBtn, "coll-single-scene-image-lab", "single-scene-image-lab-summary", async function() {
+          try {
+            await runSingleSceneImageLabPromptPreviewOnlyInternal();
+          } catch (e) {
+            setSingleSceneImageLabStatus("Single Scene Image Lab Preview derzeit nicht verfuegbar; Dashboard laeuft ohne Crash weiter.");
+            throw e;
+          }
+        });
+      });
+    }
+    var imageBtn = $("btn-ssil-openai-image");
+    if (imageBtn && imageBtn.getAttribute("data-ssil-bound") !== "1") {
+      imageBtn.setAttribute("data-ssil-bound", "1");
+      imageBtn.addEventListener("click", async function() {
+        clearWarnings();
+        await withActionButton(imageBtn, "coll-single-scene-image-lab", "single-scene-image-lab-summary", async function() {
+          try {
+            await runSingleSceneOpenAIImageOnlyInternal();
+          } catch (e) {
+            setSingleSceneImageLabStatus("Single OpenAI Image derzeit nicht verfuegbar oder sauber blockiert; kein Voice, kein Motion, kein Render.");
+            throw e;
+          }
+        });
+      });
+    }
   }
 
   function clearExportScenePlanSummary() {
@@ -11659,6 +11931,7 @@ try {
   });
   loadVisualPromptControls();
   bindVisualPromptPreviewButton();
+  bindSingleSceneImageLabButtons();
   var fdTpl = $("fd-template");
   if (fdTpl) {
     fdTpl.addEventListener("change", function() {
