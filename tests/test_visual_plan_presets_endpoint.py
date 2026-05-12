@@ -61,6 +61,38 @@ def test_visual_plan_prompt_preview_endpoint_returns_engine_output():
         assert label in data["visual_prompt_raw"]
 
 
+def test_visual_plan_prompt_preview_endpoint_derives_subject_from_headline():
+    client = TestClient(app)
+    title = "Warum Vertrauen in Experten plÃ¶tzlich brÃ¶ckelt"
+    narration = (
+        "Ein neuer Gesundheitsfall sorgt fÃ¼r Ã¶ffentliche Unsicherheit. "
+        "Experten versuchen ruhig zu erklÃ¤ren, wÃ¤hrend BÃ¼rger zwischen Fakten, "
+        "Angst und Misstrauen schwanken."
+    )
+    r = client.post(
+        "/visual-plan/prompt-preview",
+        json={
+            "scene_title": title,
+            "narration": narration,
+            "provider_target": "openai_image",
+        },
+    )
+
+    assert r.status_code == 200, r.text
+    data = r.json()
+    anatomy = data["visual_prompt_anatomy"]
+    assert anatomy["subject_description"] != title
+    assert any(
+        term in anatomy["subject_description"].lower()
+        for term in ["expert", "citizens", "public health", "documentary subject"]
+    )
+    assert anatomy["environment"] != "grounded documentary environment / editorial real-world setting"
+    assert anatomy["action"] != narration
+    assert len(anatomy["action"]) < len(narration)
+    assert "Subject: " + anatomy["subject_description"] in data["visual_prompt_raw"]
+    assert 0 <= data["prompt_quality_score"] <= 100
+
+
 def test_visual_plan_prompt_preview_endpoint_defaults_and_normalizes_unknown_controls():
     client = TestClient(app)
     r = client.post(

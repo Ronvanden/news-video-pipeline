@@ -87,6 +87,21 @@ def test_visual_prompt_anatomy_derives_subject_environment_and_action_from_headl
     assert "Subject: " + anatomy["subject_description"] in result.visual_prompt_raw
 
 
+def test_visual_prompt_anatomy_derives_subject_from_headline_without_narration():
+    title = "Warum Vertrauen in Experten plÃ¶tzlich brÃ¶ckelt"
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title=title,
+            provider_target="openai_image",
+        )
+    )
+    anatomy = result.visual_prompt_anatomy
+    assert anatomy["subject_description"] != title
+    assert "expert" in anatomy["subject_description"].lower() or "citizens" in anatomy["subject_description"].lower()
+    assert "visual_subject_derived" in result.prompt_risk_flags
+    assert "cinematic opening beat" not in anatomy["subject_description"]
+
+
 def test_generic_formatter_contains_core_anatomy_parts():
     anatomy = VisualPromptAnatomy(
         subject_description="public building at sunrise",

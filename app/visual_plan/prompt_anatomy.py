@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import re
+import unicodedata
 from typing import Any, Dict, List
 
 
@@ -77,13 +78,32 @@ def _source_summary(narration: str, detail_level: str) -> str:
     return text[: max(1, cap - 3)].rsplit(" ", 1)[0].strip() + "..."
 
 
+def _search_key(value: str) -> str:
+    text = _norm_space(value).lower()
+    replacements = {
+        "\u00e4": "ae",
+        "\u00f6": "oe",
+        "\u00fc": "ue",
+        "\u00df": "ss",
+        "\u00c3\u00a4": "ae",
+        "\u00c3\u00b6": "oe",
+        "\u00c3\u00bc": "ue",
+        "\u00c3\u009f": "ss",
+    }
+    for raw, repl in replacements.items():
+        text = text.replace(raw, repl)
+    return "".join(
+        ch for ch in unicodedata.normalize("NFKD", text) if not unicodedata.combining(ch)
+    )
+
+
 def _contains_any(text: str, needles: List[str]) -> bool:
-    haystack = _norm_space(text).lower()
-    return any(needle in haystack for needle in needles)
+    haystack = _search_key(text)
+    return any(_search_key(needle) in haystack for needle in needles)
 
 
 def _looks_like_abstract_headline(title: str) -> bool:
-    text = _norm_space(title).lower()
+    text = _search_key(title)
     if not text:
         return False
     if text == "cinematic opening beat":
@@ -102,16 +122,46 @@ def _looks_like_abstract_headline(title: str) -> bool:
         "unsicherheit",
         "fakten",
         "krise",
+        "health",
+        "expert",
+        "citizen",
+        "society",
+        "trust",
     ]
     if any(marker in text for marker in question_markers):
         return True
-    return len(text.split()) >= 6 and _contains_any(text, abstract_markers)
+    return len(text.split()) >= 3 and _contains_any(text, abstract_markers)
+
+
+def _should_derive_visual_subject(scene_title: str, narration: str, video_template: str, visual_preset: str) -> bool:
+    title = _norm_space(scene_title)
+    if not title:
+        return True
+    if _search_key(title) == "cinematic opening beat":
+        return False
+    combined = f"{title} {_norm_space(narration)} {_norm_space(video_template)} {_norm_space(visual_preset)}"
+    domain_markers = [
+        "vertrauen",
+        "misstrauen",
+        "experten",
+        "gesundheit",
+        "gesundheitsfall",
+        "buerger",
+        "gesellschaft",
+        "health",
+        "expert",
+        "citizen",
+        "society",
+        "trust",
+        "public",
+    ]
+    return _looks_like_abstract_headline(title) or (len(title.split()) >= 3 and _contains_any(combined, domain_markers))
 
 
 def derive_visual_subject(scene_title: str, narration: str, video_template: str, visual_preset: str) -> str:
     """Derive a concrete visual subject without inventing specific facts."""
     title = _norm_space(scene_title)
-    if not _looks_like_abstract_headline(title):
+    if not _should_derive_visual_subject(title, narration, video_template, visual_preset):
         return title or "a grounded documentary subject representing the scene topic"
 
     combined = f"{title} {_norm_space(narration)} {_norm_space(video_template)} {_norm_space(visual_preset)}"
