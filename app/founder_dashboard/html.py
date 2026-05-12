@@ -3097,6 +3097,11 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         </div>
         <p class="muted" id="visual-prompt-controls-status" style="margin:0.45rem 0 0;font-size:0.78rem">Visual Controls werden geladen.</p>
         <p class="muted" id="visual-prompt-controls-preview-state" data-visual-controls-preview-state="1" style="margin:0.35rem 0 0;font-size:0.78rem">Preview-only visual controls state: noch nicht verwendet.</p>
+        <div class="actions" style="margin-top:0.55rem">
+          <button type="button" id="btn-visual-prompt-preview" data-label="Visual Prompt Preview">Visual Prompt Preview</button>
+        </div>
+        <p class="muted" id="visual-prompt-preview-status" style="margin:0.35rem 0 0;font-size:0.78rem">Preview-only: sendet nur an /visual-plan/prompt-preview, kein Provider-Call, kein Render.</p>
+        <div id="visual-prompt-preview-result" data-visual-prompt-preview-result="1" class="out out-empty" style="margin-top:0.5rem;max-height:360px;overflow:auto;white-space:normal">Noch kein Visual Prompt Preview Ergebnis.</div>
       </div>
       <div class="row-check">
         <input type="checkbox" id="fd-lock" checked/>
@@ -3885,6 +3890,97 @@ try {
     }
   }
 
+  async function resolveVisualPromptPreviewEndpoint() {
+    try {
+      const cfg = await fetchJson("/founder/dashboard/config", { method: "GET" });
+      var rel = cfg && cfg.visual_plan_relative && cfg.visual_plan_relative.prompt_preview ? cfg.visual_plan_relative.prompt_preview : null;
+      var p = rel && rel.path ? String(rel.path) : "";
+      return p || "/visual-plan/prompt-preview";
+    } catch (e) {
+      return "/visual-plan/prompt-preview";
+    }
+  }
+
+  function setVisualPromptPreviewStatus(msg) {
+    var el = $("visual-prompt-preview-status");
+    if (el) el.textContent = msg || "";
+  }
+
+  function visualPromptPreviewNarrationFallback() {
+    var summary = $("fd-summary") ? String($("fd-summary").value || "").trim() : "";
+    if (summary) return summary;
+    var raw = $("fd-chapters") ? String($("fd-chapters").value || "").trim() : "";
+    if (!raw) return "";
+    try {
+      var chapters = JSON.parse(raw);
+      if (Array.isArray(chapters) && chapters.length) {
+        return String((chapters[0] && chapters[0].content) || "").trim();
+      }
+    } catch (e) {}
+    return "";
+  }
+
+  function buildVisualPromptPreviewPayload() {
+    var controls = getSafeVisualPromptControlsState();
+    var payload = {
+      scene_title: $("fd-title") && String($("fd-title").value || "").trim() ? String($("fd-title").value || "").trim() : "Hook",
+      narration: visualPromptPreviewNarrationFallback(),
+      video_template: $("fd-template") ? normalizeStoryTemplateId($("fd-template").value) : "",
+      beat_role: "dashboard_visual_prompt_preview"
+    };
+    VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
+      var key = row[0];
+      payload[key] = controls[key] || "";
+    });
+    return payload;
+  }
+
+  function renderVisualPromptPreviewResult(data, payload) {
+    var box = $("visual-prompt-preview-result");
+    if (!box) return;
+    if (!data) {
+      box.classList.add("out-empty");
+      box.textContent = "Noch kein Visual Prompt Preview Ergebnis.";
+      return;
+    }
+    box.classList.remove("out-empty");
+    var flags = Array.isArray(data.prompt_risk_flags) ? data.prompt_risk_flags.join(", ") : "";
+    var normalized = data.normalized_controls || {};
+    var anatomyText = "";
+    try {
+      anatomyText = JSON.stringify(data.visual_prompt_anatomy || {}, null, 2);
+    } catch (e) {
+      anatomyText = String(data.visual_prompt_anatomy || "");
+    }
+    box.innerHTML =
+      '<div data-visual-prompt-preview-summary="1">' +
+      '<p style="margin:0 0 0.35rem"><strong>Visual Prompt Preview</strong> <span class="muted">Preview-only · backend_payload sent only to prompt-preview · no provider call / no render</span></p>' +
+      '<p style="margin:0.2rem 0"><strong>prompt_quality_score:</strong> ' + escapeHtml(String(data.prompt_quality_score == null ? "n/a" : data.prompt_quality_score)) + '</p>' +
+      '<p style="margin:0.2rem 0"><strong>prompt_risk_flags:</strong> ' + escapeHtml(flags || "none") + '</p>' +
+      '<p style="margin:0.2rem 0"><strong>visual_style_profile:</strong> ' + escapeHtml(String(data.visual_style_profile || "n/a")) + '</p>' +
+      '<p style="margin:0.2rem 0"><strong>normalized_controls:</strong> ' + escapeHtml(JSON.stringify(normalized)) + '</p>' +
+      '<div class="pc-block"><label>visual_prompt_raw</label><pre class="pc-pre">' + escapeHtml(data.visual_prompt_raw || "") + '</pre></div>' +
+      '<div class="pc-block"><label>negative_prompt</label><pre class="pc-pre">' + escapeHtml(data.negative_prompt || "") + '</pre></div>' +
+      '<details style="margin-top:0.45rem"><summary>visual_prompt_anatomy</summary><pre class="pc-pre">' + escapeHtml(anatomyText) + '</pre></details>' +
+      '<details style="margin-top:0.35rem"><summary>Preview request payload</summary><pre class="pc-pre">' + escapeHtml(JSON.stringify(payload || {}, null, 2)) + '</pre></details>' +
+      '</div>';
+  }
+
+  async function runVisualPromptPreviewOnlyInternal() {
+    var endpoint = await resolveVisualPromptPreviewEndpoint();
+    var payload = buildVisualPromptPreviewPayload();
+    renderVisualPromptControlsPreviewState("prompt_preview_endpoint_request");
+    setVisualPromptPreviewStatus("Visual Prompt Preview laeuft: Preview-only, kein Provider-Call, kein Render.");
+    const data = await fetchJson(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    renderVisualPromptPreviewResult(data, payload);
+    setVisualPromptPreviewStatus("Visual Prompt Preview geladen. backend_payload sent only to prompt-preview; no provider call / no render.");
+    return data;
+  }
+
   async function loadVisualPromptControls() {
     try {
       var endpoint = await resolveVisualPresetsEndpoint();
@@ -3915,6 +4011,24 @@ try {
       renderVisualPromptControlsPreviewState("presets_load_failed");
       return false;
     }
+  }
+
+  function bindVisualPromptPreviewButton() {
+    var btn = $("btn-visual-prompt-preview");
+    if (!btn || btn.getAttribute("data-vpp-bound") === "1") return;
+    btn.setAttribute("data-vpp-bound", "1");
+    btn.addEventListener("click", async function() {
+      clearWarnings();
+      await withActionButton(btn, "visual-prompt-controls-panel", "visual-prompt-preview-result", async function() {
+        try {
+          await runVisualPromptPreviewOnlyInternal();
+        } catch (e) {
+          setVisualPromptPreviewStatus("Visual Prompt Preview derzeit nicht verfuegbar; Dashboard laeuft ohne Crash weiter.");
+          renderVisualPromptPreviewResult(null, null);
+          throw e;
+        }
+      });
+    });
   }
 
   function clearExportScenePlanSummary() {
@@ -11544,6 +11658,7 @@ try {
     updateProductionChecklist();
   });
   loadVisualPromptControls();
+  bindVisualPromptPreviewButton();
   var fdTpl = $("fd-template");
   if (fdTpl) {
     fdTpl.addEventListener("change", function() {
