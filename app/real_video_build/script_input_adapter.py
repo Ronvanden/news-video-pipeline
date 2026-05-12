@@ -360,6 +360,7 @@ def _engine_result_fields(engine_result: VisualPromptEngineResult) -> Dict[str, 
         "prompt_quality_score": engine_result.prompt_quality_score,
         "prompt_risk_flags": list(engine_result.prompt_risk_flags or []),
         "normalized_controls": dict(engine_result.normalized_controls or {}),
+        "visual_prompt_anatomy": dict(engine_result.visual_prompt_anatomy or {}),
     }
 
 

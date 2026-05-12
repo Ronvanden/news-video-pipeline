@@ -85,6 +85,7 @@ def test_generate_script_response_with_chapters_builds_pack(adapter_mod):
     assert isinstance(b0.get("prompt_quality_score"), int)
     assert isinstance(b0.get("prompt_risk_flags"), list)
     assert isinstance(b0.get("normalized_controls"), dict)
+    assert isinstance(b0.get("visual_prompt_anatomy"), dict)
 
 
 def test_hook_title_is_sanitized_for_visual_prompt(adapter_mod):
@@ -135,6 +136,37 @@ def test_openai_image_routed_still_uses_openai_visual_formatter(adapter_mod):
     assert "Subject: A" in str(first.get("visual_prompt_raw") or "")
     assert "Environment:" in str(first.get("visual_prompt_raw") or "")
     assert "Composition:" in str(first.get("visual_prompt_raw") or "")
+    assert "Lighting and color:" in str(first.get("visual_prompt_raw") or "")
+    assert "Mood:" in str(first.get("visual_prompt_raw") or "")
+    assert "Important constraints:" in str(first.get("visual_prompt_raw") or "")
+    assert first.get("negative_prompt")
+    assert isinstance(first.get("visual_prompt_anatomy"), dict)
+    assert first.get("visual_prompt_anatomy")
+    assert "[visual_no_text_guard_v26_4]" in str(first.get("visual_prompt_effective") or "")
+
+
+def test_openai_image_hook_scene_pack_keeps_sanitizing_and_negative_guards(adapter_mod):
+    pack = adapter_mod.build_scene_asset_pack_from_generate_script_response(
+        {
+            "title": "Test",
+            "hook": "A quiet opening line introduces the investigation.",
+            "chapters": [{"title": "Documents", "content": "Files are reviewed on a desk in natural light."}],
+            "full_script": "",
+            "sources": [],
+            "warnings": [],
+        },
+        run_id="rid_openai_hook_pack",
+    )
+    first = _beats(pack)[0]
+    prompt_blob = f"{first.get('visual_prompt_raw') or ''}\n{first.get('visual_prompt_effective') or ''}"
+    assert first.get("normalized_controls", {}).get("provider_target") == "openai_image"
+    assert "Hook" not in prompt_blob
+    assert "hook" not in prompt_blob.lower()
+    assert "cinematic opening beat" in prompt_blob
+    assert "no fishing hook" in str(first.get("negative_prompt") or "").lower()
+    assert "no literal hook object" in str(first.get("negative_prompt") or "").lower()
+    assert isinstance(first.get("visual_prompt_anatomy"), dict)
+    assert first.get("visual_prompt_anatomy")
 
 
 def test_visual_prompt_helper_without_known_provider_stays_generic(adapter_mod):
