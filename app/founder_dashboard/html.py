@@ -3071,6 +3071,32 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <option value="leonardo">leonardo</option>
         <option value="kling">kling</option>
       </select>
+      <div class="fd-visual-prompt-controls" id="visual-prompt-controls-panel" data-visual-prompt-controls-panel="1" style="margin:0.75rem 0 0;padding:0.75rem;grid-column:1/-1;border:1px solid var(--border);border-radius:8px;background:var(--surface)">
+        <h3 style="margin:0 0 0.5rem;font-size:0.95rem">Visual Prompt Controls</h3>
+        <div class="fp-dry-run-grid">
+          <div>
+            <label for="fd-visual-preset">Visual Preset</label>
+            <select id="fd-visual-preset" data-visual-control="visual_preset"></select>
+          </div>
+          <div>
+            <label for="fd-prompt-detail-level">Prompt Detail Level</label>
+            <select id="fd-prompt-detail-level" data-visual-control="prompt_detail_level"></select>
+          </div>
+          <div>
+            <label for="fd-provider-target">Provider Target</label>
+            <select id="fd-provider-target" data-visual-control="provider_target"></select>
+          </div>
+          <div>
+            <label for="fd-text-safety-mode">Text Safety Mode</label>
+            <select id="fd-text-safety-mode" data-visual-control="text_safety_mode"></select>
+          </div>
+          <div>
+            <label for="fd-visual-consistency-mode">Visual Consistency Mode</label>
+            <select id="fd-visual-consistency-mode" data-visual-control="visual_consistency_mode"></select>
+          </div>
+        </div>
+        <p class="muted" id="visual-prompt-controls-status" style="margin:0.45rem 0 0;font-size:0.78rem">Visual Controls werden geladen.</p>
+      </div>
       <div class="row-check">
         <input type="checkbox" id="fd-lock" checked/>
         <label for="fd-lock" style="margin:0">Continuity lock</label>
@@ -3674,6 +3700,14 @@ try {
   let lastNumericPq = null;
   let templateIds = [];
   let warningsAcc = [];
+  const VISUAL_PROMPT_CONTROL_FIELDS = [
+    ["visual_preset", "fd-visual-preset", "visual_presets"],
+    ["prompt_detail_level", "fd-prompt-detail-level", "prompt_detail_levels"],
+    ["provider_target", "fd-provider-target", "provider_targets"],
+    ["text_safety_mode", "fd-text-safety-mode", "text_safety_modes"],
+    ["visual_consistency_mode", "fd-visual-consistency-mode", "visual_consistency_modes"]
+  ];
+  window.visualPromptControls = window.visualPromptControls || {};
 
   const OUTPUT_EMPTY = "Noch kein Ergebnis. Klicke auf den passenden Action-Button.";
 
@@ -3755,6 +3789,92 @@ try {
     else if (kind === "err") el.className = base + " export-action-err";
     else if (kind === "info") el.className = base + " export-action-info";
     else el.className = base;
+  }
+
+  function getVisualPromptControlsState() {
+    var out = {};
+    VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
+      var key = row[0];
+      var el = $(row[1]);
+      out[key] = el ? String(el.value || "").trim() : String((window.visualPromptControls || {})[key] || "").trim();
+    });
+    return out;
+  }
+
+  function setVisualPromptControlsStatus(msg) {
+    var el = $("visual-prompt-controls-status");
+    if (el) el.textContent = msg || "";
+  }
+
+  function syncVisualPromptControlsState() {
+    window.visualPromptControls = getVisualPromptControlsState();
+    return window.visualPromptControls;
+  }
+
+  function populateVisualPromptSelect(selectId, entries, defaultValue) {
+    var sel = $(selectId);
+    if (!sel) return;
+    var current = sel.value || defaultValue || "";
+    sel.innerHTML = "";
+    (entries || []).forEach(function(entry) {
+      var opt = document.createElement("option");
+      opt.value = String(entry.id || "");
+      opt.textContent = String(entry.label || entry.id || "");
+      if (entry.description) opt.title = String(entry.description);
+      sel.appendChild(opt);
+    });
+    if (current) sel.value = current;
+    if (!sel.value && defaultValue) sel.value = defaultValue;
+    if (!sel.value && sel.options.length) sel.selectedIndex = 0;
+  }
+
+  function applyVisualPromptControlsState(values) {
+    var v = values || {};
+    VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
+      var key = row[0];
+      var el = $(row[1]);
+      if (el && v[key]) el.value = v[key];
+    });
+    syncVisualPromptControlsState();
+  }
+
+  async function resolveVisualPresetsEndpoint() {
+    try {
+      const cfg = await fetchJson("/founder/dashboard/config", { method: "GET" });
+      var rel = cfg && cfg.visual_plan_relative && cfg.visual_plan_relative.presets ? cfg.visual_plan_relative.presets : null;
+      var p = rel && rel.path ? String(rel.path) : "";
+      return p || "/visual-plan/presets";
+    } catch (e) {
+      return "/visual-plan/presets";
+    }
+  }
+
+  async function loadVisualPromptControls() {
+    try {
+      var endpoint = await resolveVisualPresetsEndpoint();
+      const data = await fetchJson(endpoint, { method: "GET" });
+      var defaults = data && data.defaults ? data.defaults : {};
+      var controls = data && data.controls ? data.controls : {};
+      VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
+        populateVisualPromptSelect(row[1], controls[row[2]] || [], defaults[row[0]] || "");
+      });
+      applyVisualPromptControlsState(defaults);
+      VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
+        var el = $(row[1]);
+        if (!el || el.getAttribute("data-vpc-bound") === "1") return;
+        el.setAttribute("data-vpc-bound", "1");
+        el.addEventListener("change", function() {
+          syncVisualPromptControlsState();
+          setVisualPromptControlsStatus("Visual Controls lokal aktualisiert.");
+        });
+      });
+      setVisualPromptControlsStatus("Visual Controls geladen. Werte sind lokal vorbereitet und noch nicht in Generate-Flows verdrahtet.");
+      return true;
+    } catch (e) {
+      setVisualPromptControlsStatus("Visual Controls derzeit nicht verfuegbar; Dashboard laeuft mit neutralem UI-State weiter.");
+      window.visualPromptControls = window.visualPromptControls || {};
+      return false;
+    }
   }
 
   function clearExportScenePlanSummary() {
@@ -5970,6 +6090,7 @@ try {
       template: $("fd-template").value,
       duration: $("fd-duration").value,
       provider: $("fd-provider").value,
+      visual_prompt_controls: getVisualPromptControlsState(),
       continuity_lock: $("fd-lock").checked,
       chapters_json: $("fd-chapters").value
     };
@@ -7005,6 +7126,7 @@ try {
     $("fd-summary").value = inp.summary || "";
     if (inp.duration) $("fd-duration").value = inp.duration;
     if (inp.provider) $("fd-provider").value = inp.provider;
+    if (inp.visual_prompt_controls) applyVisualPromptControlsState(inp.visual_prompt_controls);
     $("fd-lock").checked = !!inp.continuity_lock;
     if (inp.chapters_json) $("fd-chapters").value = inp.chapters_json;
     if (inp.template) {
@@ -11305,6 +11427,7 @@ try {
     refreshWarningCenter();
     updateProductionChecklist();
   });
+  loadVisualPromptControls();
   var fdTpl = $("fd-template");
   if (fdTpl) {
     fdTpl.addEventListener("change", function() {
