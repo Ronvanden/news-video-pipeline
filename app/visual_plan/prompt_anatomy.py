@@ -33,6 +33,8 @@ class MotionPromptAnatomy:
     motion_intent: str = ""
     camera_motion: str = ""
     subject_motion: str = ""
+    background_motion: str = ""
+    scene_evolution: str = ""
     pacing: str = ""
     transition_hint: str = ""
     duration_hint: str = ""
@@ -132,6 +134,21 @@ def _text_safety_for(text_safety_mode: str) -> str:
     return "avoid readable generated text"
 
 
+def _camera_motion_from_hint(motion_hint: str) -> str:
+    hint = _norm_space(motion_hint).lower()
+    if not hint:
+        return "slow controlled push-in"
+    if "static" in hint or "lock-off" in hint:
+        return "static locked-off frame with minimal drift"
+    if "pan" in hint:
+        return "subtle controlled pan"
+    if "handheld" in hint:
+        return "gentle handheld documentary drift"
+    if "push" in hint or "push-in" in hint:
+        return "slow controlled push-in"
+    return _norm_space(motion_hint)
+
+
 def build_visual_prompt_anatomy(
     *,
     context: Any,
@@ -185,4 +202,63 @@ def build_visual_prompt_anatomy(
         negative_constraints=_dedupe(negative_constraints),
         sanitized_terms=_dedupe(sanitized_terms),
         source_summary=source,
+    )
+
+
+def build_motion_prompt_anatomy(
+    visual_anatomy: VisualPromptAnatomy,
+    context: Any = None,
+    normalized_controls: Dict[str, str] | None = None,
+    motion_hint: str = "",
+    duration_seconds: int | None = None,
+) -> MotionPromptAnatomy:
+    """Build a deterministic motion anatomy for future provider-specific formatters."""
+    controls = dict(normalized_controls or {})
+    detail_level = controls.get("prompt_detail_level", "enhanced")
+    duration_value = int(duration_seconds) if duration_seconds is not None else 0
+    source_summary = _norm_space(getattr(visual_anatomy, "source_summary", "") or "")
+    subject = _norm_space(getattr(visual_anatomy, "subject_description", "") or "")
+
+    if source_summary:
+        motion_intent = f"animate the provided image with grounded documentary motion based on: {source_summary}"
+    elif subject:
+        motion_intent = f"animate the provided image with grounded documentary motion around {subject}"
+    else:
+        motion_intent = "animate the provided image with grounded documentary motion"
+
+    pacing = "calm documentary pacing"
+    if detail_level == "deep":
+        pacing = "calm deliberate documentary pacing"
+
+    transition_hint = "maintain the same shot without a cut"
+    if duration_value >= 10:
+        transition_hint = "hold the same shot and evolve attention gently over the clip"
+
+    return MotionPromptAnatomy(
+        motion_intent=motion_intent,
+        camera_motion=_camera_motion_from_hint(motion_hint),
+        subject_motion="minimal natural subject movement",
+        background_motion="subtle ambient background movement only",
+        scene_evolution="no scene change, attention evolves within the provided image",
+        pacing=pacing,
+        transition_hint=transition_hint,
+        duration_hint="10 seconds" if duration_value >= 10 else "5 seconds",
+        stability_constraints=_dedupe(
+            [
+                "preserve subject identity",
+                "preserve composition",
+                "preserve lighting",
+                "preserve spatial layout",
+            ]
+        ),
+        motion_negative_constraints=_dedupe(
+            [
+                "no scene cut",
+                "no new objects",
+                "no text morphing",
+                "no warped faces",
+                "no object drift",
+                "no sudden camera shake",
+            ]
+        ),
     )

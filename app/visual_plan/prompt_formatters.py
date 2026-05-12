@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List
 
-from app.visual_plan.prompt_anatomy import VisualPromptAnatomy
+from app.visual_plan.prompt_anatomy import MotionPromptAnatomy, VisualPromptAnatomy
 
 
 def _norm_space(value: str) -> str:
@@ -132,5 +132,40 @@ def anatomy_to_openai_image_prompt(anatomy: VisualPromptAnatomy, controls: dict 
     if constraints:
         limit = 5 if detail_level == "basic" else (8 if detail_level == "enhanced" else 12)
         _append_part(parts, "Important constraints", "; ".join(constraints[:limit]))
+
+    return _norm_space(_join_sentence(parts))
+
+
+def anatomy_to_runway_motion_prompt(
+    visual_anatomy: VisualPromptAnatomy,
+    motion_anatomy: MotionPromptAnatomy,
+    controls: dict | None = None,
+) -> str:
+    """Format a motion-focused prompt for future Runway image-to-video use."""
+    controls_payload: Dict[str, Any] = dict(controls or {})
+    detail_level = str(controls_payload.get("prompt_detail_level") or "enhanced")
+
+    parts: List[str] = [
+        "Animate the provided image as a realistic short documentary clip"
+    ]
+
+    _append_part(parts, "Camera movement", motion_anatomy.camera_motion)
+    _append_part(parts, "Scene evolution", motion_anatomy.scene_evolution)
+    _append_part(parts, "Subject motion", motion_anatomy.subject_motion)
+    _append_part(parts, "Background motion", motion_anatomy.background_motion)
+    _append_part(parts, "Pacing", f"{motion_anatomy.pacing}; {motion_anatomy.duration_hint}".strip("; "))
+
+    if detail_level == "deep":
+        continuity_parts = [visual_anatomy.continuity, motion_anatomy.transition_hint]
+        continuity_text = "; ".join(_norm_space(part) for part in continuity_parts if _norm_space(part))
+        _append_part(parts, "Continuity", continuity_text)
+
+    stability = [str(item) for item in (motion_anatomy.stability_constraints or []) if str(item).strip()]
+    if stability:
+        _append_part(parts, "Stability constraints", "; ".join(stability))
+
+    avoid = [str(item) for item in (motion_anatomy.motion_negative_constraints or []) if str(item).strip()]
+    if avoid:
+        _append_part(parts, "Avoid", "; ".join(avoid))
 
     return _norm_space(_join_sentence(parts))
