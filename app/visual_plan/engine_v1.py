@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Tuple
 import unicodedata
 
 from app.visual_plan.presets import get_visual_prompt_control_options, normalize_visual_prompt_controls
-from app.visual_plan.prompt_formatters import anatomy_to_generic_prompt
+from app.visual_plan.prompt_formatters import anatomy_to_generic_prompt, anatomy_to_openai_image_prompt
 from app.visual_plan.prompt_anatomy import VisualPromptAnatomy, build_visual_prompt_anatomy
 from app.visual_plan.visual_no_text import append_no_text_guard
 
@@ -149,6 +149,8 @@ def _raw_prompt_from_anatomy(
     formatter_controls["visual_preset_label"] = str(preset.get("label") or "")
     formatter_controls["video_template"] = _norm_space(ctx.video_template) or "generic video"
     formatter_controls["beat_role"] = role
+    if controls.get("provider_target") == "openai_image":
+        return anatomy_to_openai_image_prompt(anatomy, formatter_controls), risk_flags
     return anatomy_to_generic_prompt(anatomy, formatter_controls), risk_flags
 
 

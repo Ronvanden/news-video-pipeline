@@ -1,6 +1,6 @@
 from app.visual_plan.engine_v1 import VisualPromptEngineContext, build_visual_prompt_v1
 from app.visual_plan.prompt_anatomy import VisualPromptAnatomy
-from app.visual_plan.prompt_formatters import anatomy_to_generic_prompt
+from app.visual_plan.prompt_formatters import anatomy_to_generic_prompt, anatomy_to_openai_image_prompt
 from app.visual_plan.presets import VISUAL_PROMPT_CONTROL_DEFAULTS
 
 
@@ -98,6 +98,95 @@ def test_generic_formatter_detail_levels_change_prompt_depth():
     assert "use one consistent visual style" in deep
     assert "grounded_realism" in deep
     assert "workers enter a public building" in deep
+
+
+def test_openai_image_formatter_contains_image_anatomy_sections():
+    anatomy = VisualPromptAnatomy(
+        subject_description="public building at sunrise",
+        action="workers enter through the main doors",
+        environment="grounded documentary environment",
+        camera="documentary medium-wide frame",
+        lighting="natural morning light",
+        mood="grounded documentary realism",
+        composition="clean editorial frame",
+        negative_constraints=["no readable text"],
+    )
+    prompt = anatomy_to_openai_image_prompt(
+        anatomy,
+        {
+            "prompt_detail_level": "enhanced",
+            "visual_preset": "documentary_realism",
+        },
+    )
+    assert prompt.startswith("Create a realistic documentary-style image")
+    assert "Subject: public building at sunrise" in prompt
+    assert "Environment: grounded documentary environment" in prompt
+    assert "Composition: clean editorial frame" in prompt
+    assert "Lighting and color: natural morning light" in prompt
+    assert "Important constraints: no readable text" in prompt
+    assert "Motion direction" not in prompt
+    assert "camera move" not in prompt.lower()
+
+
+def test_openai_image_formatter_basic_is_shorter_than_deep():
+    anatomy = VisualPromptAnatomy(
+        subject_description="public building at sunrise",
+        action="workers enter through the main doors",
+        environment="grounded documentary environment",
+        camera="documentary medium-wide frame",
+        lighting="natural morning light",
+        mood="grounded documentary realism",
+        composition="clean editorial frame",
+        style_tags=["grounded_realism", "natural_light"],
+        continuity="use one consistent visual style across the video",
+        source_summary="workers enter a public building at sunrise",
+        negative_constraints=["no readable text", "no logo"],
+    )
+    basic = anatomy_to_openai_image_prompt(anatomy, {"prompt_detail_level": "basic"})
+    deep = anatomy_to_openai_image_prompt(
+        anatomy,
+        {
+            "prompt_detail_level": "deep",
+            "visual_preset": "documentary_realism",
+        },
+    )
+    assert len(basic) < len(deep)
+    assert "Style consistency" in deep
+    assert "Source context" in deep
+    assert "grounded_realism" in deep
+
+
+def test_openai_image_provider_target_routes_engine_prompt_formatter():
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Documents",
+            narration="Files are reviewed on a desk in natural light.",
+            provider_target="openai_image",
+        )
+    )
+    assert result.normalized_controls["provider_target"] == "openai_image"
+    assert result.visual_prompt_raw.startswith("Create a realistic documentary-style image")
+    assert "Subject: Documents" in result.visual_prompt_raw
+    assert "Environment:" in result.visual_prompt_raw
+    assert "Composition:" in result.visual_prompt_raw
+    assert "Lighting and color:" in result.visual_prompt_raw
+    assert "[visual_no_text_guard_v26_4]" in result.visual_prompt_effective
+
+
+def test_openai_image_provider_target_keeps_hook_sanitizing_and_negative_guards():
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Hook",
+            narration="A quiet opening line introduces the investigation.",
+            beat_role="opening hook",
+            provider_target="openai_image",
+        )
+    )
+    prompt_blob = f"{result.visual_prompt_raw}\n{result.visual_prompt_effective}"
+    assert "Hook" not in prompt_blob
+    assert "hook" not in prompt_blob.lower()
+    assert "cinematic opening beat" in result.visual_prompt_raw
+    assert "no fishing hook" in result.negative_prompt.lower()
 
 
 def test_unknown_controls_warn_and_fall_back_to_defaults():

@@ -84,3 +84,53 @@ def anatomy_to_generic_prompt(anatomy: VisualPromptAnatomy, controls: dict | Non
         _append_part(parts, "Consistency mode", consistency_mode)
 
     return _norm_space(_join_sentence(parts))
+
+
+def anatomy_to_openai_image_prompt(anatomy: VisualPromptAnatomy, controls: dict | None = None) -> str:
+    """Format a VisualPromptAnatomy for OpenAI Image prompt input.
+
+    This only changes prompt wording. It does not select or call a provider.
+    """
+    controls_payload: Dict[str, Any] = dict(controls or {})
+    detail_level = str(controls_payload.get("prompt_detail_level") or "enhanced")
+
+    parts: List[str] = ["Create a realistic documentary-style image"]
+    style_label = _preset_label(controls_payload)
+    style_tags = [str(tag) for tag in (anatomy.style_tags or []) if str(tag).strip()]
+    constraints = [
+        str(item)
+        for item in (anatomy.negative_constraints or [])
+        if str(item).strip() and "hook" not in str(item).lower()
+    ]
+
+    _append_part(parts, "Subject", anatomy.subject_description or "grounded editorial scene")
+
+    if detail_level in {"enhanced", "deep"}:
+        _append_part(parts, "Visual moment", anatomy.action)
+
+    _append_part(parts, "Environment", anatomy.environment)
+    _append_part(parts, "Composition", anatomy.composition)
+
+    if detail_level in {"enhanced", "deep"}:
+        _append_part(parts, "Framing", anatomy.camera)
+        lighting_color = anatomy.lighting
+        if style_tags:
+            lighting_color = f"{lighting_color}; natural color treatment" if lighting_color else "natural color treatment"
+        _append_part(parts, "Lighting and color", lighting_color)
+        _append_part(parts, "Mood", anatomy.mood)
+
+    if style_label and detail_level != "basic":
+        style_value = style_label
+        if detail_level == "deep" and style_tags:
+            style_value = f"{style_value}; style tags: {', '.join(style_tags[:8])}"
+        _append_part(parts, "Style consistency", style_value)
+
+    if detail_level == "deep":
+        _append_part(parts, "Continuity", anatomy.continuity)
+        _append_part(parts, "Source context", anatomy.source_summary)
+
+    if constraints:
+        limit = 5 if detail_level == "basic" else (8 if detail_level == "enhanced" else 12)
+        _append_part(parts, "Important constraints", "; ".join(constraints[:limit]))
+
+    return _norm_space(_join_sentence(parts))
