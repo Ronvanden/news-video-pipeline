@@ -3078,6 +3078,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       <label for="fd-chapters">Kapitel (JSON)</label>
       <textarea id="fd-chapters" spellcheck="false"></textarea>
       <p class="muted">Templates: GET /story-engine/template-selector (beim Laden).</p>
+      <p class="muted" id="visual-controls-availability" data-visual-plan-presets-endpoint="/visual-plan/presets">Visual Controls available: GET /visual-plan/presets.</p>
     </section>
     <section class="panel">
       <h2>Actions</h2>

@@ -1028,6 +1028,9 @@ async def founder_dashboard_config() -> dict:
             "method": "GET",
             "path": "/founder/dashboard/storyboard-render/file/{run_id}/{artifact_path}",
         },
+        "visual_plan_relative": {
+            "presets": {"method": "GET", "path": "/visual-plan/presets"},
+        },
         "production_proof_summary_relative": {"method": "GET", "path": "/founder/production-proof/summary"},
         "story_engine_relative": {
             "export_package": {"method": "POST", "path": "/story-engine/export-package"},

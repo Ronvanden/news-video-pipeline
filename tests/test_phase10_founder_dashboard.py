@@ -42,6 +42,8 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertIn("Fallback-Preview erstellt. Provider/Assets prüfen oder Preview öffnen.", text)
         self.assertIn("data-ba306b-exec-row", text)
         self.assertIn("fd-dashboard-main", text)
+        self.assertIn("Visual Controls available", text)
+        self.assertIn("/visual-plan/presets", text)
         self.assertIn("Template", text)
         self.assertIn("Provider Readiness", text)
         self.assertIn("Prompt Lab", text)
@@ -723,6 +725,10 @@ class FounderDashboardRouteTests(unittest.TestCase):
         self.assertEqual(
             data["video_generate_relative"]["path"],
             "/founder/dashboard/video/generate",
+        )
+        self.assertEqual(
+            data["visual_plan_relative"]["presets"]["path"],
+            "/visual-plan/presets",
         )
 
     def test_dashboard_config_provider_readiness_missing_env_is_missing(self):
