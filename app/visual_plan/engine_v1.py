@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Tuple
 import unicodedata
 
 from app.visual_plan.presets import get_visual_prompt_control_options, normalize_visual_prompt_controls
+from app.visual_plan.prompt_formatters import anatomy_to_generic_prompt
 from app.visual_plan.prompt_anatomy import VisualPromptAnatomy, build_visual_prompt_anatomy
 from app.visual_plan.visual_no_text import append_no_text_guard
 
@@ -123,14 +124,6 @@ def _control_payload(ctx: VisualPromptEngineContext) -> Dict[str, Any]:
     }
 
 
-def _style_phrase(preset: Dict[str, Any], controls: Dict[str, str]) -> str:
-    preset_label = str(preset.get("label") or controls.get("visual_preset") or "Visual Preset")
-    tags = [str(t) for t in (preset.get("style_tags") or []) if str(t).strip()]
-    if tags:
-        return f"{preset_label}; style tags: {', '.join(tags[:5])}"
-    return preset_label
-
-
 def _negative_prompt_from_anatomy(anatomy: VisualPromptAnatomy) -> str:
     return "; ".join(_dedupe(list(anatomy.negative_constraints or [])))
 
@@ -138,34 +131,25 @@ def _negative_prompt_from_anatomy(anatomy: VisualPromptAnatomy) -> str:
 def _raw_prompt_from_anatomy(
     *,
     anatomy: VisualPromptAnatomy,
-    style_phrase: str,
+    preset: Dict[str, Any],
     ctx: VisualPromptEngineContext,
     controls: Dict[str, str],
 ) -> Tuple[str, List[str]]:
     risk_flags: List[str] = []
-    title = anatomy.subject_description or "untitled scene"
-    template = _norm_space(ctx.video_template) or "generic video"
     role_raw = _norm_space(ctx.beat_role)
     role = _HOOK_VISUAL_LABEL if _looks_like_internal_hook_title(role_raw) else (role_raw or "scene")
-    provider_target = controls.get("provider_target", "generic")
-    consistency = controls.get("visual_consistency_mode", "one_style_per_video")
 
-    if anatomy.source_summary:
-        subject = anatomy.source_summary
-    else:
-        subject = "grounded editorial scene based on the scene title"
+    if not anatomy.source_summary:
         risk_flags.append("sparse_narration")
 
     if not anatomy.subject_description and not anatomy.source_summary:
         risk_flags.append("generic_visual_fallback")
 
-    prompt = (
-        f"{style_phrase}. Visual scene: {title}. Story context: {subject}. "
-        f"Template: {template}. Beat role: {role}. "
-        f"Composition: {anatomy.composition or 'concrete editorial image, clear focal subject, believable environment, natural framing'}. "
-        f"Provider target: {provider_target}. Consistency mode: {consistency}."
-    )
-    return _norm_space(prompt), risk_flags
+    formatter_controls: Dict[str, Any] = dict(controls)
+    formatter_controls["visual_preset_label"] = str(preset.get("label") or "")
+    formatter_controls["video_template"] = _norm_space(ctx.video_template) or "generic video"
+    formatter_controls["beat_role"] = role
+    return anatomy_to_generic_prompt(anatomy, formatter_controls), risk_flags
 
 
 def _anatomy_risk_flags(anatomy: VisualPromptAnatomy) -> List[str]:
@@ -208,7 +192,6 @@ def build_visual_prompt_v1(context: VisualPromptEngineContext) -> VisualPromptEn
 
     preset = _preset_by_id(controls.get("visual_preset", ""))
     style_profile = controls.get("visual_preset", "")
-    style_phrase = _style_phrase(preset, controls)
     anatomy = build_visual_prompt_anatomy(
         context=context,
         normalized_controls=controls,
@@ -219,7 +202,7 @@ def build_visual_prompt_v1(context: VisualPromptEngineContext) -> VisualPromptEn
     )
     raw_prompt, risk_flags = _raw_prompt_from_anatomy(
         anatomy=anatomy,
-        style_phrase=style_phrase,
+        preset=preset,
         ctx=context,
         controls=controls,
     )

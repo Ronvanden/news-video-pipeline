@@ -1,4 +1,6 @@
 from app.visual_plan.engine_v1 import VisualPromptEngineContext, build_visual_prompt_v1
+from app.visual_plan.prompt_anatomy import VisualPromptAnatomy
+from app.visual_plan.prompt_formatters import anatomy_to_generic_prompt
 from app.visual_plan.presets import VISUAL_PROMPT_CONTROL_DEFAULTS
 
 
@@ -54,6 +56,48 @@ def test_visual_prompt_anatomy_contains_core_fields():
     assert anatomy["composition"]
     assert anatomy["source_summary"]
     assert "grounded_realism" in anatomy["style_tags"]
+
+
+def test_generic_formatter_contains_core_anatomy_parts():
+    anatomy = VisualPromptAnatomy(
+        subject_description="public building at sunrise",
+        environment="grounded documentary environment",
+        composition="clean editorial frame",
+    )
+    prompt = anatomy_to_generic_prompt(anatomy, {"prompt_detail_level": "basic"})
+    assert "public building at sunrise" in prompt
+    assert "grounded documentary environment" in prompt
+    assert "clean editorial frame" in prompt
+
+
+def test_generic_formatter_detail_levels_change_prompt_depth():
+    anatomy = VisualPromptAnatomy(
+        subject_description="public building at sunrise",
+        action="workers enter through the main doors",
+        environment="grounded documentary environment",
+        camera="documentary medium-wide frame",
+        lighting="natural morning light",
+        mood="grounded documentary realism",
+        composition="clean editorial frame",
+        style_tags=["grounded_realism", "natural_light"],
+        continuity="use one consistent visual style across the video",
+        source_summary="workers enter a public building at sunrise",
+        negative_constraints=["no readable text"],
+    )
+    basic = anatomy_to_generic_prompt(anatomy, {"prompt_detail_level": "basic"})
+    deep = anatomy_to_generic_prompt(
+        anatomy,
+        {
+            "prompt_detail_level": "deep",
+            "visual_preset": "documentary_realism",
+            "provider_target": "generic",
+            "visual_consistency_mode": "one_style_per_video",
+        },
+    )
+    assert len(basic) < len(deep)
+    assert "use one consistent visual style" in deep
+    assert "grounded_realism" in deep
+    assert "workers enter a public building" in deep
 
 
 def test_unknown_controls_warn_and_fall_back_to_defaults():

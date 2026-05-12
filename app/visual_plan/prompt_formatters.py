@@ -1,0 +1,86 @@
+"""Provider-neutral prompt formatters for Visual Prompt Engine V1."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, Iterable, List
+
+from app.visual_plan.prompt_anatomy import VisualPromptAnatomy
+
+
+def _norm_space(value: str) -> str:
+    return " ".join(str(value or "").split())
+
+
+def _append_part(parts: List[str], label: str, value: str) -> None:
+    clean = _norm_space(value)
+    if clean:
+        parts.append(f"{label}: {clean}")
+
+
+def _join_sentence(parts: Iterable[str]) -> str:
+    clean_parts = [_norm_space(part) for part in parts if _norm_space(part)]
+    if not clean_parts:
+        return ""
+    text = ". ".join(part.rstrip(".") for part in clean_parts)
+    return f"{text}."
+
+
+def _preset_label(controls: Dict[str, Any]) -> str:
+    label = _norm_space(str(controls.get("visual_preset_label") or ""))
+    if label:
+        return label
+    preset_id = _norm_space(str(controls.get("visual_preset") or ""))
+    if not preset_id:
+        return ""
+    return preset_id.replace("_", " ").title()
+
+
+def anatomy_to_generic_prompt(anatomy: VisualPromptAnatomy, controls: dict | None = None) -> str:
+    """Format a VisualPromptAnatomy into the generic V1 prompt string.
+
+    This intentionally stays provider-neutral. Provider-specific prompt routing
+    can be added later without changing the engine's public result contract.
+    """
+    controls_payload: Dict[str, Any] = dict(controls or {})
+    detail_level = str(controls_payload.get("prompt_detail_level") or "enhanced")
+
+    parts: List[str] = []
+    style_label = _preset_label(controls_payload)
+    style_tags = [str(tag) for tag in (anatomy.style_tags or []) if str(tag).strip()]
+
+    if detail_level != "basic" and style_label:
+        style_value = style_label
+        if style_tags:
+            style_value = f"{style_value}; style tags: {', '.join(style_tags[:5])}"
+        parts.append(style_value)
+
+    _append_part(parts, "Scene", anatomy.subject_description or "untitled scene")
+
+    if detail_level in {"enhanced", "deep"}:
+        _append_part(parts, "Action", anatomy.action)
+
+    _append_part(parts, "Environment", anatomy.environment)
+
+    if detail_level in {"enhanced", "deep"}:
+        _append_part(parts, "Camera", anatomy.camera)
+        _append_part(parts, "Lighting", anatomy.lighting)
+        _append_part(parts, "Mood", anatomy.mood)
+
+    _append_part(parts, "Composition", anatomy.composition)
+
+    if detail_level == "deep":
+        _append_part(parts, "Continuity", anatomy.continuity)
+        if style_tags and not style_label:
+            _append_part(parts, "Style tags", ", ".join(style_tags[:8]))
+        _append_part(parts, "Source summary", anatomy.source_summary)
+        constraints = [str(item) for item in (anatomy.negative_constraints or []) if str(item).strip()]
+        if constraints:
+            _append_part(parts, "Constraints", ", ".join(constraints[:8]))
+
+    provider_target = _norm_space(str(controls_payload.get("provider_target") or ""))
+    consistency_mode = _norm_space(str(controls_payload.get("visual_consistency_mode") or ""))
+    if detail_level == "deep":
+        _append_part(parts, "Provider target", provider_target)
+        _append_part(parts, "Consistency mode", consistency_mode)
+
+    return _norm_space(_join_sentence(parts))
