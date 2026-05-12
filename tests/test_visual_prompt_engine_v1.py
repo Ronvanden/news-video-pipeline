@@ -58,6 +58,35 @@ def test_visual_prompt_anatomy_contains_core_fields():
     assert "grounded_realism" in anatomy["style_tags"]
 
 
+def test_visual_prompt_anatomy_derives_subject_environment_and_action_from_headline():
+    title = "Warum Vertrauen in Experten plÃ¶tzlich brÃ¶ckelt"
+    narration = (
+        "Ein neuer Gesundheitsfall sorgt fÃ¼r Ã¶ffentliche Unsicherheit. "
+        "Experten versuchen ruhig zu erklÃ¤ren, wÃ¤hrend BÃ¼rger zwischen Fakten, "
+        "Angst und Misstrauen schwanken."
+    )
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title=title,
+            narration=narration,
+            provider_target="openai_image",
+        )
+    )
+    anatomy = result.visual_prompt_anatomy
+    subject = anatomy["subject_description"].lower()
+    assert anatomy["subject_description"] != title
+    assert any(term in subject for term in ["expert", "citizens", "public health", "documentary subject"])
+    assert anatomy["environment"] != "grounded documentary environment / editorial real-world setting"
+    assert "public information" in anatomy["environment"].lower() or "municipal hallway" in anatomy["environment"].lower()
+    assert anatomy["action"] != narration
+    assert len(anatomy["action"]) < len(narration)
+    assert "visual_subject_derived" in result.prompt_risk_flags
+    assert "subject_was_headline" in result.prompt_risk_flags
+    assert "action_from_summary" in result.prompt_risk_flags
+    assert 0 <= result.prompt_quality_score <= 100
+    assert "Subject: " + anatomy["subject_description"] in result.visual_prompt_raw
+
+
 def test_generic_formatter_contains_core_anatomy_parts():
     anatomy = VisualPromptAnatomy(
         subject_description="public building at sunrise",

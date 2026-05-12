@@ -12,7 +12,12 @@ import unicodedata
 
 from app.visual_plan.presets import get_visual_prompt_control_options, normalize_visual_prompt_controls
 from app.visual_plan.prompt_formatters import anatomy_to_generic_prompt, anatomy_to_openai_image_prompt
-from app.visual_plan.prompt_anatomy import VisualPromptAnatomy, build_visual_prompt_anatomy
+from app.visual_plan.prompt_anatomy import (
+    VisualPromptAnatomy,
+    build_visual_prompt_anatomy,
+    derive_visual_action,
+    derive_visual_subject,
+)
 from app.visual_plan.visual_no_text import append_no_text_guard
 
 
@@ -167,6 +172,33 @@ def _anatomy_risk_flags(anatomy: VisualPromptAnatomy) -> List[str]:
     return flags
 
 
+def _anatomy_enrichment_flags(
+    ctx: VisualPromptEngineContext,
+    visual_title: str,
+    anatomy: VisualPromptAnatomy,
+    controls: Dict[str, str],
+) -> List[str]:
+    flags: List[str] = []
+    narration = _norm_space(ctx.narration)
+    preset_id = controls.get("visual_preset", "")
+    derived_subject = derive_visual_subject(
+        visual_title,
+        narration,
+        ctx.video_template,
+        preset_id,
+    )
+    if _norm_space(derived_subject) and _norm_space(derived_subject) != _norm_space(visual_title):
+        flags.extend(["subject_was_headline", "visual_subject_derived"])
+    if _norm_space(anatomy.environment) == "grounded documentary environment / editorial real-world setting":
+        flags.append("environment_generic")
+    derived_action = derive_visual_action(visual_title, narration, preset_id)
+    if derived_action and _norm_space(derived_action) != _norm_space(anatomy.source_summary):
+        flags.append("action_from_summary")
+    elif anatomy.source_summary:
+        flags.append("action_from_summary")
+    return flags
+
+
 def _quality_score(raw_prompt: str, negative_prompt: str, risk_flags: List[str], warnings: List[str]) -> int:
     score = 82
     if len(raw_prompt) < 140:
@@ -175,7 +207,14 @@ def _quality_score(raw_prompt: str, negative_prompt: str, risk_flags: List[str],
         score += 5
     if negative_prompt:
         score += 5
-    score -= 10 * len(set(risk_flags))
+    weight_by_flag = {
+        "subject_was_headline": 0,
+        "visual_subject_derived": 0,
+        "action_from_summary": 0,
+        "environment_generic": 4,
+    }
+    for flag in set(risk_flags):
+        score -= weight_by_flag.get(flag, 10)
     score -= 4 * len(set(warnings))
     return max(0, min(100, score))
 
@@ -209,6 +248,7 @@ def build_visual_prompt_v1(context: VisualPromptEngineContext) -> VisualPromptEn
         controls=controls,
     )
     risk_flags.extend(_anatomy_risk_flags(anatomy))
+    risk_flags.extend(_anatomy_enrichment_flags(context, visual_title, anatomy, controls))
 
     if "symbolic" in raw_prompt.lower() and not anatomy.source_summary:
         risk_flags.append("generic_visual_fallback")

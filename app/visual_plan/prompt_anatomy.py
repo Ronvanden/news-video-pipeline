@@ -77,6 +77,120 @@ def _source_summary(narration: str, detail_level: str) -> str:
     return text[: max(1, cap - 3)].rsplit(" ", 1)[0].strip() + "..."
 
 
+def _contains_any(text: str, needles: List[str]) -> bool:
+    haystack = _norm_space(text).lower()
+    return any(needle in haystack for needle in needles)
+
+
+def _looks_like_abstract_headline(title: str) -> bool:
+    text = _norm_space(title).lower()
+    if not text:
+        return False
+    if text == "cinematic opening beat":
+        return False
+    question_markers = ["?", "warum ", "wieso ", "weshalb ", "wie ", "why ", "how "]
+    abstract_markers = [
+        "vertrauen",
+        "misstrauen",
+        "experten",
+        "gesellschaft",
+        "bröckelt",
+        "broeckelt",
+        "plötzlich",
+        "ploetzlich",
+        "angst",
+        "unsicherheit",
+        "fakten",
+        "krise",
+    ]
+    if any(marker in text for marker in question_markers):
+        return True
+    return len(text.split()) >= 6 and _contains_any(text, abstract_markers)
+
+
+def derive_visual_subject(scene_title: str, narration: str, video_template: str, visual_preset: str) -> str:
+    """Derive a concrete visual subject without inventing specific facts."""
+    title = _norm_space(scene_title)
+    if not _looks_like_abstract_headline(title):
+        return title or "a grounded documentary subject representing the scene topic"
+
+    combined = f"{title} {_norm_space(narration)} {_norm_space(video_template)} {_norm_space(visual_preset)}"
+    if _contains_any(
+        combined,
+        [
+            "gesundheit",
+            "health",
+            "experten",
+            "expert",
+            "public health",
+            "gesundheitsfall",
+            "arzt",
+            "ärzt",
+            "doctor",
+            "wissenschaft",
+            "scientist",
+        ],
+    ):
+        return "a calm public health expert in a realistic documentary setting"
+    if _contains_any(
+        combined,
+        ["vertrauen", "misstrauen", "bürger", "buerger", "citizen", "gesellschaft", "public", "community"],
+    ):
+        return "concerned citizens in a quiet public information environment"
+    if _contains_any(combined, ["politik", "policy", "regierung", "government", "news", "press"]):
+        return "a grounded civic news subject in a realistic documentary setting"
+    return "a grounded documentary subject representing the scene topic"
+
+
+def derive_visual_environment(scene_title: str, narration: str, visual_preset: str) -> str:
+    """Derive a concrete but conservative environment for prompt anatomy."""
+    combined = f"{_norm_space(scene_title)} {_norm_space(narration)} {_norm_space(visual_preset)}"
+    if _contains_any(
+        combined,
+        [
+            "gesundheit",
+            "health",
+            "experten",
+            "expert",
+            "public health",
+            "gesundheitsfall",
+            "arzt",
+            "ärzt",
+            "doctor",
+            "wissenschaft",
+            "scientist",
+            "bürger",
+            "buerger",
+            "citizen",
+        ],
+    ):
+        return "modern public information room or municipal hallway"
+    if _contains_any(combined, ["politik", "policy", "regierung", "government", "news", "press", "civic"]):
+        return "realistic press or civic environment"
+    if _contains_any(combined, ["mystery", "dark_mystery"]):
+        return "restrained real-world interior with low-key documentary atmosphere"
+    return "grounded documentary environment / editorial real-world setting"
+
+
+def derive_visual_action(scene_title: str, narration: str, visual_preset: str) -> str:
+    """Turn summary text into a short visual moment instead of copying it wholesale."""
+    combined = f"{_norm_space(scene_title)} {_norm_space(narration)} {_norm_space(visual_preset)}"
+    if _contains_any(combined, ["experten", "expert", "gesundheit", "health", "public health"]):
+        return "the expert calmly explains while concerned citizens listen in the background"
+    if _contains_any(combined, ["vertrauen", "misstrauen", "bürger", "buerger", "citizen", "gesellschaft"]):
+        return "concerned citizens listen and exchange cautious looks in a public setting"
+    if _contains_any(combined, ["politik", "policy", "regierung", "government", "press", "news"]):
+        return "a civic briefing unfolds while people listen attentively"
+
+    source = _norm_space(narration)
+    if not source:
+        return ""
+    first_sentence = re.split(r"(?<=[.!?])\s+", source, maxsplit=1)[0]
+    if len(first_sentence) > 150:
+        first_sentence = first_sentence[:147].rsplit(" ", 1)[0].strip() + "..."
+    return first_sentence
+
+
 def _camera_for(preset_id: str, detail_level: str) -> str:
     if preset_id == "clean_news_explainer":
         return "clean editorial medium-wide frame"
@@ -170,6 +284,14 @@ def build_visual_prompt_anatomy(
     narration = _norm_space(getattr(context, "narration", "") or "")
     source = _source_summary(narration, detail_level)
     style_tags = [str(t) for t in (preset_data.get("style_tags") or []) if str(t).strip()]
+    visual_subject = derive_visual_subject(
+        title,
+        narration,
+        getattr(context, "video_template", "") or "",
+        preset_id,
+    )
+    visual_environment = derive_visual_environment(title, narration, preset_id)
+    visual_action = derive_visual_action(title, narration, preset_id) or source
 
     negative_constraints: List[str] = []
     negative_constraints.extend(str(t) for t in (preset_data.get("negative_tags") or []) if str(t).strip())
@@ -185,9 +307,9 @@ def build_visual_prompt_anatomy(
     sanitized_terms = [w for w in (sanitizer_warnings or []) if str(w).strip()]
 
     return VisualPromptAnatomy(
-        subject_description=title or "grounded editorial scene based on the scene title",
-        action=source,
-        environment="grounded documentary environment / editorial real-world setting",
+        subject_description=visual_subject,
+        action=visual_action,
+        environment=visual_environment,
         camera=_camera_for(preset_id, detail_level),
         lighting=_lighting_for(preset_id),
         mood=_mood_for(preset_id, getattr(context, "video_template", "") or ""),
