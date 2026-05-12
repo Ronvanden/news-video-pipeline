@@ -242,6 +242,10 @@ def derive_visual_action(scene_title: str, narration: str, visual_preset: str) -
 
 
 def _camera_for(preset_id: str, detail_level: str) -> str:
+    if preset_id == "documentary_realism":
+        if detail_level == "deep":
+            return "35mm documentary lens feel, shallow depth of field but realistic, deliberate focal hierarchy"
+        return "35mm documentary lens feel, shallow depth of field but realistic"
     if preset_id == "clean_news_explainer":
         return "clean editorial medium-wide frame"
     if preset_id == "dark_mystery":
@@ -256,6 +260,8 @@ def _camera_for(preset_id: str, detail_level: str) -> str:
 
 
 def _lighting_for(preset_id: str) -> str:
+    if preset_id == "documentary_realism":
+        return "soft directional natural light, subtle cinematic contrast"
     if preset_id == "dark_mystery":
         return "low-key muted lighting"
     if preset_id == "cinematic_story":
@@ -282,11 +288,27 @@ def _mood_for(preset_id: str, video_template: str) -> str:
     return "grounded documentary realism"
 
 
-def _composition_for(text_safety_mode: str) -> str:
+def _composition_for(text_safety_mode: str, preset_id: str = "") -> str:
+    is_doc_real = preset_id == "documentary_realism"
     if text_safety_mode == "overlay_friendly":
+        if is_doc_real:
+            return (
+                "subject slightly off-center, softly defocused background, "
+                "clean negative space for later title overlay"
+            )
         return "concrete editorial image, clear focal subject, believable environment, clean negative space for later overlay"
     if text_safety_mode == "strict_no_text":
+        if is_doc_real:
+            return (
+                "subject slightly off-center, softly defocused background, "
+                "clean negative space for later title overlay, natural framing, no generated text"
+            )
         return "concrete editorial image, clear focal subject, believable environment, natural framing, no generated text"
+    if is_doc_real:
+        return (
+            "subject slightly off-center, softly defocused background, "
+            "clean negative space for later title overlay, natural framing"
+        )
     return "concrete editorial image, clear focal subject, believable environment, natural framing"
 
 
@@ -363,7 +385,7 @@ def build_visual_prompt_anatomy(
         camera=_camera_for(preset_id, detail_level),
         lighting=_lighting_for(preset_id),
         mood=_mood_for(preset_id, getattr(context, "video_template", "") or ""),
-        composition=_composition_for(text_safety_mode),
+        composition=_composition_for(text_safety_mode, preset_id),
         style_tags=_dedupe(style_tags),
         continuity=(
             "use one consistent visual style across the video"

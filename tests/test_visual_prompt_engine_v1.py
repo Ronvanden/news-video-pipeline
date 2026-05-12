@@ -280,6 +280,87 @@ def test_overlay_friendly_sets_anatomy_overlay_space():
     assert "clean negative space" in anatomy["composition"]
 
 
+def test_documentary_realism_camera_anatomy_has_documentary_lens_feel():
+    """Documentary Realism Preset: konkrete Kameraregie statt generischem Frame."""
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Briefing",
+            narration="An expert calmly addresses concerned citizens.",
+            prompt_detail_level="deep",
+        )
+    )
+    camera = result.visual_prompt_anatomy["camera"].lower()
+    assert "35mm" in camera
+    assert "documentary lens" in camera
+    assert "shallow depth of field" in camera
+
+
+def test_documentary_realism_lighting_anatomy_has_directional_natural_light():
+    """Documentary Realism Preset: konkrete Lichtregie."""
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Briefing",
+            narration="An expert calmly addresses concerned citizens.",
+        )
+    )
+    lighting = result.visual_prompt_anatomy["lighting"].lower()
+    assert "soft directional natural light" in lighting
+    assert "subtle cinematic contrast" in lighting
+
+
+def test_documentary_realism_composition_anatomy_has_overlay_space_and_off_center_subject():
+    """Documentary Realism Preset: Bildregie mit Off-Center-Subjekt und Negative Space, No-Text Guard bleibt."""
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Briefing",
+            narration="An expert calmly addresses concerned citizens.",
+        )
+    )
+    composition = result.visual_prompt_anatomy["composition"].lower()
+    assert "slightly off-center" in composition
+    assert "softly defocused" in composition
+    assert "clean negative space" in composition
+    assert "no generated text" in composition
+
+
+def test_documentary_realism_overlay_friendly_keeps_off_center_subject_and_overlay_space():
+    """Documentary Realism + overlay_friendly: Bildregie + Overlay-Space sichtbar, kein No-Text Zwang."""
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Briefing",
+            narration="An expert calmly addresses concerned citizens.",
+            text_safety_mode="overlay_friendly",
+        )
+    )
+    composition = result.visual_prompt_anatomy["composition"].lower()
+    assert "slightly off-center" in composition
+    assert "clean negative space" in composition
+    assert "softly defocused" in composition
+
+
+def test_documentary_realism_openai_image_prompt_carries_documentary_camera_lighting_composition():
+    """OpenAI-Image-Formatter zeigt die documentary_realism Bildregie in den labelled Sections."""
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Briefing",
+            narration="An expert calmly addresses concerned citizens.",
+            provider_target="openai_image",
+            prompt_detail_level="deep",
+        )
+    )
+    raw = result.visual_prompt_raw
+    assert raw.startswith("Create a realistic documentary-style image")
+    low = raw.lower()
+    assert "framing: " in low
+    assert "35mm" in low
+    assert "shallow depth of field" in low
+    assert "lighting and color: soft directional natural light" in low
+    assert "subtle cinematic contrast" in low
+    assert "composition: " in low
+    assert "slightly off-center" in low
+    assert "clean negative space" in low
+
+
 def test_sparse_narration_sets_risk_flag_without_crash():
     result = build_visual_prompt_v1(VisualPromptEngineContext(scene_title="Scene One"))
     assert result.visual_prompt_raw
