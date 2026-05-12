@@ -25,3 +25,59 @@ def test_visual_plan_presets_endpoint_returns_defaults_and_controls():
     }
     assert "documentary_realism" in _ids(controls["visual_presets"])
     assert _ids(controls["provider_targets"]) == {"generic", "openai_image", "runway", "kling"}
+
+
+def test_visual_plan_prompt_preview_endpoint_returns_engine_output():
+    client = TestClient(app)
+    r = client.post(
+        "/visual-plan/prompt-preview",
+        json={
+            "scene_title": "Opening city lab",
+            "narration": "Scientists review a glowing city heat map at dawn.",
+            "video_template": "documentary_short",
+            "beat_role": "opening",
+            "provider_target": "openai_image",
+            "prompt_detail_level": "deep",
+        },
+    )
+
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["visual_prompt_raw"]
+    assert data["visual_prompt_effective"]
+    assert data["negative_prompt"]
+    assert data["visual_prompt_anatomy"]
+    assert isinstance(data["prompt_quality_score"], int)
+    assert isinstance(data["prompt_risk_flags"], list)
+    assert data["normalized_controls"]["provider_target"] == "openai_image"
+    for label in [
+        "Subject",
+        "Environment",
+        "Composition",
+        "Lighting and color",
+        "Mood",
+        "Important constraints",
+    ]:
+        assert label in data["visual_prompt_raw"]
+
+
+def test_visual_plan_prompt_preview_endpoint_defaults_and_normalizes_unknown_controls():
+    client = TestClient(app)
+    r = client.post(
+        "/visual-plan/prompt-preview",
+        json={
+            "scene_title": "Hook",
+            "visual_preset": "unknown-style",
+            "provider_target": "not-a-provider",
+            "text_safety_mode": "unsafe-text",
+        },
+    )
+
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["normalized_controls"]["visual_preset"] == VISUAL_PROMPT_CONTROL_DEFAULTS["visual_preset"]
+    assert data["normalized_controls"]["provider_target"] == VISUAL_PROMPT_CONTROL_DEFAULTS["provider_target"]
+    assert data["normalized_controls"]["text_safety_mode"] == VISUAL_PROMPT_CONTROL_DEFAULTS["text_safety_mode"]
+    assert data["visual_policy_warnings"]
+    assert "no readable text" in data["visual_prompt_effective"].lower()
+    assert "no fishing hook" in data["negative_prompt"].lower()

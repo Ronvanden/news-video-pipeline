@@ -1030,6 +1030,7 @@ async def founder_dashboard_config() -> dict:
         },
         "visual_plan_relative": {
             "presets": {"method": "GET", "path": "/visual-plan/presets"},
+            "prompt_preview": {"method": "POST", "path": "/visual-plan/prompt-preview"},
         },
         "production_proof_summary_relative": {"method": "GET", "path": "/founder/production-proof/summary"},
         "story_engine_relative": {

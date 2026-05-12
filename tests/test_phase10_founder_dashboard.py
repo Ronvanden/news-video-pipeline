@@ -760,6 +760,10 @@ class FounderDashboardRouteTests(unittest.TestCase):
             data["visual_plan_relative"]["presets"]["path"],
             "/visual-plan/presets",
         )
+        self.assertEqual(
+            data["visual_plan_relative"]["prompt_preview"]["path"],
+            "/visual-plan/prompt-preview",
+        )
 
     def test_dashboard_config_provider_readiness_missing_env_is_missing(self):
         client = TestClient(app)
