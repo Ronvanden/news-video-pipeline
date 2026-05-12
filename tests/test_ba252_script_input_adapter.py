@@ -113,6 +113,40 @@ def test_hook_title_is_sanitized_for_visual_prompt(adapter_mod):
     assert first.get("visual_style_profile") == "documentary_realism"
 
 
+def test_openai_image_routed_still_uses_openai_visual_formatter(adapter_mod):
+    pack = adapter_mod.build_scene_asset_pack_from_generate_script_response(
+        {
+            "title": "Test",
+            "hook": "",
+            "chapters": [
+                {"title": "A", "content": "Alpha scene for a grounded still."},
+            ],
+            "full_script": "",
+            "sources": [],
+            "warnings": [],
+        },
+        run_id="rid_openai_formatter",
+    )
+    beats = _beats(pack)
+    first = beats[0]
+    assert first.get("routed_visual_provider") == "openai_images"
+    assert first.get("normalized_controls", {}).get("provider_target") == "openai_image"
+    assert str(first.get("visual_prompt_raw") or "").startswith("Create a realistic documentary-style image")
+    assert "Subject: A" in str(first.get("visual_prompt_raw") or "")
+    assert "Environment:" in str(first.get("visual_prompt_raw") or "")
+    assert "Composition:" in str(first.get("visual_prompt_raw") or "")
+
+
+def test_visual_prompt_helper_without_known_provider_stays_generic(adapter_mod):
+    result, _overlay, _text_sensitive = adapter_mod._visual_prompt_from_text(
+        "A",
+        "Alpha scene for a generic prompt.",
+        video_template="documentary",
+    )
+    assert result.normalized_controls.get("provider_target") == "generic"
+    assert not result.visual_prompt_raw.startswith("Create a realistic documentary-style image")
+
+
 def test_full_script_without_chapters_is_chunked(adapter_mod):
     data = {
         "title": "T",

@@ -302,6 +302,8 @@ def _visual_prompt_from_text(
     narration: str,
     *,
     video_template: Optional[str] = None,
+    visual_asset_kind: str = "",
+    provider_target: Optional[str] = None,
 ) -> Tuple[VisualPromptEngineResult, List[str], bool]:
     """
     Build visual prompt fields through Visual Prompt Engine V1.
@@ -314,15 +316,31 @@ def _visual_prompt_from_text(
     combo = f"{t}. {narr}" if t and narr else (t or narr)
     cleaned, overlay, ts_part = partition_visual_overlay_text(combo)
     ts = bool(ts_part or narr)
+    prompt_provider_target = _prompt_provider_target(
+        provider_target
+        or (
+            str(route_visual_provider(visual_asset_kind, text_sensitive=ts).get("provider") or "")
+            if visual_asset_kind
+            else ""
+        )
+    )
     result = build_visual_prompt_v1(
         VisualPromptEngineContext(
             scene_title=t,
             narration=cleaned if overlay else narr,
             video_template=_s(video_template),
             beat_role=t,
+            provider_target=prompt_provider_target,
         )
     )
     return result, overlay, ts
+
+
+def _prompt_provider_target(provider: str) -> Optional[str]:
+    p = _s(provider).lower()
+    if p in {"openai_image", "openai_images"}:
+        return "openai_image"
+    return None
 
 
 def _merge_policy_warnings(policy_fields: Dict[str, Any], engine_result: VisualPromptEngineResult) -> Dict[str, Any]:
@@ -361,7 +379,7 @@ def _build_scene_asset_pack(
     beat_index = 0
     if hook:
         engine_result, ov_int, ts = _visual_prompt_from_text(
-            "Hook", hook, video_template=vt
+            "Hook", hook, video_template=vt, visual_asset_kind="keyframe_still"
         )
         still_route = route_visual_provider("keyframe_still", text_sensitive=ts)
         vid_route = route_visual_provider("motion_clip", text_sensitive=False)
@@ -407,13 +425,13 @@ def _build_scene_asset_pack(
         if not narration:
             continue
         sc_title = _s((sc or {}).get("title")) or f"Szene {i}"
-        engine_result, ov_int, ts = _visual_prompt_from_text(
-            sc_title, narration, video_template=vt
-        )
         if hook:
             still_kind = "keyframe_still" if beat_index == 1 else "cinematic_broll"
         else:
             still_kind = "keyframe_still" if beat_index == 0 else "cinematic_broll"
+        engine_result, ov_int, ts = _visual_prompt_from_text(
+            sc_title, narration, video_template=vt, visual_asset_kind=still_kind
+        )
         still_route = route_visual_provider(still_kind, text_sensitive=ts)
         vid_route = route_visual_provider("motion_clip", text_sensitive=False)
         vp_eff2, _ = ensure_effective_prompt(engine_result.visual_prompt_effective)
@@ -468,4 +486,3 @@ def _build_scene_asset_pack(
         "scene_expansion": {"expanded_scene_assets": expanded},
     }
     return pack
-

@@ -121,7 +121,7 @@ def anatomy_to_openai_image_prompt(anatomy: VisualPromptAnatomy, controls: dict 
 
     if style_label and detail_level != "basic":
         style_value = style_label
-        if detail_level == "deep" and style_tags:
+        if style_tags:
             style_value = f"{style_value}; style tags: {', '.join(style_tags[:8])}"
         _append_part(parts, "Style consistency", style_value)
 
