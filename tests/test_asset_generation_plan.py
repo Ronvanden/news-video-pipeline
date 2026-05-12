@@ -46,10 +46,19 @@ def test_ready_storyboard_creates_image_video_voice_tasks():
 
 
 def test_hybrid_scene_creates_image_and_video_with_dependency():
-    plan = build_asset_generation_plan(_plan(_scene(asset_type="image_to_video_candidate")))
+    plan = build_asset_generation_plan(
+        _plan(
+            _scene(
+                asset_type="image_to_video_candidate",
+                video_prompt="Animate the provided image as a realistic short documentary clip. Camera movement: slow controlled push-in.",
+            )
+        )
+    )
     video = next(t for t in plan.tasks if t.task_id == "asset_scene_001_video")
     assert "asset_scene_001_image" in video.dependencies
     assert video.output_path == "planned_assets/scene_001/video.mp4"
+    assert video.provider_hint == "video"
+    assert video.prompt.startswith("Animate the provided image")
 
 
 def test_blocked_readiness_blocks_normal_asset_plan():

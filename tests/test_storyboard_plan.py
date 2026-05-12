@@ -44,7 +44,13 @@ def test_storyboard_from_prompt_plan_maps_scene_contract():
     assert out.scenes[1].negative_prompt
     assert out.scenes[1].visual_style_profile == "documentary_realism"
     assert isinstance(out.scenes[1].prompt_quality_score, int)
-    assert "Motion direction:" in out.scenes[1].video_prompt
+    assert "Animate the provided image" in out.scenes[1].video_prompt
+    assert "Camera movement:" in out.scenes[1].video_prompt
+    assert "Scene evolution:" in out.scenes[1].video_prompt
+    assert "Subject motion:" in out.scenes[1].video_prompt
+    assert "Background motion:" in out.scenes[1].video_prompt
+    assert "Stability constraints:" in out.scenes[1].video_prompt
+    assert "Avoid:" in out.scenes[1].video_prompt
     assert out.total_duration_seconds == sum(s.duration_seconds for s in out.scenes)
 
 
@@ -62,6 +68,15 @@ def test_storyboard_from_script_chapters_reuses_scene_prompt_builder():
     assert len(out.scenes) == 3
     assert out.scenes[1].source == "script_chapter"
     assert out.scenes[1].image_prompt
+    assert "provided image" in out.scenes[1].video_prompt.lower()
+    assert "preserve subject identity" in out.scenes[1].video_prompt
+    assert "preserve composition" in out.scenes[1].video_prompt
+    assert "preserve lighting" in out.scenes[1].video_prompt
+    assert "no scene cut" in out.scenes[1].video_prompt
+    assert "no new objects" in out.scenes[1].video_prompt
+    assert "no text morphing" in out.scenes[1].video_prompt
+    assert "Subject:" not in out.scenes[1].video_prompt
+    assert "Environment:" not in out.scenes[1].video_prompt
     assert out.scenes[1].provider_hints == ["image", "video", "voice", "render_timeline"]
     assert not any("provider_call" in w for w in out.warnings)
 

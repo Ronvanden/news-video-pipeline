@@ -17,7 +17,9 @@ from app.storyboard.schema import (
     StoryboardTransition,
 )
 from app.visual_plan.engine_v1 import VisualPromptEngineContext, VisualPromptEngineResult, build_visual_prompt_v1
+from app.visual_plan.prompt_anatomy import VisualPromptAnatomy, build_motion_prompt_anatomy
 from app.visual_plan.prompt_engine import build_scene_prompts_v1
+from app.visual_plan.prompt_formatters import anatomy_to_runway_motion_prompt
 
 
 _DEFAULT_BODY_DURATION_SECONDS = 34
@@ -100,8 +102,8 @@ def _asset_type_for_role(role: TimelineRole) -> StoryboardAssetType:
     return "image_keyframe"
 
 
-def _video_prompt(image_prompt: str, role: TimelineRole) -> str:
-    motion = {
+def _motion_hint_for_role(role: TimelineRole) -> str:
+    return {
         "hook": "fast editorial opener, no generated text overlays",
         "setup": "slow establishing camera move, grounded documentary pacing",
         "build": "subtle push-in, maintain continuity, no readable generated text",
@@ -109,8 +111,38 @@ def _video_prompt(image_prompt: str, role: TimelineRole) -> str:
         "climax": "focused reveal beat, cinematic but factual, no gore",
         "outro": "calm resolving motion, hold for final narration",
     }.get(role, "subtle motion")
+
+
+def _visual_anatomy_from_engine(result: VisualPromptEngineResult) -> VisualPromptAnatomy:
+    raw = dict(result.visual_prompt_anatomy or {})
+    allowed = set(VisualPromptAnatomy.__dataclass_fields__.keys())
+    payload = {k: v for k, v in raw.items() if k in allowed}
+    return VisualPromptAnatomy(**payload)
+
+
+def _video_prompt(
+    image_prompt: str,
+    role: TimelineRole,
+    engine_result: VisualPromptEngineResult,
+    duration_seconds: int,
+) -> str:
+    motion_hint = _motion_hint_for_role(role)
+    visual_anatomy = _visual_anatomy_from_engine(engine_result)
+    motion_anatomy = build_motion_prompt_anatomy(
+        visual_anatomy,
+        normalized_controls=dict(engine_result.normalized_controls or {}),
+        motion_hint=motion_hint,
+        duration_seconds=duration_seconds,
+    )
+    prompt = anatomy_to_runway_motion_prompt(
+        visual_anatomy,
+        motion_anatomy,
+        dict(engine_result.normalized_controls or {}),
+    )
+    if prompt:
+        return prompt
     base, _ = _clip(image_prompt, 640)
-    return f"{base}. Motion direction: {motion}."
+    return f"{base}. Motion direction: {motion_hint}."
 
 
 def _visual_engine_result(
@@ -271,7 +303,7 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
                 visual_intent=_clip(hook, _INTENT_CAP)[0],
                 voice_text=_clip(hook, _VOICE_CAP)[0],
                 image_prompt=hook_prompt,
-                video_prompt=_video_prompt(hook_prompt, "hook"),
+                video_prompt=_video_prompt(hook_prompt, "hook", hook_engine, _duration_for_role("hook")),
                 **_visual_engine_fields(hook_engine),
                 duration_seconds=_duration_for_role("hook"),
                 transition=_transition_for_role("hook"),
@@ -325,7 +357,7 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
                 visual_intent=_chapter_intent(ch, image_prompt),
                 voice_text=voice_text,
                 image_prompt=image_prompt,
-                video_prompt=_video_prompt(image_prompt, role),
+                video_prompt=_video_prompt(image_prompt, role, scene_engine, duration),
                 **_visual_engine_fields(scene_engine),
                 duration_seconds=duration,
                 transition=_transition_for_role(role),
