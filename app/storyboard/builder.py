@@ -102,6 +102,14 @@ def _asset_type_for_role(role: TimelineRole) -> StoryboardAssetType:
     return "image_keyframe"
 
 
+def _provider_hints_for_asset_type(asset_type: StoryboardAssetType) -> List[str]:
+    if asset_type == "image_to_video_candidate":
+        return ["image", "runway", "voice", "render_timeline"]
+    if asset_type == "hook_card":
+        return ["image", "render_layer"]
+    return ["image", "video", "voice", "render_timeline"]
+
+
 def _motion_hint_for_role(role: TimelineRole) -> str:
     return {
         "hook": "fast editorial opener, no generated text overlays",
@@ -285,6 +293,7 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
     out: List[StoryboardScene] = []
     scene_no = 1
     if _norm(hook):
+        hook_asset_type = _asset_type_for_role("hook")
         hook_engine = _visual_engine_result(
             scene_title="Hook",
             narration=hook,
@@ -307,8 +316,8 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
                 **_visual_engine_fields(hook_engine),
                 duration_seconds=_duration_for_role("hook"),
                 transition=_transition_for_role("hook"),
-                asset_type=_asset_type_for_role("hook"),
-                provider_hints=["image", "render_layer"],
+                asset_type=hook_asset_type,
+                provider_hints=_provider_hints_for_asset_type(hook_asset_type),
             )
         )
         scene_no += 1
@@ -328,6 +337,7 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
         if ts is not None:
             role = ts.timeline_role
             duration = int(ts.estimated_duration_seconds)
+        asset_type = _asset_type_for_role(role)
 
         image_prompt = scene_prompts[idx] if idx < len(scene_prompts) else ""
         if not _norm(image_prompt):
@@ -361,8 +371,8 @@ def build_storyboard_plan(req: StoryboardBuildRequest) -> StoryboardPlan:
                 **_visual_engine_fields(scene_engine),
                 duration_seconds=duration,
                 transition=_transition_for_role(role),
-                asset_type=_asset_type_for_role(role),
-                provider_hints=["image", "video", "voice", "render_timeline"],
+                asset_type=asset_type,
+                provider_hints=_provider_hints_for_asset_type(asset_type),
                 warnings=scene_warnings,
             )
         )

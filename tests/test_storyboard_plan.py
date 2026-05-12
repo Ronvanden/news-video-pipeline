@@ -4,7 +4,12 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.prompt_engine.schema import ChapterOutlineItem, ProductionPromptPlan
-from app.storyboard import StoryboardBuildRequest, build_storyboard_plan, build_storyboard_plan_from_prompt_plan
+from app.storyboard import (
+    StoryboardBuildRequest,
+    build_asset_generation_plan,
+    build_storyboard_plan,
+    build_storyboard_plan_from_prompt_plan,
+)
 
 
 def _plan(**kwargs) -> ProductionPromptPlan:
@@ -79,6 +84,29 @@ def test_storyboard_from_script_chapters_reuses_scene_prompt_builder():
     assert "Environment:" not in out.scenes[1].video_prompt
     assert out.scenes[1].provider_hints == ["image", "video", "voice", "render_timeline"]
     assert not any("provider_call" in w for w in out.warnings)
+
+
+def test_storyboard_motion_scene_maps_to_runway_asset_plan_task():
+    req = StoryboardBuildRequest(
+        hook="A concise hook.",
+        video_template="documentary",
+        chapters=[
+            {"title": "Chapter One", "content": "Enough narration text for a grounded opening scene. " * 8},
+            {"title": "Chapter Two", "content": "More narration text for a second scene with continuity. " * 8},
+            {"title": "Chapter Three", "content": "A third scene creates a motion-capable climax beat with continuity. " * 8},
+        ],
+    )
+    storyboard = build_storyboard_plan(req)
+    motion_scene = next(scene for scene in storyboard.scenes if scene.asset_type == "image_to_video_candidate")
+    asset_plan = build_asset_generation_plan(storyboard)
+    video_task = next(
+        task
+        for task in asset_plan.tasks
+        if task.scene_number == motion_scene.scene_number and task.asset_type == "video"
+    )
+    assert motion_scene.provider_hints == ["image", "runway", "voice", "render_timeline"]
+    assert video_task.provider_hint == "runway"
+    assert video_task.prompt == motion_scene.video_prompt
 
 
 def test_storyboard_hook_visual_prompt_uses_engine_sanitizing():

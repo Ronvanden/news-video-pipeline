@@ -50,6 +50,7 @@ def test_hybrid_scene_creates_image_and_video_with_dependency():
         _plan(
             _scene(
                 asset_type="image_to_video_candidate",
+                provider_hints=["image", "runway", "voice", "render_timeline"],
                 video_prompt="Animate the provided image as a realistic short documentary clip. Camera movement: slow controlled push-in.",
             )
         )
@@ -57,7 +58,7 @@ def test_hybrid_scene_creates_image_and_video_with_dependency():
     video = next(t for t in plan.tasks if t.task_id == "asset_scene_001_video")
     assert "asset_scene_001_image" in video.dependencies
     assert video.output_path == "planned_assets/scene_001/video.mp4"
-    assert video.provider_hint == "video"
+    assert video.provider_hint == "runway"
     assert video.prompt.startswith("Animate the provided image")
 
 
