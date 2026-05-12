@@ -3096,6 +3096,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
           </div>
         </div>
         <p class="muted" id="visual-prompt-controls-status" style="margin:0.45rem 0 0;font-size:0.78rem">Visual Controls werden geladen.</p>
+        <p class="muted" id="visual-prompt-controls-preview-state" data-visual-controls-preview-state="1" style="margin:0.35rem 0 0;font-size:0.78rem">Preview-only visual controls state: noch nicht verwendet.</p>
       </div>
       <div class="row-check">
         <input type="checkbox" id="fd-lock" checked/>
@@ -3708,6 +3709,8 @@ try {
     ["visual_consistency_mode", "fd-visual-consistency-mode", "visual_consistency_modes"]
   ];
   window.visualPromptControls = window.visualPromptControls || {};
+  window.visualPromptControlsDefaults = window.visualPromptControlsDefaults || {};
+  window.visualPromptControlsPreviewState = window.visualPromptControlsPreviewState || null;
 
   const OUTPUT_EMPTY = "Noch kein Ergebnis. Klicke auf den passenden Action-Button.";
 
@@ -3811,6 +3814,39 @@ try {
     return window.visualPromptControls;
   }
 
+  function getSafeVisualPromptControlsState() {
+    var raw = getVisualPromptControlsState();
+    var defaults = window.visualPromptControlsDefaults || {};
+    var out = {};
+    VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
+      var key = row[0];
+      out[key] = String(raw[key] || defaults[key] || "").trim();
+    });
+    window.visualPromptControls = out;
+    return out;
+  }
+
+  function renderVisualPromptControlsPreviewState(contextLabel) {
+    var controls = getSafeVisualPromptControlsState();
+    window.visualPromptControlsPreviewState = {
+      context: contextLabel || "dashboard_local_preview_state",
+      preview_only: true,
+      backend_payload: "not_sent",
+      controls: controls
+    };
+    var el = $("visual-prompt-controls-preview-state");
+    if (el) {
+      el.textContent = "Preview-only visual controls state: " +
+        "Visual Preset=" + (controls.visual_preset || "default") +
+        " | Prompt Detail Level=" + (controls.prompt_detail_level || "default") +
+        " | Provider Target=" + (controls.provider_target || "default") +
+        " | Text Safety Mode=" + (controls.text_safety_mode || "default") +
+        " | Visual Consistency Mode=" + (controls.visual_consistency_mode || "default") +
+        " | backend payload: not sent";
+    }
+    return window.visualPromptControlsPreviewState;
+  }
+
   function populateVisualPromptSelect(selectId, entries, defaultValue) {
     var sel = $(selectId);
     if (!sel) return;
@@ -3855,16 +3891,19 @@ try {
       const data = await fetchJson(endpoint, { method: "GET" });
       var defaults = data && data.defaults ? data.defaults : {};
       var controls = data && data.controls ? data.controls : {};
+      window.visualPromptControlsDefaults = defaults;
       VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
         populateVisualPromptSelect(row[1], controls[row[2]] || [], defaults[row[0]] || "");
       });
       applyVisualPromptControlsState(defaults);
+      renderVisualPromptControlsPreviewState("defaults_loaded");
       VISUAL_PROMPT_CONTROL_FIELDS.forEach(function(row) {
         var el = $(row[1]);
         if (!el || el.getAttribute("data-vpc-bound") === "1") return;
         el.setAttribute("data-vpc-bound", "1");
         el.addEventListener("change", function() {
           syncVisualPromptControlsState();
+          renderVisualPromptControlsPreviewState("dashboard_selection_changed");
           setVisualPromptControlsStatus("Visual Controls lokal aktualisiert.");
         });
       });
@@ -3873,6 +3912,7 @@ try {
     } catch (e) {
       setVisualPromptControlsStatus("Visual Controls derzeit nicht verfuegbar; Dashboard laeuft mit neutralem UI-State weiter.");
       window.visualPromptControls = window.visualPromptControls || {};
+      renderVisualPromptControlsPreviewState("presets_load_failed");
       return false;
     }
   }
@@ -3912,6 +3952,72 @@ try {
     addLi("Rhythm (Keys): " + rhythmBrief);
     addLi("Hook Type: " + (hk.hook_type || "—"));
     addLi("Hook Score: " + (typeof hk.hook_score === "number" ? String(hk.hook_score) : "—"));
+  }
+
+  function promptQualityBand(score) {
+    var n = Number(score);
+    if (!isFinite(n)) return "unbekannt";
+    if (n >= 80) return "gut";
+    if (n >= 50) return "pruefen";
+    return "kritisch";
+  }
+
+  function riskFlagLabel(flag) {
+    var labels = {
+      sparse_narration: "Sparse narration",
+      generic_visual_fallback: "Generic visual fallback",
+      subject_missing: "Subject missing",
+      environment_missing: "Environment missing",
+      negative_constraints_missing: "Negative constraints missing",
+      text_safety_missing: "Text safety missing"
+    };
+    return labels[flag] || String(flag || "");
+  }
+
+  function renderPromptQualityCockpit(parent, scene) {
+    if (!parent || !scene) return;
+    var hasScore = scene.prompt_quality_score != null;
+    var flags = Array.isArray(scene.prompt_risk_flags) ? scene.prompt_risk_flags : [];
+    var profile = scene.visual_style_profile || "";
+    var anatomy = scene.visual_prompt_anatomy || null;
+    if (!hasScore && !flags.length && !profile && !anatomy) return;
+    var wrap = document.createElement("div");
+    wrap.setAttribute("data-prompt-quality-cockpit", "1");
+    wrap.style.margin = "0.4rem 0 0";
+    wrap.style.padding = "0.45rem 0.55rem";
+    wrap.style.border = "1px solid var(--border)";
+    wrap.style.borderRadius = "8px";
+    wrap.style.background = "rgba(255,255,255,0.03)";
+    function addLine(label, value) {
+      var p = document.createElement("p");
+      p.style.margin = "0.22rem 0 0";
+      p.style.fontSize = "0.78rem";
+      p.textContent = label + ": " + value;
+      wrap.appendChild(p);
+    }
+    var scoreText = hasScore ? String(scene.prompt_quality_score) + " (" + promptQualityBand(scene.prompt_quality_score) + ")" : "n/a";
+    addLine("Prompt Quality Score", scoreText);
+    addLine("Risk Flags", flags.length ? flags.map(riskFlagLabel).join(", ") : "none");
+    addLine("Visual Style Profile", profile ? String(profile) : "n/a");
+    if (anatomy) {
+      var details = document.createElement("details");
+      details.style.margin = "0.3rem 0 0";
+      var summary = document.createElement("summary");
+      summary.textContent = "Visual Prompt Anatomy";
+      details.appendChild(summary);
+      var pre = document.createElement("pre");
+      pre.className = "out";
+      pre.style.maxHeight = "140px";
+      pre.style.marginTop = "0.25rem";
+      try {
+        pre.textContent = JSON.stringify(anatomy, null, 2);
+      } catch (e) {
+        pre.textContent = String(anatomy);
+      }
+      details.appendChild(pre);
+      wrap.appendChild(details);
+    }
+    parent.appendChild(wrap);
   }
 
   function clearStoryboardPlanSummary() {
@@ -3960,6 +4066,7 @@ try {
         p.textContent = row[0] + ": " + String(row[1] == null || row[1] === "" ? "—" : row[1]);
         card.appendChild(p);
       });
+      renderPromptQualityCockpit(card, scene);
       box.appendChild(card);
     });
   }
@@ -6933,6 +7040,7 @@ try {
 
   async function runPreviewOnlyInternal() {
     const body = buildCurrentExportRequestFromForm();
+    const visualPreviewState = renderVisualPromptControlsPreviewState("export_package_preview");
     var nc = body.chapters && body.chapters.length ? body.chapters.length : 0;
     setStoryEngineRequestDebug("Export Request gebaut: Template=" + body.video_template + " | Provider=" + body.provider_profile + " | Kapitel=" + nc);
     const data = await fetchJson("/story-engine/export-package/preview", {
@@ -6953,7 +7061,11 @@ try {
       top_warnings: data.top_warnings
     });
     setOut("out-pq-score", data.prompt_quality_score);
-    setOut("out-pq-detail", { prompt_quality_score: data.prompt_quality_score, scene_count: data.scene_count });
+    setOut("out-pq-detail", {
+      prompt_quality_score: data.prompt_quality_score,
+      scene_count: data.scene_count,
+      visual_prompt_controls_preview: visualPreviewState
+    });
     mergeWarnings(data.top_warnings || []);
     openPanelAndScroll("coll-preview", "out-pq-score");
     return data;
@@ -7185,7 +7297,11 @@ try {
         top_warnings: lastPreview.top_warnings
       });
       setOut("out-pq-score", lastPreview.prompt_quality_score);
-      setOut("out-pq-detail", { prompt_quality_score: lastPreview.prompt_quality_score, scene_count: lastPreview.scene_count });
+      setOut("out-pq-detail", {
+        prompt_quality_score: lastPreview.prompt_quality_score,
+        scene_count: lastPreview.scene_count,
+        visual_prompt_controls_preview: renderVisualPromptControlsPreviewState("restored_preview")
+      });
       mergeWarnings(lastPreview.top_warnings || []);
     }
     if (lastStoryboard) {
