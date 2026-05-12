@@ -102,6 +102,71 @@ def test_visual_prompt_anatomy_derives_subject_from_headline_without_narration()
     assert "cinematic opening beat" not in anatomy["subject_description"]
 
 
+def test_documentary_realism_derives_concrete_subjects_and_environments_for_lab_topics():
+    cases = [
+        (
+            "Regierung verliert Vertrauen der Bevoelkerung",
+            "Eine Regierungserklaerung trifft auf skeptische Buerger und Pressefragen.",
+            ["government spokesperson", "skeptical citizens"],
+            ["press briefing room", "municipal hallway"],
+            ["spokesperson addresses", "reporters listen"],
+            ["public scrutiny", "quiet civic tension"],
+        ),
+        (
+            "Steigende Preise verunsichern Familien",
+            "Eine Familie prueft Rechnungen und Einkaeufe, waehrend die Stimmung angespannt bleibt.",
+            ["worried parent", "grocery receipts", "family"],
+            ["modest family kitchen", "small apartment dining table"],
+            ["compares receipts", "groceries"],
+            ["financial uncertainty", "family stress"],
+        ),
+        (
+            "Eine Ermittlerin rekonstruiert den letzten Abend",
+            "Eine Ermittlerin ordnet Hinweise und versucht den Ablauf eines Abends nachzuvollziehen.",
+            ["focused investigator", "evening timeline"],
+            ["quiet investigation office", "unlabelled evidence photos"],
+            ["studies unlabelled evidence", "sequence of events"],
+            ["investigative", "tense but grounded"],
+        ),
+        (
+            "Ein verlassenes Dorf in den Bergen sorgt fuer Fragen",
+            "Ein leeres Bergdorf wirkt real und still, ohne uebernatuerliche Zeichen.",
+            ["abandoned mountain village street", "shuttered houses"],
+            ["weathered houses", "alpine slopes"],
+            ["empty street holds still", "quiet unease"],
+            ["restrained mystery", "quiet unease"],
+        ),
+        (
+            "Ein Vater erklaert seiner Tochter die Krise",
+            "Ein Vater spricht ruhig mit seiner Tochter am Kuechentisch ueber schwierige Nachrichten.",
+            ["father and daughter", "modest kitchen table"],
+            ["modest family kitchen", "household details"],
+            ["restrained emotion", "daughter listens"],
+            ["emotional restraint", "family intimacy"],
+        ),
+    ]
+    for title, narration, subject_terms, environment_terms, action_terms, mood_terms in cases:
+        result = build_visual_prompt_v1(
+            VisualPromptEngineContext(
+                scene_title=title,
+                narration=narration,
+                provider_target="openai_image",
+                prompt_detail_level="deep",
+            )
+        )
+        anatomy = result.visual_prompt_anatomy
+        subject = anatomy["subject_description"].lower()
+        environment = anatomy["environment"].lower()
+        action = anatomy["action"].lower()
+        mood = anatomy["mood"].lower()
+        assert anatomy["subject_description"] != title
+        assert any(term in subject for term in subject_terms)
+        assert any(term in environment for term in environment_terms)
+        assert any(term in action for term in action_terms)
+        assert any(term in mood for term in mood_terms)
+        assert "grounded documentary environment / editorial real-world setting" not in environment
+
+
 def test_generic_formatter_contains_core_anatomy_parts():
     anatomy = VisualPromptAnatomy(
         subject_description="public building at sunrise",

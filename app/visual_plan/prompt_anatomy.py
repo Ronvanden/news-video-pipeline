@@ -127,6 +127,15 @@ def _looks_like_abstract_headline(title: str) -> bool:
         "citizen",
         "society",
         "trust",
+        "regierung",
+        "bevoelkerung",
+        "preise",
+        "familien",
+        "ermittlerin",
+        "rekonstruiert",
+        "verlassenes dorf",
+        "vater",
+        "tochter",
     ]
     if any(marker in text for marker in question_markers):
         return True
@@ -154,6 +163,32 @@ def _should_derive_visual_subject(scene_title: str, narration: str, video_templa
         "society",
         "trust",
         "public",
+        "regierung",
+        "government",
+        "presse",
+        "press",
+        "bevoelkerung",
+        "preise",
+        "price",
+        "inflation",
+        "familie",
+        "familien",
+        "ermittlerin",
+        "ermittler",
+        "investigator",
+        "rekonstruiert",
+        "hinweise",
+        "verlassen",
+        "dorf",
+        "bergdorf",
+        "berge",
+        "mountain",
+        "village",
+        "vater",
+        "tochter",
+        "father",
+        "daughter",
+        "kuechentisch",
     ]
     return _looks_like_abstract_headline(title) or (len(title.split()) >= 3 and _contains_any(combined, domain_markers))
 
@@ -165,6 +200,16 @@ def derive_visual_subject(scene_title: str, narration: str, video_template: str,
         return title or "a grounded documentary subject representing the scene topic"
 
     combined = f"{title} {_norm_space(narration)} {_norm_space(video_template)} {_norm_space(visual_preset)}"
+    if _contains_any(combined, ["vater", "tochter", "father", "daughter", "kuechentisch"]):
+        return "a father and daughter seated at a modest kitchen table during a quiet crisis conversation"
+    if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
+        return "a worried parent reviewing grocery receipts with family at a modest kitchen table"
+    if _contains_any(combined, ["ermittlerin", "ermittler", "investigator", "rekonstruiert", "hinweise", "true crime"]):
+        return "a focused investigator reconstructing an evening timeline in a quiet investigation office"
+    if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
+        return "an empty abandoned mountain village street with shuttered houses and no symbolic props"
+    if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
+        return "a government spokesperson facing skeptical citizens in a real press briefing room"
     if _contains_any(
         combined,
         [
@@ -195,6 +240,16 @@ def derive_visual_subject(scene_title: str, narration: str, video_template: str,
 def derive_visual_environment(scene_title: str, narration: str, visual_preset: str) -> str:
     """Derive a concrete but conservative environment for prompt anatomy."""
     combined = f"{_norm_space(scene_title)} {_norm_space(narration)} {_norm_space(visual_preset)}"
+    if _contains_any(combined, ["ermittlerin", "ermittler", "investigator", "rekonstruiert", "hinweise", "true crime"]):
+        return "quiet investigation office with unlabelled evidence photos, a desk, and muted practical light"
+    if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
+        return "abandoned mountain village street with weathered houses and distant alpine slopes"
+    if _contains_any(combined, ["vater", "tochter", "father", "daughter", "kuechentisch"]):
+        return "modest family kitchen with a small table and everyday household details"
+    if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
+        return "modest family kitchen or small apartment dining table with groceries and receipts"
+    if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
+        return "real press briefing room or municipal hallway with citizens and reporters in the background"
     if _contains_any(
         combined,
         [
@@ -225,6 +280,16 @@ def derive_visual_environment(scene_title: str, narration: str, visual_preset: s
 def derive_visual_action(scene_title: str, narration: str, visual_preset: str) -> str:
     """Turn summary text into a short visual moment instead of copying it wholesale."""
     combined = f"{_norm_space(scene_title)} {_norm_space(narration)} {_norm_space(visual_preset)}"
+    if _contains_any(combined, ["vater", "tochter", "father", "daughter", "kuechentisch"]):
+        return "the father explains calmly while his daughter listens, both framed with restrained emotion"
+    if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
+        return "a parent compares receipts and groceries while the family sits quietly nearby"
+    if _contains_any(combined, ["ermittlerin", "ermittler", "investigator", "rekonstruiert", "hinweise", "true crime"]):
+        return "the investigator studies unlabelled evidence photos and reconstructs the sequence of events"
+    if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
+        return "the empty street holds still, with weathered homes and mountain light creating quiet unease"
+    if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
+        return "the spokesperson addresses the room while skeptical citizens and reporters listen in soft background"
     if _contains_any(combined, ["experten", "expert", "gesundheit", "health", "public health"]):
         return "the expert calmly explains while concerned citizens listen in the background"
     if _contains_any(combined, ["vertrauen", "misstrauen", "bürger", "buerger", "citizen", "gesellschaft"]):
@@ -244,8 +309,8 @@ def derive_visual_action(scene_title: str, narration: str, visual_preset: str) -
 def _camera_for(preset_id: str, detail_level: str) -> str:
     if preset_id == "documentary_realism":
         if detail_level == "deep":
-            return "35mm documentary lens feel, shallow depth of field but realistic, deliberate focal hierarchy"
-        return "35mm documentary lens feel, shallow depth of field but realistic"
+            return "35mm documentary lens feel, eye-level medium shot, shallow depth of field but realistic, deliberate focal hierarchy"
+        return "35mm documentary lens feel, eye-level medium shot, shallow depth of field but realistic"
     if preset_id == "clean_news_explainer":
         return "clean editorial medium-wide frame"
     if preset_id == "dark_mystery":
@@ -261,7 +326,7 @@ def _camera_for(preset_id: str, detail_level: str) -> str:
 
 def _lighting_for(preset_id: str) -> str:
     if preset_id == "documentary_realism":
-        return "soft directional natural light, subtle cinematic contrast"
+        return "soft directional natural light, subtle cinematic contrast, no theatrical color cast"
     if preset_id == "dark_mystery":
         return "low-key muted lighting"
     if preset_id == "cinematic_story":
@@ -275,8 +340,21 @@ def _lighting_for(preset_id: str) -> str:
     return "natural light"
 
 
-def _mood_for(preset_id: str, video_template: str) -> str:
+def _mood_for(preset_id: str, video_template: str, scene_title: str = "", narration: str = "") -> str:
     template = _norm_space(video_template).lower()
+    combined = f"{_norm_space(scene_title)} {_norm_space(narration)} {template}"
+    if preset_id == "documentary_realism":
+        if _contains_any(combined, ["ermittlerin", "ermittler", "investigator", "rekonstruiert", "hinweise", "true crime"]):
+            return "investigative, tense but grounded, restrained documentary realism"
+        if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
+            return "restrained mystery, quiet unease, grounded documentary realism"
+        if _contains_any(combined, ["vater", "tochter", "father", "daughter", "kuechentisch"]):
+            return "emotional restraint, protective family intimacy, grounded documentary realism"
+        if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
+            return "quiet financial uncertainty, restrained family stress, grounded documentary realism"
+        if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
+            return "public scrutiny, quiet civic tension, grounded documentary realism"
+        return "observational documentary realism, quiet uncertainty, emotionally restrained"
     if preset_id == "dark_mystery" or "mystery" in template:
         return "restrained tension"
     if preset_id == "emotional_human_story":
@@ -293,20 +371,20 @@ def _composition_for(text_safety_mode: str, preset_id: str = "") -> str:
     if text_safety_mode == "overlay_friendly":
         if is_doc_real:
             return (
-                "subject slightly off-center, softly defocused background, "
+                "clear foreground subject, midground context, softly defocused background, subject slightly off-center, "
                 "clean negative space for later title overlay"
             )
         return "concrete editorial image, clear focal subject, believable environment, clean negative space for later overlay"
     if text_safety_mode == "strict_no_text":
         if is_doc_real:
             return (
-                "subject slightly off-center, softly defocused background, "
+                "clear foreground subject, midground context, softly defocused background, subject slightly off-center, "
                 "clean negative space for later title overlay, natural framing, no generated text"
             )
         return "concrete editorial image, clear focal subject, believable environment, natural framing, no generated text"
     if is_doc_real:
         return (
-            "subject slightly off-center, softly defocused background, "
+            "clear foreground subject, midground context, softly defocused background, subject slightly off-center, "
             "clean negative space for later title overlay, natural framing"
         )
     return "concrete editorial image, clear focal subject, believable environment, natural framing"
@@ -384,7 +462,12 @@ def build_visual_prompt_anatomy(
         environment=visual_environment,
         camera=_camera_for(preset_id, detail_level),
         lighting=_lighting_for(preset_id),
-        mood=_mood_for(preset_id, getattr(context, "video_template", "") or ""),
+        mood=_mood_for(
+            preset_id,
+            getattr(context, "video_template", "") or "",
+            title,
+            narration,
+        ),
         composition=_composition_for(text_safety_mode, preset_id),
         style_tags=_dedupe(style_tags),
         continuity=(
