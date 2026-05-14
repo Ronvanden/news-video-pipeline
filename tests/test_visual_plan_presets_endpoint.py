@@ -113,3 +113,65 @@ def test_visual_plan_prompt_preview_endpoint_defaults_and_normalizes_unknown_con
     assert data["visual_policy_warnings"]
     assert "no readable text" in data["visual_prompt_effective"].lower()
     assert "no fishing hook" in data["negative_prompt"].lower()
+
+
+def test_visual_plan_prompt_preview_endpoint_hardens_single_scene_image_lab_topics():
+    client = TestClient(app)
+    cases = [
+        (
+            {
+                "scene_title": "Steigende Preise verunsichern Familien",
+                "narration": (
+                    "Immer mehr Familien muessen beim Einkaufen sparen. Eltern vergleichen Preise, "
+                    "streichen Produkte von der Einkaufsliste und sprechen zuhause ueber finanzielle Unsicherheit."
+                ),
+                "visual_preset": "documentary_realism",
+            },
+            ["blank unreadable grocery receipts", "unbranded groceries"],
+        ),
+        (
+            {
+                "scene_title": "Eine Ermittlerin rekonstruiert den letzten Abend",
+                "narration": (
+                    "Eine Ermittlerin steht in einem ruhigen Buero vor unbeschrifteten Fotos und Notizen. "
+                    "Sie versucht, den Ablauf des letzten bekannten Abends sachlich und konzentriert nachzuvollziehen."
+                ),
+                "visual_preset": "dark_mystery",
+            },
+            ["blank unmarked evidence cards", "blank notes"],
+        ),
+        (
+            {
+                "scene_title": "Ein verlassenes Dorf in den Bergen sorgt fuer Fragen",
+                "narration": (
+                    "In einem abgelegenen Bergdorf stehen verlassene Haeuser an einer schmalen Strasse. "
+                    "Nebel haengt zwischen den Fassaden, waehrend die Szene ruhig und raetselhaft wirkt."
+                ),
+                "visual_preset": "dark_mystery",
+            },
+            ["abandoned mountain village street", "no symbolic props"],
+        ),
+    ]
+
+    for payload, expected_terms in cases:
+        r = client.post(
+            "/visual-plan/prompt-preview",
+            json={
+                **payload,
+                "provider_target": "openai_image",
+                "prompt_detail_level": "deep",
+                "text_safety_mode": "strict_no_text",
+                "visual_consistency_mode": "one_style_per_video",
+            },
+        )
+
+        assert r.status_code == 200, r.text
+        data = r.json()
+        prompt_blob = f"{data['visual_prompt_raw']}\n{data['negative_prompt']}".lower()
+        for term in expected_terms:
+            assert term in prompt_blob
+        assert "no readable labels" in data["negative_prompt"].lower()
+        assert "no documents with legible writing" in data["negative_prompt"].lower()
+        assert "[visual_no_text_guard_v26_4]" in data["visual_prompt_effective"]
+        assert data["normalized_controls"]["provider_target"] == "openai_image"
+        assert 0 <= data["prompt_quality_score"] <= 100
