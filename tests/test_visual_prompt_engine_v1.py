@@ -115,17 +115,17 @@ def test_documentary_realism_derives_concrete_subjects_and_environments_for_lab_
         (
             "Steigende Preise verunsichern Familien",
             "Eine Familie prueft Rechnungen und Einkaeufe, waehrend die Stimmung angespannt bleibt.",
-            ["worried parent", "grocery receipts", "family"],
+            ["worried parent", "blank unreadable grocery receipts", "family"],
             ["modest family kitchen", "small apartment dining table"],
-            ["compares receipts", "groceries"],
+            ["compares blank receipts", "unbranded groceries"],
             ["financial uncertainty", "family stress"],
         ),
         (
             "Eine Ermittlerin rekonstruiert den letzten Abend",
             "Eine Ermittlerin ordnet Hinweise und versucht den Ablauf eines Abends nachzuvollziehen.",
-            ["focused investigator", "evening timeline"],
-            ["quiet investigation office", "unlabelled evidence photos"],
-            ["studies unlabelled evidence", "sequence of events"],
+            ["focused investigator", "blank unmarked evidence cards"],
+            ["quiet investigation office", "out-of-focus evidence photos", "blank notes"],
+            ["studies blank unmarked evidence cards", "sequence of events"],
             ["investigative", "tense but grounded"],
         ),
         (
@@ -329,7 +329,45 @@ def test_strict_no_text_sets_anatomy_text_safety_and_composition():
     )
     anatomy = result.visual_prompt_anatomy
     assert "no readable text" in anatomy["text_safety"]
+    assert "no documents with legible writing" in anatomy["text_safety"]
     assert "no generated text" in anatomy["composition"]
+
+
+def test_lab_topics_harden_document_props_against_text_artifacts():
+    economy = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Steigende Preise verunsichern Familien",
+            narration=(
+                "Immer mehr Familien muessen beim Einkaufen sparen. Eltern vergleichen Preise, "
+                "streichen Produkte von der Einkaufsliste und sprechen zuhause ueber finanzielle Unsicherheit."
+            ),
+            provider_target="openai_image",
+            prompt_detail_level="deep",
+            text_safety_mode="strict_no_text",
+        )
+    )
+    economy_raw = economy.visual_prompt_raw.lower()
+    assert "blank unreadable grocery receipts" in economy_raw
+    assert "unbranded groceries" in economy_raw
+    assert "no documents with legible writing" in economy.negative_prompt.lower()
+
+    true_crime = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title="Eine Ermittlerin rekonstruiert den letzten Abend",
+            narration=(
+                "Eine Ermittlerin steht in einem ruhigen Buero vor unbeschrifteten Fotos und Notizen. "
+                "Sie versucht, den Ablauf des letzten bekannten Abends sachlich nachzuvollziehen."
+            ),
+            visual_preset="dark_mystery",
+            provider_target="openai_image",
+            prompt_detail_level="deep",
+            text_safety_mode="strict_no_text",
+        )
+    )
+    crime_raw = true_crime.visual_prompt_raw.lower()
+    assert "blank unmarked evidence cards" in crime_raw
+    assert "blank notes" in crime_raw
+    assert "no readable labels" in true_crime.negative_prompt.lower()
 
 
 def test_overlay_friendly_sets_anatomy_overlay_space():

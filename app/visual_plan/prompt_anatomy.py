@@ -203,9 +203,9 @@ def derive_visual_subject(scene_title: str, narration: str, video_template: str,
     if _contains_any(combined, ["vater", "tochter", "father", "daughter", "kuechentisch"]):
         return "a father and daughter seated at a modest kitchen table during a quiet crisis conversation"
     if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
-        return "a worried parent reviewing grocery receipts with family at a modest kitchen table"
+        return "a worried parent reviewing blank unreadable grocery receipts with family at a modest kitchen table"
     if _contains_any(combined, ["ermittlerin", "ermittler", "investigator", "rekonstruiert", "hinweise", "true crime"]):
-        return "a focused investigator reconstructing an evening timeline in a quiet investigation office"
+        return "a focused investigator reconstructing an evening timeline with blank unmarked evidence cards in a quiet investigation office"
     if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
         return "an empty abandoned mountain village street with shuttered houses and no symbolic props"
     if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
@@ -241,13 +241,13 @@ def derive_visual_environment(scene_title: str, narration: str, visual_preset: s
     """Derive a concrete but conservative environment for prompt anatomy."""
     combined = f"{_norm_space(scene_title)} {_norm_space(narration)} {_norm_space(visual_preset)}"
     if _contains_any(combined, ["ermittlerin", "ermittler", "investigator", "rekonstruiert", "hinweise", "true crime"]):
-        return "quiet investigation office with unlabelled evidence photos, a desk, and muted practical light"
+        return "quiet investigation office with unlabelled out-of-focus evidence photos, blank notes, a desk, and muted practical light"
     if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
         return "abandoned mountain village street with weathered houses and distant alpine slopes"
     if _contains_any(combined, ["vater", "tochter", "father", "daughter", "kuechentisch"]):
         return "modest family kitchen with a small table and everyday household details"
     if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
-        return "modest family kitchen or small apartment dining table with groceries and receipts"
+        return "modest family kitchen or small apartment dining table with unbranded groceries and blank unreadable receipts"
     if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
         return "real press briefing room or municipal hallway with citizens and reporters in the background"
     if _contains_any(
@@ -283,9 +283,9 @@ def derive_visual_action(scene_title: str, narration: str, visual_preset: str) -
     if _contains_any(combined, ["vater", "tochter", "father", "daughter", "kuechentisch"]):
         return "the father explains calmly while his daughter listens, both framed with restrained emotion"
     if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
-        return "a parent compares receipts and groceries while the family sits quietly nearby"
+        return "a parent compares blank receipts and unbranded groceries while the family sits quietly nearby"
     if _contains_any(combined, ["ermittlerin", "ermittler", "investigator", "rekonstruiert", "hinweise", "true crime"]):
-        return "the investigator studies unlabelled evidence photos and reconstructs the sequence of events"
+        return "the investigator studies blank unmarked evidence cards and reconstructs the sequence of events"
     if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
         return "the empty street holds still, with weathered homes and mountain light creating quiet unease"
     if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
@@ -394,7 +394,7 @@ def _text_safety_for(text_safety_mode: str) -> str:
     if text_safety_mode == "overlay_friendly":
         return "leave clean empty space for later editorial text overlay"
     if text_safety_mode == "strict_no_text":
-        return "no readable text, no letters, no fake UI, no logo, no typography"
+        return "no readable text, no letters, no fake UI, no logo, no typography, no documents with legible writing"
     return "avoid readable generated text"
 
 
@@ -448,7 +448,17 @@ def build_visual_prompt_anatomy(
     negative_constraints.extend(sanitizer_guards or [])
     negative_constraints.extend(_split_negative_segments(getattr(context, "existing_negative_prompt", "") or ""))
     if text_safety_mode == "strict_no_text":
-        negative_constraints.extend(["no readable text", "no letters", "no fake UI", "no logo", "no typography"])
+        negative_constraints.extend(
+            [
+                "no readable text",
+                "no letters",
+                "no fake UI",
+                "no logo",
+                "no typography",
+                "no readable labels",
+                "no documents with legible writing",
+            ]
+        )
     elif text_safety_mode == "overlay_friendly":
         negative_constraints.extend(["no rendered text", "no cluttered frame", "preserve clean negative space"])
     elif text_safety_mode == "normal":
