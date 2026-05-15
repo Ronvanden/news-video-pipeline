@@ -82,7 +82,7 @@ def test_visual_prompt_anatomy_derives_subject_environment_and_action_from_headl
     assert len(anatomy["action"]) < len(narration)
     assert "visual_subject_derived" in result.prompt_risk_flags
     assert "subject_was_headline" in result.prompt_risk_flags
-    assert "action_from_summary" in result.prompt_risk_flags
+    assert "visual_action_derived" in result.prompt_risk_flags
     assert 0 <= result.prompt_quality_score <= 100
     assert "Subject: " + anatomy["subject_description"] in result.visual_prompt_raw
 
@@ -100,6 +100,42 @@ def test_visual_prompt_anatomy_derives_subject_from_headline_without_narration()
     assert "expert" in anatomy["subject_description"].lower() or "citizens" in anatomy["subject_description"].lower()
     assert "visual_subject_derived" in result.prompt_risk_flags
     assert "cinematic opening beat" not in anatomy["subject_description"]
+
+
+def test_youtube_political_commentary_chapter_derives_concrete_visual_anatomy():
+    title = "Kapitel 1: Die Demokratie in Deutschland"
+    narration = (
+        "Sarah Bosetti aeussert in ihrer neuesten Folge, dass menschliches Handeln zu dumm "
+        "fuer die Demokratie sei. Doch wie steht es wirklich um die Demokratie in Deutschland?"
+    )
+    result = build_visual_prompt_v1(
+        VisualPromptEngineContext(
+            scene_title=title,
+            narration=narration,
+            provider_target="openai_image",
+            prompt_detail_level="deep",
+            text_safety_mode="strict_no_text",
+        )
+    )
+    anatomy = result.visual_prompt_anatomy
+    subject = anatomy["subject_description"].lower()
+    environment = anatomy["environment"].lower()
+    action = anatomy["action"].lower()
+    assert anatomy["subject_description"] != title
+    assert any(term in subject for term in ["political commentator", "documentary host", "public political debate"])
+    assert "grounded documentary environment / editorial real-world setting" not in environment
+    assert any(
+        term in environment
+        for term in ["editorial studio", "newsroom desk", "political talk", "public media analysis"]
+    )
+    assert anatomy["action"] != narration
+    assert len(anatomy["action"]) < len(narration)
+    assert any(term in action for term in ["explains", "reviews", "public debate", "public reactions"])
+    assert "[visual_no_text_guard_v26_4]" in result.visual_prompt_effective
+    assert "environment_generic" not in result.prompt_risk_flags
+    assert "visual_action_derived" in result.prompt_risk_flags
+    assert "action_from_summary" not in result.prompt_risk_flags
+    assert "Subject: " + anatomy["subject_description"] in result.visual_prompt_raw
 
 
 def test_documentary_realism_derives_concrete_subjects_and_environments_for_lab_topics():

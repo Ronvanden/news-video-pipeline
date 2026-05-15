@@ -214,3 +214,33 @@ def test_scene_asset_pack_uses_visual_prompt_engine_for_openai_image(ba265_mod, 
     assert isinstance(beat.get("visual_prompt_anatomy"), dict)
     assert beat["visual_prompt_anatomy"].get("subject_description")
     assert (beat.get("normalized_controls") or {}).get("provider_target") == "openai_image"
+
+
+def test_youtube_style_scene_asset_pack_derives_non_generic_anatomy(ba265_mod, tmp_path):
+    scene_rows = [
+        {
+            "title": "Kapitel 1: Die Demokratie in Deutschland",
+            "narration": (
+                "Sarah Bosetti aeussert in ihrer neuesten Folge, dass menschliches Handeln zu dumm "
+                "fuer die Demokratie sei. Doch wie steht es wirklich um die Demokratie in Deutschland?"
+            ),
+            "duration_seconds": 8,
+        }
+    ]
+    pack = ba265_mod._build_scene_asset_pack(
+        scene_rows,
+        script={"title": "YouTube Visual Test", "hook": "", "video_template": "documentary_story"},
+        rel_videos=[],
+        pack_parent=tmp_path,
+        image_provider="openai_image",
+    )
+    beat = ((pack.get("scene_expansion") or {}).get("expanded_scene_assets") or [])[0]
+    anatomy = beat["visual_prompt_anatomy"]
+    subject = anatomy["subject_description"].lower()
+    environment = anatomy["environment"].lower()
+    action = anatomy["action"].lower()
+    assert anatomy["subject_description"] != scene_rows[0]["title"]
+    assert "grounded documentary environment / editorial real-world setting" not in environment
+    assert any(term in subject for term in ["political commentator", "documentary host", "public political debate"])
+    assert any(term in environment for term in ["editorial studio", "newsroom desk", "political talk", "public media"])
+    assert any(term in action for term in ["explains", "reviews", "public debate", "public reactions"])

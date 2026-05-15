@@ -122,6 +122,22 @@ def _looks_like_abstract_headline(title: str) -> bool:
         "unsicherheit",
         "fakten",
         "krise",
+        "kapitel",
+        "demokratie",
+        "democracy",
+        "kommentar",
+        "kommentator",
+        "commentary",
+        "youtube",
+        "talk",
+        "medien",
+        "media",
+        "bundestag",
+        "partei",
+        "parteien",
+        "opposition",
+        "debatte",
+        "debate",
         "health",
         "expert",
         "citizen",
@@ -165,6 +181,28 @@ def _should_derive_visual_subject(scene_title: str, narration: str, video_templa
         "public",
         "regierung",
         "government",
+        "demokratie",
+        "democracy",
+        "bundestag",
+        "partei",
+        "parteien",
+        "opposition",
+        "oppositionsparteien",
+        "ausschuss",
+        "wahl",
+        "debatte",
+        "debate",
+        "kommentar",
+        "kommentator",
+        "kommentatorin",
+        "commentary",
+        "youtube",
+        "talk",
+        "moderator",
+        "host",
+        "medien",
+        "media",
+        "bosetti",
         "presse",
         "press",
         "bevoelkerung",
@@ -208,6 +246,28 @@ def derive_visual_subject(scene_title: str, narration: str, video_template: str,
         return "a focused investigator reconstructing an evening timeline with blank unmarked evidence cards in a quiet investigation office"
     if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
         return "an empty abandoned mountain village street with shuttered houses and no symbolic props"
+    if _contains_any(
+        combined,
+        ["kommentar", "kommentator", "kommentatorin", "commentary", "youtube", "talk", "moderator", "host", "bosetti"],
+    ):
+        return "a political commentator at a desk in a quiet editorial studio"
+    if _contains_any(
+        combined,
+        [
+            "demokratie",
+            "democracy",
+            "bundestag",
+            "partei",
+            "parteien",
+            "opposition",
+            "oppositionsparteien",
+            "ausschuss",
+            "wahl",
+            "debatte",
+            "debate",
+        ],
+    ):
+        return "a documentary host reviewing a public political debate with restrained focus"
     if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
         return "a government spokesperson facing skeptical citizens in a real press briefing room"
     if _contains_any(
@@ -248,6 +308,28 @@ def derive_visual_environment(scene_title: str, narration: str, visual_preset: s
         return "modest family kitchen with a small table and everyday household details"
     if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
         return "modest family kitchen or small apartment dining table with unbranded groceries and blank unreadable receipts"
+    if _contains_any(
+        combined,
+        ["kommentar", "kommentator", "kommentatorin", "commentary", "youtube", "talk", "moderator", "host", "bosetti"],
+    ):
+        return "quiet editorial studio with a simple desk, soft practical light, and a public media analysis atmosphere"
+    if _contains_any(
+        combined,
+        [
+            "demokratie",
+            "democracy",
+            "bundestag",
+            "partei",
+            "parteien",
+            "opposition",
+            "oppositionsparteien",
+            "ausschuss",
+            "wahl",
+            "debatte",
+            "debate",
+        ],
+    ):
+        return "public media analysis environment with a newsroom desk and subtle political talk setting"
     if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
         return "real press briefing room or municipal hallway with citizens and reporters in the background"
     if _contains_any(
@@ -288,6 +370,28 @@ def derive_visual_action(scene_title: str, narration: str, visual_preset: str) -
         return "the investigator studies blank unmarked evidence cards and reconstructs the sequence of events"
     if _contains_any(combined, ["verlassen", "dorf", "bergdorf", "berge", "mountain village", "abandoned village"]):
         return "the empty street holds still, with weathered homes and mountain light creating quiet unease"
+    if _contains_any(
+        combined,
+        ["kommentar", "kommentator", "kommentatorin", "commentary", "youtube", "talk", "moderator", "host", "bosetti"],
+    ):
+        return "the commentator explains the situation calmly at a desk while reviewing public reactions"
+    if _contains_any(
+        combined,
+        [
+            "demokratie",
+            "democracy",
+            "bundestag",
+            "partei",
+            "parteien",
+            "opposition",
+            "oppositionsparteien",
+            "ausschuss",
+            "wahl",
+            "debatte",
+            "debate",
+        ],
+    ):
+        return "the documentary host reviews the public debate while the newsroom setting stays quietly focused"
     if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
         return "the spokesperson addresses the room while skeptical citizens and reporters listen in soft background"
     if _contains_any(combined, ["experten", "expert", "gesundheit", "health", "public health"]):
@@ -352,6 +456,29 @@ def _mood_for(preset_id: str, video_template: str, scene_title: str = "", narrat
             return "emotional restraint, protective family intimacy, grounded documentary realism"
         if _contains_any(combined, ["preise", "price", "inflation", "familie", "familien", "einkauf", "rechnungen", "kosten"]):
             return "quiet financial uncertainty, restrained family stress, grounded documentary realism"
+        if _contains_any(
+            combined,
+            [
+                "kommentar",
+                "kommentator",
+                "kommentatorin",
+                "commentary",
+                "youtube",
+                "talk",
+                "moderator",
+                "host",
+                "bosetti",
+                "demokratie",
+                "democracy",
+                "bundestag",
+                "partei",
+                "parteien",
+                "opposition",
+                "debatte",
+                "debate",
+            ],
+        ):
+            return "measured political analysis, public scrutiny, restrained editorial tension"
         if _contains_any(combined, ["regierung", "government", "politik", "policy", "presse", "press", "bevoelkerung"]):
             return "public scrutiny, quiet civic tension, grounded documentary realism"
         return "observational documentary realism, quiet uncertainty, emotionally restrained"

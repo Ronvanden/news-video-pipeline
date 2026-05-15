@@ -192,8 +192,13 @@ def _anatomy_enrichment_flags(
     if _norm_space(anatomy.environment) == "grounded documentary environment / editorial real-world setting":
         flags.append("environment_generic")
     derived_action = derive_visual_action(visual_title, narration, preset_id)
-    if derived_action and _norm_space(derived_action) != _norm_space(anatomy.source_summary):
-        flags.append("action_from_summary")
+    derived_action_norm = _norm_space(derived_action)
+    source_summary_norm = _norm_space(anatomy.source_summary)
+    if derived_action_norm and source_summary_norm and derived_action_norm != source_summary_norm:
+        if derived_action_norm.lower() in source_summary_norm.lower():
+            flags.append("action_from_summary")
+        else:
+            flags.append("visual_action_derived")
     elif anatomy.source_summary:
         flags.append("action_from_summary")
     return flags
@@ -210,6 +215,7 @@ def _quality_score(raw_prompt: str, negative_prompt: str, risk_flags: List[str],
     weight_by_flag = {
         "subject_was_headline": 0,
         "visual_subject_derived": 0,
+        "visual_action_derived": 0,
         "action_from_summary": 0,
         "environment_generic": 4,
     }
