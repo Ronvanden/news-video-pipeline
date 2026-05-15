@@ -263,6 +263,66 @@ button.fd-sidebar-link:hover:not(:disabled) {
   border-color: rgba(0, 70, 255, 0.35);
   color: var(--text);
 }
+.fd-operator-start {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(72, 88, 120, 0.9);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(25, 34, 54, 0.96), rgba(17, 24, 38, 0.94));
+  box-shadow: var(--vp-card-shadow);
+}
+.fd-operator-start h2 {
+  margin: 0;
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
+}
+.fd-operator-start-sub {
+  margin: 0.35rem 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.fd-operator-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.65rem;
+}
+.fd-operator-card {
+  display: block;
+  min-height: 100%;
+  padding: 0.82rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(70, 86, 118, 0.9);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text);
+  text-decoration: none;
+}
+.fd-operator-card:hover,
+.fd-operator-card:focus-visible {
+  border-color: rgba(120, 160, 255, 0.8);
+  background: rgba(0, 70, 255, 0.1);
+  outline: none;
+}
+.fd-operator-card strong {
+  display: block;
+  margin: 0 0 0.28rem;
+  font-size: 0.95rem;
+}
+.fd-operator-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.fd-advanced-tools > summary,
+.fd-legacy-warning > summary {
+  font-weight: 700;
+}
+.fd-advanced-tools-note,
+.fd-legacy-warning-note {
+  margin: 0.45rem 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
 .fd-sidebar-score {
   margin-top: 0.35rem;
   padding: 0.72rem 0.65rem;
@@ -2386,6 +2446,29 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
 <main class="fd-dashboard-main">
   <div id="error-bar" role="alert"></div>
 
+  <section class="fd-operator-start" id="fd-operator-start" data-dashboard-ux-cleanup-v1="1" aria-labelledby="fd-operator-start-h">
+    <h2 id="fd-operator-start-h">Was m&ouml;chtest du tun?</h2>
+    <p class="fd-operator-start-sub">W&auml;hle zuerst den passenden Arbeitsmodus. Die alten Einzelaktionen bleiben erhalten, sind aber unter Advanced geb&uuml;ndelt.</p>
+    <div class="fd-operator-card-grid" aria-label="Operator Start Navigation">
+      <a class="fd-operator-card" href="#panel-ba323-video-generate">
+        <strong>Video generieren</strong>
+        <span>URL rein, Dauer setzen, Provider-Kosten bewusst best&auml;tigen, Start klicken.</span>
+      </a>
+      <a class="fd-operator-card" href="#coll-single-scene-image-lab">
+        <strong>Bild-Lab &ouml;ffnen</strong>
+        <span>Scene Title und Summary testen: Prompt Preview, dann optional ein einzelnes OpenAI Image.</span>
+      </a>
+      <a class="fd-operator-card" href="#coll-warning-center">
+        <strong>Review &amp; Qualit&auml;t pr&uuml;fen</strong>
+        <span>Warnings, Artefakte, letzte Runs und Prompt-Quality-Signale ansehen.</span>
+      </a>
+      <a class="fd-operator-card" href="#coll-advanced-actions">
+        <strong>Advanced / Developer Tools</strong>
+        <span>Storyboard, Asset Plan, Provider-Live, Batch, Export und Legacy-Debug nur bei Bedarf.</span>
+      </a>
+    </div>
+  </section>
+
   <div class="fd-exec-row" data-ba306b-exec-row="1">
     <div class="fp-exec-strip" id="fp-exec-strip" data-ba306-exec-strip="1" aria-label="Executive Kurzüberblick Vorschau">
       <div class="fp-exec-cell"><div class="fp-exec-label">Vorschau-Status</div><div class="fp-exec-val" id="fp-exec-fresh-status">Warte auf Daten …</div><div class="fp-exec-hint" id="fp-exec-hint-fresh"></div></div>
@@ -2991,9 +3074,10 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </section>
 
-  <details class="fd-coll" id="coll-legacy-debug" style="margin-top:1rem">
-    <summary>Legacy Source Intake / Debug (BA 11.0)</summary>
+  <details class="fd-coll fd-legacy-warning" id="coll-legacy-debug" style="margin-top:1rem">
+    <summary>Legacy Source Intake / Debug (BA 11.0) - Legacy / Debug - nur nutzen, wenn du weisst warum</summary>
     <div class="coll-body">
+      <p class="fd-legacy-warning-note"><strong>Legacy / Debug - nur nutzen, wenn du weisst warum.</strong> Dieser Bereich bleibt fuer alte Pipeline-Pfade und technische Diagnose erhalten; fuer normale Bedienung oben starten.</p>
       <p class="muted">Dieser ältere Bereich bleibt für Debug/alte Pipeline-Pfade erhalten. Für neue Produktionen nutze oben „Video generieren“.</p>
       <section class="panel" id="coll-source-intake" style="margin-top:0.75rem">
         <h2>Source Intake (BA 11.0)</h2>
@@ -3112,8 +3196,11 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       <p class="muted">Templates: GET /story-engine/template-selector (beim Laden).</p>
       <p class="muted" id="visual-controls-availability" data-visual-plan-presets-endpoint="/visual-plan/presets">Visual Controls available: GET /visual-plan/presets.</p>
     </section>
+    <details class="fd-coll fd-advanced-tools" id="coll-advanced-actions" data-dashboard-advanced-tools="1">
+      <summary>Advanced / Developer Tools</summary>
+      <p class="fd-advanced-tools-note">Storyboard-, Asset-, Provider-Live-, Batch- und Export-Einzelaktionen. F&uuml;r normale Bedienung zuerst oben <strong>Video generieren</strong> oder das <strong>Single Scene Image Lab</strong> nutzen.</p>
     <section class="panel">
-      <h2>Actions</h2>
+      <h2>Actions (Advanced)</h2>
       <p class="muted">POST-Body = ExportPackageRequest (BA 10.3–10.5).</p>
       <p id="story-engine-request-debug" class="muted" style="font-size:0.78rem;min-height:1.1rem;margin:0.35rem 0 0.25rem" aria-live="polite"></p>
       <p id="export-action-status" class="export-action-status muted" role="status" aria-live="polite"></p>
@@ -3155,6 +3242,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <span class="muted" id="batch-status"></span>
       </div>
     </section>
+    </details>
   </div>
 
   <section class="panel" id="coll-ops" style="margin-top:1rem">
@@ -3172,15 +3260,20 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     <h2 class="subh" id="prod-flow-heading">Produktionsfluss</h2>
     <p class="muted" id="prod-flow-intro" style="margin:0.25rem 0 0.5rem;font-size:0.82rem">Lokale Vorschau, menschliche Prüfung und finale Render-Freigabe (read-only, aus eingebettetem <code>production_summary</code>).</p>
     <pre class="out out-empty" id="out-prod-flow">Kein Production Summary — Produktionsfluss nicht verfügbar.</pre>
-    <h2 class="subh">Export Ops (lokal)</h2>
-    <p class="muted">Download Production Bundle: mehrere Dateien nacheinander (kein ZIP). Session Snapshot: localStorage Key <code>fd_session_snapshot_v1</code>.</p>
-    <div class="actions">
-      <button type="button" class="primary" id="btn-prod-bundle" data-label="Download Production Bundle">Download Production Bundle</button>
-      <button type="button" id="btn-copy-all-prompts" data-label="Copy All Prompts">Copy All Prompts</button>
-      <button type="button" id="btn-snapshot-save" data-label="Save Session Snapshot">Save Session Snapshot</button>
-      <button type="button" id="btn-snapshot-load" data-label="Load Last Snapshot">Load Last Snapshot</button>
-      <button type="button" id="btn-snapshot-clear" data-label="Clear Snapshot">Clear Snapshot</button>
-    </div>
+    <details class="fd-coll fd-advanced-tools" id="coll-export-ops-advanced">
+      <summary>Export / Session Snapshot Tools (Advanced)</summary>
+      <div class="coll-body">
+        <h2 class="subh">Export Ops (lokal)</h2>
+        <p class="muted">Download Production Bundle: mehrere Dateien nacheinander (kein ZIP). Session Snapshot: localStorage Key <code>fd_session_snapshot_v1</code>.</p>
+        <div class="actions">
+          <button type="button" class="primary" id="btn-prod-bundle" data-label="Download Production Bundle">Download Production Bundle</button>
+          <button type="button" id="btn-copy-all-prompts" data-label="Copy All Prompts">Copy All Prompts</button>
+          <button type="button" id="btn-snapshot-save" data-label="Save Session Snapshot">Save Session Snapshot</button>
+          <button type="button" id="btn-snapshot-load" data-label="Load Last Snapshot">Load Last Snapshot</button>
+          <button type="button" id="btn-snapshot-clear" data-label="Clear Snapshot">Clear Snapshot</button>
+        </div>
+      </div>
+    </details>
   </section>
 
   <details class="fd-coll" open id="coll-single-scene-image-lab" data-single-scene-image-lab="1">
@@ -3222,7 +3315,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-export">
+  <details class="fd-coll fd-advanced-tools" id="coll-export">
     <summary>Export Package (roh)</summary>
     <div class="coll-body">
       <div id="export-scene-plan-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem">
@@ -3238,7 +3331,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-storyboard">
+  <details class="fd-coll fd-advanced-tools" id="coll-storyboard">
     <summary>Storyboard Plan</summary>
     <div class="coll-body">
       <div id="storyboard-plan-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-plan-panel="1">
@@ -3254,7 +3347,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-storyboard-readiness">
+  <details class="fd-coll fd-advanced-tools" id="coll-storyboard-readiness">
     <summary>Storyboard Readiness</summary>
     <div class="coll-body">
       <div id="storyboard-readiness-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-readiness-panel="1">
@@ -3270,7 +3363,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-asset-generation-plan">
+  <details class="fd-coll fd-advanced-tools" id="coll-asset-generation-plan">
     <summary>Asset Plan</summary>
     <div class="coll-body">
       <div id="asset-generation-plan-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-asset-generation-plan-panel="1">
@@ -3286,7 +3379,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-asset-execution-stub">
+  <details class="fd-coll fd-advanced-tools" id="coll-asset-execution-stub">
     <summary>Asset Execution Stub</summary>
     <div class="coll-body">
       <div id="asset-execution-stub-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-asset-execution-stub-panel="1">
@@ -3302,7 +3395,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-openai-image-live">
+  <details class="fd-coll fd-advanced-tools" id="coll-openai-image-live">
     <summary>OpenAI Image Live</summary>
     <div class="coll-body">
       <div id="openai-image-live-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-openai-image-live-panel="1">
@@ -3318,7 +3411,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-elevenlabs-voice-live">
+  <details class="fd-coll fd-advanced-tools" id="coll-elevenlabs-voice-live">
     <summary>ElevenLabs Voice Live</summary>
     <div class="coll-body">
       <div id="elevenlabs-voice-live-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-elevenlabs-voice-live-panel="1">
@@ -3334,7 +3427,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-runway-motion-live">
+  <details class="fd-coll fd-advanced-tools" id="coll-runway-motion-live">
     <summary>Runway Motion Live</summary>
     <div class="coll-body">
       <div id="runway-motion-live-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-runway-motion-live-panel="1">
@@ -3350,7 +3443,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-storyboard-render-timeline">
+  <details class="fd-coll fd-advanced-tools" id="coll-storyboard-render-timeline">
     <summary>Storyboard Render Timeline</summary>
     <div class="coll-body">
       <div id="storyboard-render-timeline-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-render-timeline-panel="1">
@@ -3366,7 +3459,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-storyboard-local-render-package">
+  <details class="fd-coll fd-advanced-tools" id="coll-storyboard-local-render-package">
     <summary>Storyboard Local Render Package</summary>
     <div class="coll-body">
       <div id="storyboard-local-render-package-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-local-render-package-panel="1">
@@ -3382,7 +3475,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-storyboard-local-render-execute">
+  <details class="fd-coll fd-advanced-tools" id="coll-storyboard-local-render-execute">
     <summary>Storyboard Local Render Execute</summary>
     <div class="coll-body">
       <div id="storyboard-local-render-execute-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-local-render-execute-panel="1">
@@ -3398,7 +3491,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-storyboard-voice-mixdown">
+  <details class="fd-coll fd-advanced-tools" id="coll-storyboard-voice-mixdown">
     <summary>Storyboard Voice Mixdown</summary>
     <div class="coll-body">
       <div id="storyboard-voice-mixdown-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-voice-mixdown-panel="1">
@@ -3414,7 +3507,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-storyboard-live-run-review">
+  <details class="fd-coll fd-advanced-tools" id="coll-storyboard-live-run-review">
     <summary>Storyboard Live Run Review</summary>
     <div class="coll-body">
       <div id="storyboard-live-run-review-summary" class="panel" style="margin:0 0 0.75rem;padding:0.55rem 0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem" data-storyboard-live-run-review-panel="1">
@@ -3430,7 +3523,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-preview">
+  <details class="fd-coll fd-advanced-tools" id="coll-preview">
     <summary>Preview (Hook + Prompt Quality)</summary>
     <div class="coll-body grid grid-2">
       <div class="panel" style="margin:0">
@@ -3455,7 +3548,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-readiness">
+  <details class="fd-coll fd-advanced-tools" id="coll-readiness">
     <summary>Provider Readiness</summary>
     <div class="coll-body">
       <div class="out-toolbar">
@@ -3467,7 +3560,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-optimize">
+  <details class="fd-coll fd-advanced-tools" id="coll-optimize">
     <summary>Provider Optimize (Leonardo / OpenAI / Kling + Shotlists)</summary>
     <div class="coll-body grid grid-2">
       <div class="panel" style="margin:0">
@@ -3525,7 +3618,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-ctr">
+  <details class="fd-coll fd-advanced-tools" id="coll-ctr">
     <summary>Thumbnail CTR</summary>
     <div class="coll-body grid grid-2">
       <div class="panel" style="margin:0">
@@ -3549,7 +3642,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-batch">
+  <details class="fd-coll fd-advanced-tools" id="coll-batch">
     <summary>Batch Template Compare</summary>
     <div class="coll-body">
       <p class="muted">readiness_score = Mittelwert aus scores.leonardo, scores.kling, scores.openai (Provider Readiness).</p>
@@ -3569,7 +3662,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" open id="coll-prompt-lab">
+  <details class="fd-coll fd-advanced-tools" id="coll-prompt-lab">
     <summary>Prompt Lab (Side-by-side)</summary>
     <div class="coll-body">
       <p class="muted">Quelle: zuletzt „Optimize Provider Prompts“, sonst Stub-Prompts aus Export-Paket.</p>
@@ -3602,7 +3695,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </div>
   </details>
 
-  <details class="fd-coll" id="coll-formats">
+  <details class="fd-coll fd-advanced-tools" id="coll-formats">
     <summary>Export Formats Registry</summary>
     <div class="coll-body">
       <div class="out-toolbar">
