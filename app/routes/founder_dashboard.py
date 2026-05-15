@@ -54,6 +54,7 @@ from app.founder_dashboard.local_preview_panel import (
     build_approval_gate_from_run,
     validate_local_preview_run_id,
 )
+from app.utils import extract_video_id
 from scripts.run_final_render import run_final_render_for_local_preview
 
 router = APIRouter(tags=["founder-dashboard"])
@@ -415,6 +416,13 @@ def _ps_single_quote_body(s: str) -> str:
     return (s or "").replace("'", "''")
 
 
+def _canonical_youtube_url_from_dashboard_url(url: Optional[str]) -> Optional[str]:
+    vid = extract_video_id((url or "").strip())
+    if not vid:
+        return None
+    return f"https://www.youtube.com/watch?v={vid}"
+
+
 def _build_fresh_preview_handoff_cli(
     *,
     dry_run_run_id: str,
@@ -556,7 +564,10 @@ async def founder_dashboard_video_generate(req: VideoGenerateRequest, request: R
 
     def _run() -> Dict[str, Any]:
         out_dir.mkdir(parents=True, exist_ok=True)
-        yt_effective = (req.source_youtube_url or "").strip() or (req.youtube_url or "").strip() or None
+        yt_explicit = (req.source_youtube_url or "").strip() or (req.youtube_url or "").strip()
+        yt_from_url = _canonical_youtube_url_from_dashboard_url(req.url) if not yt_explicit else None
+        yt_effective = yt_explicit or yt_from_url or None
+        url_effective = None if yt_from_url else req.url
         has_dev_keys = any(
             bool((x or "").strip())
             for x in (
@@ -570,7 +581,7 @@ async def founder_dashboard_video_generate(req: VideoGenerateRequest, request: R
             # dev-only: niemals Keys akzeptieren, wenn nicht explizit erlaubt/lokal
             raise HTTPException(status_code=403, detail="dev_key_overrides_not_allowed")
         return execute_dashboard_video_generate(
-            url=req.url,
+            url=url_effective,
             raw_text=req.raw_text,
             title=req.title,
             script_text=req.script_text,

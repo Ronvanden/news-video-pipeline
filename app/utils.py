@@ -591,13 +591,21 @@ def build_script_response_from_extracted_text(
 
     sources = [source_url]
     target_word_count = duration_minutes * 140
-    actual_word_count = count_words(full_script)
+    script_for_count = full_script
+    if not (script_for_count or "").strip():
+        parts = [hook]
+        for ch in chapters or []:
+            if isinstance(ch, dict):
+                parts.append(str(ch.get("title") or ""))
+                parts.append(str(ch.get("content") or ""))
+        script_for_count = "\n\n".join(p for p in parts if str(p or "").strip())
+    actual_word_count = count_words(script_for_count)
     warnings.append(f"Target word count: {target_word_count}, Actual word count: {actual_word_count}")
     if actual_word_count < target_word_count * 0.5:
         warnings.append(
             "Script is significantly shorter than target. Content may be insufficient for the requested duration."
         )
-    if len(full_script) < 500:
+    if len(script_for_count) < 500:
         warnings.append("Script may be too short for 10-minute video")
 
     fallback_note = (
@@ -737,6 +745,7 @@ def build_script_dict_from_youtube_source(
     transcript = fetch_youtube_transcript_by_video_id(video_id)
     transcript_ok = bool((transcript or "").strip())
     if not transcript_ok:
+        warns.extend(["transcript_missing", "youtube_transcript_unavailable"])
         return None, False, warns, ["youtube_transcript_missing"]
 
     canonical_url = f"https://www.youtube.com/watch?v={video_id}"

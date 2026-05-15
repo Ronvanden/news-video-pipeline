@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from app import utils as app_utils
 from app.main import app
 from app.founder_dashboard.ba323_video_generate import execute_dashboard_video_generate
 
@@ -99,6 +100,8 @@ def test_run_ba265_youtube_transcript_missing_blocks_without_providers(tmp_path:
             )
     assert doc.get("ok") is False
     assert "youtube_transcript_missing" in (doc.get("blocking_reasons") or [])
+    assert "transcript_missing" in (doc.get("warnings") or [])
+    assert "youtube_transcript_unavailable" in (doc.get("warnings") or [])
     assert doc.get("generated_original_script") is False
     assert (tmp_path / "yt_block" / "scene_plan.json").is_file() is False
 
@@ -153,6 +156,54 @@ def test_dashboard_youtube_url_conflict_422() -> None:
         },
     )
     assert r.status_code == 422
+
+
+def test_dashboard_url_youtube_watch_auto_routes_to_source_youtube_url() -> None:
+    client = TestClient(app)
+    captured: dict = {}
+
+    def _fake_execute(**kwargs):
+        captured.update(kwargs)
+        return {
+            "ok": False,
+            "run_id": "stub",
+            "warnings": [],
+            "blocking_reasons": ["stubbed"],
+        }
+
+    with patch("app.routes.founder_dashboard.execute_dashboard_video_generate", side_effect=_fake_execute):
+        r = client.post(
+            "/founder/dashboard/video/generate",
+            json={"url": "https://www.youtube.com/watch?v=abc123XYZ12"},
+        )
+
+    assert r.status_code == 200
+    assert captured.get("url") is None
+    assert captured.get("source_youtube_url") == "https://www.youtube.com/watch?v=abc123XYZ12"
+
+
+def test_dashboard_article_url_remains_article_url() -> None:
+    client = TestClient(app)
+    captured: dict = {}
+
+    def _fake_execute(**kwargs):
+        captured.update(kwargs)
+        return {
+            "ok": False,
+            "run_id": "stub",
+            "warnings": [],
+            "blocking_reasons": ["stubbed"],
+        }
+
+    with patch("app.routes.founder_dashboard.execute_dashboard_video_generate", side_effect=_fake_execute):
+        r = client.post(
+            "/founder/dashboard/video/generate",
+            json={"url": "https://example.com/article"},
+        )
+
+    assert r.status_code == 200
+    assert captured.get("url") == "https://example.com/article"
+    assert captured.get("source_youtube_url") is None
 
 
 def test_execute_forwards_youtube_and_script_fields(tmp_path: Path) -> None:
@@ -224,3 +275,66 @@ def test_execute_forwards_youtube_and_script_fields(tmp_path: Path) -> None:
     assert captured.get("target_language") == "de"
     assert out.get("input_mode") == "youtube_source"
     assert out.get("generated_original_script") is True
+
+
+def test_youtube_transcript_missing_adds_clear_warning(tmp_path: Path) -> None:
+    m = _load_run_url_to_final_mod()
+
+    def _fake_empty(*, source_youtube_url: str, **kwargs):
+        return None, False, ["transcript_missing", "youtube_transcript_unavailable"], ["youtube_transcript_missing"]
+
+    with patch.object(m, "build_script_dict_from_youtube_source", side_effect=_fake_empty):
+        with patch.object(m, "extract_text_from_url", side_effect=AssertionError("no_url_extract")):
+            doc = m.run_ba265_url_to_final(
+                url=None,
+                raw_text=None,
+                source_youtube_url="https://www.youtube.com/watch?v=nosuchid1234",
+                script_json_path=None,
+                out_dir=tmp_path / "yt_warn",
+                max_scenes=1,
+                duration_seconds=60,
+                asset_dir=None,
+                run_id="ba358warn",
+                motion_mode="static",
+                voice_mode="none",
+                asset_runner_mode="placeholder",
+                max_live_assets=None,
+                max_motion_clips=0,
+            )
+    assert doc.get("ok") is False
+    assert "youtube_transcript_missing" in (doc.get("blocking_reasons") or [])
+    assert "transcript_missing" in (doc.get("warnings") or [])
+    assert "youtube_transcript_unavailable" in (doc.get("warnings") or [])
+
+
+def test_wordcount_warning_counts_chapters_when_full_script_empty() -> None:
+    def _fake_generate_script(*args, **kwargs):
+        return (
+            "Titel",
+            "Hook mit mehreren Worten.",
+            [
+                {"title": "Kapitel 1", "content": "Alpha beta gamma delta."},
+                {"title": "Kapitel 2", "content": "Epsilon zeta eta theta."},
+            ],
+            "",
+            "llm",
+            "",
+        )
+
+    with patch.object(app_utils, "summarize_text", return_value="Zusammenfassung"):
+        with patch.object(app_utils, "translate_to_german", return_value="Zusammenfassung"):
+            with patch.object(app_utils, "extract_key_points", return_value=["Ein Punkt mit ausreichend Text"]):
+                with patch.object(app_utils, "generate_title", return_value="Titel"):
+                    with patch.object(app_utils.ScriptGenerator, "generate_script", side_effect=_fake_generate_script):
+                        _title, _hook, _chapters, _full_script, _sources, warnings = (
+                            app_utils.build_script_response_from_extracted_text(
+                                extracted_text="Quelle mit ein bisschen Inhalt.",
+                                source_url="https://example.com/article",
+                                target_language="de",
+                                duration_minutes=1,
+                            )
+                        )
+
+    wc_warnings = [w for w in warnings if str(w).startswith("Target word count:")]
+    assert wc_warnings
+    assert "Actual word count: 0" not in wc_warnings[0]

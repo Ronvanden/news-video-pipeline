@@ -1153,6 +1153,10 @@ def run_ba265_url_to_final(
         warnings.extend(list(yt_warns or []))
         if yt_block:
             blocking.extend(list(yt_block))
+            if "youtube_transcript_missing" in yt_block:
+                for w in ("transcript_missing", "youtube_transcript_unavailable"):
+                    if w not in warnings:
+                        warnings.append(w)
             doc = {
                 "ok": False,
                 "input_mode": input_mode,
