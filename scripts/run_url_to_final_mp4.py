@@ -33,11 +33,13 @@ from app.real_video_build.runway_motion_integration import (  # type: ignore
     apply_first_runway_motion_slot_to_manifest,
 )
 from app.real_video_build.script_input_adapter import (  # type: ignore
+    _engine_result_fields,
     _scenes_from_chapters_like,
     _scenes_from_full_script,
     _visual_prompt_from_text,
 )
 from app.story_engine.templates import normalize_story_template_id  # type: ignore
+from app.visual_plan.visual_policy_report import ensure_effective_prompt  # type: ignore
 from app.utils import (  # type: ignore
     build_script_dict_from_youtube_source,
     build_script_response_from_extracted_text,
@@ -56,6 +58,13 @@ _VOICE_MODES = ("none", "existing", "elevenlabs", "dummy", "openai")
 _VOICE_AUDIO_SUFFIXES = {".mp3", ".wav", ".m4a"}
 _DEFAULT_DUMMY_VOICE_SECONDS = 8
 _DEFAULT_VOICE_FIT_PADDING_SECONDS = 0.75
+
+
+def _prompt_provider_target_for_image_provider(image_provider: Optional[str]) -> Optional[str]:
+    p = str(image_provider or "").strip().lower()
+    if p in {"openai_image", "openai_images", "openai-image", "openai", "gpt_image", "gpt-image"}:
+        return "openai_image"
+    return None
 
 
 def _load_submodule(name: str, path: Path):
@@ -150,14 +159,15 @@ def _build_scene_rows_from_script(
             dur = 5
         title = r["title"]
         narration = r["narration"]
+        engine_result, _overlay, _text_sensitive = _visual_prompt_from_text(
+            title, narration, video_template=vt
+        )
         out.append(
             {
                 "title": title,
                 "narration": narration,
                 "duration_seconds": dur,
-                "visual_prompt": _visual_prompt_from_text(
-                    title, narration, video_template=vt
-                )[1],
+                "visual_prompt": engine_result.visual_prompt_effective,
             }
         )
     return out
@@ -382,22 +392,44 @@ def _build_scene_asset_pack(
     script: Dict[str, Any],
     rel_videos: Sequence[Optional[str]],
     pack_parent: Path,
+    image_provider: Optional[str] = None,
 ) -> Dict[str, Any]:
     expanded: List[Dict[str, Any]] = []
+    vt = str(script.get("video_template") or "").strip()
+    provider_target = _prompt_provider_target_for_image_provider(image_provider)
     for i, row in enumerate(scene_rows):
         sn = i + 1
+        scene_title = str(row.get("title") or f"Szene {sn}")
+        narration = str(row.get("narration") or "")
+        visual_asset_kind = "keyframe_still" if i == 0 else "cinematic_broll"
+        engine_result, overlay_intent, text_sensitive = _visual_prompt_from_text(
+            scene_title,
+            narration,
+            video_template=vt,
+            visual_asset_kind=visual_asset_kind,
+            provider_target=provider_target,
+        )
+        visual_prompt_effective, _guard_applied = ensure_effective_prompt(engine_result.visual_prompt_effective)
         beat: Dict[str, Any] = {
             "chapter_index": 0,
             "beat_index": i,
-            "visual_prompt": str(row.get("visual_prompt") or ""),
+            "visual_prompt": visual_prompt_effective,
+            "visual_prompt_raw": engine_result.visual_prompt_raw,
+            "visual_prompt_effective": visual_prompt_effective,
+            "negative_prompt": engine_result.negative_prompt,
             "camera_motion_hint": "static",
             "duration_seconds": int(row.get("duration_seconds") or 6),
             "asset_type": "broll",
             "continuity_note": "",
             "safety_notes": [],
-            "narration": str(row.get("narration") or ""),
-            "voiceover_text": str(row.get("narration") or ""),
-            "scene_title": str(row.get("title") or f"Szene {sn}"),
+            "narration": narration,
+            "voiceover_text": narration,
+            "scene_title": scene_title,
+            "overlay_intent": overlay_intent,
+            "text_sensitive": text_sensitive,
+            "visual_asset_kind": visual_asset_kind,
+            "routed_image_provider": provider_target or "",
+            **_engine_result_fields(engine_result),
         }
         rv = rel_videos[i] if i < len(rel_videos) else None
         if rv:
@@ -1284,7 +1316,13 @@ def run_ba265_url_to_final(
     scene_plan = _build_scene_plan(scene_rows, script_title=script.get("title") or "")
     scene_plan_path.write_text(json.dumps(scene_plan, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    pack = _build_scene_asset_pack(scene_rows, script=script, rel_videos=rel_videos, pack_parent=out_dir)
+    pack = _build_scene_asset_pack(
+        scene_rows,
+        script=script,
+        rel_videos=rel_videos,
+        pack_parent=out_dir,
+        image_provider=image_provider,
+    )
     slot_nums = _compute_motion_slot_scene_numbers(
         scene_rows,
         every_sec=int(motion_clip_every_seconds),

@@ -178,3 +178,39 @@ def test_url_extraction_empty_blocks(ba265_mod, tmp_path):
         )
     assert doc.get("ok") is False
     assert "url_extraction_empty_use_script_json" in (doc.get("blocking_reasons") or [])
+
+
+def test_scene_asset_pack_uses_visual_prompt_engine_for_openai_image(ba265_mod, tmp_path):
+    scene_rows = [
+        {
+            "title": "Warum Vertrauen in Experten plötzlich bröckelt",
+            "narration": (
+                "Ein neuer Gesundheitsfall sorgt für öffentliche Unsicherheit. Experten erklären ruhig, "
+                "während Bürger zwischen Fakten, Angst und Misstrauen schwanken."
+            ),
+            "duration_seconds": 8,
+        }
+    ]
+    pack = ba265_mod._build_scene_asset_pack(
+        scene_rows,
+        script={"title": "Visual Test", "hook": "", "video_template": "documentary_story"},
+        rel_videos=[],
+        pack_parent=tmp_path,
+        image_provider="openai_image",
+    )
+    beats = (pack.get("scene_expansion") or {}).get("expanded_scene_assets") or []
+    assert beats
+    beat = beats[0]
+    raw = str(beat.get("visual_prompt_raw") or "")
+    effective = str(beat.get("visual_prompt_effective") or "")
+    assert raw.strip()
+    assert "Subject:" in raw
+    assert "Environment:" in raw
+    assert "Composition:" in raw
+    assert "Subject:" in effective
+    assert "[visual_no_text_guard_v26_4]" in effective
+    assert effective.strip() != "[visual_no_text_guard_v26_4]"
+    assert str(beat.get("negative_prompt") or "").strip()
+    assert isinstance(beat.get("visual_prompt_anatomy"), dict)
+    assert beat["visual_prompt_anatomy"].get("subject_description")
+    assert (beat.get("normalized_controls") or {}).get("provider_target") == "openai_image"

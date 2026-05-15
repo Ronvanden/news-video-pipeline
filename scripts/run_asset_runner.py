@@ -75,6 +75,26 @@ def load_scene_asset_pack(path: Path) -> Tuple[Dict[str, Any], List[Dict[str, An
     return data, beats
 
 
+_VISUAL_ENGINE_MANIFEST_FIELDS = (
+    "negative_prompt",
+    "visual_prompt_anatomy",
+    "visual_style_profile",
+    "prompt_quality_score",
+    "prompt_risk_flags",
+    "normalized_controls",
+)
+
+
+def _copy_visual_engine_manifest_fields(asset_row: Dict[str, Any], beat: Dict[str, Any]) -> None:
+    for key in _VISUAL_ENGINE_MANIFEST_FIELDS:
+        if key not in beat:
+            continue
+        value = beat.get(key)
+        if value is None or value == "":
+            continue
+        asset_row[key] = value
+
+
 def _live_env_ready() -> bool:
     return bool((os.environ.get("LEONARDO_API_KEY") or "").strip())
 
@@ -987,6 +1007,7 @@ def run_local_asset_runner(
                 row_oai["visual_asset_kind"] = asset_kind
                 row_oai["routed_visual_provider"] = routed_v
                 row_oai["routed_image_provider"] = routed_img
+                _copy_visual_engine_manifest_fields(row_oai, b)
                 if beat_dur is not None:
                     row_oai["duration_seconds"] = beat_dur
                     row_oai["estimated_duration_seconds"] = beat_dur
@@ -1033,6 +1054,7 @@ def run_local_asset_runner(
             row_fail["visual_asset_kind"] = asset_kind
             row_fail["routed_visual_provider"] = routed_v
             row_fail["routed_image_provider"] = routed_img
+            _copy_visual_engine_manifest_fields(row_fail, b)
             if beat_dur is not None:
                 row_fail["duration_seconds"] = beat_dur
                 row_fail["estimated_duration_seconds"] = beat_dur
@@ -1088,6 +1110,7 @@ def run_local_asset_runner(
                 asset_row_oai["visual_asset_kind"] = asset_kind
                 asset_row_oai["routed_visual_provider"] = "openai_images"
                 asset_row_oai["routed_image_provider"] = routed_img
+                _copy_visual_engine_manifest_fields(asset_row_oai, b)
                 if beat_dur is not None:
                     asset_row_oai["duration_seconds"] = beat_dur
                     asset_row_oai["estimated_duration_seconds"] = beat_dur

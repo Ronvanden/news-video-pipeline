@@ -88,6 +88,78 @@ def test_openai_image_live_success_manifest_and_gate(ar_mod, tmp_path, monkeypat
     assert (aa.get("asset_quality_gate") or {}).get("status") == "production_ready"
 
 
+def test_openai_image_live_uses_effective_visual_prompt_and_keeps_anatomy(ar_mod, tmp_path, monkeypatch):
+    monkeypatch.setenv("IMAGE_PROVIDER", "openai_image")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key-placeholder")
+    raw = (
+        "Create a realistic documentary-style image.\n"
+        "Subject: concerned citizens listening to a calm public health expert.\n"
+        "Environment: modern public information room.\n"
+        "Composition: foreground subject, midground context, softly defocused background."
+    )
+    effective = f"{raw}\n\n[visual_no_text_guard_v26_4]\nNo readable text, no lettering, no logos."
+    pack_doc = {
+        "export_version": "18.2-v1",
+        "scene_expansion": {
+            "expanded_scene_assets": [
+                {
+                    "chapter_index": 0,
+                    "beat_index": 0,
+                    "visual_prompt": effective,
+                    "visual_prompt_effective": effective,
+                    "visual_prompt_raw": raw,
+                    "negative_prompt": "text, captions, labels, logos",
+                    "visual_prompt_anatomy": {
+                        "subject_description": "concerned citizens listening to a calm public health expert",
+                        "environment": "modern public information room",
+                    },
+                    "visual_style_profile": {"preset": "documentary_realism"},
+                    "prompt_quality_score": 91,
+                    "prompt_risk_flags": ["visual_subject_derived"],
+                    "normalized_controls": {"provider_target": "openai_image"},
+                    "camera_motion_hint": "static",
+                    "duration_seconds": 8,
+                    "asset_type": "broll",
+                    "overlay_intent": [],
+                    "text_sensitive": True,
+                    "visual_asset_kind": "keyframe_still",
+                    "routed_image_provider": "openai_image",
+                    "continuity_note": "",
+                    "safety_notes": [],
+                }
+            ]
+        },
+    }
+    pack = tmp_path / "pack_engine_fields.json"
+    pack.write_text(json.dumps(pack_doc), encoding="utf-8")
+    captured = {}
+
+    def _stub(vp, dest, **_kw):
+        captured["prompt"] = vp
+        dest.write_bytes(b"\x89PNG\r\n\x1a\n")
+        return (
+            True,
+            ["openai_image_provider:openai_image"],
+            {"ok": True, "bytes_written": 8, "dry_run": False},
+        )
+
+    with patch.object(ar_mod, "run_openai_image_live_to_png", side_effect=_stub):
+        meta = ar_mod.run_local_asset_runner(pack, tmp_path / "out", run_id="ba340_engine", mode="live", max_assets_live=1)
+    out = Path(meta["output_dir"])
+    man = json.loads((out / "asset_manifest.json").read_text(encoding="utf-8"))
+    asset = man["assets"][0]
+    assert captured["prompt"].startswith("Create a realistic documentary-style image.")
+    assert "Subject: concerned citizens" in captured["prompt"]
+    assert "[visual_no_text_guard_v26_4]" in captured["prompt"]
+    assert captured["prompt"].strip() != "[visual_no_text_guard_v26_4]"
+    assert asset.get("visual_prompt_raw") == raw
+    assert asset.get("visual_prompt_effective") == effective
+    assert asset.get("negative_prompt") == "text, captions, labels, logos"
+    assert (asset.get("visual_prompt_anatomy") or {}).get("subject_description")
+    assert asset.get("prompt_quality_score") == 91
+    assert (asset.get("normalized_controls") or {}).get("provider_target") == "openai_image"
+
+
 def test_openai_image_missing_key_top_level_manifest(ar_mod, tmp_path, monkeypatch):
     monkeypatch.setenv("IMAGE_PROVIDER", "openai_image")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
