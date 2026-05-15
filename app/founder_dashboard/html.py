@@ -9272,6 +9272,12 @@ try {
     var blocking = (j && j.blocking_reasons && j.blocking_reasons.length) ? j.blocking_reasons : [];
     var warnings = (j && j.warnings && j.warnings.length) ? j.warnings : [];
     var liveMotionAvailable = !!(j && j.motion_strategy && j.motion_strategy.live_motion_available);
+    var finalVideoPathForResult = fdVgFinalVideoPath(j);
+    var hasFinalVideoArtifact = !!finalVideoPathForResult;
+    if (ok && !hasFinalVideoArtifact) {
+      if (warnings.indexOf("final_video_path_missing_no_final_render") < 0) warnings = ["final_video_path_missing_no_final_render"].concat(warnings);
+      if (blocking.indexOf("final_video_path_missing") < 0) blocking = ["final_video_path_missing"].concat(blocking);
+    }
 
     // default hide lists
     if (blockersWrap) blockersWrap.style.display = "none";
@@ -9420,7 +9426,7 @@ try {
     var hasScript = !!(j && j.script_path);
     var hasPack = !!(j && j.scene_asset_pack_path);
     var hasManifest = !!(j && j.asset_manifest_path);
-    var hasFinalVideo = !!(j && j.final_video_path);
+    var hasFinalVideo = hasFinalVideoArtifact;
     var motionFieldPresent = (j && j.motion_strategy && typeof j.motion_strategy.live_motion_available === "boolean");
     var motionOk = motionFieldPresent ? !!j.motion_strategy.live_motion_available : null;
     var raQc = (j && j.readiness_audit && typeof j.readiness_audit === "object") ? j.readiness_audit : {};
@@ -9475,7 +9481,20 @@ try {
       var hasFallbackSignal = fdVgIsOkRunFallbackPreview(j, warnJoined);
       var op = j && j.video_generate_operator && typeof j.video_generate_operator === "object" ? j.video_generate_operator : null;
 
-      if (op && op.headline) {
+      if (ok && !hasFinalVideoArtifact) {
+        if (h) h.textContent = "Kein final_video.mp4 erzeugt";
+        if (sub) sub.textContent = "Der Lauf hat geantwortet, aber final_video_path fehlt. Prüfe Output, Warnings und Render-Schritt.";
+        if (badge) {
+          badge.textContent = "Final fehlt";
+          badge.className = "fd-vg-badge fd-vg-badge--blocked";
+        }
+        if (cta) cta.textContent = "Nächster Schritt: Output-Ordner, Warnings und Render-Schritt prüfen.";
+        if (fbExplain) fbExplain.style.display = "block";
+        if (smokeEl) {
+          smokeEl.style.display = "block";
+          smokeEl.innerHTML = "<strong>Smoke-Ergebnis</strong>: Lauf beendet ohne final_video.mp4.";
+        }
+      } else if (op && op.headline) {
         if (h) h.textContent = String(op.headline || "");
         if (sub) sub.textContent = String(op.subline || "");
         if (badge) {
@@ -9567,6 +9586,9 @@ try {
     var paths = [];
     var tpPack = null;
     if (j) {
+      var rsPath = fdVgVideoGenerateRunStatusFromPayload(j) || (ok ? (hasFinalVideoArtifact ? "response_complete_final_video_present" : "response_complete_final_video_missing") : "blocked");
+      paths.push(["Current Step", rsPath]);
+      paths.push(["final_video_path", finalVideoPathForResult || "missing"]);
       if (j.final_video_path) paths.push(["Final Video", j.final_video_path]);
       if (j.output_dir) paths.push(["Output-Ordner", j.output_dir]);
       if (j.script_path) paths.push(["Script", j.script_path]);
@@ -9831,16 +9853,17 @@ try {
         btn.classList.remove("is-loading");
         return;
       }
+      var finalOk = !!(j && j.ok && fdVgHasFinalVideoArtifact(j));
       if (st) {
-        st.textContent = (j && j.ok) ? "Fertig — siehe Ergebnis." : "Beendet mit Blockern/Warnungen.";
-        st.classList.add((j && j.ok) ? "intake-status-success" : "intake-status-err");
+        st.textContent = finalOk ? "Fertig — final_video.mp4 vorhanden." : ((j && j.ok) ? "Beendet — final_video.mp4 fehlt. Siehe Ergebnis." : "Beendet mit Blockern/Warnungen.");
+        st.classList.add(finalOk ? "intake-status-success" : "intake-status-err");
       }
       fdUpdateVideoGenerateExecutiveState(j || null, "done");
       fdRenderVideoGenerateOperatorResult(j || null, "done");
       try { FD_VG_LAST_VIDEO_GENERATE = j || null; } catch (eKeep) {}
       try { fdApplyRealProductionSmokeChecklist(); } catch (eRsAfter) {}
       try { fdVgSaveLastRunSummary(j || null); } catch (eSave) {}
-      btn.classList.add((j && j.ok) ? "is-success" : "is-error");
+      btn.classList.add(finalOk ? "is-success" : "is-error");
       btn.textContent = "Video generieren";
       btn.disabled = false;
       btn.classList.remove("is-loading");
@@ -11237,6 +11260,18 @@ try {
     try { return (warnings || []).map(function(x) { return String(x || ""); }).join(" ").toLowerCase(); } catch (eW) { return ""; }
   }
 
+  function fdVgFinalVideoPath(j) {
+    if (!j || typeof j !== "object") return "";
+    var p = j.final_video_path != null ? String(j.final_video_path || "").trim() : "";
+    if (p) return p;
+    var pb = j.production_bundle && typeof j.production_bundle === "object" ? j.production_bundle : null;
+    return pb && pb.final_video_bundle_path != null ? String(pb.final_video_bundle_path || "").trim() : "";
+  }
+
+  function fdVgHasFinalVideoArtifact(j) {
+    return !!fdVgFinalVideoPath(j);
+  }
+
   function fdVgHasAnySignal(joinedLower, signals) {
     if (!joinedLower) return false;
     for (var i = 0; i < signals.length; i++) {
@@ -11340,13 +11375,19 @@ try {
     var blocking = (j && j.blocking_reasons && j.blocking_reasons.length) ? j.blocking_reasons : [];
     var warnings = (j && j.warnings && j.warnings.length) ? j.warnings : [];
     var warnJoined = fdVgWarnJoinedLower(warnings);
+    var rsDone = fdVgVideoGenerateRunStatusFromPayload(j);
+    var hasFinalDone = fdVgHasFinalVideoArtifact(j);
+    var finalMissingDone = ok && !hasFinalDone;
     var isFallbackPreview = ok && fdVgIsOkRunFallbackPreview(j, warnJoined);
     var exRun2 = document.getElementById("fp-exec-latest-run");
     if (exRun2) exRun2.textContent = rid ? ("Letzter Videolauf: " + rid) : "Kein aktiver Run";
     var exFs2 = document.getElementById("fp-exec-fresh-status");
-    if (exFs2) exFs2.textContent = ok ? (isFallbackPreview ? "Video-Status: Fallback-Preview erstellt" : "Video-Status: fertig") : (blocking && blocking.length ? "Video-Status: blockiert" : "Video-Status: beendet");
+    if (exFs2) exFs2.textContent = finalMissingDone ? "Video-Status: final_video.mp4 fehlt" : (ok ? (isFallbackPreview ? "Video-Status: Fallback-Preview erstellt" : "Video-Status: fertig") : (blocking && blocking.length ? "Video-Status: blockiert" : "Video-Status: beendet"));
     if (ok) {
-      if (isFallbackPreview) {
+      if (finalMissingDone) {
+        fdExecSetNextStep("final_video.mp4 fehlt. Prüfe Output, Warnings und Render-Schritt.", "fd-video-generate-result", "Status: " + (rsDone || "final_video_missing"));
+        fdSetGuidedFlowVideoGenerateState("blocked", "final_video_path fehlt - Output und Render-Schritt prüfen");
+      } else if (isFallbackPreview) {
         fdExecSetNextStep("Fallback-Preview erstellt. Provider/Assets prüfen oder Preview öffnen.", "fd-video-generate-result", "");
         fdSetGuidedFlowVideoGenerateState("ok", "Provider/Assets prüfen oder Preview öffnen, dann Ergebnis validieren");
       } else {

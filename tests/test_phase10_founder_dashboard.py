@@ -337,6 +337,10 @@ class FounderDashboardRouteTests(unittest.TestCase):
         # BA 32.31 — Silent Render mit voice_mode=none: kein Fallback-Preview allein wegen audio_missing_silent_render
         self.assertIn("fdVgWarnTriggersFallbackPreview", text)
         self.assertIn("fdVgVideoGenerateRunStatusFromPayload", text)
+        self.assertIn("fdVgHasFinalVideoArtifact", text)
+        self.assertIn("final_video_path fehlt", text)
+        self.assertIn("final_video_path_missing_no_final_render", text)
+        self.assertIn("Video-Status: final_video.mp4 fehlt", text)
         self.assertIn("fdVgIsOkRunFallbackPreview", text)
         self.assertIn("fdVgEffectiveVoiceMode", text)
         self.assertIn("fdVgAudioSilentIsExpectedFallback", text)

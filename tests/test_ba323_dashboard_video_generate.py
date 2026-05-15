@@ -17,6 +17,7 @@ from app.founder_dashboard.ba323_video_generate import execute_dashboard_video_g
 from app.founder_dashboard.ba323_video_generate import resolve_voice_mode_dashboard
 from app.founder_dashboard.ba323_video_generate import build_voice_artifact
 from app.founder_dashboard.ba323_video_generate import build_asset_artifact
+from app.founder_dashboard.ba323_video_generate import build_video_generate_operator_ui_ba3280
 from app.founder_dashboard.ba323_video_generate import build_open_me_video_result_html
 from app.founder_dashboard.ba323_video_generate import _qc_rows
 from app.founder_dashboard.ba323_video_generate import derive_motion_readiness_fields
@@ -179,18 +180,21 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         p_ok = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["no_assets_in_asset_dir_using_placeholder"],
         }
         self.assertEqual(derive_video_generate_status(p_ok), "fallback_preview")
         p_ok2 = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["ba323_voice_mode_fallback_dummy_no_elevenlabs_key"],
         }
         self.assertEqual(derive_video_generate_status(p_ok2), "fallback_preview")
         p_prod = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["some_unrelated_warning"],
         }
         self.assertEqual(derive_video_generate_status(p_prod), "production_ready")
@@ -200,6 +204,25 @@ class Ba323VideoGenerateTests(unittest.TestCase):
             "warnings": [],
         }
         self.assertEqual(derive_video_generate_status(p_fail), "blocked")
+
+    def test_derive_video_generate_status_blocks_ok_payload_without_final_video(self) -> None:
+        payload = {
+            "ok": True,
+            "run_id": "video_gen_missing_final",
+            "output_dir": "/tmp/video_gen_missing_final",
+            "blocking_reasons": [],
+            "warnings": [],
+            "script_path": "/tmp/video_gen_missing_final/script.json",
+            "scene_asset_pack_path": "/tmp/video_gen_missing_final/scene_asset_pack.json",
+            "asset_manifest_path": "/tmp/video_gen_missing_final/asset_manifest.json",
+            "final_video_path": "",
+        }
+
+        self.assertEqual(derive_video_generate_status(payload), "blocked")
+        self.assertIn("final_video_path_missing", payload["blocking_reasons"])
+        self.assertIn("final_video_path_missing_no_final_render", payload["warnings"])
+        op = build_video_generate_operator_ui_ba3280("blocked", payload)
+        self.assertEqual(op["headline"], "Kein final_video.mp4 erzeugt")
 
     def test_readiness_audit_live_assets_not_requested_sets_blocker(self) -> None:
         class _FakeMod:
@@ -541,6 +564,7 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         payload = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["ba266_cinematic_placeholder_applied:1"],
             "readiness_audit": {"asset_strict_ready": True},
             "asset_artifact": {
@@ -554,6 +578,7 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         payload = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["audio_missing_silent_render"],
             "voice_artifact": {"effective_voice_mode": "none"},
             "readiness_audit": {"effective_voice_mode": "none"},
@@ -567,6 +592,7 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         payload = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["audio_missing_silent_render"],
             "voice_artifact": {"effective_voice_mode": "elevenlabs"},
             "asset_artifact": {
@@ -580,6 +606,7 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         payload = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["audio_missing_silent_render"],
             "asset_artifact": {
                 "asset_quality_gate": {"status": "production_ready", "strict_ready": True},
@@ -592,6 +619,7 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         payload = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["audio_missing_silent_render"],
             "readiness_audit": {"silent_render_expected": True},
             "asset_artifact": {
@@ -609,6 +637,7 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         payload = {
             "ok": True,
             "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
             "warnings": ["audio_missing_silent_render", "ba266_cinematic_placeholder_applied:1"],
             "voice_artifact": {"effective_voice_mode": "none"},
             "asset_artifact": {

@@ -305,7 +305,7 @@ def _ba3280_should_suppress_warn_fallback_preview(payload: Dict[str, Any], joine
     aa = payload.get("asset_artifact") if isinstance(payload.get("asset_artifact"), dict) else {}
     gate = aa.get("asset_quality_gate") if isinstance(aa.get("asset_quality_gate"), dict) else {}
     strict = bool(ra.get("asset_strict_ready")) or bool(gate.get("strict_ready"))
-    has_final = bool(str(payload.get("final_video_path") or "").strip())
+    has_final = _has_final_video_path(payload)
     render_bad = _render_layer_placeholder_hit_from_payload(payload, joined_eval)
     if not (strict and has_final and not render_bad):
         return False
@@ -621,12 +621,30 @@ def _warn_joined_lower(payload: Dict[str, Any]) -> str:
         return ""
 
 
+def _has_final_video_path(payload: Dict[str, Any]) -> bool:
+    return bool(str(payload.get("final_video_path") or "").strip())
+
+
+def _mark_missing_final_video(payload: Dict[str, Any]) -> None:
+    """Keep dashboard success states tied to an actual final video artifact path."""
+    if not bool(payload.get("ok")) or _has_final_video_path(payload):
+        return
+    warnings = payload.setdefault("warnings", [])
+    if isinstance(warnings, list) and "final_video_path_missing_no_final_render" not in warnings:
+        warnings.append("final_video_path_missing_no_final_render")
+    blockers = payload.setdefault("blocking_reasons", [])
+    if isinstance(blockers, list) and "final_video_path_missing" not in blockers:
+        blockers.append("final_video_path_missing")
+    payload["next_action"] = "final_video.mp4 fehlt - Output, Warnings und Render-Schritt prüfen"
+
+
 def derive_video_generate_status(payload: Dict[str, Any]) -> str:
     """
     BA 32.80 — normalisierter Gesamtstatus:
 
     ``blocked`` | ``fallback_preview`` | ``mixed_preview`` | ``gold_mini_ready`` | ``production_ready``
     """
+    _mark_missing_final_video(payload)
     ok = bool(payload.get("ok"))
     blockers = payload.get("blocking_reasons") or []
     if (not ok) or (isinstance(blockers, list) and len(blockers) > 0):
@@ -661,7 +679,7 @@ def derive_video_generate_status(payload: Dict[str, Any]) -> str:
     if gst == "mixed_assets" and not strict:
         return "mixed_preview"
 
-    has_final = bool(str(payload.get("final_video_path") or "").strip())
+    has_final = _has_final_video_path(payload)
     thumb_ok, bundle_ok = _thumb_bundle_ready_ba3280(payload)
     if (
         strict
@@ -680,6 +698,14 @@ def derive_video_generate_status(payload: Dict[str, Any]) -> str:
 def build_video_generate_operator_ui_ba3280(status: str, payload: Dict[str, Any]) -> Dict[str, str]:
     """Kurztexte für Dashboard/JSON (de). ``status`` = Ergebnis von ``derive_video_generate_status``."""
     ra = payload.get("readiness_audit") if isinstance(payload.get("readiness_audit"), dict) else {}
+    if status == "blocked" and bool(payload.get("ok")) and not _has_final_video_path(payload):
+        return {
+            "headline": "Kein final_video.mp4 erzeugt",
+            "subline": "Der Lauf hat geantwortet, aber der finale Videopfad fehlt. Output, Warnings und Render-Schritt prüfen.",
+            "smoke_line": "Lauf beendet ohne final_video.mp4.",
+            "badge": "Final fehlt",
+            "badge_class": "bad",
+        }
     motion_req = bool(ra.get("motion_requested"))
     motion_ok = bool(ra.get("motion_ready"))
     if status == "blocked":
