@@ -323,6 +323,28 @@ button.fd-sidebar-link:hover:not(:disabled) {
   color: var(--muted);
   font-size: 0.82rem;
 }
+.fd-advanced-tools {
+  opacity: 0.92;
+}
+.fd-advanced-tools .coll-body,
+.fd-advanced-tools .panel {
+  font-size: 0.88rem;
+}
+.fd-advanced-tools .out-toolbar {
+  opacity: 0.74;
+  transform: scale(0.98);
+  transform-origin: left center;
+}
+.fd-advanced-tools pre.out,
+.fd-advanced-tools .out {
+  max-height: 170px;
+  font-size: 0.76rem;
+}
+.fd-core-section-note {
+  margin: 0.35rem 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
 .fd-sidebar-score {
   margin-top: 0.35rem;
   padding: 0.72rem 0.65rem;
@@ -2395,8 +2417,8 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       <div class="fd-logo-mark" aria-hidden="true">▶</div>
       <div>
         <h1>VideoPipe Founder Cockpit</h1>
-        <p class="fd-header-sub">Starte und prüfe Vorschau-Prüfläufe aus einem ruhigen Operator-Cockpit.</p>
-        <p class="fd-header-tech">Lokaler Stand · Struktur-Test ohne Live-Provider · read-only</p>
+        <p class="fd-header-sub">Starte Videos, teste Bilder und prüfe Warnungen an einem Ort.</p>
+        <p class="fd-header-tech">Operator-Modus · Core zuerst · Advanced eingeklappt</p>
       </div>
     </div>
     <div class="fd-header-actions">
@@ -2420,10 +2442,10 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fd-overview-anchor">Overview</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba323-video-generate">Video generieren</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fd-video-generate-result">Ergebnis prüfen</button>
-      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba303-fresh-preview">Vorschau-Prüflauf</button>
-      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fp-btn-refresh">Status aktualisieren / Readiness</button>
-      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="fp-dry-run-handoff">Befehl kopieren</button>
-      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba22-local-preview">Local Preview</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="coll-single-scene-image-lab">Bild-Lab</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="coll-warning-center">Review &amp; Qualität</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="panel-ba22-local-preview">Letzte Runs / Artefakte</button>
+      <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="coll-advanced-actions">Advanced Tools</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="founder-strategic-summary">Founder Summary</button>
       <button type="button" class="fd-sidebar-link" data-fd-nav-scroll="coll-legacy-debug">Legacy / Debug</button>
     </nav>
@@ -2446,9 +2468,9 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
 <main class="fd-dashboard-main">
   <div id="error-bar" role="alert"></div>
 
-  <section class="fd-operator-start" id="fd-operator-start" data-dashboard-ux-cleanup-v1="1" aria-labelledby="fd-operator-start-h">
+  <section class="fd-operator-start" id="fd-operator-start" data-dashboard-ux-cleanup-v1="1" data-dashboard-ux-cleanup-v2="1" aria-labelledby="fd-operator-start-h">
     <h2 id="fd-operator-start-h">Was m&ouml;chtest du tun?</h2>
-    <p class="fd-operator-start-sub">W&auml;hle zuerst den passenden Arbeitsmodus. Die alten Einzelaktionen bleiben erhalten, sind aber unter Advanced geb&uuml;ndelt.</p>
+    <p class="fd-operator-start-sub">W&auml;hle einen Arbeitsmodus. Core bleibt oben, technische Einzelaktionen liegen unter Advanced.</p>
     <div class="fd-operator-card-grid" aria-label="Operator Start Navigation">
       <a class="fd-operator-card" href="#panel-ba323-video-generate">
         <strong>Video generieren</strong>
@@ -2460,7 +2482,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
       </a>
       <a class="fd-operator-card" href="#coll-warning-center">
         <strong>Review &amp; Qualit&auml;t pr&uuml;fen</strong>
-        <span>Warnings, Artefakte, letzte Runs und Prompt-Quality-Signale ansehen.</span>
+        <span>Warnings, Prompt Quality, Artefakte und letzte Runs ansehen.</span>
       </a>
       <a class="fd-operator-card" href="#coll-advanced-actions">
         <strong>Advanced / Developer Tools</strong>
@@ -2481,9 +2503,9 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
   <section class="fd-guided-flow" id="fd-guided-production-flow" data-ba311-guided-flow="1" aria-labelledby="fd-guided-flow-h">
     <div class="fd-guided-flow-head">
       <h2 id="fd-guided-flow-h">Production Flow</h2>
-      <p class="fd-guided-flow-sub">Geführter Ablauf vom Input bis zum Final Render</p>
+      <p class="fd-guided-flow-sub">Die grobe Reihenfolge für normale Produktionen.</p>
     </div>
-    <p class="fd-guided-flow-microcopy-help muted" id="fd-guided-flow-microcopy-help"><strong>Status aktualisieren</strong> liest den aktuellen Projektstand aus dem Ordner <code class="fp-inline-path">output/</code> neu ein. Nutze das nach einem lokalen Vorschau-Prüflauf im Terminal.</p>
+    <p class="fd-guided-flow-microcopy-help muted" id="fd-guided-flow-microcopy-help"><strong>Status aktualisieren</strong> liest den aktuellen Stand aus <code class="fp-inline-path">output/</code>.</p>
     <div id="fd-guided-flow-steps" class="fd-guided-flow-steps" aria-label="Produktionsschritte"></div>
     <div class="fd-guided-flow-next">
       <div class="fd-guided-flow-next-kicker">Nächster Schritt</div>
@@ -2495,20 +2517,20 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
   <section class="panel panel--video-generate" id="panel-ba323-video-generate" data-ba323-video-generate="1" aria-labelledby="vg-video-generate-h">
     <div class="panel-section-head">
       <h2 id="vg-video-generate-h">Video generieren</h2>
-      <p class="panel-section-desc muted">URL eingeben und einen kontrollierten 10-Minuten-Produktionslauf starten.</p>
+      <p class="panel-section-desc muted">URL eingeben, Dauer setzen, Kosten bewusst bestätigen, Start klicken.</p>
     </div>
     <div class="fd-vg-operator-brief" aria-label="Operator-Kurzüberblick Video Generate">
       <div class="fd-vg-brief-card">
         <span class="fd-vg-brief-k">Current production state</span>
-        <span class="fd-vg-brief-v">Kontrollierter URL → Longform-Render bis <code class="fp-inline-path">final_video.mp4</code>.</span>
+        <span class="fd-vg-brief-v">URL wird zu Script, Assets, Preview und optionalem Finalvideo.</span>
       </div>
       <div class="fd-vg-brief-card">
         <span class="fd-vg-brief-k">Next operator step</span>
-        <span class="fd-vg-brief-v">URL eintragen, Kosten bewusst bestätigen und danach Ergebnis, Pfade und Warnungen prüfen.</span>
+        <span class="fd-vg-brief-v">URL eintragen, Optionen prüfen, dann Ergebnis und Warnungen ansehen.</span>
       </div>
       <div class="fd-vg-brief-card">
         <span class="fd-vg-brief-k">Safety mode</span>
-        <span class="fd-vg-brief-v">Ohne Aktivierung wird eine Fallback-Preview mit Platzhaltern erstellt; Live-Motion blockt ohne echten Connector.</span>
+        <span class="fd-vg-brief-v">Ohne Live-Haken bleibt der Lauf im sicheren Fallback-Modus.</span>
       </div>
     </div>
     <div class="fd-vg-pipeline-steps" aria-label="Video Generate Produktionsgates">
@@ -2538,7 +2560,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
           <option value="placeholder">placeholder</option>
         </select>
       </div>
-      <p class="fd-vg-primary-note"><strong>Standardwerte reichen für normale Tests.</strong><br/>Advanced nur ändern, wenn du bewusst Provider-Kosten/Renderlast steuerst.</p>
+      <p class="fd-vg-primary-note"><strong>Standardwerte reichen für normale Tests.</strong><br/>Advanced nur ändern, wenn du Kosten oder Renderlast bewusst steuerst.</p>
       <div style="grid-column:1/-1">
         <label for="fd-vg-voice-mode">Voice-Modus</label>
         <select id="fd-vg-voice-mode">
@@ -2616,7 +2638,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
           </div>
         </div>
         <details class="muted" style="margin-top:0.65rem" id="fd-vg-dev-keys" data-ba3272b-dev-keys="1">
-          <summary><strong>Provider Keys / Local Test (dev-only)</strong> — nur im Request, nie speichern</summary>
+          <summary><strong>Provider Keys / Local Test (dev-only)</strong></summary>
           <p class="muted" style="margin:0.35rem 0 0;font-size:0.78rem;line-height:1.35">
             Diese Felder werden <strong>nur</strong> im aktuellen <code>POST /founder/dashboard/video/generate</code> übertragen.
             Es gibt <strong>keine</strong> Speicherung (kein localStorage/sessionStorage), <strong>kein</strong> Echo im Ergebnis-JSON, <strong>kein</strong> OPEN_ME und <strong>keine</strong> Logs.
@@ -2646,7 +2668,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <p class="muted" id="fd-vg-assets-mode-hint" style="margin:0.15rem 0 0;font-size:0.82rem"><strong>Preview/Fallback-Modus</strong> — keine Live-Provider, Platzhalter sind erwartbar.</p>
       </div>
       <div style="grid-column:1/-1">
-        <div class="fd-vg-section-title">Readiness Audit · Provider-Readiness</div>
+        <div class="fd-vg-section-title">Provider bereit?</div>
         <div id="fd-vg-provider-readiness" class="fd-vg-kv" aria-label="Provider-Readiness">
           <div class="fd-vg-kv-row"><span class="fd-vg-k">Live Assets</span><span class="fd-vg-v" id="fd-vg-pr-live-assets">Unbekannt</span></div>
           <div class="fd-vg-kv-row"><span class="fd-vg-k">ElevenLabs Voice</span><span class="fd-vg-v" id="fd-vg-pr-eleven">Unbekannt</span></div>
@@ -2659,21 +2681,21 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         </div>
         <p class="muted" id="fd-vg-provider-readiness-hint" style="margin:0.35rem 0 0;font-size:0.78rem"></p>
 
-        <div class="fd-vg-section-title">Current Production State · Preflight</div>
+        <div class="fd-vg-section-title">Aktueller Stand</div>
         <div class="fd-vg-kv" aria-label="Preflight">
           <div class="fd-vg-kv-row"><span class="fd-vg-k">Status</span><span class="fd-vg-v" id="fd-vg-preflight-status">Unbekannt</span></div>
           <div class="fd-vg-kv-row"><span class="fd-vg-k">Hinweis</span><span class="fd-vg-v" id="fd-vg-preflight-text">—</span></div>
         </div>
 
-        <div class="fd-vg-section-title">Warning / Blocking Reasons · Fix Checklist</div>
+        <div class="fd-vg-section-title">Was blockiert?</div>
         <div id="fd-vg-fix-checklist" class="fd-vg-kv" aria-label="Fix Checklist">
           <div class="fd-vg-kv-row"><span class="fd-vg-k">—</span><span class="fd-vg-v">Noch keine Readiness geladen.</span></div>
         </div>
 
-        <div class="fd-vg-section-title">Next Operator Step · Real Production Smoke</div>
+        <div class="fd-vg-section-title">Echter Mini-Lauf</div>
         <p class="muted" style="margin:0 0 0.35rem;font-size:0.78rem">Checkliste für einen echten Lauf mit realen Assets und echter Voice.</p>
         <div style="display:flex;gap:8px;align-items:center;margin:0 0 0.45rem;flex-wrap:wrap">
-          <button type="button" class="sm" id="fd-vg-real-smoke-preset">Real Production Smoke Preset</button>
+          <button type="button" class="sm" id="fd-vg-real-smoke-preset">Mini-Lauf Preset</button>
           <span class="muted" style="font-size:0.78rem">setzt Live Assets + bestmögliche Voice (kein Blocker)</span>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin:0.35rem 0 0;flex-wrap:wrap">
@@ -2816,7 +2838,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
   <section class="panel panel--fresh-preview fp-cockpit-primary" id="panel-ba303-fresh-preview" aria-labelledby="fp-snapshot-h">
     <div class="panel-section-head fp-cockpit-panel-head">
       <h2 id="fp-snapshot-h">Vorschau-Prüflauf (BA 30.3–30.8)</h2>
-      <p class="panel-section-desc muted">Read-only unter <code class="fp-inline-path">output/fresh_topic_preview/</code> · Ready, Warning oder Blocked auf einen Blick · <strong>Struktur-Test</strong> und <strong>Status aktualisieren</strong> an einem Ort. <em>Vorschau-Prüflauf:</em> erzeugt eine prüfbare Vorschau vor dem finalen Video.</p>
+      <p class="panel-section-desc muted">Letzte Vorschau und Status aus <code class="fp-inline-path">output/</code>. Lokal, read-only, ohne neue Provider-Calls.</p>
     </div>
     <div class="fp-cockpit-split">
       <div class="fp-cockpit-col fp-cockpit-col--actions">
@@ -3180,11 +3202,11 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
           </div>
         </div>
         <p class="muted" id="visual-prompt-controls-status" style="margin:0.45rem 0 0;font-size:0.78rem">Visual Controls werden geladen.</p>
-        <p class="muted" id="visual-prompt-controls-preview-state" data-visual-controls-preview-state="1" style="margin:0.35rem 0 0;font-size:0.78rem">Preview-only visual controls state: noch nicht verwendet.</p>
+        <p class="muted" id="visual-prompt-controls-preview-state" data-visual-controls-preview-state="1" style="margin:0.35rem 0 0;font-size:0.78rem">Controls: noch nicht im Preview verwendet.</p>
         <div class="actions" style="margin-top:0.55rem">
           <button type="button" id="btn-visual-prompt-preview" data-label="Visual Prompt Preview">Visual Prompt Preview</button>
         </div>
-        <p class="muted" id="visual-prompt-preview-status" style="margin:0.35rem 0 0;font-size:0.78rem">Preview-only: sendet nur an /visual-plan/prompt-preview, kein Provider-Call, kein Render.</p>
+        <p class="muted" id="visual-prompt-preview-status" style="margin:0.35rem 0 0;font-size:0.78rem">Sicherer Prompt-Test: kein Provider-Call, kein Render.</p>
         <div id="visual-prompt-preview-result" data-visual-prompt-preview-result="1" class="out out-empty" style="margin-top:0.5rem;max-height:360px;overflow:auto;white-space:normal">Noch kein Visual Prompt Preview Ergebnis.</div>
       </div>
       <div class="row-check">
@@ -3198,7 +3220,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     </section>
     <details class="fd-coll fd-advanced-tools" id="coll-advanced-actions" data-dashboard-advanced-tools="1">
       <summary>Advanced / Developer Tools</summary>
-      <p class="fd-advanced-tools-note">Storyboard-, Asset-, Provider-Live-, Batch- und Export-Einzelaktionen. F&uuml;r normale Bedienung zuerst oben <strong>Video generieren</strong> oder das <strong>Single Scene Image Lab</strong> nutzen.</p>
+      <p class="fd-advanced-tools-note">Technische Einzelaktionen. F&uuml;r normale Bedienung zuerst <strong>Video generieren</strong> oder <strong>Bild-Lab</strong> nutzen.</p>
     <section class="panel">
       <h2>Actions (Advanced)</h2>
       <p class="muted">POST-Body = ExportPackageRequest (BA 10.3–10.5).</p>
@@ -3246,11 +3268,11 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
   </div>
 
   <section class="panel" id="coll-ops" style="margin-top:1rem">
-    <h2>Production Ready Checklist</h2>
+    <h2>Review &amp; Qualität</h2>
     <div id="prod-checklist-badge" class="checklist-badge blocked">BLOCKED</div>
     <ul id="prod-checklist-items"></ul>
     <h2 class="subh">Production Pack (read-only)</h2>
-    <p class="muted" id="prod-pack-meta" style="margin:0.25rem 0 0.5rem;font-size:0.82rem">Noch kein Production Pack Summary im geladenen JSON.</p>
+    <p class="muted" id="prod-pack-meta" style="margin:0.25rem 0 0.5rem;font-size:0.82rem">Noch kein Production Summary geladen.</p>
     <div class="out-toolbar">
       <button type="button" class="sm tb-copy" data-pre="out-prod-pack-summary">Copy</button>
       <button type="button" class="sm tb-json" data-pre="out-prod-pack-summary" data-dlname="production_summary.json">JSON</button>
@@ -3281,7 +3303,7 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
     <div class="coll-body">
       <div class="panel" style="margin:0 0 0.75rem;padding:0.65rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.88rem">
         <strong>Single Scene Image Lab</strong>
-        <p class="muted" id="single-scene-image-lab-status" style="margin:0.25rem 0 0.55rem;font-size:0.8rem">Isolierter Bildqualitaets-Test: ein Prompt, optional ein OpenAI Image, kein Voice, kein Motion, kein Render.</p>
+        <p class="muted" id="single-scene-image-lab-status" style="margin:0.25rem 0 0.55rem;font-size:0.8rem">Bildqualität isoliert testen: Prompt Preview, dann optional genau ein OpenAI Image.</p>
         <label for="ssil-scene-title">Scene Title</label>
         <input type="text" id="ssil-scene-title" placeholder="Warum Vertrauen in Experten ploetzlich broeckelt"/>
         <label for="ssil-narration">Narration / Summary</label>
