@@ -175,8 +175,11 @@ def _build_scene_rows_from_script(
 
 
 def _script_text_for_duration_audit(script: Dict[str, Any]) -> str:
+    full_script = str(script.get("full_script") or "").strip()
+    if full_script:
+        return full_script
     parts: List[str] = []
-    for key in ("hook", "full_script"):
+    for key in ("hook",):
         value = str(script.get(key) or "").strip()
         if value:
             parts.append(value)
@@ -573,6 +576,21 @@ def _collect_voiceover_text(scene_rows: Sequence[Dict[str, Any]]) -> str:
         if narration:
             parts.append(narration)
     return "\n\n".join(parts).strip()
+
+
+def _collect_voiceover_text_from_script(
+    script: Dict[str, Any], scene_rows: Sequence[Dict[str, Any]]
+) -> Tuple[str, str]:
+    """Prefer a fuller generated script when scene rows only contain shortened chapter narration."""
+    row_text = _collect_voiceover_text(scene_rows)
+    full_script = str((script or {}).get("full_script") or "").strip()
+    if not full_script:
+        return row_text, "scene_rows"
+    row_words = count_words(row_text)
+    full_words = count_words(full_script)
+    if full_words > max(row_words, int(row_words * 1.15)):
+        return full_script, "full_script"
+    return row_text, "scene_rows"
 
 
 def _validate_voice_file(p: Path) -> Tuple[bool, str]:
@@ -1525,7 +1543,9 @@ def run_ba265_url_to_final(
     )
     warnings.extend(cin_warns)
 
-    voiceover_text = _collect_voiceover_text(scene_rows)
+    voiceover_text, voiceover_text_source = _collect_voiceover_text_from_script(script, scene_rows)
+    if voiceover_text_source == "full_script":
+        warnings.append("voiceover_full_script_used")
     if voiceover_text:
         try:
             voice_text_path.write_text(voiceover_text + "\n", encoding="utf-8")

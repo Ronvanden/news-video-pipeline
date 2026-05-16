@@ -32,6 +32,27 @@ def test_120_seconds_maps_to_about_280_target_words():
     assert audit["scene_count"] == 5
 
 
+def test_duration_audit_prefers_full_script_without_chapter_duplication():
+    ba265 = _load_ba265_module()
+    script = {
+        "hook": "Hook words should not duplicate.",
+        "chapters": [{"title": "Kapitel", "content": "Short chapter."}],
+        "full_script": "one two three four five",
+    }
+    assert ba265._script_text_for_duration_audit(script) == "one two three four five"
+
+
+def test_voiceover_prefers_full_script_when_chapter_rows_are_shorter():
+    ba265 = _load_ba265_module()
+    script = {
+        "full_script": " ".join([f"word{i}" for i in range(40)]),
+    }
+    scene_rows = [{"narration": "short row narration"}]
+    text, source = ba265._collect_voiceover_text_from_script(script, scene_rows)
+    assert source == "full_script"
+    assert text == script["full_script"]
+
+
 def test_script_generation_prompt_contains_duration_and_length_direction():
     source = inspect.getsource(utils.ScriptGenerator._generate_with_openai)
     assert "Zielwortanzahl: {target_word_count}" in source
