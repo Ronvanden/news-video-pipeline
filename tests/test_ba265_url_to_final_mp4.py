@@ -344,18 +344,54 @@ def test_youtube_packaging_extends_script_voice_and_audit(ba265_mod, tmp_path):
     manifest = json.loads((out / "youtube_packaging_manifest.json").read_text(encoding="utf-8"))
     summary = json.loads((out / "run_summary.json").read_text(encoding="utf-8"))
 
-    assert "Willkommen zu dieser Einordnung" in written["full_script"]
+    assert "Willkommen zu dieser Einordnung" not in written["full_script"]
     assert "abonniere den Kanal" in written["full_script"]
-    assert "Danke fürs Zuschauen" in written["full_script"]
+    assert "Danke fuers Zuschauen" not in written["full_script"]
     assert original in written["full_script"]
     assert voice_text.strip() == written["full_script"]
     assert doc["script_word_count"] > original_words
     assert doc["duration_audit"]["script_word_count"] == doc["script_word_count"]
     assert manifest["packaging_applied"] is True
+    assert manifest["packaging_level"] == "minimal"
+    assert manifest["included_intro"] is False
+    assert manifest["included_cta"] is True
+    assert manifest["included_outro"] is False
     assert manifest["packaged_full_script_word_count"] == doc["script_word_count"]
     assert summary["youtube_packaging"]["packaging_applied"] is True
     assert Path(summary["youtube_packaging"]["manifest_path"]).is_file()
     assert Path(summary["youtube_packaging"]["original_script_path"]).is_file()
+
+
+def test_youtube_packaging_duration_levels():
+    from app.publishing.youtube_packaging import build_youtube_packaging
+
+    short = build_youtube_packaging(
+        title="Ein Thema",
+        hook="Ein kurzer Hook",
+        chapters=[],
+        target_language="de",
+        duration_target_seconds=300,
+    )
+    assert short["packaging_level"] == "short"
+    assert short["included_intro"] is True
+    assert short["included_cta"] is True
+    assert short["included_outro"] is False
+    assert short["intro_text"]
+    assert short["outro_text"] == ""
+
+    standard = build_youtube_packaging(
+        title="Ein Thema",
+        hook="Ein kurzer Hook",
+        chapters=[],
+        target_language="de",
+        duration_target_seconds=600,
+    )
+    assert standard["packaging_level"] == "standard"
+    assert standard["included_intro"] is True
+    assert standard["included_cta"] is True
+    assert standard["included_outro"] is True
+    assert standard["intro_text"]
+    assert standard["outro_text"]
 
 
 def test_youtube_packaging_truncates_hook_on_word_boundary():

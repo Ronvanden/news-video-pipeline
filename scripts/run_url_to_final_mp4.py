@@ -1395,7 +1395,11 @@ def run_ba265_url_to_final(
     if bool(enable_youtube_packaging):
         original_script_copy = json.loads(json.dumps(script, ensure_ascii=False, default=str))
         try:
-            packaged = apply_youtube_packaging_to_script(script, target_language=tlang)
+            packaged = apply_youtube_packaging_to_script(
+                script,
+                target_language=tlang,
+                duration_target_seconds=int(original_requested_duration_seconds),
+            )
             script = packaged["script"]
             youtube_packaging_result = dict(packaged.get("packaging") or {})
             youtube_packaging_result["manifest_path"] = str(youtube_packaging_manifest_path)

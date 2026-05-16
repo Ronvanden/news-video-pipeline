@@ -44,6 +44,18 @@ def _language_is_german(target_language: Optional[str]) -> bool:
     return str(target_language or "de").strip().lower().startswith("de")
 
 
+def _packaging_level(duration_target_seconds: Optional[int]) -> str:
+    try:
+        duration = int(duration_target_seconds or 0)
+    except (TypeError, ValueError):
+        duration = 0
+    if duration and duration <= 120:
+        return "minimal"
+    if duration and duration < 600:
+        return "short"
+    return "standard"
+
+
 def build_youtube_packaging(
     *,
     title: Optional[str] = None,
@@ -51,6 +63,7 @@ def build_youtube_packaging(
     chapters: Any = None,
     target_language: str = "de",
     channel_name: Optional[str] = None,
+    duration_target_seconds: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Build a deterministic YouTube wrapper for script/voice usage.
 
@@ -63,35 +76,45 @@ def build_youtube_packaging(
     german = _language_is_german(target_language)
     warnings: List[str] = []
 
+    packaging_level = _packaging_level(duration_target_seconds)
+    included_intro = packaging_level in {"short", "standard"}
+    included_cta = True
+    included_outro = packaging_level == "standard"
+
     if german:
-        intro_text = (
-            f"Willkommen zu dieser Einordnung. In diesem Video geht es um {title_s}. "
-            "Wir schauen ruhig auf die wichtigsten Punkte, ordnen den Kontext ein und trennen Beobachtung von Bewertung."
-        )
-        if hook_s:
-            intro_text += f" Ausgangspunkt ist: {hook_s}"
-        cta_text = (
-            "Wenn du solche sachlichen Einordnungen hilfreich findest, abonniere den Kanal "
-            "und aktiviere die Glocke, damit du die nächsten Analysen nicht verpasst."
-        )
+        if packaging_level == "standard":
+            intro_text = (
+                f"Willkommen zu dieser Einordnung. In diesem Video geht es um {title_s}. "
+                "Wir schauen ruhig auf die wichtigsten Punkte, ordnen den Kontext ein und trennen Beobachtung von Bewertung."
+            )
+            if hook_s:
+                intro_text += f" Ausgangspunkt ist: {hook_s}"
+        elif packaging_level == "short":
+            intro_text = f"Willkommen zu dieser kurzen Einordnung zu {title_s}."
+        else:
+            intro_text = ""
+        cta_text = "Wenn du solche Einordnungen hilfreich findest, abonniere den Kanal."
         outro_text = (
-            "Zum Schluss bleibt wichtig: Dieser Beitrag ersetzt keine eigene Prüfung der Quellen, "
-            "sondern soll helfen, die Lage strukturierter einzuordnen. Danke fürs Zuschauen."
-        )
+            "Zum Schluss bleibt wichtig: Dieser Beitrag ersetzt keine eigene Pruefung der Quellen, "
+            "sondern hilft bei einer strukturierteren Einordnung. Danke fuers Zuschauen."
+        ) if included_outro else ""
     else:
-        intro_text = (
-            f"Welcome to this analysis. In this video, we look at {title_s}, separate observation from evaluation, "
-            "and put the key points into context."
-        )
-        if hook_s:
-            intro_text += f" The starting point is: {hook_s}"
-        cta_text = (
-            "If you find calm, evidence-minded analysis useful, subscribe to the channel and turn on notifications."
-        )
+        if packaging_level == "standard":
+            intro_text = (
+                f"Welcome to this analysis. In this video, we look at {title_s}, separate observation from evaluation, "
+                "and put the key points into context."
+            )
+            if hook_s:
+                intro_text += f" The starting point is: {hook_s}"
+        elif packaging_level == "short":
+            intro_text = f"Welcome to this short analysis of {title_s}."
+        else:
+            intro_text = ""
+        cta_text = "If you find this useful, subscribe to the channel."
         outro_text = (
             "To close, this video is meant to support a clearer view of the topic, not replace your own source check. "
             "Thanks for watching."
-        )
+        ) if included_outro else ""
 
     overlay_hooks = [{"type": "title_hook", "text": title_s}]
     for idx, chapter_title in enumerate(_chapter_titles(chapters), start=1):
@@ -105,6 +128,10 @@ def build_youtube_packaging(
     return {
         "youtube_packaging_version": _VERSION,
         "packaging_applied": True,
+        "packaging_level": packaging_level,
+        "included_intro": bool(included_intro),
+        "included_cta": bool(included_cta),
+        "included_outro": bool(included_outro),
         "intro_text": intro_text,
         "cta_text": cta_text,
         "outro_text": outro_text,
@@ -118,6 +145,7 @@ def apply_youtube_packaging_to_script(
     *,
     target_language: str = "de",
     channel_name: Optional[str] = None,
+    duration_target_seconds: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Return a copied script with intro/CTA/outro added to ``full_script``."""
     src = dict(script or {})
@@ -127,6 +155,7 @@ def apply_youtube_packaging_to_script(
         chapters=src.get("chapters"),
         target_language=target_language,
         channel_name=channel_name,
+        duration_target_seconds=duration_target_seconds,
     )
     original_full = str(src.get("full_script") or "").strip()
     if not original_full:
