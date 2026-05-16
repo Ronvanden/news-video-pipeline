@@ -915,6 +915,7 @@ Ziel:
 {addon_block}
 Laengen-Regie:
 - Die Zielwortanzahl ist verbindlich: Schreibe nahe {target_word_count} Woerter und mindestens {min_word_count} Woerter.
+- Eine Antwort unter {min_word_count} Woertern gilt als zu kurz und muss vor der Ausgabe erweitert werden.
 - Kein Telegrammstil: Jeder Hauptpunkt braucht mehrere erklaerende Saetze, klare Uebergaenge und gesprochenen Kontext.
 - Bei YouTube-Transkripten oder Quelltexten: vorhandenes Material ausfuehrlicher paraphrasieren und einordnen, ohne neue Fakten zu erfinden.
 - Wenn die Quelle knapp ist: erklaere Bedeutung, Kontext, Unsicherheiten und moegliche Folgen vorsichtig, statt neue Details zu behaupten.
@@ -1020,6 +1021,21 @@ Gib die Antwort exakt als Objekt zurück:
                         "llm",
                         reason,
                     )
+
+            repaired_full = self._deterministic_length_repair(
+                current_full_script=full_script,
+                key_points=key_points,
+                target_word_count=target_word_count,
+                min_word_count=min_word_count,
+                max_word_count=max_word_count,
+            )
+            repaired_words = count_words(repaired_full)
+            if repaired_words > full_script_words:
+                if repaired_words < min_word_count:
+                    reason = "LLM output shorter than target; deterministic repair still below target"
+                else:
+                    reason = "LLM output expanded with deterministic safe repair"
+                return title_text, hook, chapters, repaired_full, "llm", reason
 
             logger.warning(
                 "LLM output below minimum word band (%s words, min=%s); expansion not applied",
@@ -1182,6 +1198,61 @@ Wenn du unbedingt das komplette Objekt liefern willst, darfst du alternativ dies
         if not str(ex_full).strip():
             return None
         return ex_title, ex_hook, ex_chapters, str(ex_full)
+
+    def _deterministic_length_repair(
+        self,
+        *,
+        current_full_script: str,
+        key_points: List[str],
+        target_word_count: int,
+        min_word_count: int,
+        max_word_count: int,
+    ) -> str:
+        """Safely add spoken context from existing material when LLM expansion under-shoots."""
+        base = str(current_full_script or "").strip()
+        if not base:
+            return base
+        current_words = count_words(base)
+        if current_words >= min_word_count:
+            return base
+
+        safe_points = [re.sub(r"\s+", " ", str(p or "").strip()) for p in key_points if str(p or "").strip()]
+        safe_points = [p for p in safe_points if count_words(p) >= 4][:4]
+        if not safe_points:
+            safe_points = ["die bereits genannten Punkte aus der Quelle"]
+
+        additions: List[str] = []
+        for idx, point in enumerate(safe_points, start=1):
+            additions.append(
+                "Zur Einordnung: Der vorhandene Quelltext setzt hier vor allem einen Schwerpunkt auf "
+                f"{point}. Wichtig ist, diese Aussage nicht isoliert zu betrachten, sondern im Zusammenhang "
+                "mit den bereits genannten Punkten zu hören."
+            )
+            if idx == 1:
+                additions.append(
+                    "Für die Zuschauerinnen und Zuschauer hilft deshalb ein ruhiger Blick auf die Abfolge: "
+                    "Welche Behauptung steht im Raum, welche Reaktion wird beschrieben, und welche Frage "
+                    "bleibt danach offen?"
+                )
+            elif idx == 2:
+                additions.append(
+                    "Das ist keine neue Behauptung, sondern eine vorsichtige Zusammenfassung der vorhandenen "
+                    "Informationen: Erst die Einordnung macht sichtbar, warum der Konflikt für die weitere "
+                    "Debatte relevant sein kann."
+                )
+
+            candidate = base + "\n\n" + "\n\n".join(additions)
+            words = count_words(candidate)
+            if words >= min_word_count or words >= target_word_count:
+                if words <= int(max_word_count * 1.25):
+                    return candidate
+                break
+
+        candidate = base + "\n\n" + "\n\n".join(additions)
+        if count_words(candidate) <= int(max_word_count * 1.25):
+            return candidate
+        # Keep the repair conservative if the source was already close to the upper band.
+        return base
 
     # NOTE: Use try/except in caller; never bubble expansion errors into fallback.
     

@@ -74,6 +74,7 @@ def test_script_generation_prompt_contains_duration_and_length_direction():
     source = inspect.getsource(utils.ScriptGenerator._generate_with_openai)
     assert "Zielwortanzahl: {target_word_count}" in source
     assert "Mindestwortanzahl: {min_word_count}" in source
+    assert "Eine Antwort unter {min_word_count} Woertern gilt als zu kurz" in source
     assert "Die Zielwortanzahl ist verbindlich" in source
     assert "Kein Telegrammstil" in source
     assert "vorhandenes Material ausfuehrlicher paraphrasieren" in source
@@ -85,6 +86,82 @@ def test_expansion_pass_uses_dynamic_word_band_for_short_targets():
     assert "target_word_count <= 400" in source
     assert "desired_new_words" in source
     assert "nahe {target_word_count} Woerter" in source
+
+
+def test_deterministic_repair_extends_short_script_without_new_claims():
+    generator = utils.ScriptGenerator()
+    base = " ".join(["vorhanden"] * 174)
+    repaired = generator._deterministic_length_repair(
+        current_full_script=base,
+        key_points=[
+            "Sarah Bosetti kritisiert die demokratische Debatte und ihre Grenzen",
+            "Im vorhandenen Material werden Reaktionen und offene Fragen beschrieben",
+        ],
+        target_word_count=256,
+        min_word_count=217,
+        max_word_count=294,
+    )
+    assert utils.count_words(repaired) >= 217
+    assert utils.count_words(repaired) <= int(294 * 1.25)
+    assert repaired.startswith(base)
+    assert "Zur Einordnung" in repaired
+
+
+def test_openai_short_output_uses_deterministic_repair_when_expansion_fails(monkeypatch):
+    generator = utils.ScriptGenerator()
+
+    monkeypatch.setattr(utils, "openai", object())
+    monkeypatch.setattr(utils, "_effective_openai_api_key", lambda: "test-key")
+    monkeypatch.setattr(generator, "_expand_llm_script_with_openai", lambda **kwargs: None)
+
+    def fake_build_client():
+        class _Message:
+            content = (
+                '{"title":"Test","hook":"Hook","chapters":[],"full_script":"'
+                + " ".join(["kurz"] * 174)
+                + '"}'
+            )
+
+        class _Choice:
+            message = _Message()
+
+        class _Completions:
+            def create(self, **kwargs):
+                class _Response:
+                    choices = [_Choice()]
+
+                return _Response()
+
+        class _Chat:
+            completions = _Completions()
+
+        class _Client:
+            chat = _Chat()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        return _Client()
+
+    monkeypatch.setattr(utils, "build_openai_client", fake_build_client)
+
+    _title, _hook, _chapters, full_script, mode, reason = generator._generate_with_openai(
+        "Test",
+        ["Sarah Bosetti kritisiert die demokratische Debatte und ihre Grenzen"],
+        2,
+        256,
+        4,
+        217,
+        294,
+        400,
+    )
+
+    assert mode == "llm"
+    assert reason == "LLM output expanded with deterministic safe repair"
+    assert utils.count_words(full_script) >= 217
 
 
 def test_short_script_gets_precise_duration_warnings(monkeypatch):
