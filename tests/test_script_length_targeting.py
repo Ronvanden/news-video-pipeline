@@ -164,6 +164,66 @@ def test_openai_short_output_uses_deterministic_repair_when_expansion_fails(monk
     assert utils.count_words(full_script) >= 217
 
 
+def test_openai_empty_full_script_builds_from_chapters_before_repair(monkeypatch):
+    generator = utils.ScriptGenerator()
+
+    monkeypatch.setattr(utils, "openai", object())
+    monkeypatch.setattr(utils, "_effective_openai_api_key", lambda: "test-key")
+    monkeypatch.setattr(generator, "_expand_llm_script_with_openai", lambda **kwargs: None)
+
+    def fake_build_client():
+        chapter_content = " ".join(["kapitelinhalt"] * 120)
+
+        class _Message:
+            content = (
+                '{"title":"Test","hook":"Hook text","chapters":[{"title":"Kapitel 1",'
+                f'"content":"{chapter_content}"'
+                '}],"full_script":""}'
+            )
+
+        class _Choice:
+            message = _Message()
+
+        class _Completions:
+            def create(self, **kwargs):
+                class _Response:
+                    choices = [_Choice()]
+
+                return _Response()
+
+        class _Chat:
+            completions = _Completions()
+
+        class _Client:
+            chat = _Chat()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        return _Client()
+
+    monkeypatch.setattr(utils, "build_openai_client", fake_build_client)
+
+    _title, _hook, _chapters, full_script, mode, reason = generator._generate_with_openai(
+        "Test",
+        ["Im vorhandenen Material werden Reaktionen und offene Fragen beschrieben"],
+        2,
+        256,
+        4,
+        217,
+        294,
+        400,
+    )
+
+    assert mode == "llm"
+    assert reason == "LLM output expanded with deterministic safe repair"
+    assert "Kapitel 1" in full_script
+    assert utils.count_words(full_script) >= 217
+
+
 def test_short_script_gets_precise_duration_warnings(monkeypatch):
     def fake_generate_script(self, title, key_points, duration_minutes, source_word_count=0, **kwargs):
         del self, key_points, duration_minutes, source_word_count, kwargs

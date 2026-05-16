@@ -956,9 +956,16 @@ Gib die Antwort exakt als Objekt zurück:
             hook = data.get("hook") or f"Entdecken Sie: {title_text}"
             chapters = data.get("chapters") if isinstance(data.get("chapters"), list) else []
             full_script = data.get("full_script") or data.get("script") or ""
+            if not str(full_script).strip() and chapters:
+                parts = [str(hook or "").strip()]
+                for ch in chapters:
+                    if isinstance(ch, dict):
+                        parts.append(str(ch.get("title") or "").strip())
+                        parts.append(str(ch.get("content") or "").strip())
+                full_script = "\n\n".join(p for p in parts if p)
             
             full_script_words = count_words(full_script)
-            if full_script_words >= min_word_count or not full_script.strip():
+            if full_script_words >= min_word_count:
                 return title_text, hook, chapters, full_script, "llm", ""
 
             # Valid LLM JSON, but clearly too short: do NOT fallback.
@@ -1241,6 +1248,32 @@ Wenn du unbedingt das komplette Objekt liefern willst, darfst du alternativ dies
                     "Debatte relevant sein kann."
                 )
 
+            candidate = base + "\n\n" + "\n\n".join(additions)
+            words = count_words(candidate)
+            if words >= min_word_count or words >= target_word_count:
+                if words <= int(max_word_count * 1.25):
+                    return candidate
+                break
+
+        neutral_bridges = [
+            (
+                "Noch einmal zusammengefasst: Entscheidend ist hier nicht, zusätzliche Details zu behaupten, "
+                "sondern die vorhandenen Aussagen sauber zu sortieren. So wird klarer, welche Punkte belegt "
+                "aus dem Ausgangsmaterial stammen und wo lediglich offene Fragen für die weitere Debatte bleiben."
+            ),
+            (
+                "Für die Erzählung bedeutet das: Wir bleiben nah am Material, paraphrasieren die bekannten "
+                "Aussagen und erklären ihre mögliche Bedeutung vorsichtig. Genau diese Trennung zwischen "
+                "Quelle, Einordnung und offener Frage macht das Skript belastbarer."
+            ),
+            (
+                "Am Ende bleibt deshalb vor allem ein Prüfauftrag: Welche Aussage trägt wirklich, welche "
+                "Reaktion ist nur eine Interpretation, und welche Punkte müssten mit zusätzlichem Material "
+                "weiter überprüft werden?"
+            ),
+        ]
+        for bridge in neutral_bridges:
+            additions.append(bridge)
             candidate = base + "\n\n" + "\n\n".join(additions)
             words = count_words(candidate)
             if words >= min_word_count or words >= target_word_count:
