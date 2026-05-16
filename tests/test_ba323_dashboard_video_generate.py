@@ -132,6 +132,7 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         self.assertEqual(kw["duration_target_seconds"], 600)
         self.assertEqual(kw["max_scenes"], 24)
         self.assertEqual(kw["max_live_assets"], 24)
+        self.assertFalse(kw["enable_youtube_packaging"])
         data = r.json()
         self.assertTrue(data.get("open_me_report_path"), msg="open_me_report_path missing")
         self.assertIn("readiness_audit", data)
@@ -152,6 +153,41 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         self.assertIn("Voice Artifact", txt)
         self.assertIn("Smoke Result", txt)
         self.assertIn("Asset Artifact", txt)
+
+    @patch("app.routes.founder_dashboard.execute_dashboard_video_generate")
+    def test_forwards_youtube_packaging_flag(self, mock_exec) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            out_root = Path(td).resolve()
+            out_dir = (out_root / "video_generate" / "video_gen_10m_packaging").resolve()
+            out_dir.mkdir(parents=True, exist_ok=True)
+            mock_exec.return_value = {
+                "ok": True,
+                "run_id": "video_gen_10m_packaging",
+                "output_dir": str(out_dir),
+                "final_video_path": str(out_dir / "final_video.mp4"),
+                "script_path": str(out_dir / "script.json"),
+                "scene_asset_pack_path": str(out_dir / "scene_asset_pack.json"),
+                "asset_manifest_path": str(out_dir / "asset_manifest.json"),
+                "duration_target_seconds": 600,
+                "max_scenes": 24,
+                "max_live_assets": 24,
+                "motion_strategy": {},
+                "youtube_packaging": {
+                    "packaging_applied": True,
+                    "manifest_path": str(out_dir / "youtube_packaging_manifest.json"),
+                },
+                "warnings": [],
+                "blocking_reasons": [],
+                "next_action": "Final Video prÃ¼fen",
+            }
+            with patch("app.routes.founder_dashboard.default_local_preview_out_root", lambda: out_root):
+                r = self.client.post(
+                    "/founder/dashboard/video/generate",
+                    json={"url": "https://example.com/a", "enable_youtube_packaging": True},
+                )
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        self.assertTrue(mock_exec.call_args.kwargs["enable_youtube_packaging"])
+        self.assertTrue((r.json().get("youtube_packaging") or {}).get("packaging_applied"))
 
     @patch("app.routes.founder_dashboard.execute_dashboard_video_generate")
     def test_response_includes_version(self, mock_exec) -> None:

@@ -64,6 +64,23 @@ def _minimal_script(path: Path, *, n_chapters: int = 4) -> None:
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _script_with_full_script(path: Path) -> str:
+    full_script = (
+        "Dies ist der Haupttext der Analyse. Er erklaert die Lage ruhig und bleibt bei den vorhandenen Fakten. "
+        "Der Text dient als Grundlage fuer die Voice und soll nicht durch externe Provider erweitert werden."
+    )
+    doc = {
+        "title": "Testtitel fuer YouTube Packaging",
+        "hook": "Ein kurzer Hook leitet das Thema ein.",
+        "chapters": [{"title": "Kapitel 1", "content": "Einordnung und Kontext."}],
+        "full_script": full_script,
+        "sources": ["https://example.com/a"],
+        "warnings": [],
+    }
+    path.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+    return full_script
+
+
 @pytest.mark.skipif(not _ffmpeg_ok(), reason="ffmpeg not available")
 def test_script_json_produces_run_summary_and_video(ba265_mod, tmp_path):
     script_p = tmp_path / "in.json"
@@ -281,3 +298,61 @@ def test_duration_minutes_from_seconds_rounds_up(ba265_mod):
     assert ba265_mod._duration_minutes_from_seconds(60) == 1
     assert ba265_mod._duration_minutes_from_seconds(61) == 2
     assert ba265_mod._duration_minutes_from_seconds(120) == 2
+
+
+def test_youtube_packaging_default_off_preserves_script(ba265_mod, tmp_path):
+    script_p = tmp_path / "script_off.json"
+    original = _script_with_full_script(script_p)
+    out = tmp_path / "out_packaging_off"
+    ba265_mod.run_ba265_url_to_final(
+        url=None,
+        script_json_path=script_p,
+        out_dir=out,
+        max_scenes=2,
+        duration_seconds=60,
+        asset_dir=None,
+        run_id="packaging_off",
+        motion_mode="static",
+        voice_mode="none",
+    )
+    written = json.loads((out / "script.json").read_text(encoding="utf-8"))
+    summary = json.loads((out / "run_summary.json").read_text(encoding="utf-8"))
+    assert written["full_script"] == original
+    assert not (out / "youtube_packaging_manifest.json").exists()
+    assert "youtube_packaging" not in summary
+
+
+def test_youtube_packaging_extends_script_voice_and_audit(ba265_mod, tmp_path):
+    script_p = tmp_path / "script_on.json"
+    original = _script_with_full_script(script_p)
+    original_words = ba265_mod.count_words(original)
+    out = tmp_path / "out_packaging_on"
+    doc = ba265_mod.run_ba265_url_to_final(
+        url=None,
+        script_json_path=script_p,
+        out_dir=out,
+        max_scenes=2,
+        duration_seconds=60,
+        asset_dir=None,
+        run_id="packaging_on",
+        motion_mode="static",
+        voice_mode="none",
+        enable_youtube_packaging=True,
+    )
+    written = json.loads((out / "script.json").read_text(encoding="utf-8"))
+    voice_text = (out / "voiceover_text.txt").read_text(encoding="utf-8")
+    manifest = json.loads((out / "youtube_packaging_manifest.json").read_text(encoding="utf-8"))
+    summary = json.loads((out / "run_summary.json").read_text(encoding="utf-8"))
+
+    assert "Willkommen zu dieser Einordnung" in written["full_script"]
+    assert "abonniere den Kanal" in written["full_script"]
+    assert "Danke fürs Zuschauen" in written["full_script"]
+    assert original in written["full_script"]
+    assert voice_text.strip() == written["full_script"]
+    assert doc["script_word_count"] > original_words
+    assert doc["duration_audit"]["script_word_count"] == doc["script_word_count"]
+    assert manifest["packaging_applied"] is True
+    assert manifest["packaged_full_script_word_count"] == doc["script_word_count"]
+    assert summary["youtube_packaging"]["packaging_applied"] is True
+    assert Path(summary["youtube_packaging"]["manifest_path"]).is_file()
+    assert Path(summary["youtube_packaging"]["original_script_path"]).is_file()

@@ -405,6 +405,11 @@ class FounderDashboardRouteTests(unittest.TestCase):
         # BA 32.78 — Thumbnail Pack Auto-Attach Optionen
         self.assertIn("fd-vg-generate-thumbnail-pack", text)
         self.assertIn("data-ba3278-thumbnail-pack", text)
+        # YouTube Packaging V1 — optionaler Script-/Voice-Layer, default aus
+        self.assertIn("fd-vg-enable-youtube-packaging", text)
+        self.assertIn("data-youtube-packaging-v1", text)
+        self.assertIn("enable_youtube_packaging", text)
+        self.assertIn("YouTube Packaging Manifest", text)
         # BA 32.79 — Production Bundle Ergebnisanzeige
         self.assertIn("Production Bundle (BA 32.79)", text)
         self.assertIn("data-ba3279-production-bundle", text)

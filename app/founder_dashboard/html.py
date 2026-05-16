@@ -2580,6 +2580,10 @@ body[data-ba3290-visual-skin="1"] .opp-grid {
         <label><input type="checkbox" id="fd-vg-generate-thumbnail-pack"/> Thumbnail Pack erzeugen (BA 32.78)</label>
         <span class="muted" style="font-size:0.78rem;display:block;margin:0.25rem 0 0">Erzeugt nach erfolgreichem Video-Lauf zusätzliche <strong>OpenAI-Bilder</strong> (Kandidaten) und lokale Text-Overlays. Erfordert OpenAI-Key und <strong>Kostenbestätigung</strong>.</span>
       </div>
+      <div style="grid-column:1/-1" class="fp-dry-run-checks" data-youtube-packaging-v1="1">
+        <label><input type="checkbox" id="fd-vg-enable-youtube-packaging"/> YouTube Packaging V1 aktivieren</label>
+        <span class="muted" style="font-size:0.78rem;display:block;margin:0.25rem 0 0">Optionaler Script-/Voice-Layer: Intro, CTA und Outro. Kein Render-Burn-in, keine Provider-Calls, kein Upload.</span>
+      </div>
       <details class="fd-vg-advanced-params" id="fd-vg-advanced-production-params" data-ba3292-video-generate-polish="1">
         <summary>Erweiterte Produktionsparameter</summary>
         <p class="fd-vg-advanced-copy"><strong>Standardwerte reichen für normale Tests.</strong> Advanced nur ändern, wenn du bewusst Provider-Kosten/Renderlast steuerst.</p>
@@ -9596,6 +9600,11 @@ try {
       if (j.asset_manifest_path) paths.push(["Asset Manifest", j.asset_manifest_path]);
       if (j.voice_artifact && j.voice_artifact.voice_file_path) paths.push(["Voice-Datei", j.voice_artifact.voice_file_path]);
       if (j.open_me_report_path) paths.push(["OPEN_ME Ergebnisbericht", j.open_me_report_path]);
+      var ytp = (j.youtube_packaging && typeof j.youtube_packaging === "object") ? j.youtube_packaging : null;
+      if (ytp) {
+        paths.push(["YouTube Packaging", ytp.packaging_applied ? "aktiv" : "nicht angewendet"]);
+        if (ytp.manifest_path) paths.push(["YouTube Packaging Manifest", String(ytp.manifest_path)]);
+      }
       tpPack = (j.thumbnail_pack && typeof j.thumbnail_pack === "object") ? j.thumbnail_pack : null;
       if (tpPack) {
         if (tpPack.thumbnail_recommended_path) paths.push(["Empfohlenes Thumbnail", String(tpPack.thumbnail_recommended_path)]);
@@ -9739,6 +9748,8 @@ try {
     var confirmCosts = !!(confirmCostsCb && confirmCostsCb.checked);
     var cbThumbPack = document.getElementById("fd-vg-generate-thumbnail-pack");
     var generateThumbPack = !!(cbThumbPack && cbThumbPack.checked);
+    var cbYoutubePackaging = document.getElementById("fd-vg-enable-youtube-packaging");
+    var enableYoutubePackaging = !!(cbYoutubePackaging && cbYoutubePackaging.checked);
     var thumbCandEl = document.getElementById("fd-vg-thumb-cand-count");
     var thumbOutEl = document.getElementById("fd-vg-thumb-max-out");
     var thumbModelEl = document.getElementById("fd-vg-thumb-model");
@@ -9786,6 +9797,7 @@ try {
       confirm_provider_costs: !!confirmCosts,
       voice_mode: voiceMode,
       motion_mode: "basic",
+      enable_youtube_packaging: !!enableYoutubePackaging,
       generate_thumbnail_pack: !!generateThumbPack,
       thumbnail_candidate_count: thumbCand,
       thumbnail_max_outputs: thumbMaxOut

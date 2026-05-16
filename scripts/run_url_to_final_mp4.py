@@ -38,6 +38,7 @@ from app.real_video_build.script_input_adapter import (  # type: ignore
     _scenes_from_full_script,
     _visual_prompt_from_text,
 )
+from app.publishing.youtube_packaging import apply_youtube_packaging_to_script  # type: ignore
 from app.story_engine.templates import normalize_story_template_id  # type: ignore
 from app.visual_plan.visual_policy_report import ensure_effective_prompt  # type: ignore
 from app.utils import (  # type: ignore
@@ -1024,6 +1025,7 @@ def run_ba265_url_to_final(
     openai_image_model: Optional[str] = None,
     openai_image_size: Optional[str] = None,
     openai_image_timeout_seconds: Optional[float] = None,
+    enable_youtube_packaging: bool = False,
     motion_clip_every_seconds: int = 60,
     motion_clip_duration_seconds: int = 10,
     max_motion_clips: int = 10,
@@ -1063,6 +1065,9 @@ def run_ba265_url_to_final(
     final_video_path = out_dir / "final_video.mp4"
     render_result_path = out_dir / "render_result.json"
     voice_text_path = out_dir / "voiceover_text.txt"
+    youtube_packaging_manifest_path = out_dir / "youtube_packaging_manifest.json"
+    youtube_packaging_original_script_path = out_dir / "youtube_packaging_original_script.json"
+    youtube_packaging_result: Optional[Dict[str, Any]] = None
     voice_meta: Dict[str, Any] = {
         "voice_used": False,
         "voice_mode": (voice_mode or "none").strip().lower(),
@@ -1115,6 +1120,8 @@ def run_ba265_url_to_final(
                 "video_clip_paths": [],
                 "warnings": [],
             }
+        if isinstance(youtube_packaging_result, dict):
+            doc["youtube_packaging"] = youtube_packaging_result
         return doc
 
     def _build_timing_audit(
@@ -1384,6 +1391,48 @@ def run_ba265_url_to_final(
             if w not in sw_script:
                 sw_script.append(w)
         script["warnings"] = sw_script
+
+    if bool(enable_youtube_packaging):
+        original_script_copy = json.loads(json.dumps(script, ensure_ascii=False, default=str))
+        try:
+            packaged = apply_youtube_packaging_to_script(script, target_language=tlang)
+            script = packaged["script"]
+            youtube_packaging_result = dict(packaged.get("packaging") or {})
+            youtube_packaging_result["manifest_path"] = str(youtube_packaging_manifest_path)
+            youtube_packaging_result["original_script_path"] = str(youtube_packaging_original_script_path)
+            youtube_packaging_result["original_full_script_word_count"] = count_words(
+                str(packaged.get("original_full_script") or "")
+            )
+            youtube_packaging_result["packaged_full_script_word_count"] = count_words(
+                str(script.get("full_script") or "")
+            )
+            youtube_packaging_original_script_path.write_text(
+                json.dumps(original_script_copy, ensure_ascii=False, indent=2, default=str),
+                encoding="utf-8",
+            )
+            youtube_packaging_manifest_path.write_text(
+                json.dumps(youtube_packaging_result, ensure_ascii=False, indent=2, default=str),
+                encoding="utf-8",
+            )
+            warnings.append("youtube_packaging_v1_applied")
+            for w in list(youtube_packaging_result.get("warnings") or []):
+                sw = str(w or "").strip()
+                if sw and sw not in warnings:
+                    warnings.append(sw)
+        except (OSError, TypeError, ValueError) as exc:
+            warn = f"youtube_packaging_v1_failed:{type(exc).__name__}"
+            warnings.append(warn)
+            sw_script = list(script.get("warnings") or [])
+            if warn not in sw_script:
+                sw_script.append(warn)
+            script["warnings"] = sw_script
+            youtube_packaging_result = {
+                "youtube_packaging_version": "youtube_packaging_v1",
+                "packaging_applied": False,
+                "manifest_path": "",
+                "original_script_path": "",
+                "warnings": [warn],
+            }
 
     script_path.write_text(
         json.dumps(script, ensure_ascii=False, indent=2, default=str),
@@ -1846,6 +1895,12 @@ def main() -> int:
         dest="fit_min_seconds_per_scene",
         help="Mindestdauer pro Szene bei --fit-video-to-voice (Default 2).",
     )
+    p.add_argument(
+        "--enable-youtube-packaging",
+        action="store_true",
+        dest="enable_youtube_packaging",
+        help="Optionaler V1 Script-/Voice-Layer: Intro, CTA und Outro vor Voice/Timeline ergänzen.",
+    )
     args = p.parse_args()
 
     try:
@@ -1867,6 +1922,7 @@ def main() -> int:
             fit_video_to_voice=bool(args.fit_video_to_voice),
             voice_fit_padding_seconds=float(args.voice_fit_padding_seconds),
             fit_min_seconds_per_scene=max(1, int(args.fit_min_seconds_per_scene)),
+            enable_youtube_packaging=bool(args.enable_youtube_packaging),
         )
     except Exception as e:
         err = {"ok": False, "error": type(e).__name__, "message": str(e)}

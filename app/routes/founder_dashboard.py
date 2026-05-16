@@ -231,6 +231,10 @@ class VideoGenerateRequest(BaseModel):
     dev_leonardo_api_key: Optional[str] = Field(default=None, max_length=512)
     # BA 32.78 — optional Thumbnail Pack (OpenAI Image Candidates + lokales Batch-Overlay)
     generate_thumbnail_pack: bool = False
+    enable_youtube_packaging: bool = Field(
+        default=False,
+        description="Optionaler YouTube Packaging V1 Script-/Voice-Layer (Intro/CTA/Outro); default aus.",
+    )
     thumbnail_candidate_count: int = Field(default=3, ge=1, le=3)
     thumbnail_max_outputs: int = Field(default=6, ge=1, le=6)
     thumbnail_model: Optional[str] = Field(default=None, max_length=128)
@@ -605,6 +609,7 @@ async def founder_dashboard_video_generate(req: VideoGenerateRequest, request: R
             openai_image_model=req.openai_image_model,
             openai_image_size=req.openai_image_size,
             openai_image_timeout_seconds=req.openai_image_timeout_seconds,
+            enable_youtube_packaging=bool(req.enable_youtube_packaging),
             dev_openai_api_key=req.dev_openai_api_key,
             dev_elevenlabs_api_key=req.dev_elevenlabs_api_key,
             dev_runway_api_key=req.dev_runway_api_key,

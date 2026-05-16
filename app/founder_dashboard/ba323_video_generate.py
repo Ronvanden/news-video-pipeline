@@ -1641,6 +1641,7 @@ def execute_dashboard_video_generate(
     openai_image_model: Optional[str] = None,
     openai_image_size: Optional[str] = None,
     openai_image_timeout_seconds: Optional[float] = None,
+    enable_youtube_packaging: bool = False,
     # BA 32.72b — dev-only, transient per-request key overrides.
     # Niemals zurückgeben, loggen oder persistieren.
     dev_openai_api_key: Optional[str] = None,
@@ -1760,6 +1761,7 @@ def execute_dashboard_video_generate(
             motion_clip_every_seconds=int(motion_clip_every_seconds),
             motion_clip_duration_seconds=int(motion_clip_duration_seconds),
             max_motion_clips=int(max_motion_clips),
+            enable_youtube_packaging=bool(enable_youtube_packaging),
             **ba265_img_kw,
         )
     finally:
@@ -2078,6 +2080,8 @@ def execute_dashboard_video_generate(
         "thumbnail_pack": thumb_pack,
         "production_bundle": pb,
     }
+    if isinstance(doc.get("youtube_packaging"), dict):
+        out_payload["youtube_packaging"] = doc.get("youtube_packaging")
     try:
         scrub_video_generate_warnings_ba3280(out_payload)
         _st_o = derive_video_generate_status(out_payload)
