@@ -601,6 +601,9 @@ def build_script_response_from_extracted_text(
         script_for_count = "\n\n".join(p for p in parts if str(p or "").strip())
     actual_word_count = count_words(script_for_count)
     warnings.append(f"Target word count: {target_word_count}, Actual word count: {actual_word_count}")
+    if actual_word_count < target_word_count * 0.75:
+        warnings.append("script_below_target_after_expansion")
+        warnings.append("duration_target_unreachable_due_to_short_script")
     if actual_word_count < target_word_count * 0.5:
         warnings.append(
             "Script is significantly shorter than target. Content may be insufficient for the requested duration."
@@ -901,6 +904,13 @@ Ziel:
 
 {source_note}
 {addon_block}
+Laengen-Regie:
+- Die Zielwortanzahl ist verbindlich: Schreibe nahe {target_word_count} Woerter und mindestens {min_word_count} Woerter.
+- Kein Telegrammstil: Jeder Hauptpunkt braucht mehrere erklaerende Saetze, klare Uebergaenge und gesprochenen Kontext.
+- Bei YouTube-Transkripten oder Quelltexten: vorhandenes Material ausfuehrlicher paraphrasieren und einordnen, ohne neue Fakten zu erfinden.
+- Wenn die Quelle knapp ist: erklaere Bedeutung, Kontext, Unsicherheiten und moegliche Folgen vorsichtig, statt neue Details zu behaupten.
+- Schreibe das `full_script` als echten Sprechertext; Kapitelinhalte duerfen nicht nur Stichpunkte sein.
+
 Baue folgende Struktur ein:
 1. Ein starker Hook
 2. Ein kurzes Intro
@@ -961,7 +971,7 @@ Gib die Antwort exakt als Objekt zurück:
 
                 # If still very short, allow one more expansion attempt (max 2 expansion calls total).
                 # Never fallback just due to shortness.
-                if after > before and after < 1200:
+                if after > before and after < min_word_count:
                     expanded2 = self._expand_llm_script_with_openai(
                         title=ex_title or title_text,
                         key_points=key_points,
@@ -989,7 +999,7 @@ Gib die Antwort exakt als Objekt zurück:
                 if after > before and after <= int(max_word_count * 1.25) and (
                     after >= min_word_count or after >= int(before * 1.15) or abs(target_word_count - after) < abs(target_word_count - before)
                 ):
-                    if after < 1200 or after < min_word_count:
+                    if after < min_word_count:
                         reason = "LLM expansion still below target"
                     else:
                         reason = "LLM script expanded toward target length"
@@ -1060,11 +1070,15 @@ Gib die Antwort exakt als Objekt zurück:
             chapters_json = "[]"
 
         current_words = count_words(current_full_script or "")
-        target_min_words = 1200
-        target_max_words = 1500
+        target_min_words = max(1, int(min_word_count))
+        target_max_words = max(int(max_word_count), int(target_word_count))
         missing_to_min = max(0, target_min_words - current_words)
-        # Ask for a concrete amount of NEW text to append. Buffer a bit to avoid landing just under the target.
-        desired_new_words = max(250, min(900, missing_to_min + 200))
+        # Ask for concrete NEW text. Short videos must stay near their real target
+        # instead of aiming for long-form filler that later fails the word-band guard.
+        if target_word_count <= 400:
+            desired_new_words = max(60, min(260, missing_to_min + 60))
+        else:
+            desired_new_words = max(120, min(900, missing_to_min + 160))
 
         expansion_prompt = f"""
 Du bist Redaktions- und Story-Producer für ein YouTube-News-Video.
@@ -1093,7 +1107,8 @@ Ziel (konkret):
 
 KLARE ANWEISUNG:
 - Erweitere das Skript auf **mindestens {target_min_words} Wörter** (besser: nahe {target_word_count} und im Bereich {target_min_words}–{target_max_words}).
-- Schreibe so lange weiter, bis du mindestens {target_min_words} Wörter erreichst, sofern du das ohne neue Fakten und ohne Wiederholungen sauber kannst.
+- Fuege etwa {desired_new_words} neue Woerter hinzu, sofern du das ohne neue Fakten und ohne Wiederholungen sauber kannst.
+- Das finale Skript soll nahe {target_word_count} Woerter landen; vermeide sowohl Unterlaenge als auch kuenstliche Ueberlaenge.
 - Nutze dafür vor allem: Übergänge, Moderation, Einordnung, Definitionen, „Warum ist das relevant?“, mögliche Konsequenzen, Abwägungen, offene Fragen, Fazit, CTA.
 - Wenn das nicht sauber möglich ist, bleibe so nah wie möglich am Zielbereich und markiere Unsicherheiten indirekt durch vorsichtige Formulierungen (ohne Fakten zu erfinden).
 
