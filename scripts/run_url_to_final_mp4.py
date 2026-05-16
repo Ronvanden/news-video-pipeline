@@ -41,6 +41,7 @@ from app.real_video_build.script_input_adapter import (  # type: ignore
 from app.story_engine.templates import normalize_story_template_id  # type: ignore
 from app.visual_plan.visual_policy_report import ensure_effective_prompt  # type: ignore
 from app.utils import (  # type: ignore
+    SCRIPT_TARGET_WORDS_PER_MINUTE,
     build_script_dict_from_youtube_source,
     build_script_response_from_extracted_text,
     count_words,
@@ -224,18 +225,23 @@ def _duration_scaling_audit(
     final_video_duration_seconds: Optional[float],
 ) -> Dict[str, Any]:
     target = max(1, int(target_seconds))
-    target_word_count = max(1, int(round((float(target) / 60.0) * 140.0)))
+    target_word_count = max(1, int(round((float(target) / 60.0) * SCRIPT_TARGET_WORDS_PER_MINUTE)))
     voice_ratio = _duration_ratio(voice_duration_seconds, float(target))
     final_ratio = _duration_ratio(final_video_duration_seconds, float(target))
+    estimated_voice_wpm: Optional[float] = None
+    if voice_duration_seconds and voice_duration_seconds > 0:
+        estimated_voice_wpm = round(float(script_word_count) / (float(voice_duration_seconds) / 60.0), 3)
     return {
         "target_duration_seconds": int(target),
         "target_word_count": int(target_word_count),
         "script_word_count": int(script_word_count),
         "scene_count": int(scene_count),
         "actual_voice_duration_seconds": voice_duration_seconds,
+        "voice_duration_seconds": voice_duration_seconds,
         "final_video_duration_seconds": final_video_duration_seconds,
         "voice_duration_ratio": voice_ratio,
         "duration_ratio": final_ratio if final_ratio is not None else voice_ratio,
+        "estimated_voice_wpm": estimated_voice_wpm,
     }
 
 
@@ -250,10 +256,14 @@ def _duration_scaling_warnings(audit: Dict[str, Any]) -> List[str]:
     voice_ratio = audit.get("voice_duration_ratio")
     if isinstance(final_ratio, (int, float)) and float(final_ratio) < 0.85:
         warnings.append("target_duration_not_reached")
+    if isinstance(final_ratio, (int, float)) and float(final_ratio) > 1.15:
+        warnings.append("target_duration_overshot")
     if target_words > 0 and script_words < int(target_words * 0.85):
         warnings.append("script_too_short_for_target_duration")
     if isinstance(voice_ratio, (int, float)) and float(voice_ratio) < 0.85:
         warnings.append("voice_shorter_than_target_duration")
+    if isinstance(voice_ratio, (int, float)) and float(voice_ratio) > 1.15:
+        warnings.append("voice_longer_than_target_duration")
     return warnings
 
 

@@ -225,6 +225,15 @@ def _openai_max_tokens_for_expansion(model: str, target_word_count: int) -> int:
     return max(2500, min(4500, desired))
 
 
+SCRIPT_TARGET_WORDS_PER_MINUTE = 128
+
+
+def target_word_count_for_duration_minutes(duration_minutes: int) -> int:
+    """Voiceover-oriented target words; calibrated from ElevenLabs live smoke runs."""
+    minutes = max(1, int(duration_minutes))
+    return max(1, int(round(minutes * SCRIPT_TARGET_WORDS_PER_MINUTE)))
+
+
 def _openai_nested_error_message(body: object) -> str:
     if not isinstance(body, dict):
         return ""
@@ -590,7 +599,7 @@ def build_script_response_from_extracted_text(
     )
 
     sources = [source_url]
-    target_word_count = duration_minutes * 140
+    target_word_count = target_word_count_for_duration_minutes(duration_minutes)
     script_for_count = full_script
     if not (script_for_count or "").strip():
         parts = [hook]
@@ -830,7 +839,7 @@ class ScriptGenerator:
     ) -> Tuple[str, str, List[dict], str, str, str]:
         """Generate script structure based on duration. Returns title, hook, chapters, full_script, mode, reason."""
         tid, _ = normalize_story_template_id(video_template)
-        target_word_count = duration_minutes * 140
+        target_word_count = target_word_count_for_duration_minutes(duration_minutes)
         min_word_count = max(int(target_word_count * 0.85), 200)
         max_word_count = int(target_word_count * 1.15)
         

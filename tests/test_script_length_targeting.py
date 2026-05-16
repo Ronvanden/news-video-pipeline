@@ -19,17 +19,34 @@ def _load_ba265_module():
     return module
 
 
-def test_120_seconds_maps_to_about_280_target_words():
+def test_120_seconds_maps_to_elevenlabs_calibrated_target_words():
     ba265 = _load_ba265_module()
     audit = ba265._duration_scaling_audit(
         target_seconds=120,
-        script_word_count=280,
+        script_word_count=256,
         scene_count=5,
         voice_duration_seconds=118.0,
         final_video_duration_seconds=119.0,
     )
-    assert audit["target_word_count"] == 280
+    assert audit["target_word_count"] == 256
     assert audit["scene_count"] == 5
+    assert audit["estimated_voice_wpm"] == 130.169
+
+
+def test_duration_audit_warns_when_target_is_overshot():
+    ba265 = _load_ba265_module()
+    audit = ba265._duration_scaling_audit(
+        target_seconds=120,
+        script_word_count=317,
+        scene_count=5,
+        voice_duration_seconds=148.75,
+        final_video_duration_seconds=149.04,
+    )
+    warnings = ba265._duration_scaling_warnings(audit)
+    assert audit["duration_ratio"] == 1.242
+    assert audit["estimated_voice_wpm"] == 127.866
+    assert "target_duration_overshot" in warnings
+    assert "voice_longer_than_target_duration" in warnings
 
 
 def test_duration_audit_prefers_full_script_without_chapter_duplication():
@@ -99,6 +116,6 @@ def test_short_script_gets_precise_duration_warnings(monkeypatch):
         )
     )
 
-    assert "Target word count: 280, Actual word count: 2" in warnings
+    assert "Target word count: 256, Actual word count: 2" in warnings
     assert "script_below_target_after_expansion" in warnings
     assert "duration_target_unreachable_due_to_short_script" in warnings

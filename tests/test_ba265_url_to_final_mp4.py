@@ -254,12 +254,27 @@ def test_duration_scaling_audit_warns_when_target_is_missed(ba265_mod):
         voice_duration_seconds=180.0,
         final_video_duration_seconds=182.0,
     )
-    assert audit["target_word_count"] == 1400
+    assert audit["target_word_count"] == 1280
     assert audit["duration_ratio"] == 0.303
     warnings = ba265_mod._duration_scaling_warnings(audit)
     assert "target_duration_not_reached" in warnings
     assert "script_too_short_for_target_duration" in warnings
     assert "voice_shorter_than_target_duration" in warnings
+
+
+def test_duration_scaling_audit_warns_when_target_is_overshot(ba265_mod):
+    audit = ba265_mod._duration_scaling_audit(
+        target_seconds=120,
+        script_word_count=317,
+        scene_count=5,
+        voice_duration_seconds=148.75,
+        final_video_duration_seconds=149.04,
+    )
+    assert audit["target_word_count"] == 256
+    assert audit["estimated_voice_wpm"] == 127.866
+    warnings = ba265_mod._duration_scaling_warnings(audit)
+    assert "target_duration_overshot" in warnings
+    assert "voice_longer_than_target_duration" in warnings
 
 
 def test_duration_minutes_from_seconds_rounds_up(ba265_mod):
