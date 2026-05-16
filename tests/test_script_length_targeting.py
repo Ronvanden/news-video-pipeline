@@ -78,6 +78,7 @@ def test_script_generation_prompt_contains_duration_and_length_direction():
     assert "Die Zielwortanzahl ist verbindlich" in source
     assert "Kein Telegrammstil" in source
     assert "vorhandenes Material ausfuehrlicher paraphrasieren" in source
+    assert "Fuer Langform-Ziele ab 10 Minuten" in source
 
 
 def test_expansion_pass_uses_dynamic_word_band_for_short_targets():
@@ -86,6 +87,28 @@ def test_expansion_pass_uses_dynamic_word_band_for_short_targets():
     assert "target_word_count <= 400" in source
     assert "desired_new_words" in source
     assert "nahe {target_word_count} Woerter" in source
+
+
+def test_ten_minute_generation_requests_more_chapters(monkeypatch):
+    generator = utils.ScriptGenerator()
+    captured = {}
+
+    def fake_generate(*args, **kwargs):
+        captured["num_chapters"] = args[4]
+        return "Title", "Hook", [], " ".join(["word"] * 1100), "llm", ""
+
+    monkeypatch.setattr(utils, "openai", object())
+    monkeypatch.setattr(utils, "_effective_openai_api_key", lambda: "test-key")
+    monkeypatch.setattr(generator, "_generate_with_openai", fake_generate)
+
+    generator.generate_script(
+        "Title",
+        ["Quelle beschreibt politische Einordnung und öffentliche Reaktionen"],
+        10,
+        1000,
+    )
+
+    assert captured["num_chapters"] >= 7
 
 
 def test_deterministic_repair_extends_short_script_without_new_claims():
@@ -105,6 +128,26 @@ def test_deterministic_repair_extends_short_script_without_new_claims():
     assert utils.count_words(repaired) <= int(294 * 1.25)
     assert repaired.startswith(base)
     assert "Zur Einordnung" in repaired
+
+
+def test_deterministic_repair_extends_600s_script_to_longform_threshold():
+    generator = utils.ScriptGenerator()
+    base = " ".join(["vorhanden"] * 983)
+    repaired = generator._deterministic_length_repair(
+        current_full_script=base,
+        key_points=[
+            "Sarah Bosetti kritisiert die demokratische Debatte und ihre Grenzen",
+            "Im vorhandenen Material werden Reaktionen und offene Fragen beschrieben",
+            "Die Quelle behandelt politische Einordnung und öffentliche Reaktionen",
+            "Der Beitrag ordnet bekannte Aussagen vorsichtig ein",
+        ],
+        target_word_count=1280,
+        min_word_count=1088,
+        max_word_count=1472,
+    )
+    assert utils.count_words(repaired) >= 1152
+    assert utils.count_words(repaired) <= int(1472 * 1.25)
+    assert repaired.startswith(base)
 
 
 def test_openai_short_output_uses_deterministic_repair_when_expansion_fails(monkeypatch):
@@ -293,6 +336,78 @@ def test_longform_partial_expansion_is_repaired_to_minimum(monkeypatch):
     assert reason == "LLM longform expansion repaired toward target length"
     assert utils.count_words(full_script) >= 544
     assert utils.count_words(full_script) <= int(736 * 1.25)
+
+
+def test_600s_partial_expansion_is_repaired_to_longform_threshold(monkeypatch):
+    generator = utils.ScriptGenerator()
+
+    monkeypatch.setattr(utils, "openai", object())
+    monkeypatch.setattr(utils, "_effective_openai_api_key", lambda: "test-key")
+
+    def fake_expand(**kwargs):
+        return (
+            kwargs["title"],
+            kwargs["current_hook"],
+            kwargs["current_chapters"],
+            " ".join(["expanded"] * 983),
+        )
+
+    monkeypatch.setattr(generator, "_expand_llm_script_with_openai", fake_expand)
+
+    def fake_build_client():
+        class _Message:
+            content = (
+                '{"title":"Test","hook":"Hook","chapters":[],"full_script":"'
+                + " ".join(["kurz"] * 700)
+                + '"}'
+            )
+
+        class _Choice:
+            message = _Message()
+
+        class _Completions:
+            def create(self, **kwargs):
+                class _Response:
+                    choices = [_Choice()]
+
+                return _Response()
+
+        class _Chat:
+            completions = _Completions()
+
+        class _Client:
+            chat = _Chat()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        return _Client()
+
+    monkeypatch.setattr(utils, "build_openai_client", fake_build_client)
+
+    _title, _hook, _chapters, full_script, mode, reason = generator._generate_with_openai(
+        "Test",
+        [
+            "Sarah Bosetti kritisiert die demokratische Debatte und ihre Grenzen",
+            "Im vorhandenen Material werden Reaktionen und offene Fragen beschrieben",
+            "Die Quelle behandelt politische Einordnung und öffentliche Reaktionen",
+            "Der Beitrag ordnet bekannte Aussagen vorsichtig ein",
+        ],
+        10,
+        1280,
+        7,
+        1088,
+        1472,
+        1200,
+    )
+
+    assert mode == "llm"
+    assert reason == "LLM longform expansion repaired toward target length"
+    assert utils.count_words(full_script) >= 1152
+    assert utils.count_words(full_script) <= int(1472 * 1.25)
 
 
 def test_short_script_gets_precise_duration_warnings(monkeypatch):

@@ -848,6 +848,8 @@ class ScriptGenerator:
         # Determine number of chapters based on duration; clamp to template blueprint band (BA 9.1)
         if duration_minutes <= 6:
             num_chapters = 4
+        elif duration_minutes >= 10:
+            num_chapters = 7
         elif duration_minutes <= 10:
             num_chapters = 6
         else:
@@ -922,6 +924,7 @@ Laengen-Regie:
 - Bei YouTube-Transkripten oder Quelltexten: vorhandenes Material ausfuehrlicher paraphrasieren und einordnen, ohne neue Fakten zu erfinden.
 - Wenn die Quelle knapp ist: erklaere Bedeutung, Kontext, Unsicherheiten und moegliche Folgen vorsichtig, statt neue Details zu behaupten.
 - Schreibe das `full_script` als echten Sprechertext; Kapitelinhalte duerfen nicht nur Stichpunkte sein.
+- Fuer Langform-Ziele ab 10 Minuten: baue eine klare Langform-Dramaturgie mit Hook, Intro, 5-7 Hauptkapiteln, Kontext-/Einordnungsabschnitten, Ueberleitungen, Zwischenfazits und Schlussfazit.
 
 Baue folgende Struktur ein:
 1. Ein starker Hook
@@ -1250,8 +1253,13 @@ Wenn du unbedingt das komplette Objekt liefern willst, darfst du alternativ dies
         if current_words >= min_word_count:
             return base
 
+        longform = int(target_word_count) >= 1024
+        repair_target_words = int(min_word_count)
+        if longform:
+            repair_target_words = max(repair_target_words, int(target_word_count * 0.9))
+
         safe_points = [re.sub(r"\s+", " ", str(p or "").strip()) for p in key_points if str(p or "").strip()]
-        safe_points = [p for p in safe_points if count_words(p) >= 4][:4]
+        safe_points = [p for p in safe_points if count_words(p) >= 4][:(8 if longform else 4)]
         if not safe_points:
             safe_points = ["die bereits genannten Punkte aus der Quelle"]
 
@@ -1277,7 +1285,7 @@ Wenn du unbedingt das komplette Objekt liefern willst, darfst du alternativ dies
 
             candidate = base + "\n\n" + "\n\n".join(additions)
             words = count_words(candidate)
-            if words >= min_word_count or words >= target_word_count:
+            if words >= repair_target_words or words >= target_word_count:
                 if words <= int(max_word_count * 1.25):
                     return candidate
                 break
@@ -1303,10 +1311,48 @@ Wenn du unbedingt das komplette Objekt liefern willst, darfst du alternativ dies
             additions.append(bridge)
             candidate = base + "\n\n" + "\n\n".join(additions)
             words = count_words(candidate)
-            if words >= min_word_count or words >= target_word_count:
+            if words >= repair_target_words or words >= target_word_count:
                 if words <= int(max_word_count * 1.25):
                     return candidate
                 break
+
+        if longform:
+            longform_bridges = [
+                (
+                    "Ein weiterer Langform-Baustein ist die Kontextlinie: Was beschreibt das Material, "
+                    "warum wird es zugespitzt, und welche Deutung bleibt vorsichtig? Diese Fragen helfen, "
+                    "die bekannten Aussagen nicht nur aufzuzählen, sondern für die Zuschauerinnen und "
+                    "Zuschauer nachvollziehbar zu ordnen."
+                ),
+                (
+                    "Danach lohnt sich ein Blick auf die Wirkungsebene. Aus dem vorhandenen Material lässt "
+                    "sich keine neue Tatsache ableiten, aber es lässt sich erklären, weshalb Ton, Auswahl "
+                    "und Einordnung einer Aussage die öffentliche Wahrnehmung verändern können."
+                ),
+                (
+                    "Für den Hauptteil bedeutet das: Jede bekannte Aussage braucht eine kurze Rückbindung "
+                    "an die Quelle, eine vorsichtige Erklärung und eine klare Trennung zwischen belegtem "
+                    "Inhalt und offener Bewertung."
+                ),
+                (
+                    "Als Zwischenfazit bleibt: Das Material liefert Anhaltspunkte für eine Debatte, aber "
+                    "keinen Freifahrtschein für zusätzliche Behauptungen. Genau deshalb wird hier langsam "
+                    "und Schritt für Schritt erklärt, was gesagt wird und was daraus eben nicht automatisch folgt."
+                ),
+                (
+                    "Zum Schluss kann die Erzählung die offenen Punkte bündeln: Welche Fragen müssten weiter "
+                    "geprüft werden, welche Reaktionen sind nachvollziehbar, und wo beginnt reine Interpretation? "
+                    "Diese Ordnung macht den Beitrag länger, aber nicht faktenreicher als die Quelle."
+                ),
+            ]
+            for bridge in longform_bridges:
+                additions.append(bridge)
+                candidate = base + "\n\n" + "\n\n".join(additions)
+                words = count_words(candidate)
+                if words >= repair_target_words or words >= target_word_count:
+                    if words <= int(max_word_count * 1.25):
+                        return candidate
+                    break
 
         candidate = base + "\n\n" + "\n\n".join(additions)
         if count_words(candidate) <= int(max_word_count * 1.25):
