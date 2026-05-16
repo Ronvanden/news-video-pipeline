@@ -613,6 +613,8 @@ def build_script_response_from_extracted_text(
     if actual_word_count < target_word_count * 0.75:
         warnings.append("script_below_target_after_expansion")
         warnings.append("duration_target_unreachable_due_to_short_script")
+        if target_word_count >= 512:
+            warnings.append("longform_expansion_below_target")
     if actual_word_count < target_word_count * 0.5:
         warnings.append(
             "Script is significantly shorter than target. Content may be insufficient for the requested duration."
@@ -1016,6 +1018,31 @@ Gib die Antwort exakt als Objekt zurück:
                 if after > before and after <= int(max_word_count * 1.25) and (
                     after >= min_word_count or after >= int(before * 1.15) or abs(target_word_count - after) < abs(target_word_count - before)
                 ):
+                    if after < min_word_count:
+                        repaired_ex_full = self._deterministic_length_repair(
+                            current_full_script=ex_full,
+                            key_points=key_points,
+                            target_word_count=target_word_count,
+                            min_word_count=min_word_count,
+                            max_word_count=max_word_count,
+                        )
+                        repaired_ex_words = count_words(repaired_ex_full)
+                        if repaired_ex_words > after:
+                            reason = (
+                                "LLM longform expansion repaired toward target length"
+                                if target_word_count >= 512 and repaired_ex_words >= min_word_count
+                                else "LLM expansion repaired toward target length"
+                            )
+                            if repaired_ex_words < min_word_count:
+                                reason = "LLM expansion still below target"
+                            return (
+                                ex_title or title_text,
+                                ex_hook or hook,
+                                ex_chapters if isinstance(ex_chapters, list) else chapters,
+                                repaired_ex_full,
+                                "llm",
+                                reason,
+                            )
                     if after < min_word_count:
                         reason = "LLM expansion still below target"
                     else:

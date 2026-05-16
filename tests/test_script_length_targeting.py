@@ -224,6 +224,77 @@ def test_openai_empty_full_script_builds_from_chapters_before_repair(monkeypatch
     assert utils.count_words(full_script) >= 217
 
 
+def test_longform_partial_expansion_is_repaired_to_minimum(monkeypatch):
+    generator = utils.ScriptGenerator()
+
+    monkeypatch.setattr(utils, "openai", object())
+    monkeypatch.setattr(utils, "_effective_openai_api_key", lambda: "test-key")
+
+    def fake_expand(**kwargs):
+        return (
+            kwargs["title"],
+            kwargs["current_hook"],
+            kwargs["current_chapters"],
+            " ".join(["expanded"] * 395),
+        )
+
+    monkeypatch.setattr(generator, "_expand_llm_script_with_openai", fake_expand)
+
+    def fake_build_client():
+        class _Message:
+            content = (
+                '{"title":"Test","hook":"Hook","chapters":[],"full_script":"'
+                + " ".join(["kurz"] * 300)
+                + '"}'
+            )
+
+        class _Choice:
+            message = _Message()
+
+        class _Completions:
+            def create(self, **kwargs):
+                class _Response:
+                    choices = [_Choice()]
+
+                return _Response()
+
+        class _Chat:
+            completions = _Completions()
+
+        class _Client:
+            chat = _Chat()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        return _Client()
+
+    monkeypatch.setattr(utils, "build_openai_client", fake_build_client)
+
+    _title, _hook, _chapters, full_script, mode, reason = generator._generate_with_openai(
+        "Test",
+        [
+            "Sarah Bosetti kritisiert die demokratische Debatte und ihre Grenzen",
+            "Im vorhandenen Material werden Reaktionen und offene Fragen beschrieben",
+            "Die Quelle behandelt politische Einordnung und öffentliche Reaktionen",
+        ],
+        5,
+        640,
+        6,
+        544,
+        736,
+        900,
+    )
+
+    assert mode == "llm"
+    assert reason == "LLM longform expansion repaired toward target length"
+    assert utils.count_words(full_script) >= 544
+    assert utils.count_words(full_script) <= int(736 * 1.25)
+
+
 def test_short_script_gets_precise_duration_warnings(monkeypatch):
     def fake_generate_script(self, title, key_points, duration_minutes, source_word_count=0, **kwargs):
         del self, key_points, duration_minutes, source_word_count, kwargs
@@ -256,3 +327,36 @@ def test_short_script_gets_precise_duration_warnings(monkeypatch):
     assert "Target word count: 256, Actual word count: 2" in warnings
     assert "script_below_target_after_expansion" in warnings
     assert "duration_target_unreachable_due_to_short_script" in warnings
+
+
+def test_longform_short_script_gets_longform_warning(monkeypatch):
+    def fake_generate_script(self, title, key_points, duration_minutes, source_word_count=0, **kwargs):
+        del self, key_points, duration_minutes, source_word_count, kwargs
+        return (
+            title,
+            "Kurzer Hook.",
+            [{"title": "Kapitel 1", "content": "Kurz."}],
+            " ".join(["kurz"] * 395),
+            "llm",
+            "LLM expansion still below target",
+        )
+
+    monkeypatch.setattr(utils, "summarize_text", lambda text, sentences_count=20: text)
+    monkeypatch.setattr(utils, "translate_to_german", lambda text: text)
+    monkeypatch.setattr(utils, "extract_key_points", lambda text: ["Punkt eins", "Punkt zwei"])
+    monkeypatch.setattr(utils, "generate_title", lambda text: "Testtitel")
+    monkeypatch.setattr(utils.ScriptGenerator, "generate_script", fake_generate_script)
+
+    _title, _hook, _chapters, _full_script, _sources, warnings = (
+        utils.build_script_response_from_extracted_text(
+            extracted_text="Ausreichend Quellmaterial fuer einen Test.",
+            source_url="https://example.com/source",
+            target_language="de",
+            duration_minutes=5,
+            extraction_warnings=[],
+            video_template="generic",
+        )
+    )
+
+    assert "Target word count: 640, Actual word count: 395" in warnings
+    assert "longform_expansion_below_target" in warnings
