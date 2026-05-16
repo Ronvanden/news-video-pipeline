@@ -243,6 +243,28 @@ def _voice_escape_ok_ba3280(payload: Dict[str, Any]) -> bool:
     return bool(ra.get("voice_file_ready"))
 
 
+def _duration_target_major_miss_ba3280(payload: Dict[str, Any]) -> bool:
+    """Large requested videos should not look production-ready when duration is badly missed."""
+    da = payload.get("duration_audit") if isinstance(payload.get("duration_audit"), dict) else {}
+    if not da:
+        ta = payload.get("timing_audit") if isinstance(payload.get("timing_audit"), dict) else {}
+        target_raw = ta.get("requested_duration_seconds")
+        final_raw = ta.get("final_video_duration_seconds")
+        try:
+            target_f = float(target_raw)
+            final_f = float(final_raw)
+            ratio = final_f / target_f if target_f > 0 else None
+        except (TypeError, ValueError):
+            ratio = None
+        da = {"target_duration_seconds": target_raw, "duration_ratio": ratio}
+    try:
+        target = float(da.get("target_duration_seconds") or 0)
+        ratio = float(da.get("duration_ratio"))
+    except (TypeError, ValueError):
+        return False
+    return target >= 300.0 and ratio < 0.75
+
+
 def _thumb_bundle_ready_ba3280(payload: Dict[str, Any]) -> Tuple[bool, bool]:
     tp = payload.get("thumbnail_pack") if isinstance(payload.get("thumbnail_pack"), dict) else {}
     pb = payload.get("production_bundle") if isinstance(payload.get("production_bundle"), dict) else {}
@@ -658,11 +680,14 @@ def derive_video_generate_status(payload: Dict[str, Any]) -> str:
     render_bad = _render_layer_placeholder_hit_from_payload(payload, joined_eval)
     motion_penalty = _motion_penalty_ba3280(payload)
     voice_dummy_penalty = _voice_dummy_productive_penalty_ba3280(payload)
+    duration_major_miss = _duration_target_major_miss_ba3280(payload)
     if render_bad:
         return "fallback_preview"
     if voice_dummy_penalty:
         return "mixed_preview"
     if motion_penalty:
+        return "mixed_preview"
+    if duration_major_miss:
         return "mixed_preview"
 
     warn_fb = _warn_triggers_fallback_preview(payload, joined_eval)
@@ -2027,6 +2052,9 @@ def execute_dashboard_video_generate(
         "scene_asset_pack_path": str(doc.get("scene_asset_pack_path") or ""),
         "asset_manifest_path": str(doc.get("asset_manifest_path") or ""),
         "timing_audit": (doc.get("timing_audit") if isinstance(doc.get("timing_audit"), dict) else {}),
+        "duration_audit": (doc.get("duration_audit") if isinstance(doc.get("duration_audit"), dict) else {}),
+        "script_word_count": doc.get("script_word_count"),
+        "scene_count": doc.get("scene_count"),
         "duration_target_seconds": int(duration_target_seconds),
         "max_scenes": int(max_scenes),
         "max_live_assets": int(max_live_assets),

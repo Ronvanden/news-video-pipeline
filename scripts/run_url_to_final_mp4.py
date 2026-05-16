@@ -43,6 +43,7 @@ from app.visual_plan.visual_policy_report import ensure_effective_prompt  # type
 from app.utils import (  # type: ignore
     build_script_dict_from_youtube_source,
     build_script_response_from_extracted_text,
+    count_words,
     extract_text_from_url,
     extract_video_id,
 )
@@ -171,6 +172,86 @@ def _build_scene_rows_from_script(
             }
         )
     return out
+
+
+def _script_text_for_duration_audit(script: Dict[str, Any]) -> str:
+    parts: List[str] = []
+    for key in ("hook", "full_script"):
+        value = str(script.get(key) or "").strip()
+        if value:
+            parts.append(value)
+    chapters = script.get("chapters")
+    if isinstance(chapters, list):
+        for chapter in chapters:
+            if not isinstance(chapter, dict):
+                continue
+            title = str(chapter.get("title") or "").strip()
+            content = str(chapter.get("content") or "").strip()
+            if title:
+                parts.append(title)
+            if content:
+                parts.append(content)
+    return "\n\n".join(parts)
+
+
+def _duration_ratio(actual_seconds: Optional[float], target_seconds: float) -> Optional[float]:
+    if actual_seconds is None or target_seconds <= 0:
+        return None
+    try:
+        actual = float(actual_seconds)
+    except (TypeError, ValueError):
+        return None
+    if actual <= 0:
+        return None
+    return round(actual / float(target_seconds), 3)
+
+
+def _duration_minutes_from_seconds(duration_seconds: int) -> int:
+    """Round up so e.g. 90 seconds targets a 2-minute script instead of shrinking to 1."""
+    seconds = max(1, int(duration_seconds))
+    return max(1, (seconds + 59) // 60)
+
+
+def _duration_scaling_audit(
+    *,
+    target_seconds: int,
+    script_word_count: int,
+    scene_count: int,
+    voice_duration_seconds: Optional[float],
+    final_video_duration_seconds: Optional[float],
+) -> Dict[str, Any]:
+    target = max(1, int(target_seconds))
+    target_word_count = max(1, int(round((float(target) / 60.0) * 140.0)))
+    voice_ratio = _duration_ratio(voice_duration_seconds, float(target))
+    final_ratio = _duration_ratio(final_video_duration_seconds, float(target))
+    return {
+        "target_duration_seconds": int(target),
+        "target_word_count": int(target_word_count),
+        "script_word_count": int(script_word_count),
+        "scene_count": int(scene_count),
+        "actual_voice_duration_seconds": voice_duration_seconds,
+        "final_video_duration_seconds": final_video_duration_seconds,
+        "voice_duration_ratio": voice_ratio,
+        "duration_ratio": final_ratio if final_ratio is not None else voice_ratio,
+    }
+
+
+def _duration_scaling_warnings(audit: Dict[str, Any]) -> List[str]:
+    warnings: List[str] = []
+    target = float(audit.get("target_duration_seconds") or 0)
+    if target <= 0:
+        return warnings
+    target_words = int(audit.get("target_word_count") or 0)
+    script_words = int(audit.get("script_word_count") or 0)
+    final_ratio = audit.get("duration_ratio")
+    voice_ratio = audit.get("voice_duration_ratio")
+    if isinstance(final_ratio, (int, float)) and float(final_ratio) < 0.85:
+        warnings.append("target_duration_not_reached")
+    if target_words > 0 and script_words < int(target_words * 0.85):
+        warnings.append("script_too_short_for_target_duration")
+    if isinstance(voice_ratio, (int, float)) and float(voice_ratio) < 0.85:
+        warnings.append("voice_shorter_than_target_duration")
+    return warnings
 
 
 def _compute_motion_slot_scene_numbers(
@@ -1139,7 +1220,7 @@ def run_ba265_url_to_final(
     elif yt_s:
         # BA 32.58 — YouTube-Transkript als Recherchebasis → neues Skript (kein 1:1-Reupload-Pfad).
         input_mode = "youtube_source"
-        dm = max(1, int(round(duration_seconds / 60.0)))
+        dm = _duration_minutes_from_seconds(duration_seconds)
         y_script, transcript_ok, yt_warns, yt_block = build_script_dict_from_youtube_source(
             source_youtube_url=yt_s,
             duration_minutes=dm,
@@ -1189,7 +1270,7 @@ def run_ba265_url_to_final(
     elif raw_text_s:
         # BA 32.42 — Raw Text Input: keine URL-Extraktion, gleicher Script-/Pack-Pfad wie extrahierter Text.
         input_mode = "raw_text"
-        dm = max(1, int(round(duration_seconds / 60.0)))
+        dm = _duration_minutes_from_seconds(duration_seconds)
         title_g, hook, chapters, full_script, sources, gen_warns = build_script_response_from_extracted_text(
             extracted_text=raw_text_s,
             source_url="raw_text",
@@ -1240,7 +1321,7 @@ def run_ba265_url_to_final(
             }
             summary_path.write_text(json.dumps(_finalize_summary(doc), ensure_ascii=False, indent=2), encoding="utf-8")
             return doc
-        dm = max(1, int(round(duration_seconds / 60.0)))
+        dm = _duration_minutes_from_seconds(duration_seconds)
         title, hook, chapters, full_script, sources, gen_warns = build_script_response_from_extracted_text(
             extracted_text=text,
             source_url=url,
@@ -1312,6 +1393,7 @@ def run_ba265_url_to_final(
         return doc
 
     n_scenes = len(scene_rows)
+    script_word_count = count_words(_script_text_for_duration_audit(script))
     rel_videos, img_overrides, assign_warns = _assign_media(n_scenes, videos, images, out_dir)
     warnings.extend(assign_warns)
     used_v = sum(1 for x in rel_videos if x)
@@ -1655,6 +1737,20 @@ def run_ba265_url_to_final(
         render_meta=rmeta if isinstance(rmeta, dict) else None,
         effective_fit_to_voice=bool(effective_fit_video_to_voice),
     )
+    duration_audit = _duration_scaling_audit(
+        target_seconds=int(original_requested_duration_seconds),
+        script_word_count=int(script_word_count),
+        scene_count=int(n_scenes),
+        voice_duration_seconds=doc["timing_audit"].get("voice_duration_seconds"),
+        final_video_duration_seconds=doc["timing_audit"].get("final_video_duration_seconds"),
+    )
+    doc["duration_audit"] = duration_audit
+    for w in _duration_scaling_warnings(duration_audit):
+        if w not in warnings:
+            warnings.append(w)
+    doc["warnings"] = warnings
+    doc["script_word_count"] = int(script_word_count)
+    doc["scene_count"] = int(n_scenes)
     summary_path.write_text(json.dumps(_finalize_summary(doc), ensure_ascii=False, indent=2), encoding="utf-8")
     return doc
 

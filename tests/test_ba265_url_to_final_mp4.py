@@ -244,3 +244,25 @@ def test_youtube_style_scene_asset_pack_derives_non_generic_anatomy(ba265_mod, t
     assert any(term in subject for term in ["political commentator", "documentary host", "public political debate"])
     assert any(term in environment for term in ["editorial studio", "newsroom desk", "political talk", "public media"])
     assert any(term in action for term in ["explains", "reviews", "public debate", "public reactions"])
+
+
+def test_duration_scaling_audit_warns_when_target_is_missed(ba265_mod):
+    audit = ba265_mod._duration_scaling_audit(
+        target_seconds=600,
+        script_word_count=300,
+        scene_count=6,
+        voice_duration_seconds=180.0,
+        final_video_duration_seconds=182.0,
+    )
+    assert audit["target_word_count"] == 1400
+    assert audit["duration_ratio"] == 0.303
+    warnings = ba265_mod._duration_scaling_warnings(audit)
+    assert "target_duration_not_reached" in warnings
+    assert "script_too_short_for_target_duration" in warnings
+    assert "voice_shorter_than_target_duration" in warnings
+
+
+def test_duration_minutes_from_seconds_rounds_up(ba265_mod):
+    assert ba265_mod._duration_minutes_from_seconds(60) == 1
+    assert ba265_mod._duration_minutes_from_seconds(61) == 2
+    assert ba265_mod._duration_minutes_from_seconds(120) == 2

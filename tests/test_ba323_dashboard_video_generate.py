@@ -588,6 +588,52 @@ class Ba323VideoGenerateTests(unittest.TestCase):
         }
         self.assertEqual(derive_video_generate_status(payload), "production_ready")
 
+    def test_derive_status_mixed_preview_when_long_target_duration_badly_missed(self) -> None:
+        payload = {
+            "ok": True,
+            "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
+            "warnings": ["target_duration_not_reached", "script_too_short_for_target_duration"],
+            "voice_artifact": {
+                "effective_voice_mode": "elevenlabs",
+                "voice_ready": True,
+                "is_dummy": False,
+            },
+            "readiness_audit": {
+                "asset_strict_ready": True,
+                "effective_voice_mode": "elevenlabs",
+                "voice_file_ready": True,
+            },
+            "asset_artifact": {
+                "asset_quality_gate": {"status": "production_ready", "strict_ready": True},
+            },
+            "duration_audit": {"target_duration_seconds": 600, "duration_ratio": 0.31},
+        }
+        self.assertEqual(derive_video_generate_status(payload), "mixed_preview")
+
+    def test_derive_status_still_ready_for_short_smoke_duration_miss(self) -> None:
+        payload = {
+            "ok": True,
+            "blocking_reasons": [],
+            "final_video_path": "/tmp/final_video.mp4",
+            "warnings": ["target_duration_not_reached"],
+            "voice_artifact": {
+                "effective_voice_mode": "elevenlabs",
+                "voice_ready": True,
+                "is_dummy": False,
+            },
+            "readiness_audit": {
+                "asset_strict_ready": True,
+                "effective_voice_mode": "elevenlabs",
+                "voice_file_ready": True,
+            },
+            "asset_artifact": {
+                "asset_quality_gate": {"status": "production_ready", "strict_ready": True},
+            },
+            "duration_audit": {"target_duration_seconds": 60, "duration_ratio": 0.6},
+        }
+        self.assertEqual(derive_video_generate_status(payload), "production_ready")
+
     def test_derive_status_fallback_audio_silent_when_voice_expected(self) -> None:
         payload = {
             "ok": True,
