@@ -15,7 +15,14 @@ _VERSION = "youtube_packaging_v1"
 
 def _clean(value: Any, *, limit: int = 500) -> str:
     text = " ".join(str(value or "").replace("\r", " ").replace("\n", " ").split())
-    return text[:limit].strip()
+    if len(text) <= limit:
+        return text.strip()
+    clipped = text[:limit].rstrip()
+    if " " in clipped:
+        clipped = clipped.rsplit(" ", 1)[0].rstrip(" ,;:-")
+    if clipped and clipped[-1] not in ".!?":
+        clipped += "."
+    return clipped.strip()
 
 
 def _chapter_titles(chapters: Any, *, limit: int = 5) -> List[str]:

@@ -356,3 +356,18 @@ def test_youtube_packaging_extends_script_voice_and_audit(ba265_mod, tmp_path):
     assert summary["youtube_packaging"]["packaging_applied"] is True
     assert Path(summary["youtube_packaging"]["manifest_path"]).is_file()
     assert Path(summary["youtube_packaging"]["original_script_path"]).is_file()
+
+
+def test_youtube_packaging_truncates_hook_on_word_boundary():
+    from app.publishing.youtube_packaging import build_youtube_packaging
+
+    packaging = build_youtube_packaging(
+        title="Testtitel",
+        hook=("Dies ist ein sehr langer Ausgangspunkt mit vielen Details und einem Satz, der nicht mitten "
+              "in einem Wort abgeschnitten werden soll. " * 4),
+        chapters=[],
+        target_language="de",
+    )
+    intro = packaging["intro_text"]
+    assert not intro.endswith(" hi")
+    assert intro[-1] in ".!?"
